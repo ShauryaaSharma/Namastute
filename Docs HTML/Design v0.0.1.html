@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ubery Design v0.0.1</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --code:#f6f8fa; --link:#0969da; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#30363d; --code:#161b22; --link:#4493f8; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  nav { position:fixed; top:0; left:0; bottom:0; width:260px; overflow-y:auto; padding:24px 16px; border-right:1px solid var(--line); }
+  nav strong { display:block; margin-bottom:12px; }
+  nav a { display:block; color:var(--muted); text-decoration:none; padding:3px 0; font-size:14px; }
+  nav a:hover { color:var(--link); }
+  nav a.l3 { padding-left:14px; font-size:13px; }
+  main { margin-left:260px; max-width:960px; padding:32px 40px 80px; }
+  a { color:var(--link); }
+  h1, h2 { border-bottom:1px solid var(--line); padding-bottom:.3em; }
+  h2, h3 { scroll-margin-top:16px; }
+  table { border-collapse:collapse; display:block; overflow-x:auto; margin:16px 0; }
+  th, td { border:1px solid var(--line); padding:6px 12px; text-align:left; vertical-align:top; }
+  code { overflow-wrap:anywhere; background:var(--code); padding:.15em .35em; border-radius:4px; font-size:.9em; }
+  pre { background:var(--code); padding:16px; border-radius:6px; overflow-x:auto; }
+  pre code { background:none; padding:0; }
+  pre.mermaid { background:none; text-align:center; }
+  blockquote { margin:0; padding:0 1em; color:var(--muted); border-left:4px solid var(--line); }
+  @media (max-width: 800px) {
+    nav { position:static; width:auto; border-right:0; border-bottom:1px solid var(--line); }
+    main { margin-left:0; padding:16px; }
+  }
+</style>
+</head>
+<body>
+<nav><strong>Ubery Docs</strong>
+<a class="l2" href="#1-product-scope">1. Product scope</a>
+<a class="l3" href="#1-1-core-loop-the-only-thing-v1-must-do-well">1.1 Core loop (the only thing v1 must do well)</a>
+<a class="l3" href="#1-2-in-v1-not-in-v1">1.2 In v1 / not in v1</a>
+<a class="l3" href="#1-3-delhi-specific-notes">1.3 Delhi-specific notes</a>
+<a class="l3" href="#1-4-success-metrics-pm-owns">1.4 Success metrics (PM owns)</a>
+<a class="l2" href="#2-high-level-design">2. High-Level Design</a>
+<a class="l3" href="#2-1-architecture-modular-monolith">2.1 Architecture: modular monolith</a>
+<a class="l3" href="#2-2-modules">2.2 Modules</a>
+<a class="l3" href="#2-3-tech-stack-and-why-each-piece-earns-its-place">2.3 Tech stack (and why each piece earns its place)</a>
+<a class="l3" href="#2-4-aws-budget-100-credits">2.4 AWS budget (~$100 credits)</a>
+<a class="l2" href="#3-low-level-design">3. Low-Level Design</a>
+<a class="l3" href="#3-1-data-model-postgres">3.1 Data model (Postgres)</a>
+<a class="l3" href="#3-2-state-machines">3.2 State machines</a>
+<a class="l3" href="#3-3-matching">3.3 Matching</a>
+<a class="l3" href="#3-4-concurrency-two-people-taking-the-last-seat">3.4 Concurrency: two people taking the last seat</a>
+<a class="l3" href="#3-5-rest-api-v1">3.5 REST API (v1)</a>
+<a class="l3" href="#3-6-websocket-events-socket-io">3.6 WebSocket events (Socket.IO)</a>
+<a class="l3" href="#3-7-background-jobs-bullmq">3.7 Background jobs (BullMQ)</a>
+<a class="l3" href="#3-8-fare-split">3.8 Fare split</a>
+<a class="l2" href="#4-safety-privacy-legal">4. Safety, privacy, legal</a>
+<a class="l3" href="#4-1-otp-auth">4.1 OTP auth</a>
+<a class="l3" href="#4-2-id-verification-one-time">4.2 ID verification (one-time)</a>
+<a class="l3" href="#4-3-women-only-groups">4.3 Women-only groups</a>
+<a class="l3" href="#4-4-other-safety">4.4 Other safety</a>
+<a class="l3" href="#4-5-legal-privacy">4.5 Legal / privacy</a>
+<a class="l3" href="#4-6-app-security-checklist">4.6 App security checklist</a>
+<a class="l2" href="#5-repo-layout">5. Repo layout</a>
+<a class="l2" href="#6-conventions-decide-once-don-t-debate-again">6. Conventions (decide once, don&#x27;t debate again)</a>
+<a class="l2" href="#7-roadmap">7. Roadmap</a>
+<a class="l2" href="#8-open-questions">8. Open questions</a>
+</nav>
+<main>
+<h1 id="ubery-design-doc-v0-0-1">Ubery — Design Doc v0.0.1</h1>
+<blockquote>
+<p>Connect passengers landing at Delhi IGI around the same time, heading the same way, so they can share one cab.
+We <strong>only connect</strong>. Booking happens in Uber/Ola by one group member. Money moves between users (UPI), never through us.</p>
+</blockquote>
+<p>Status: draft · Owner: Keshav (dev) · Team: 1 PM, 2 devs · Scope: web (PWA), Delhi IGI only</p>
+<hr>
+<h2 id="1-product-scope">1. Product scope</h2>
+<h3 id="1-1-core-loop-the-only-thing-v1-must-do-well">1.1 Core loop (the only thing v1 must do well)</h3>
+<ol>
+<li>Sign up with phone OTP.</li>
+<li>Create a <strong>trip request</strong>: terminal, flight no., when I&#39;ll be outside, where I&#39;m going, seats, bags, women-only?</li>
+<li>See <strong>ranked matches</strong>: open groups / other travellers going my way within ±30 min.</li>
+<li>Request to join → members accept → <strong>group chat</strong> opens.</li>
+<li>Group locks at meet time, meets at the terminal pickup point, one person (the <strong>booker</strong>) books Uber/Ola with multiple stops.</li>
+<li>After the ride: booker enters the actual fare → app shows each person&#39;s share + UPI pay link → rate each other.</li>
+</ol>
+<h3 id="1-2-in-v1-not-in-v1">1.2 In v1 / not in v1</h3>
+<table>
+<thead>
+<tr>
+<th>In v1</th>
+<th>Later</th>
+<th>Never (by decision)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Phone OTP login</td>
+<td>Live flight status API</td>
+<td>Booking rides</td>
+</tr>
+<tr>
+<td>Trip requests + ranked matches</td>
+<td>Auto-matching (no manual join)</td>
+<td>Handling payments</td>
+</tr>
+<tr>
+<td>Groups, join requests, group chat</td>
+<td>Masked calling</td>
+<td>Driver side</td>
+</tr>
+<tr>
+<td>ID verification (manual review + face match)</td>
+<td>Other airports</td>
+<td></td>
+</tr>
+<tr>
+<td>Women-only groups</td>
+<td>Native mobile apps</td>
+<td></td>
+</tr>
+<tr>
+<td>Web push notifications</td>
+<td>Ratings-based ranking</td>
+<td></td>
+</tr>
+<tr>
+<td>Fare split + UPI deep links</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Report / block, SOS (112)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Admin panel for ID review</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="1-3-delhi-specific-notes">1.3 Delhi-specific notes</h3>
+<ul>
+<li>IGI has <strong>T1, T2, T3</strong>. Pickup zones differ per terminal. PM to physically confirm the app-cab pickup spots and record them (<code>terminals.pickup_note</code>). Don&#39;t guess these.</li>
+<li><strong>Competitor that matters: Airport Express metro line.</strong> It&#39;s cheap and fast to central Delhi / Dwarka. Our sweet spot is where the metro is painful: <strong>Gurugram, Noida, Faridabad, South/East Delhi</strong> — far, expensive solo cabs, big savings when split.</li>
+<li>Store all times as UTC (<code>timestamptz</code>), display in IST.</li>
+</ul>
+<h3 id="1-4-success-metrics-pm-owns">1.4 Success metrics (PM owns)</h3>
+<ul>
+<li><strong>Match rate</strong>: % of trip requests that end in a locked group of ≥ 2. This is the only number that matters early.</li>
+<li>Time to first match, no-show rate, % verified users, report rate.</li>
+</ul>
+<hr>
+<h2 id="2-high-level-design">2. High-Level Design</h2>
+<h3 id="2-1-architecture-modular-monolith">2.1 Architecture: modular monolith</h3>
+<pre class="mermaid">flowchart LR
+  subgraph Client
+    W[Next.js PWA&lt;br/&gt;Vercel]
+  end
+  subgraph EC2[&quot;AWS EC2 (Docker Compose)&quot;]
+    C[Caddy&lt;br/&gt;TLS + reverse proxy]
+    A[API + WebSocket&lt;br/&gt;NestJS]
+    K[Worker&lt;br/&gt;BullMQ jobs]
+    P[(Postgres + PostGIS)]
+    R[(Redis)]
+  end
+  S3[(S3&lt;br/&gt;ID docs, private)]
+  RK[Rekognition&lt;br/&gt;CompareFaces]
+  SMS[SMS OTP provider]
+  MAP[Maps / geocoding API]
+  WP[Web Push&lt;br/&gt;browser vendors]
+
+  W -- HTTPS REST --&gt; C --&gt; A
+  W -- WSS Socket.IO --&gt; C
+  A --&gt; P
+  A --&gt; R
+  K --&gt; P
+  K --&gt; R
+  A -- presigned POST/GET --&gt; S3
+  W -- upload ID directly --&gt; S3
+  K --&gt; RK
+  A --&gt; SMS
+  W --&gt; MAP
+  K --&gt; WP
+</pre>
+<p><strong>Why a modular monolith, not microservices:</strong> 2 devs. Microservices would add network calls, deploys and distributed debugging with zero benefit at this scale. Modules have hard boundaries (each owns its tables, talks to others via services/events), so any one can be split out later. This is the answer to give in interviews.</p>
+<p><strong>The statement, explained:</strong></p>
+<ul>
+<li><strong>&quot;2 devs&quot;</strong>: microservices mainly solve <em>team</em> problems, like 50 engineers getting in each other&#39;s way. With 2 developers, that problem doesn&#39;t exist.</li>
+<li><strong>&quot;Network calls, deploys, distributed debugging&quot;</strong>: these are the costs you&#39;d pay. Every call between parts could fail, you&#39;d run many pipelines, and finding a bug means following it across services.</li>
+<li><strong>&quot;Zero benefit at this scale&quot;</strong>: one EC2 instance handles Ubery&#39;s load easily. There&#39;s nothing to scale separately yet.</li>
+<li><strong>&quot;Hard boundaries, can be split out later&quot;</strong>: because each module owns its tables and only talks through a defined interface, you could later pull out, say, <code>chat</code> into its own service without rewriting everything else.</li>
+<li><strong>Interview version:</strong> &quot;I chose a modular monolith because microservices solve team-scale and independent-scaling problems we don&#39;t have. Their operational cost is real from day one. Clean module boundaries keep the option to split later.&quot;</li>
+</ul>
+<p><strong>Two processes, one codebase:</strong></p>
+<ul>
+<li><code>api</code> — REST + WebSocket gateway. Stateless; horizontally scalable thanks to the Redis Socket.IO adapter.</li>
+<li><code>worker</code> — BullMQ consumer: expiry timers, matching notifications, face-match, push sends, doc deletion.</li>
+</ul>
+<h3 id="2-2-modules">2.2 Modules</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Owns</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>auth</code></td>
+<td><code>sessions</code>, OTP keys in Redis</td>
+<td>OTP request/verify, JWT access + refresh rotation</td>
+</tr>
+<tr>
+<td><code>users</code></td>
+<td><code>users</code>, <code>blocks</code></td>
+<td>Profile, UPI ID, public profile view</td>
+</tr>
+<tr>
+<td><code>verification</code></td>
+<td><code>verifications</code></td>
+<td>Presigned upload, face match job, admin approve/reject, doc deletion</td>
+</tr>
+<tr>
+<td><code>trips</code></td>
+<td><code>trip_requests</code>, <code>terminals</code></td>
+<td>Create/update/cancel trip request</td>
+</tr>
+<tr>
+<td><code>matching</code></td>
+<td>— (pure logic + queries)</td>
+<td>Candidate search + ranking</td>
+</tr>
+<tr>
+<td><code>groups</code></td>
+<td><code>groups</code>, <code>group_members</code></td>
+<td>Join requests, accept, lock, leave, no-show, state machine</td>
+</tr>
+<tr>
+<td><code>chat</code></td>
+<td><code>messages</code></td>
+<td>Group messages, system messages, live location (Redis, TTL)</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td><code>push_subscriptions</code></td>
+<td>Web Push + in-app socket events</td>
+</tr>
+<tr>
+<td><code>feedback</code></td>
+<td><code>ratings</code>, <code>reports</code></td>
+<td>Post-ride rating, report, block</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>—</td>
+<td>Verification queue, reports queue, ban</td>
+</tr>
+</tbody></table>
+<h3 id="2-3-tech-stack-and-why-each-piece-earns-its-place">2.3 Tech stack (and why each piece earns its place)</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Repo</td>
+<td>pnpm workspaces monorepo: <code>apps/web</code>, <code>apps/api</code>, <code>packages/shared</code></td>
+<td>Share types + validation between front and back</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Next.js (App Router) + TypeScript + Tailwind, PWA (manifest + service worker)</td>
+<td>Installable, push notifications, one codebase for mobile web</td>
+</tr>
+<tr>
+<td>Map UI</td>
+<td>Leaflet + OpenStreetMap tiles</td>
+<td>Free; we only show pins and a meet point</td>
+</tr>
+<tr>
+<td>Geocoding / autocomplete</td>
+<td>Ola Maps or Google Places (pick by free tier — <strong>verify pricing</strong>)</td>
+<td>India address quality matters for destination entry</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>NestJS (TypeScript)</td>
+<td>Modules, DI, guards, WS gateways built-in; maps to the module table above</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>Zod schemas in <code>packages/shared</code></td>
+<td>Same schema validates the form and the API</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>PostgreSQL 16 + <strong>PostGIS</strong></td>
+<td>Geo queries (<code>ST_DWithin</code>, distance), transactions for seat-taking races</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>Drizzle + raw SQL for geo</td>
+<td>Drizzle handles PostGIS types better than Prisma</td>
+</tr>
+<tr>
+<td>Cache / realtime</td>
+<td>Redis</td>
+<td>OTPs, rate limits, Socket.IO adapter, BullMQ, ephemeral live location</td>
+</tr>
+<tr>
+<td>Realtime</td>
+<td>Socket.IO with Redis adapter</td>
+<td>Rooms per group/user; worker can emit via Redis emitter</td>
+</tr>
+<tr>
+<td>Jobs</td>
+<td>BullMQ</td>
+<td>Delayed jobs (expire trip at T+60min), retries</td>
+</tr>
+<tr>
+<td>Object storage</td>
+<td>S3 (private bucket)</td>
+<td>ID documents, auto-deleted</td>
+</tr>
+<tr>
+<td>Face match</td>
+<td>AWS Rekognition <code>CompareFaces</code></td>
+<td>ID photo vs selfie; costs fractions of a cent per call</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Web Push (VAPID, <code>web-push</code> lib)</td>
+<td>Free. iOS needs PWA installed to home screen (iOS 16.4+)</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Vitest (unit), Testcontainers (Postgres+PostGIS integration), Playwright (e2e)</td>
+<td>Matching logic gets real tests</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>GitHub Actions → build image → GHCR → SSH deploy to EC2</td>
+<td>Free for this scale</td>
+</tr>
+<tr>
+<td>Infra as code</td>
+<td>Terraform (EC2, SG, S3, IAM, budget alarm) — phase 3</td>
+<td>Small, real, resume-worthy</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>pino JSON logs, Sentry free tier; OpenTelemetry later</td>
+<td></td>
+</tr>
+<tr>
+<td>Load test</td>
+<td>k6 — phase 3</td>
+<td>Gives real numbers for the resume (&quot;X concurrent sockets on a t4g.small&quot;)</td>
+</tr>
+</tbody></table>
+<h3 id="2-4-aws-budget-100-credits">2.4 AWS budget (~$100 credits)</h3>
+<p>Use AWS only where it adds value: <strong>EC2, S3, Rekognition</strong>. Approximate monthly (check the AWS pricing calculator):</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>~USD/month</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EC2 t4g.small (2 GB, ARM) running everything in Docker</td>
+<td>~12</td>
+</tr>
+<tr>
+<td>EBS 20 GB gp3</td>
+<td>~2</td>
+</tr>
+<tr>
+<td>Public IPv4</td>
+<td>~3.6</td>
+</tr>
+<tr>
+<td>S3 + Rekognition at demo volume</td>
+<td>&lt; 1</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>~18 → ~5 months of credits</strong></td>
+</tr>
+</tbody></table>
+<p>Rules:</p>
+<ul>
+<li><strong>Develop locally with Docker Compose.</strong> Only run EC2 when demoing/testing; stop it otherwise.</li>
+<li><strong>Do not create:</strong> NAT Gateway, ALB, RDS, ElastiCache, EKS. Each one alone eats the credits in months.</li>
+<li><strong>Set AWS Budgets alerts at $10 / $25 / $50 on day one.</strong></li>
+<li>Frontend on Vercel Hobby (free). Hobby is non-commercial — move off it when this becomes a business.</li>
+<li>Nightly <code>pg_dump</code> → S3 (cron in worker). The DB lives on the instance; this is the backup.</li>
+</ul>
+<hr>
+<h2 id="3-low-level-design">3. Low-Level Design</h2>
+<h3 id="3-1-data-model-postgres">3.1 Data model (Postgres)</h3>
+<pre><code class="language-sql">create extension if not exists postgis;
+create extension if not exists pgcrypto;
+
+create type verification_status as enum (&#39;unverified&#39;,&#39;pending&#39;,&#39;verified&#39;,&#39;rejected&#39;);
+create type gender              as enum (&#39;female&#39;,&#39;male&#39;,&#39;other&#39;);
+create type trip_status         as enum (&#39;searching&#39;,&#39;grouped&#39;,&#39;cancelled&#39;,&#39;expired&#39;,&#39;done&#39;);
+create type group_status        as enum (&#39;open&#39;,&#39;locked&#39;,&#39;met&#39;,&#39;done&#39;,&#39;cancelled&#39;,&#39;expired&#39;);
+create type member_status       as enum (&#39;requested&#39;,&#39;accepted&#39;,&#39;declined&#39;,&#39;left&#39;,&#39;removed&#39;,&#39;no_show&#39;);
+
+create table users (
+  id            uuid primary key default gen_random_uuid(),
+  phone         text not null unique,              -- E.164, +91XXXXXXXXXX
+  name          text not null,
+  gender        gender,                            -- set ONLY by admin from the verified ID
+  verification  verification_status not null default &#39;unverified&#39;,
+  verified_at   timestamptz,
+  upi_id        text,                              -- optional, shown only to group members
+  role          text not null default &#39;user&#39; check (role in (&#39;user&#39;,&#39;admin&#39;)),
+  rating_sum    int not null default 0,
+  rating_count  int not null default 0,
+  no_show_count int not null default 0,
+  banned_at     timestamptz,
+  created_at    timestamptz not null default now()
+);
+
+create table sessions (                            -- refresh tokens, rotated on every use
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references users on delete cascade,
+  token_hash   text not null unique,               -- sha256 of refresh token, never the token
+  expires_at   timestamptz not null,
+  revoked_at   timestamptz,
+  created_at   timestamptz not null default now()
+);
+
+create table verifications (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null references users on delete cascade,
+  doc_type        text not null check (doc_type in (&#39;passport&#39;,&#39;driving_licence&#39;,&#39;voter_id&#39;,&#39;masked_aadhaar&#39;)),
+  doc_key         text,                            -- S3 key; NULLed once the file is deleted
+  selfie_key      text,
+  face_similarity real,                            -- from Rekognition, 0..100
+  doc_last4       text,                            -- the only document number we keep
+  status          verification_status not null default &#39;pending&#39;,
+  reviewed_by     uuid references users,
+  reviewed_at     timestamptz,
+  reject_reason   text,
+  created_at      timestamptz not null default now()
+);
+
+create table terminals (
+  id           text primary key,                   -- &#39;DEL-T1&#39;, &#39;DEL-T2&#39;, &#39;DEL-T3&#39;
+  airport      text not null,                      -- &#39;DEL&#39;
+  name         text not null,
+  pickup       geography(point, 4326) not null,
+  pickup_note  text                                -- filled by PM after visiting
+);
+
+create table trip_requests (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references users,
+  terminal_id text not null references terminals,
+  flight_no   text,                                -- informational in v1
+  exit_at     timestamptz not null,                -- when they expect to be outside
+  dest        geography(point, 4326) not null,     -- exact; never sent to other users
+  dest_area   text not null,                       -- &#39;DLF Phase 3, Gurugram&#39; — what others see
+  solo_km     real not null,                       -- pickup → dest, computed on create
+  seats       smallint not null default 1 check (seats between 1 and 3),
+  bags        smallint not null default 1 check (bags between 0 and 6),
+  women_only  boolean not null default false,
+  status      trip_status not null default &#39;searching&#39;,
+  created_at  timestamptz not null default now()
+);
+create unique index trip_one_active   on trip_requests (user_id) where status in (&#39;searching&#39;,&#39;grouped&#39;);
+create index        trip_search       on trip_requests (terminal_id, exit_at) where status = &#39;searching&#39;;
+create index        trip_dest_gist    on trip_requests using gist (dest);
+
+create table groups (
+  id           uuid primary key default gen_random_uuid(),
+  terminal_id  text not null references terminals,
+  meet_at      timestamptz not null,               -- max(exit_at) of accepted members
+  women_only   boolean not null,
+  status       group_status not null default &#39;open&#39;,
+  capacity     smallint not null default 4,
+  seats_taken  smallint not null default 0,
+  bags_taken   smallint not null default 0,
+  booker_id    uuid references users,
+  fare_total   numeric(10,2),                      -- entered by booker after the ride
+  created_at   timestamptz not null default now(),
+  check (seats_taken &lt;= capacity)
+);
+create index groups_open on groups (terminal_id, meet_at) where status = &#39;open&#39;;
+
+create table group_members (
+  group_id    uuid not null references groups on delete cascade,
+  user_id     uuid not null references users,
+  trip_id     uuid not null references trip_requests,
+  status      member_status not null default &#39;requested&#39;,
+  share       numeric(10,2),                       -- computed fare share
+  created_at  timestamptz not null default now(),
+  primary key (group_id, user_id)
+);
+
+create table messages (
+  id          bigint generated always as identity primary key,
+  group_id    uuid not null references groups on delete cascade,
+  user_id     uuid references users,               -- NULL for system messages
+  kind        text not null default &#39;text&#39; check (kind in (&#39;text&#39;,&#39;system&#39;)),
+  body        text not null check (length(body) &lt;= 1000),
+  created_at  timestamptz not null default now()
+);
+create index messages_by_group on messages (group_id, id);
+
+create table ratings (
+  group_id  uuid not null references groups,
+  rater_id  uuid not null references users,
+  ratee_id  uuid not null references users,
+  score     smallint not null check (score between 1 and 5),
+  primary key (group_id, rater_id, ratee_id)
+);
+
+create table reports (
+  id          uuid primary key default gen_random_uuid(),
+  reporter_id uuid not null references users,
+  reported_id uuid not null references users,
+  group_id    uuid references groups,
+  reason      text not null,
+  status      text not null default &#39;open&#39; check (status in (&#39;open&#39;,&#39;actioned&#39;,&#39;dismissed&#39;)),
+  created_at  timestamptz not null default now()
+);
+
+create table blocks (
+  blocker_id uuid not null references users,
+  blocked_id uuid not null references users,
+  primary key (blocker_id, blocked_id)
+);
+
+create table push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references users on delete cascade,
+  endpoint   text not null unique,
+  keys       jsonb not null,
+  created_at timestamptz not null default now()
+);
+</code></pre>
+<h3 id="3-2-state-machines">3.2 State machines</h3>
+<pre class="mermaid">stateDiagram-v2
+  direction LR
+  [*] --&gt; searching
+  searching --&gt; grouped: accepted into a group
+  grouped --&gt; searching: left / removed (before lock)
+  searching --&gt; cancelled: user cancels
+  searching --&gt; expired: exit_at + 60 min
+  grouped --&gt; done: group done
+</pre>
+<pre class="mermaid">stateDiagram-v2
+  direction LR
+  [*] --&gt; open
+  open --&gt; locked: booker locks / meet_at - 5 min
+  open --&gt; cancelled: last member leaves
+  open --&gt; expired: meet_at + 30 min with &lt; 2 members
+  locked --&gt; met: ≥ 2 members tap &quot;I&#39;m here&quot;
+  locked --&gt; cancelled: everyone leaves
+  met --&gt; done: booker enters fare (or meet_at + 4 h)
+</pre>
+<p>Every transition is a single SQL <code>update ... where status = &#39;&lt;from&gt;&#39;</code> so invalid transitions affect 0 rows and fail loudly. Each transition posts a <code>system</code> message to the chat and emits a socket event.</p>
+<h3 id="3-3-matching">3.3 Matching</h3>
+<p><strong>Inputs:</strong> new or updated trip <code>T</code>. <strong>Output:</strong> top 5 open groups + top 5 searching travellers to start a group with.</p>
+<p><strong>Step 1 — candidate SQL (cheap, uses indexes):</strong></p>
+<pre><code class="language-sql">-- open groups T could join
+select g.*
+from groups g
+where g.terminal_id = $terminal
+  and g.status = &#39;open&#39;
+  and g.meet_at between $exit_at - interval &#39;30 min&#39; and $exit_at + interval &#39;30 min&#39;
+  and g.capacity - g.seats_taken &gt;= $seats
+  and (g.women_only = false or $t_is_verified_female)
+  and (not $t_women_only or g.women_only)
+  and exists (                                      -- at least one member heading near T
+    select 1 from group_members m join trip_requests tr on tr.id = m.trip_id
+    where m.group_id = g.id and m.status = &#39;accepted&#39;
+      and st_dwithin(tr.dest, $dest, 15000))        -- 15 km
+  and not exists (                                  -- nobody in the group blocked/was blocked by T
+    select 1 from group_members m join blocks b
+      on (b.blocker_id = m.user_id and b.blocked_id = $user)
+      or (b.blocked_id = m.user_id and b.blocker_id = $user)
+    where m.group_id = g.id);
+</code></pre>
+<p><strong>Step 2 — rank in code (pure function, fully unit-tested):</strong></p>
+<pre><code class="language-ts">// packages/shared/src/matching.ts
+// shortcut: straight-line km × ROAD_FACTOR instead of real routing; swap in a routing API when match quality complaints appear.
+const ROAD_FACTOR = 1.4;
+
+function routeKm(pickup: Point, drops: Point[]): number {
+  // greedy: always go to the nearest remaining drop. Fine for ≤ 4 drops.
+}
+
+function extraKmFor(group: Candidate, t: Trip): number {
+  return routeKm(pickup, [...group.drops, t.dest]) - routeKm(pickup, group.drops);
+}
+
+function acceptable(group, t): boolean {
+  // nobody (including T) should ride more than max(3 km, 25%) beyond their solo trip
+  // bags: sum ≤ 4 for a sedan
+}
+
+score = extraKm + 0.2 * Math.abs(minutesBetween(group.meetAt, t.exitAt));  // lower is better
+</code></pre>
+<p><strong>Step 3 — notify the other side.</strong> When <code>T</code> is created, the worker runs the reverse query: which <em>searching</em> users would have <code>T</code> in their top 5? Send them a push: &quot;Someone heading to Gurugram lands 10 min after you.&quot;</p>
+<p><strong>Why suggestions + consent instead of auto-assign:</strong> safety. Users see verified badge, rating, first name and area before choosing. Auto-assign is phase 3, once there&#39;s trust data.</p>
+<p><strong>Why PostGIS and not H3/geohash:</strong> with one airport and a few hundred concurrent trips, <code>ST_DWithin</code> on a GiST index is instant. H3 is worth it only if we precompute pools across many airports — note it as a future option, don&#39;t build it.</p>
+<h3 id="3-4-concurrency-two-people-taking-the-last-seat">3.4 Concurrency: two people taking the last seat</h3>
+<p>Join acceptance is one atomic statement, no locks held across requests:</p>
+<pre><code class="language-sql">update groups
+set seats_taken = seats_taken + $seats, bags_taken = bags_taken + $bags
+where id = $group and status = &#39;open&#39;
+  and seats_taken + $seats &lt;= capacity
+returning *;
+</code></pre>
+<p>0 rows → &quot;group just filled up&quot;. Run it in the same transaction that sets <code>group_members.status = &#39;accepted&#39;</code> and <code>trip_requests.status = &#39;grouped&#39;</code>. The <code>check (seats_taken &lt;= capacity)</code> constraint is the last line of defence. <strong>Write an integration test that fires 10 concurrent accepts at a 1-seat group and asserts exactly 1 succeeds.</strong></p>
+<h3 id="3-5-rest-api-v1">3.5 REST API (v1)</h3>
+<p>All under <code>/api/v1</code>, JSON, auth via <code>Authorization: Bearer &lt;access JWT&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Method &amp; path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST /auth/otp</code> <code>{phone}</code></td>
+<td>Send OTP</td>
+</tr>
+<tr>
+<td><code>POST /auth/verify</code> <code>{phone, code}</code></td>
+<td>→ access token (15 min) + refresh token in <code>httpOnly; Secure; SameSite=Lax</code> cookie (30 days)</td>
+</tr>
+<tr>
+<td><code>POST /auth/refresh</code></td>
+<td>Rotate refresh token; reuse of an old one revokes all sessions</td>
+</tr>
+<tr>
+<td><code>POST /auth/logout</code></td>
+<td>Revoke session</td>
+</tr>
+<tr>
+<td><code>GET/PATCH /me</code></td>
+<td>Own profile (name, UPI ID)</td>
+</tr>
+<tr>
+<td><code>GET /users/:id</code></td>
+<td>Public profile: first name, verified badge, rating, ride count</td>
+</tr>
+<tr>
+<td><code>POST /verification/upload-urls</code></td>
+<td>Presigned POSTs for doc + selfie</td>
+</tr>
+<tr>
+<td><code>POST /verification</code> <code>{docType, docKey, selfieKey}</code></td>
+<td>Submit for review</td>
+</tr>
+<tr>
+<td><code>GET /terminals</code></td>
+<td>T1/T2/T3 + pickup info</td>
+</tr>
+<tr>
+<td><code>POST /trips</code></td>
+<td>Create trip request</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/:id</code></td>
+<td>Update <code>exit_at</code> (flight delayed)</td>
+</tr>
+<tr>
+<td><code>DELETE /trips/:id</code></td>
+<td>Cancel</td>
+</tr>
+<tr>
+<td><code>GET /trips/:id/matches</code></td>
+<td>Ranked groups + travellers</td>
+</tr>
+<tr>
+<td><code>POST /groups</code> <code>{tripId, inviteTripId?}</code></td>
+<td>Start a group (optionally inviting a traveller)</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/join</code> <code>{tripId}</code></td>
+<td>Request to join</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/members/:userId/accept</code> / <code>decline</code></td>
+<td>Any accepted member can decide (v1)</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/leave</code></td>
+<td>Leave</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/lock</code></td>
+<td>Booker locks</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/here</code></td>
+<td>&quot;I&#39;m at the pickup point&quot;</td>
+</tr>
+<tr>
+<td><code>POST /groups/:id/fare</code> <code>{total}</code></td>
+<td>Booker enters fare → shares computed</td>
+</tr>
+<tr>
+<td><code>GET /groups/:id/messages?before=&lt;id&gt;</code></td>
+<td>Paginated history (cursor = message id)</td>
+</tr>
+<tr>
+<td><code>POST /ratings</code>, <code>POST /reports</code>, <code>POST /blocks</code></td>
+<td>Feedback</td>
+</tr>
+<tr>
+<td><code>POST /push/subscribe</code></td>
+<td>Save Web Push subscription</td>
+</tr>
+<tr>
+<td><code>GET /admin/verifications?status=pending</code></td>
+<td>Admin queue</td>
+</tr>
+<tr>
+<td><code>POST /admin/verifications/:id/approve</code> <code>{gender, docLast4}</code> / <code>reject</code> <code>{reason}</code></td>
+<td>Admin decision</td>
+</tr>
+<tr>
+<td><code>POST /admin/users/:id/ban</code></td>
+<td>Admin</td>
+</tr>
+</tbody></table>
+<p>Errors: <code>{ &quot;error&quot;: { &quot;code&quot;: &quot;GROUP_FULL&quot;, &quot;message&quot;: &quot;...&quot; } }</code> with proper HTTP status. Codes live in <code>packages/shared</code> so the UI can switch on them.</p>
+<h3 id="3-6-websocket-events-socket-io">3.6 WebSocket events (Socket.IO)</h3>
+<p>Auth: access JWT in handshake <code>auth</code>. On connect, server joins <code>user:{id}</code> and every <code>group:{id}</code> the user is accepted in. Server re-checks membership; never trust a client-sent room name.</p>
+<table>
+<thead>
+<tr>
+<th>Direction</th>
+<th>Event</th>
+<th>Payload</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>C→S</td>
+<td><code>chat:send</code></td>
+<td><code>{groupId, body, clientId}</code> (clientId for dedupe/optimistic UI)</td>
+</tr>
+<tr>
+<td>S→C</td>
+<td><code>chat:message</code></td>
+<td>message row</td>
+</tr>
+<tr>
+<td>C→S</td>
+<td><code>location:share</code></td>
+<td><code>{groupId, lat, lng}</code> — only between <code>locked</code> and <code>met</code>, stored in Redis with 60 s TTL, never in Postgres</td>
+</tr>
+<tr>
+<td>S→C</td>
+<td><code>location:update</code></td>
+<td><code>{userId, lat, lng, at}</code></td>
+</tr>
+<tr>
+<td>S→C</td>
+<td><code>group:updated</code></td>
+<td>group + members snapshot</td>
+</tr>
+<tr>
+<td>S→C</td>
+<td><code>group:join_request</code></td>
+<td><code>{groupId, user}</code></td>
+</tr>
+<tr>
+<td>S→C</td>
+<td><code>match:new</code></td>
+<td><code>{tripId}</code> → client refetches matches</td>
+</tr>
+</tbody></table>
+<h3 id="3-7-background-jobs-bullmq">3.7 Background jobs (BullMQ)</h3>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Trigger</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>trip.expire</code></td>
+<td>delayed to <code>exit_at + 60 min</code> on create/update</td>
+<td><code>searching → expired</code></td>
+</tr>
+<tr>
+<td><code>group.autolock</code></td>
+<td>delayed to <code>meet_at - 5 min</code></td>
+<td><code>open → locked</code> if ≥ 2 members</td>
+</tr>
+<tr>
+<td><code>group.expire</code></td>
+<td>delayed to <code>meet_at + 30 min</code></td>
+<td>expire groups that never formed</td>
+</tr>
+<tr>
+<td><code>match.notify</code></td>
+<td>on trip create</td>
+<td>reverse-match + push</td>
+</tr>
+<tr>
+<td><code>verify.facematch</code></td>
+<td>on verification submit</td>
+<td>Rekognition CompareFaces → store similarity</td>
+</tr>
+<tr>
+<td><code>verify.purge</code></td>
+<td>after admin decision</td>
+<td>delete S3 objects, null the keys</td>
+</tr>
+<tr>
+<td><code>db.backup</code></td>
+<td>nightly</td>
+<td><code>pg_dump</code> → S3</td>
+</tr>
+</tbody></table>
+<p>Use deterministic job IDs (<code>trip.expire:{tripId}</code>) so rescheduling replaces the old job instead of duplicating it.</p>
+<h3 id="3-8-fare-split">3.8 Fare split</h3>
+<p>Booker enters the real fare after the ride. Default split is <strong>proportional to each person&#39;s solo distance</strong> (the person going furthest pays most):</p>
+<pre><code>share_i = fare × solo_km_i / Σ solo_km
+</code></pre>
+<p>Round to whole rupees; the booker absorbs the rounding remainder. Each member sees a UPI link:</p>
+<pre><code>upi://pay?pa=&lt;booker_upi&gt;&amp;pn=&lt;booker_name&gt;&amp;am=&lt;share&gt;&amp;cu=INR&amp;tn=Ubery%20ride
+</code></pre>
+<p>Works from Android mobile browsers; iOS support for <code>upi://</code> is patchy, so also show the UPI ID with a copy button. The app never confirms payment — it&#39;s between users.</p>
+<p>Uber deep link to prefill the booker&#39;s ride (verify the current format in Uber&#39;s docs): <code>https://m.uber.com/ul/?action=setPickup&amp;pickup[latitude]=..&amp;pickup[longitude]=..&amp;dropoff[latitude]=..&amp;dropoff[longitude]=..</code>. Ola: check whether a public deep link exists; otherwise just show the drop list.</p>
+<hr>
+<h2 id="4-safety-privacy-legal">4. Safety, privacy, legal</h2>
+<h3 id="4-1-otp-auth">4.1 OTP auth</h3>
+<ul>
+<li>6 digits, stored in Redis as a <strong>hash</strong>, TTL 5 min, max 5 attempts, 30 s resend cooldown.</li>
+<li>Rate limit: 3 OTPs / 15 min per phone, 10 / hour per IP.</li>
+<li><strong>India SMS needs DLT registration</strong> (TRAI) to send from your own sender ID. Options: (a) a provider that handles DLT for you (e.g. MSG91), or (b) Firebase Phone Auth, then exchange the Firebase ID token for our JWT. <strong>Decision for PM + devs.</strong> In dev, OTP is printed to the API log.</li>
+</ul>
+<h3 id="4-2-id-verification-one-time">4.2 ID verification (one-time)</h3>
+<ul>
+<li>Accepted: Passport, Driving Licence, Voter ID, <strong>masked</strong> Aadhaar only. Never collect a full Aadhaar number (Aadhaar Act restricts this for private entities).</li>
+<li>Flow: client gets presigned <strong>POST</strong> (enforces <code>content-length-range</code> ≤ 5 MB and image content type) → uploads doc + live selfie straight to S3 → worker runs Rekognition <code>CompareFaces</code> → admin sees doc, selfie, similarity score → approves (sets <code>gender</code>, <code>doc_last4</code>) or rejects.</li>
+<li><strong>Delete both images right after the decision.</strong> Keep only: doc type, last 4 digits, reviewer, timestamp, verified flag. S3 lifecycle rule deletes anything left after 7 days as a safety net.</li>
+<li>Bucket: Block Public Access on, SSE-S3 encryption, admin views via 5-minute presigned GET only.</li>
+<li>Profile shows <strong>&quot;ID verified&quot;</strong> badge + date.</li>
+</ul>
+<h3 id="4-3-women-only-groups">4.3 Women-only groups</h3>
+<ul>
+<li>Only users with <code>verification = &#39;verified&#39; AND gender = &#39;female&#39;</code> can create or join women-only groups. Gender comes from the ID review, <strong>not</strong> self-declaration — otherwise the feature is trivially abused.</li>
+<li>Enforced in the matching SQL <strong>and</strong> in the join endpoint (never only in the UI).</li>
+<li><strong>Open question for PM:</strong> policy for IDs showing transgender / third gender (legally recognised in India).</li>
+</ul>
+<h3 id="4-4-other-safety">4.4 Other safety</h3>
+<ul>
+<li>Phone numbers are never shown to other users. Chat in-app only.</li>
+<li>Before joining a group, others see only: first name, verified badge, rating, ride count, <code>dest_area</code>, exit time, bags. Exact destination is never sent to other clients.</li>
+<li>SOS button in the group screen → <code>tel:112</code> + share group details with an emergency contact (phase 2).</li>
+<li>Report + block from any profile. Blocked users never appear in each other&#39;s matches.</li>
+<li>No-show (didn&#39;t tap &quot;I&#39;m here&quot;, flagged by others) increments <code>no_show_count</code>; shown on profile after 2.</li>
+<li>18+ only (checked from ID).</li>
+</ul>
+<h3 id="4-5-legal-privacy">4.5 Legal / privacy</h3>
+<ul>
+<li>Terms: we&#39;re a <strong>communication platform</strong>, not a transport provider or aggregator. Get this reviewed before going commercial.</li>
+<li><strong>DPDP Act 2023</strong>: explicit consent at signup, purpose-limited data, account deletion endpoint (<code>DELETE /me</code> → anonymise messages, delete profile). Check the current status of the DPDP Rules before launch.</li>
+<li>Privacy policy must list: phone, name, ID (deleted after review), trip locations, chat.</li>
+</ul>
+<h3 id="4-6-app-security-checklist">4.6 App security checklist</h3>
+<ul>
+<li>Helmet headers, strict CORS (web origin only), CSRF safe via <code>SameSite</code> cookie + refresh endpoint accepting only POST.</li>
+<li>Every group endpoint checks membership server-side; admin endpoints behind a role guard.</li>
+<li>Input validated by Zod at every boundary; parameterised SQL only.</li>
+<li>Secrets in <code>.env</code> locally, SSM Parameter Store (free tier) on EC2. Never commit <code>.env</code>.</li>
+</ul>
+<hr>
+<h2 id="5-repo-layout">5. Repo layout</h2>
+<pre><code>ubery/
+  apps/
+    web/                 Next.js PWA
+      app/               routes: /, /login, /trip/new, /trip/[id], /group/[id], /profile, /verify, /admin
+      components/
+      lib/api.ts         fetch wrapper + token refresh
+      public/sw.js       service worker (push)
+    api/
+      src/
+        auth/ users/ verification/ trips/ matching/ groups/ chat/ notifications/ feedback/ admin/
+        db/              drizzle schema + migrations
+        main.ts          API process
+        worker.ts        BullMQ process
+      test/              integration tests (Testcontainers)
+  packages/
+    shared/              zod schemas, error codes, matching.ts (pure), types
+  infra/
+    docker-compose.yml   postgres+postgis, redis, api, worker, caddy
+    terraform/           phase 3
+  Docs Text/             design docs (Markdown)
+  Docs HTML/             same docs as HTML pages
+  .github/workflows/ci.yml
+</code></pre>
+<hr>
+<h2 id="6-conventions-decide-once-don-t-debate-again">6. Conventions (decide once, don&#39;t debate again)</h2>
+<ul>
+<li>TypeScript <code>strict</code>, ESLint + Prettier, enforced in CI.</li>
+<li>Conventional commits (<code>feat:</code>, <code>fix:</code>…), PRs need 1 review, <code>main</code> always deployable.</li>
+<li>Migrations via Drizzle Kit, committed, forward-only.</li>
+<li>IDs: UUID v4 everywhere except <code>messages</code> (bigint, for cursor pagination).</li>
+<li>Phone numbers stored E.164. Money as <code>numeric(10,2)</code> in INR, never float.</li>
+<li>API versioned under <code>/api/v1</code>.</li>
+<li>Feature work = schema + API + UI + test in one PR.</li>
+</ul>
+<hr>
+<h2 id="7-roadmap">7. Roadmap</h2>
+<p><strong>Phase 0 — validate (PM, parallel to Phase 1, ~2 weeks)</strong>
+Talk to ~30 people at IGI arrivals / in flyer WhatsApp groups. Confirm the pickup spots per terminal. Optional: run a WhatsApp group for one route (IGI → Gurugram) and count real matches.</p>
+<p><strong>Phase 1 — core loop</strong>
+Monorepo + Docker Compose + CI · OTP auth (console provider) · profile · terminals seed · trip request with address autocomplete · matching (SQL + ranker + unit tests) · groups + join/accept + concurrency test · chat over Socket.IO · expiry jobs.
+<em>Done when:</em> two browsers can sign up, match, group, chat, lock.</p>
+<p><strong>Phase 2 — trust &amp; safety</strong>
+ID upload + Rekognition + admin queue + doc purge · women-only · Web Push · live location at pickup · fare split + UPI links · ratings, reports, blocks · real SMS provider · deploy to EC2 with Caddy TLS.
+<em>Done when:</em> a verified woman can create a women-only group that an unverified user cannot see.</p>
+<p><strong>Phase 3 — make it impressive</strong>
+Flight status API to auto-shift <code>exit_at</code> on delays · auto-matching · Terraform · OpenTelemetry tracing · k6 load test with published numbers · account deletion (DPDP).</p>
+<p><strong>Team split (suggested)</strong></p>
+<ul>
+<li>PM: Phase 0, pickup spots, women-only/ID policy, T&amp;C + privacy policy, metrics.</li>
+<li>Dev 1 (you): API, matching, groups/concurrency, jobs, infra.</li>
+<li>Dev 2: PWA, chat UI, map/autocomplete, admin panel, push.</li>
+<li>Claude: scaffolding, tests, reviews, any module on request.</li>
+</ul>
+<hr>
+<h2 id="8-open-questions">8. Open questions</h2>
+<ol>
+<li>SMS: MSG91 (DLT) vs Firebase Phone Auth?</li>
+<li>Geocoding provider: Ola Maps vs Google Places — compare free tiers.</li>
+<li>Who accepts join requests: any member, or only the group creator?</li>
+<li>Women-only policy for third-gender IDs.</li>
+<li>Max detour default: 3 km / 25% — PM to sanity-check against real Gurugram/Noida routes.</li>
+<li>Domain name + brand (is &quot;Ubery&quot; too close to &quot;Uber&quot; for a trademark issue? Probably yes — consider renaming before going public).</li>
+</ol>
+
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" });
+</script>
+</body>
+</html>
