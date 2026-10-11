@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Namastute Learning Notes</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --code:#f6f8fa; --link:#0969da; --hl:#ddf4ff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#30363d; --code:#161b22; --link:#4493f8; --hl:#0c2d6b; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  nav { position:fixed; top:0; left:0; bottom:0; width:290px; overflow-y:auto; padding:20px 14px; border-right:1px solid var(--line); }
+  nav strong { display:block; margin-bottom:12px; font-size:15px; }
+  nav a { color:var(--fg); text-decoration:none; }
+  nav a:hover { color:var(--link); }
+  nav .topic, nav summary { display:block; padding:4px 6px; font-size:14px; font-weight:600; border-radius:6px; cursor:pointer; }
+  nav summary { list-style:none; }
+  nav summary::-webkit-details-marker { display:none; }
+  nav summary::before { content:"▸"; display:inline-block; width:14px; color:var(--muted); transition:transform .15s; }
+  nav details[open] > summary::before { transform:rotate(90deg); }
+  nav .topic::before { content:""; display:inline-block; width:14px; }
+  nav .sub { display:block; padding:3px 6px 3px 26px; font-size:13px; color:var(--muted); border-radius:6px; }
+  nav a.active { color:var(--link); background:var(--hl); }
+  main { margin-left:290px; max-width:960px; padding:32px 40px 80px; }
+  a { color:var(--link); }
+  h1, h2 { border-bottom:1px solid var(--line); padding-bottom:.3em; }
+  h2 { margin-top:2.2em; }
+  h2, h3 { scroll-margin-top:16px; }
+  table { border-collapse:collapse; display:block; overflow-x:auto; margin:16px 0; }
+  th, td { border:1px solid var(--line); padding:6px 12px; text-align:left; vertical-align:top; }
+  code { overflow-wrap:anywhere; background:var(--code); padding:.15em .35em; border-radius:4px; font-size:.9em; }
+  pre { background:var(--code); padding:16px; border-radius:6px; overflow-x:auto; }
+  pre code { background:none; padding:0; overflow-wrap:normal; }
+  pre.mermaid { background:none; text-align:center; }
+  blockquote { margin:0; padding:0 1em; color:var(--muted); border-left:4px solid var(--line); }
+  @media (max-width: 800px) {
+    nav { position:static; width:auto; border-right:0; border-bottom:1px solid var(--line); max-height:50vh; }
+    main { margin-left:0; padding:16px; }
+  }
+</style>
+</head>
+<body>
+<nav><strong>Namastute Learning Notes</strong>
+<a class="topic" href="#1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</a>
+<details><summary><a href="#2-java-and-spring-foundations">2. Java and Spring foundations</a></summary><a class="sub" href="#21-classes-and-objects">2.1 Classes and objects</a><a class="sub" href="#22-dependencies">2.2 Dependencies</a><a class="sub" href="#23-wiring-by-hand-and-why-it-hurts">2.3 Wiring by hand, and why it hurts</a><a class="sub" href="#24-inversion-of-control-ioc">2.4 Inversion of Control (IoC)</a><a class="sub" href="#25-dependency-injection-di">2.5 Dependency Injection (DI)</a></details>
+<details><summary><a href="#3-spring-boot">3. Spring Boot</a></summary><a class="sub" href="#31-auto-configuration">3.1 Auto-configuration</a><a class="sub" href="#32-starters">3.2 Starters</a><a class="sub" href="#33-embedded-web-server">3.3 Embedded web server</a><a class="sub" href="#34-spring-boot-4-specifics-we-use-411">3.4 Spring Boot 4 specifics (we use 4.1.1)</a><a class="sub" href="#35-actuator">3.5 Actuator</a></details>
+<details><summary><a href="#4-maven">4. Maven</a></summary><a class="sub" href="#41-what-building-means">4.1 What &quot;building&quot; means</a><a class="sub" href="#42-mavens-pieces">4.2 Maven&#x27;s pieces</a><a class="sub" href="#43-the-maven-wrapper-mvnw">4.3 The Maven wrapper (mvnw)</a><a class="sub" href="#44-inside-our-pomxml">4.4 Inside our pom.xml</a></details>
+<details><summary><a href="#5-the-generated-spring-project">5. The generated Spring project</a></summary><a class="sub" href="#51-startspringio-settings-we-chose">5.1 start.spring.io settings we chose</a><a class="sub" href="#52-files">5.2 Files</a><a class="sub" href="#53-our-applicationyaml">5.3 Our application.yaml</a></details>
+<details><summary><a href="#6-databases-postgres-postgis-sql">6. Databases: Postgres, PostGIS, SQL</a></summary><a class="sub" href="#psql-postgress-command-line-client">psql (Postgres&#x27;s command-line client)</a></details>
+<details><summary><a href="#7-docker-and-docker-compose">7. Docker and Docker Compose</a></summary><a class="sub" href="#71-why-not-install-postgres-on-windows">7.1 Why not install Postgres on Windows?</a><a class="sub" href="#72-core-terms">7.2 Core terms</a><a class="sub" href="#73-docker-compose">7.3 Docker Compose</a><a class="sub" href="#74-docker-vs-docker-compose">7.4 docker vs docker compose</a><a class="sub" href="#75-getting-inside-a-container">7.5 Getting inside a container</a></details>
+<a class="topic" href="#8-connecting-spring-to-the-database-jdbc-jpa-hibernate">8. Connecting Spring to the database: JDBC, JPA, Hibernate</a>
+<a class="topic" href="#9-flyway-database-migrations">9. Flyway: database migrations</a>
+<details><summary><a href="#10-testing-and-spring-modulith">10. Testing and Spring Modulith</a></summary><a class="sub" href="#101-tests">10.1 Tests</a><a class="sub" href="#102-spring-modulith">10.2 Spring Modulith</a></details>
+<details><summary><a href="#11-frontend-typescript-node-pnpm-react-nextjs">11. Frontend: TypeScript, Node, pnpm, React, Next.js</a></summary><a class="sub" href="#111-frontend-vs-backend">11.1 Frontend vs backend</a><a class="sub" href="#112-typescript">11.2 TypeScript</a><a class="sub" href="#113-nodejs">11.3 Node.js</a><a class="sub" href="#114-pnpm">11.4 pnpm</a><a class="sub" href="#115-react">11.5 React</a><a class="sub" href="#116-nextjs-we-use-164-with-react-193">11.6 Next.js (we use 16.4, with React 19.3)</a><a class="sub" href="#117-tailwind-and-eslint">11.7 Tailwind and ESLint</a></details>
+<details><summary><a href="#12-git-and-github-workflow">12. Git and GitHub workflow</a></summary><a class="sub" href="#121-basics">12.1 Basics</a><a class="sub" href="#122-branching-github-flow-design-v002-61">12.2 Branching: GitHub Flow (Design v0.0.2 §6.1)</a><a class="sub" href="#123-pull-requests-and-merging">12.3 Pull requests and merging</a><a class="sub" href="#124-branch-protection-on-main-what-we-set">12.4 Branch protection on main (what we set)</a><a class="sub" href="#125-rewriting-history-lesson-from-the-ubery-repo">12.5 Rewriting history (lesson from the Ubery repo)</a></details>
+<details><summary><a href="#13-ci-with-github-actions">13. CI with GitHub Actions</a></summary><a class="sub" href="#131-what-ci-is">13.1 What CI is</a><a class="sub" href="#132-parts-of-github-actions">13.2 Parts of GitHub Actions</a><a class="sub" href="#133-lines-worth-remembering">13.3 Lines worth remembering</a></details>
+<details><summary><a href="#14-cross-platform-gotchas-permissions-and-line-endings">14. Cross-platform gotchas: permissions and line endings</a></summary><a class="sub" href="#141-executable-permission">14.1 Executable permission</a><a class="sub" href="#142-line-endings">14.2 Line endings</a></details>
+<details><summary><a href="#15-aws-account-security-and-cost-control">15. AWS: account security and cost control</a></summary><a class="sub" href="#151-root-user-and-mfa">15.1 Root user and MFA</a><a class="sub" href="#152-aws-budgets-monthly-cost-guard">15.2 AWS Budgets (monthly-cost-guard)</a><a class="sub" href="#153-regions">15.3 Regions</a></details>
+<details><summary><a href="#16-hosting-and-infrastructure-decisions">16. Hosting and infrastructure decisions</a></summary><a class="sub" href="#161-where-spring-boot-runs-one-ec2-instance">16.1 Where Spring Boot runs: one EC2 instance</a><a class="sub" href="#162-why-no-kubernetes-proposed-stash-idea-2">16.2 Why no Kubernetes (Proposed Stash idea 2)</a><a class="sub" href="#163-c-in-the-project-proposed-stash-idea-1">16.3 C++ in the project (Proposed Stash idea 1)</a></details>
+<a class="topic" href="#17-terminal-basics">17. Terminal basics</a>
+<details><summary><a href="#18-command-cheat-sheet">18. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#19-glossary">19. Glossary</a>
+<a class="topic" href="#20-interview-questions-to-practise">20. Interview questions to practise</a>
+</nav>
+<main>
+<h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
+<p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
+<p>Last updated: 2026-10-12 (project scaffold complete: Spring Boot api, Next.js web, Postgres in Docker, CI).</p>
+<hr>
+<h2 id="contents">Contents</h2>
+<ol>
+<li><a href="#1-architecture-monolith-vs-microservices">Architecture: monolith vs microservices</a></li>
+<li><a href="#2-java-and-spring-foundations">Java and Spring foundations</a></li>
+<li><a href="#3-spring-boot">Spring Boot</a></li>
+<li><a href="#4-maven">Maven</a></li>
+<li><a href="#5-the-generated-spring-project">The generated Spring project</a></li>
+<li><a href="#6-databases-postgres-postgis-sql">Databases: Postgres, PostGIS, SQL</a></li>
+<li><a href="#7-docker-and-docker-compose">Docker and Docker Compose</a></li>
+<li><a href="#8-connecting-spring-to-the-database-jdbc-jpa-hibernate">Connecting Spring to the database: JDBC, JPA, Hibernate</a></li>
+<li><a href="#9-flyway-database-migrations">Flyway: database migrations</a></li>
+<li><a href="#10-testing-and-spring-modulith">Testing and Spring Modulith</a></li>
+<li><a href="#11-frontend-typescript-node-pnpm-react-nextjs">Frontend: TypeScript, Node, pnpm, React, Next.js</a></li>
+<li><a href="#12-git-and-github-workflow">Git and GitHub workflow</a></li>
+<li><a href="#13-ci-with-github-actions">CI with GitHub Actions</a></li>
+<li><a href="#14-cross-platform-gotchas-permissions-and-line-endings">Cross-platform gotchas: permissions and line endings</a></li>
+<li><a href="#15-aws-account-security-and-cost-control">AWS: account security and cost control</a></li>
+<li><a href="#16-hosting-and-infrastructure-decisions">Hosting and infrastructure decisions</a></li>
+<li><a href="#17-terminal-basics">Terminal basics</a></li>
+<li><a href="#18-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#19-glossary">Glossary</a></li>
+<li><a href="#20-interview-questions-to-practise">Interview questions to practise</a></li>
+</ol>
+<hr>
+<h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
+<p><strong>Monolith:</strong> the whole backend is one application. Deployed once, runs as one process, usually one database. One part calls another with a normal function call.</p>
+<p><strong>Microservices:</strong> the backend is split into many small applications (auth service, matching service, chat service…), each deployed separately, usually with its own database. They talk over the network (HTTP, gRPC, message queues).</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Monolith</th>
+<th>Microservices</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deploy</td>
+<td>One app</td>
+<td>Many apps, many pipelines</td>
+</tr>
+<tr>
+<td>Calls between parts</td>
+<td>Function call: fast, can&#39;t fail on the network</td>
+<td>Network call: slower, can time out or fail</td>
+</tr>
+<tr>
+<td>Debugging</td>
+<td>One log, one stack trace</td>
+<td>A bug can span services; needs tracing</td>
+</tr>
+<tr>
+<td>Scaling</td>
+<td>Scale the whole app</td>
+<td>Scale only the busy service</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>Small teams, early products</td>
+<td>Large teams, each owning a service</td>
+</tr>
+</tbody></table>
+<p><strong>Modular monolith (what we chose):</strong> one deployable app, but the code is split into strict modules (<code>auth</code>, <code>trips</code>, <code>groups</code>, <code>chat</code>…). Each module owns its tables and only talks to others through public interfaces. Deployed like a monolith, organised like microservices.</p>
+<p><strong>Why it fits Namastute:</strong></p>
+<ul>
+<li>Microservices mainly solve <em>team</em> problems (dozens of engineers stepping on each other). With 2 devs, that problem doesn&#39;t exist.</li>
+<li>Their costs (network failures, many deploys, distributed debugging) are real from day one.</li>
+<li>One server handles our load; nothing needs scaling separately yet.</li>
+<li>Clean module boundaries keep the option to split a module out later.</li>
+</ul>
+<p><strong>Interview version:</strong> &quot;I chose a modular monolith because microservices solve team-scale and independent-scaling problems we don&#39;t have, and their operational cost is real from day one. Clean module boundaries, enforced by a test, keep the option to split later.&quot;</p>
+<hr>
+<h2 id="2-java-and-spring-foundations">2. Java and Spring foundations</h2>
+<h3 id="21-classes-and-objects">2.1 Classes and objects</h3>
+<ul>
+<li>A <strong>class</strong> is a blueprint: &quot;a Group has an id, a meeting time, members, and can lock itself&quot;.</li>
+<li>An <strong>object</strong> is one real thing built from it while the program runs: <em>this</em> group, id 42, meeting at 10:30. Created with <code>new Group(...)</code>.</li>
+</ul>
+<h3 id="22-dependencies">2.2 Dependencies</h3>
+<p>Objects rarely work alone. <code>GroupService</code> needs a <code>GroupRepository</code> (reads/writes groups in the DB) and a <code>NotificationService</code> (sends pushes). Those are its <strong>dependencies</strong>.</p>
+<h3 id="23-wiring-by-hand-and-why-it-hurts">2.3 Wiring by hand, and why it hurts</h3>
+<pre><code class="language-java">DataSource db = new HikariDataSource(config);
+GroupRepository groups = new GroupRepository(db);
+NotificationService notifications = new NotificationService(new PushSender(keys));
+GroupService groupService = new GroupService(groups, notifications);
+// ...dozens more, in the right order
+</code></pre>
+<p>Problems:</p>
+<ol>
+<li><strong>Wiring grows</strong> with every class, and order matters.</li>
+<li><strong>Swapping is painful:</strong> tests want a fake <code>PushSender</code>; you&#39;d rewrite the wiring per test.</li>
+<li><strong>Sharing:</strong> you want exactly one connection pool shared by all; you must pass it around carefully.</li>
+</ol>
+<h3 id="24-inversion-of-control-ioc">2.4 Inversion of Control (IoC)</h3>
+<ul>
+<li><strong>Control</strong> = who decides when objects are created and connected.</li>
+<li>Normally <em>your code</em> does (<code>new</code> everywhere). <strong>IoC flips it:</strong> a framework creates and connects objects; your classes only declare what they need.</li>
+<li>The part of the framework that holds those objects is a <strong>container</strong>. In Spring it&#39;s the <strong>ApplicationContext</strong>.</li>
+<li>An object managed by Spring is a <strong>bean</strong>.</li>
+</ul>
+<h3 id="25-dependency-injection-di">2.5 Dependency Injection (DI)</h3>
+<p>The container <strong>hands an object its dependencies from outside</strong>, usually through the <strong>constructor</strong>:</p>
+<pre><code class="language-java">@Service
+public class GroupService {
+    private final GroupRepository groups;
+    private final NotificationService notifications;
+
+    public GroupService(GroupRepository groups, NotificationService notifications) {
+        this.groups = groups;
+        this.notifications = notifications;
+    }
+}
+</code></pre>
+<ul>
+<li><code>@Service</code> is an <strong>annotation</strong>: a tag starting with <code>@</code> that adds information without changing the code. Spring reads it at startup.</li>
+<li>Our convention: <strong>constructor injection only</strong> (no <code>@Autowired</code> on fields), so dependencies are explicit and the class is easy to test.</li>
+</ul>
+<p><strong>What Spring does at startup:</strong></p>
+<ol>
+<li><strong>Scan</strong> <code>com.namastute</code> and its sub-packages for <code>@Service</code>, <code>@Repository</code>, <code>@RestController</code>…</li>
+<li><strong>Plan:</strong> read constructors to map who needs whom.</li>
+<li><strong>Create</strong> in dependency order.</li>
+<li><strong>Inject</strong> each object into the constructors that asked for it.</li>
+<li><strong>Keep</strong> them: by default one shared instance each (<strong>singleton</strong>).</li>
+</ol>
+<p><strong>How it fixes the problems:</strong> add a class = add a tag; tests can swap in fakes; sharing is automatic.</p>
+<p><strong>In our project:</strong> <code>ApiApplication.java</code> has <code>@SpringBootApplication</code>, which turns on scanning from <code>com.namastute</code>. That&#39;s why the package name mattered: Spring only scans that package and below.</p>
+<hr>
+<h2 id="3-spring-boot">3. Spring Boot</h2>
+<p>Plain Spring still needs to be <em>told</em> how to build infrastructure beans: the <strong>connection pool</strong> (reusable DB connections, because opening one per request is slow), the <strong>web server</strong>, the <strong>JSON converter</strong>, etc. Spring Boot removes that work with three ideas:</p>
+<h3 id="31-auto-configuration">3.1 Auto-configuration</h3>
+<ul>
+<li>The <strong>classpath</strong> = all libraries (jars) available to the app at runtime.</li>
+<li>At startup Boot runs many rules with <strong>conditions</strong>:<ul>
+<li>&quot;PostgreSQL driver on the classpath <strong>and</strong> <code>spring.datasource.url</code> set → create a connection pool.&quot;</li>
+<li>&quot;Spring Web MVC on the classpath → start a web server on 8080.&quot;</li>
+<li>&quot;You defined your own bean of this type → back off and use yours.&quot;</li>
+</ul>
+</li>
+<li>So: <strong>adding a dependency turns a feature on; <code>application.yaml</code> adjusts it.</strong></li>
+<li>We saw this live: with JPA + Flyway added but no database configured, the app would refuse to start, because auto-config tried to connect.</li>
+</ul>
+<h3 id="32-starters">3.2 Starters</h3>
+<p>One dependency that brings a tested set of libraries. <code>spring-boot-starter-data-jpa</code> = Hibernate + connection pool + transactions, at compatible versions.</p>
+<h3 id="33-embedded-web-server">3.3 Embedded web server</h3>
+<ul>
+<li>A <strong>web server</strong> listens on a <strong>port</strong> for HTTP requests and sends responses. A port is a numbered door on a computer (8080, 5432…); each program listens on its own.</li>
+<li>Old way: install Tomcat separately, copy your app into it. Boot way: Tomcat runs <strong>inside</strong> your app; you run one jar. That&#39;s why we chose <strong>Jar</strong> packaging.</li>
+</ul>
+<h3 id="34-spring-boot-4-specifics-we-use-411">3.4 Spring Boot 4 specifics (we use 4.1.1)</h3>
+<ul>
+<li>Built on <strong>Spring Framework 7</strong> and <strong>Jakarta EE 11</strong>.</li>
+<li><strong>Smaller, focused starters:</strong> <code>spring-boot-starter-webmvc</code> (was <code>-web</code> in Boot 3), <code>spring-boot-starter-flyway</code>, plus a matching <code>-test</code> starter per module. Smaller jars, faster startup.</li>
+<li>Most tutorials online are still Boot 3. If something from a tutorial fails, <strong>check the version first</strong>.</li>
+</ul>
+<h3 id="35-actuator">3.5 Actuator</h3>
+<p>Adds operational endpoints. <code>/actuator/health</code> answers &quot;is the app alive and is the database reachable?&quot;. Used by Docker, CI, load balancers and Kubernetes. Ours returned <code>{&quot;status&quot;:&quot;UP&quot;}</code>.</p>
+<hr>
+<h2 id="4-maven">4. Maven</h2>
+<h3 id="41-what-building-means">4.1 What &quot;building&quot; means</h3>
+<ol>
+<li><strong>Compile</strong> <code>.java</code> (text) → <code>.class</code> (<strong>bytecode</strong>, run by the <strong>JVM</strong>, the Java Virtual Machine).</li>
+<li><strong>Fetch libraries</strong> (jars = zip files of <code>.class</code> files) your code uses.</li>
+<li><strong>Test.</strong></li>
+<li><strong>Package</strong> your classes + libraries into one runnable <code>.jar</code>.</li>
+</ol>
+<h3 id="42-mavens-pieces">4.2 Maven&#39;s pieces</h3>
+<ul>
+<li><strong><code>pom.xml</code></strong> (Project Object Model): project name, dependencies, plugins.</li>
+<li><strong>Maven Central:</strong> the public online library of jars. Downloads are cached in <code>C:\Users\Lenovo\.m2\repository</code>.</li>
+<li><strong>Transitive dependencies:</strong> need A, and A needs B and C → Maven fetches all three. ~7 lines in our pom → ~100 jars.</li>
+<li><strong>Lifecycle phases:</strong> <code>validate → compile → test → package → verify → install</code>. Running one runs all before it, so you can&#39;t package untested code.</li>
+<li><strong>Plugins</strong> add commands, e.g. <code>spring-boot:run</code> from the Spring Boot plugin.</li>
+</ul>
+<h3 id="43-the-maven-wrapper-mvnw">4.3 The Maven wrapper (<code>mvnw</code>)</h3>
+<p>A script committed to the repo that downloads the exact Maven version in <code>.mvn/wrapper/</code>. Everyone (other dev, CI) builds identically with nothing to install.</p>
+<ul>
+<li><code>mvnw</code> = Linux/Mac/CI shell script. <code>mvnw.cmd</code> = Windows version.</li>
+</ul>
+<h3 id="44-inside-our-pomxml">4.4 Inside our <code>pom.xml</code></h3>
+<ul>
+<li><strong>Why no version numbers on dependencies:</strong> the <code>&lt;parent&gt;</code> (<code>spring-boot-starter-parent</code>) includes a <strong>BOM (Bill of Materials)</strong>, a list of versions tested together. <code>spring-modulith-bom</code> in <code>&lt;dependencyManagement&gt;</code> does the same for Modulith. Prevents version clashes.</li>
+<li><strong>Dependency scopes:</strong><ul>
+<li><em>(none)</em> = compile: needed to compile and run.</li>
+<li><code>runtime</code>: needed to run, not to compile (e.g. the PostgreSQL driver; our code only talks to JDBC).</li>
+<li><code>test</code>: only for tests; never shipped.</li>
+</ul>
+</li>
+<li><strong>Project version <code>0.0.1-SNAPSHOT</code>:</strong> <em>our</em> version. <strong>SNAPSHOT</strong> = in development, not released. Spring Boot&#39;s version is in <code>&lt;parent&gt;</code>.</li>
+<li><strong>We trimmed it:</strong> Initializr added 7 Modulith dependencies; we kept only <code>spring-modulith-starter-core</code> and <code>spring-modulith-starter-test</code>. Rule: <strong>add a dependency when a feature needs it</strong>, so you always know why it&#39;s there.</li>
+</ul>
+<hr>
+<h2 id="5-the-generated-spring-project">5. The generated Spring project</h2>
+<h3 id="51-startspringio-settings-we-chose">5.1 start.spring.io settings we chose</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Project</td>
+<td>Maven</td>
+<td>Design decision</td>
+</tr>
+<tr>
+<td>Spring Boot</td>
+<td>4.1.1</td>
+<td>Newest <em>stable</em>; SNAPSHOT/M/RC are unfinished</td>
+</tr>
+<tr>
+<td>Group</td>
+<td><code>com.namastute</code></td>
+<td>Reverse-domain naming avoids package clashes</td>
+</tr>
+<tr>
+<td>Artifact</td>
+<td><code>api</code></td>
+<td>Jar name; lives in <code>apps/api</code></td>
+</tr>
+<tr>
+<td>Package</td>
+<td><code>com.namastute</code></td>
+<td>Initializr appends the artifact by default (<code>com.namastute.api</code>); we removed it so modules are <code>com.namastute.trips</code>, not <code>com.namastute.api.trips</code></td>
+</tr>
+<tr>
+<td>Packaging</td>
+<td>Jar</td>
+<td>Embedded Tomcat</td>
+</tr>
+<tr>
+<td>Config</td>
+<td>YAML</td>
+<td>Nested config reads better than long repeated prefixes</td>
+</tr>
+<tr>
+<td>Java</td>
+<td>21</td>
+<td>LTS (long-term support), installed locally</td>
+</tr>
+</tbody></table>
+<h3 id="52-files">5.2 Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pom.xml</code></td>
+<td>Build definition</td>
+</tr>
+<tr>
+<td><code>mvnw</code>, <code>mvnw.cmd</code>, <code>.mvn/wrapper/</code></td>
+<td>Maven wrapper</td>
+</tr>
+<tr>
+<td><code>src/main/java/com/namastute/ApiApplication.java</code></td>
+<td>Entry point (<code>@SpringBootApplication</code>)</td>
+</tr>
+<tr>
+<td><code>src/main/resources/application.yaml</code></td>
+<td>Configuration</td>
+</tr>
+<tr>
+<td><code>src/main/resources/db/migration/</code></td>
+<td>Flyway SQL migrations</td>
+</tr>
+<tr>
+<td><code>src/test/java/...</code></td>
+<td>Tests</td>
+</tr>
+<tr>
+<td><code>.gitignore</code></td>
+<td>Keeps <code>target/</code> (build output) out of git</td>
+</tr>
+</tbody></table>
+<h3 id="53-our-applicationyaml">5.3 Our <code>application.yaml</code></h3>
+<pre><code class="language-yaml">spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/namastute
+    username: namastute
+    password: ${DB_PASSWORD:namastute}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+</code></pre>
+<ul>
+<li><strong><code>${DB_PASSWORD:namastute}</code></strong> is a <strong>placeholder</strong>: use the <strong>environment variable</strong> <code>DB_PASSWORD</code> if set (a named value the OS gives a program at start), else the default. Real secrets never go in git.</li>
+<li><strong><code>open-in-view: false</code>:</strong> by default Spring keeps a DB session open for the whole web request, hiding slow queries and holding connections longer. Turning it off is recommended practice.</li>
+<li><code>ddl-auto: validate</code>: see §8.</li>
+</ul>
+<hr>
+<h2 id="6-databases-postgres-postgis-sql">6. Databases: Postgres, PostGIS, SQL</h2>
+<ul>
+<li>A <strong>database server</strong> stores data in <strong>tables</strong> and answers questions written in <strong>SQL</strong>. Postgres listens on port <strong>5432</strong>.</li>
+<li>One Postgres server can hold many <strong>databases</strong>; each database has <strong>schemas</strong> (namespaces for tables). The default schema is <code>public</code>.</li>
+<li><strong>DDL</strong> (Data Definition Language) = SQL that changes structure: <code>create table</code>, <code>alter table</code>.</li>
+<li>An <strong>extension</strong> adds abilities to the database. <strong>PostGIS</strong> adds geographic types and functions (e.g. &quot;points within 15 km&quot;). Our matching depends on it.</li>
+<li><strong><code>spatial_ref_sys</code></strong> is a PostGIS table of <strong>coordinate systems</strong> (rules for turning a point on the round Earth into numbers). Our columns use <code>geography(point, 4326)</code>; <strong>4326</strong> = the GPS system (WGS 84).</li>
+<li>The <strong><code>tiger</code></strong> and <strong><code>topology</code></strong> schemas came from the Docker image&#39;s own startup script (US address lookup, topology tools). We don&#39;t use them; they exist only locally.</li>
+</ul>
+<h3 id="psql-postgress-command-line-client">psql (Postgres&#39;s command-line client)</h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-U namastute</code></td>
+<td>Log in as <strong>U</strong>ser <code>namastute</code></td>
+</tr>
+<tr>
+<td><code>-d namastute</code></td>
+<td>Connect to <strong>d</strong>atabase <code>namastute</code></td>
+</tr>
+<tr>
+<td><code>-c &quot;...&quot;</code></td>
+<td>Run one <strong>c</strong>ommand, print, exit</td>
+</tr>
+</tbody></table>
+<p>Interactive meta-commands (start with <code>\</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>\l</code></td>
+<td>List databases</td>
+</tr>
+<tr>
+<td><code>\dt</code></td>
+<td>List tables</td>
+</tr>
+<tr>
+<td><code>\dx</code></td>
+<td>List installed extensions</td>
+</tr>
+<tr>
+<td><code>\d tablename</code></td>
+<td>Describe a table</td>
+</tr>
+<tr>
+<td><code>\q</code></td>
+<td>Quit</td>
+</tr>
+</tbody></table>
+<p>No password was asked inside the container because the Postgres image trusts connections from inside its own container. Spring connects from outside via port 5432, so it needs the password.</p>
+<hr>
+<h2 id="7-docker-and-docker-compose">7. Docker and Docker Compose</h2>
+<h3 id="71-why-not-install-postgres-on-windows">7.1 Why not install Postgres on Windows?</h3>
+<p>Different versions between devs, fiddly PostGIS setup, always running, messy to remove.</p>
+<h3 id="72-core-terms">7.2 Core terms</h3>
+<ul>
+<li><strong>Image:</strong> a packaged, read-only snapshot of a program plus everything it needs (small Linux system, libraries, settings). E.g. <code>postgis/postgis:16-3.5</code>.</li>
+<li><strong>Container:</strong> a <strong>running copy</strong> of an image, isolated (own files, network, processes). Start/stop/delete without affecting anything else.</li>
+<li><strong>Docker Engine:</strong> background program that pulls images and runs containers (inside Docker Desktop on Windows).</li>
+<li><strong>Registry:</strong> online store of images; <strong>Docker Hub</strong> is the default. Downloading = <strong>pulling</strong>.</li>
+<li><strong>Container vs VM:</strong> a VM simulates a whole computer with its own OS (heavy, slow). A container shares the host&#39;s Linux kernel (Docker Desktop provides one on Windows), so it starts in seconds and uses little memory.</li>
+<li><strong>Port mapping</strong> <code>&quot;5432:5432&quot;</code> = host port : container port. Lets Spring reach Postgres at <code>localhost:5432</code>.</li>
+<li><strong>Volume:</strong> storage kept <em>outside</em> the container and attached to it, so data survives container deletion. <code>down</code> keeps volumes; <code>down -v</code> deletes them.</li>
+</ul>
+<h3 id="73-docker-compose">7.3 Docker Compose</h3>
+<ul>
+<li>Describe containers in a <strong>YAML</strong> file; start them all with one command; commit it so everyone has the same setup.</li>
+<li><strong>YAML:</strong> <code>key: value</code>; indentation (spaces, never tabs) nests things.</li>
+<li>A <strong>project</strong> = the containers from one compose file. Default project name = the folder the file is in (ours would be <code>infra</code>), so we added <code>name: namastute</code> at the top.</li>
+<li><strong>Service name</strong> (<code>postgres</code> in the file) vs <strong>container name</strong> (<code>namastute-postgres-1</code> = project-service-copy number).</li>
+<li><strong>Healthcheck:</strong> how Docker checks the service is really ready (<code>pg_isready</code>), shown as <code>(healthy)</code>.</li>
+</ul>
+<h3 id="74-docker-vs-docker-compose">7.4 <code>docker</code> vs <code>docker compose</code></h3>
+<ul>
+<li><code>docker ps</code> = <strong>every</strong> running container on the machine, by container name/ID.</li>
+<li><code>docker compose ps</code> = <strong>only this project&#39;s</strong> containers, by service name, with health.</li>
+<li><code>-f infra/docker-compose.yml</code> = which compose file (default is the current folder).</li>
+<li><code>docker compose down</code> stops <strong>only this project</strong>.</li>
+</ul>
+<h3 id="75-getting-inside-a-container">7.5 Getting inside a container</h3>
+<ul>
+<li><strong>Shell:</strong> a program that reads and runs typed commands (PowerShell on Windows, <strong>bash</strong> on Linux). Inside a container you use Linux commands (<code>ls</code>, <code>cat</code>, <code>pwd</code>).</li>
+<li><strong>Terminal (TTY):</strong> the text window showing a shell.</li>
+<li><code>docker compose ... exec postgres bash</code> (Compose sets <code>-it</code> for you), or <code>docker exec -it &lt;name-or-id&gt; bash</code>.<ul>
+<li><code>-i</code> interactive: keep keyboard input connected. <code>-t</code>: allocate a terminal.</li>
+</ul>
+</li>
+<li>Leave with <code>exit</code> or <strong>Ctrl+D</strong>. The container keeps running.</li>
+</ul>
+<hr>
+<h2 id="8-connecting-spring-to-the-database-jdbc-jpa-hibernate">8. Connecting Spring to the database: JDBC, JPA, Hibernate</h2>
+<ul>
+<li><strong>JDBC</strong> (Java Database Connectivity): Java&#39;s standard API for talking to any database. Each database provides a <strong>driver</strong> implementing it.</li>
+<li><strong>JDBC URL:</strong> <code>jdbc:postgresql://localhost:5432/namastute</code> = protocol : driver : host : port / database. <code>localhost</code> = this computer.</li>
+<li><strong>HikariCP:</strong> the connection pool Spring uses. Log line <code>HikariPool-1 - Start completed</code> = connected.</li>
+<li><strong>ORM</strong> (Object-Relational Mapping): converts between Java objects and table rows.</li>
+<li><strong>JPA</strong> (Jakarta Persistence API): Java&#39;s standard rules for ORMs. <strong>Hibernate</strong>: the library that implements them.</li>
+<li><strong><code>ddl-auto</code>:</strong><ul>
+<li><code>update</code>: Hibernate creates/changes tables from Java classes. Risky: it guesses, never safely renames or removes.</li>
+<li><code>validate</code> (ours): Hibernate only <strong>checks</strong> tables match the classes and refuses to start if not. Flyway owns the schema.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="9-flyway-database-migrations">9. Flyway: database migrations</h2>
+<p><strong>Problem:</strong> code is versioned in git, but the database structure isn&#39;t. Changes get forgotten; databases drift; &quot;column does not exist&quot;.</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Every structural change is a <strong>migration</strong>: an SQL file in <code>src/main/resources/db/migration/</code>, e.g. <code>V1__init.sql</code> (capital V, version, <strong>two</strong> underscores, description).</li>
+<li>At startup Flyway checks <strong><code>flyway_schema_history</code></strong>, runs <strong>only new files in order</strong>, and records them.</li>
+<li>It stores a <strong>checksum</strong> (fingerprint of each file). If an already-applied file is edited, Flyway <strong>refuses to start</strong>.</li>
+<li><strong>Golden rule:</strong> never edit an applied migration. Add <code>V2__...</code> instead (<strong>forward-only</strong>).</li>
+<li>Result: every database (laptop, CI, production) reaches the same structure just by starting the app.</li>
+</ul>
+<p>Our <code>V1__init.sql</code> = the full data model from Design v0.0.2 §3.1 (12 tables).</p>
+<hr>
+<h2 id="10-testing-and-spring-modulith">10. Testing and Spring Modulith</h2>
+<h3 id="101-tests">10.1 Tests</h3>
+<ul>
+<li>An <strong>automated test</strong> runs your code and checks the result; fails loudly when wrong.</li>
+<li><strong>JUnit:</strong> the standard Java test library. Mark a method <code>@Test</code>.</li>
+<li><strong>Unit test:</strong> one small piece, no DB/server. Milliseconds.</li>
+<li><strong>Integration test:</strong> pieces together (starts Spring, real DB). Seconds; catches what unit tests can&#39;t.</li>
+<li><code>ApiApplicationTests.contextLoads()</code> starts the whole app (beans, DB, Flyway). That&#39;s why it needs Postgres running locally, and why CI starts a Postgres service.</li>
+<li>Run all: <code>.\mvnw.cmd test</code> (or <code>verify</code> in CI).</li>
+</ul>
+<h3 id="102-spring-modulith">10.2 Spring Modulith</h3>
+<p>Turns &quot;modular monolith&quot; from a claim into a check.</p>
+<ul>
+<li>Each package directly under <code>com.namastute</code> is a <strong>module</strong>.</li>
+<li>Classes directly in a module&#39;s package = its <strong>public API</strong>.</li>
+<li>Sub-packages (e.g. <code>com.namastute.groups.internal</code>) = <strong>private</strong>.</li>
+<li><code>ApplicationModules.of(ApiApplication.class).verify()</code> fails if a module touches another&#39;s private classes, or if modules depend on each other in a <strong>cycle</strong> (A uses B and B uses A).</li>
+<li>Our <code>ModularityTest</code> doesn&#39;t start Spring; it only reads compiled classes, so it&#39;s fast.</li>
+</ul>
+<hr>
+<h2 id="11-frontend-typescript-node-pnpm-react-nextjs">11. Frontend: TypeScript, Node, pnpm, React, Next.js</h2>
+<h3 id="111-frontend-vs-backend">11.1 Frontend vs backend</h3>
+<ul>
+<li><strong>Backend</strong> (Spring Boot): runs on a server, holds data, enforces rules, answers requests.</li>
+<li><strong>Frontend:</strong> runs in the user&#39;s browser: screens, buttons, forms.</li>
+<li>Browsers understand <strong>HTML</strong> (structure), <strong>CSS</strong> (appearance), <strong>JavaScript</strong> (behaviour).</li>
+</ul>
+<h3 id="112-typescript">11.2 TypeScript</h3>
+<p>JavaScript + <strong>types</strong>, checked before running. Compiled to plain JS for browsers. Planned benefit: types generated from the Java API, so a renamed backend field breaks the frontend <strong>build</strong>, not the live app.</p>
+<h3 id="113-nodejs">11.3 Node.js</h3>
+<p>Runs JavaScript outside the browser. Needed because all frontend tools (TS compiler, bundler, Next.js dev server) are JS programs.</p>
+<h3 id="114-pnpm">11.4 pnpm</h3>
+<ul>
+<li>Same idea as Maven for JavaScript. Packages come from the <strong>npm registry</strong>.</li>
+<li><code>package.json</code> ≈ <code>pom.xml</code> (name, dependencies, <strong>scripts</strong> like <code>dev</code>, <code>build</code>, <code>lint</code>).</li>
+<li><code>node_modules/</code> = installed packages; never committed.</li>
+<li><strong>Lockfile</strong> <code>pnpm-lock.yaml</code> = exact versions of everything; <strong>committed</strong> so everyone installs the same.</li>
+<li>Why pnpm: one shared copy per version on disk (fast, small) and <strong>strict</strong> (can&#39;t use undeclared packages).</li>
+<li><strong>Install scripts</strong> can run code during install (a known attack route), so recent pnpm blocks them unless approved. <code>pnpm-workspace.yaml</code> records ours (<code>sharp</code>, <code>unrs-resolver</code> not built; fallbacks work).</li>
+</ul>
+<h3 id="115-react">11.5 React</h3>
+<p>UI from <strong>components</strong> (functions returning what to show). Each describes the screen for the current data (<strong>state</strong>); React updates only what changed. Written in <strong>JSX/TSX</strong> (HTML-like tags in JS/TS).</p>
+<ul>
+<li><code>className</code> instead of <code>class</code> (<code>class</code> is a reserved word in JS).</li>
+<li><code>export default function Home()</code> = the component this file provides.</li>
+</ul>
+<h3 id="116-nextjs-we-use-164-with-react-193">11.6 Next.js (we use 16.4, with React 19.3)</h3>
+<p>Framework on top of React:</p>
+<ul>
+<li><strong>File-based routing (App Router):</strong> <code>app/page.tsx</code> = <code>/</code>; <code>app/trip/new/page.tsx</code> = <code>/trip/new</code>.</li>
+<li><strong>Server rendering:</strong> HTML prepared on a server so the first screen loads fast on slow mobile networks.</li>
+<li><strong>Build tooling:</strong> compiles TS, <strong>bundles</strong> (combines and shrinks files), dev server with <strong>hot reload</strong> (browser updates on save).</li>
+<li><code>app/layout.tsx</code> = the shared frame around every page.</li>
+<li><code>pnpm dev</code> (development, forgiving, port 3000) vs <code>pnpm build</code> (production build, type-checks everything; what CI runs).</li>
+<li><code>.next/</code> = build output, never committed.</li>
+<li><code>AGENTS.md</code> = Next.js&#39;s note for AI assistants: Next 16 changed a lot; read the bundled docs in <code>node_modules/next/dist/docs/</code>.</li>
+</ul>
+<h3 id="117-tailwind-and-eslint">11.7 Tailwind and ESLint</h3>
+<ul>
+<li><strong>Tailwind CSS:</strong> style with utility classes in markup: <code>p-8</code> padding, <code>text-3xl</code> big text, <code>font-bold</code>, <code>mt-2</code> margin-top.</li>
+<li><strong>ESLint:</strong> a <strong>linter</strong>; reads code without running it and flags likely bugs.</li>
+</ul>
+<hr>
+<h2 id="12-git-and-github-workflow">12. Git and GitHub workflow</h2>
+<h3 id="121-basics">12.1 Basics</h3>
+<ul>
+<li><strong>Commit:</strong> a saved snapshot of files + message in local history.</li>
+<li><strong>Staging area:</strong> choose what goes into the next commit (<code>git add</code>), then save it (<code>git commit</code>).</li>
+<li><strong>Push:</strong> copy commits to GitHub. <code>git push -u origin &lt;branch&gt;</code> the first time links local and remote branches; afterwards just <code>git push</code>.</li>
+<li><strong>Habit:</strong> <code>git status</code> and <code>git diff --staged</code> before every commit. (An empty <code>ci.yml</code> once got committed because the editor never saved; this would have shown it.)</li>
+</ul>
+<h3 id="122-branching-github-flow-design-v002-61">12.2 Branching: GitHub Flow (Design v0.0.2 §6.1)</h3>
+<ul>
+<li>One protected <code>main</code>, always deployable. Short-lived branches (2–3 days max).</li>
+<li>Names: <code>type/short-description</code>, e.g. <code>feat/14-trip-request</code>, <code>fix/31-group-full-race</code>, <code>docs/...</code>, <code>chore/...</code>, <code>ci/...</code>, <code>refactor/...</code>, <code>test/...</code>, <code>spike/...</code>.</li>
+<li>No GitFlow (<code>develop</code>, <code>release/*</code>): overhead for 2 devs.</li>
+<li><strong>Conventional commits:</strong> <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>chore:</code>, <code>ci:</code>… PR titles use the same format.</li>
+</ul>
+<h3 id="123-pull-requests-and-merging">12.3 Pull requests and merging</h3>
+<ul>
+<li><strong>PR:</strong> a request to merge a branch into <code>main</code>; where review and CI happen.</li>
+<li><strong>Draft PR:</strong> marked not ready; can&#39;t merge but CI runs.</li>
+<li><strong>Squash merge:</strong> all the branch&#39;s commits become <strong>one</strong> new commit on <code>main</code> (title = PR title). Keeps history clean.</li>
+<li>After a squash merge, <code>git branch -d</code> refuses to delete the branch (git doesn&#39;t see its original commits in <code>main</code>); use <code>-D</code> once you know it&#39;s merged.</li>
+<li><code>git fetch --prune</code> removes local records of deleted remote branches.</li>
+</ul>
+<h3 id="124-branch-protection-on-main-what-we-set">12.4 Branch protection on <code>main</code> (what we set)</h3>
+<p>PR required (also for admins), 0 approvals until the second dev joins (then 1), old approvals dismissed on new commits, comments must be resolved, linear history, no force pushes or deletion, <strong>required checks <code>api</code> + <code>web</code></strong>, <strong>branch must be up to date</strong> before merging.</p>
+<ul>
+<li><strong>Required check:</strong> the Merge button stays disabled until named checks pass. Names = CI job names. GitHub only offers names it has seen run.</li>
+<li><strong>Up to date before merging:</strong> two PRs can each pass alone but break together; this forces CI to test the real combination (&quot;Update branch&quot; button).</li>
+<li>Free branch protection is only enforced on <strong>public</strong> repos (or paid plans).</li>
+</ul>
+<h3 id="125-rewriting-history-lesson-from-the-ubery-repo">12.5 Rewriting history (lesson from the Ubery repo)</h3>
+<ul>
+<li>Removing a line from a pushed commit means <strong>rewriting</strong> it (<code>git commit --amend</code>) and <strong>force-pushing</strong>, which replaces history on GitHub. Anyone who already pulled must reset.</li>
+<li>GitHub&#39;s <strong>contributors sidebar is cached</strong>; it kept showing &quot;claude&quot; from a <code>Co-Authored-By</code> trailer even after the rewrite. That&#39;s why the project moved to the clean <code>Namastute</code> repo.</li>
+<li>Rule now: no co-author trailers or AI attribution in commits or PRs.</li>
+</ul>
+<hr>
+<h2 id="13-ci-with-github-actions">13. CI with GitHub Actions</h2>
+<h3 id="131-what-ci-is">13.1 What CI is</h3>
+<p><strong>Continuous Integration:</strong> every change is automatically built and tested on a <strong>clean machine</strong> before it can join <code>main</code>.</p>
+<ul>
+<li>Clean machine = only what&#39;s in git. Catches &quot;works on my laptop&quot; (cached jars, env vars, uncommitted files).</li>
+<li>Automatic = nobody forgets to run tests.</li>
+<li>With required checks, broken code <strong>can&#39;t</strong> be merged.</li>
+</ul>
+<h3 id="132-parts-of-github-actions">13.2 Parts of GitHub Actions</h3>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Ours</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Workflow</td>
+<td>YAML file in <code>.github/workflows/</code></td>
+<td><code>ci.yml</code></td>
+</tr>
+<tr>
+<td>Event/trigger</td>
+<td>What starts it</td>
+<td>PR opened/updated; push to <code>main</code></td>
+</tr>
+<tr>
+<td>Job</td>
+<td>Steps on one machine; jobs run in parallel</td>
+<td><code>api</code>, <code>web</code></td>
+</tr>
+<tr>
+<td>Runner</td>
+<td>Fresh VM for a job, deleted after</td>
+<td><code>ubuntu-latest</code></td>
+</tr>
+<tr>
+<td>Step</td>
+<td>One command or action, in order; a failure stops the job</td>
+<td><code>./mvnw -B verify</code></td>
+</tr>
+<tr>
+<td>Action</td>
+<td>Reusable ready-made step (<code>uses:</code>)</td>
+<td><code>actions/checkout</code>, <code>setup-java</code>, <code>setup-node</code>, <code>pnpm/action-setup</code></td>
+</tr>
+<tr>
+<td>Service container</td>
+<td>Docker container beside a job</td>
+<td>Postgres for <code>contextLoads</code></td>
+</tr>
+</tbody></table>
+<h3 id="133-lines-worth-remembering">13.3 Lines worth remembering</h3>
+<ul>
+<li><code>./mvnw -B verify</code>: <code>verify</code> = compile + test + package + final checks; <code>-B</code> = batch mode, cleaner logs.</li>
+<li>Postgres service uses the <strong>same</strong> DB name/user/password as <code>application.yaml</code>, so no config changes.</li>
+<li><code>pnpm install --frozen-lockfile</code>: install exactly the lockfile; fail if <code>package.json</code> disagrees.</li>
+<li><code>cache: maven</code> / <code>cache: pnpm</code>: reuse downloads between runs (much faster).</li>
+<li><code>@v5</code>, <code>@v4</code>: pin action major versions so a new release can&#39;t change the build silently.</li>
+<li>A workflow run that fails in <strong>0 seconds</strong> with &quot;workflow file issue&quot; = the YAML is invalid or empty.</li>
+</ul>
+<hr>
+<h2 id="14-cross-platform-gotchas-permissions-and-line-endings">14. Cross-platform gotchas: permissions and line endings</h2>
+<h3 id="141-executable-permission">14.1 Executable permission</h3>
+<ul>
+<li>Linux runs a file as a program only if it has the <strong>executable flag</strong>. Windows has no such flag.</li>
+<li>Extracting <code>mvnw</code> on Windows lost it: git recorded <code>100644</code> (normal) instead of <code>100755</code> (executable), so CI would fail with &quot;Permission denied&quot;.</li>
+<li>Fix: <code>git update-index --chmod=+x apps/api/mvnw</code>. Check: <code>git ls-files -s apps/api/mvnw</code>.</li>
+</ul>
+<h3 id="142-line-endings">14.2 Line endings</h3>
+<ul>
+<li>Windows ends lines with <strong>CRLF</strong> (<code>\r\n</code>, Carriage Return + Line Feed, from typewriters); Linux/Mac with <strong>LF</strong> (<code>\n</code>).</li>
+<li>Mixed endings make git show every line as changed and break Linux scripts (<code>bad interpreter: /bin/sh^M</code>).</li>
+<li>Fix: root <strong><code>.gitattributes</code></strong>:<pre><code>* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+</code></pre>
+then <code>git add --renormalize .</code> to re-apply to existing files.</li>
+</ul>
+<hr>
+<h2 id="15-aws-account-security-and-cost-control">15. AWS: account security and cost control</h2>
+<h3 id="151-root-user-and-mfa">15.1 Root user and MFA</h3>
+<ul>
+<li>The <strong>root user</strong> (sign-up email) can do anything, including run up huge bills. A leaked root password without MFA is how student accounts get crypto-mining bills.</li>
+<li><strong>MFA</strong> (multi-factor authentication) added via <code>https://console.aws.amazon.com/iam/home#/security_credentials</code> → Assign MFA device → Authenticator app.</li>
+<li><strong>TOTP</strong> (Time-based One-Time Password): AWS and the phone share a secret from the QR code; each computes <code>HMAC(secret, time ÷ 30)</code> → 6 digits. No communication needed, works offline. AWS asks for two consecutive codes to check the clocks agree.</li>
+<li>Keep a backup (cloud-backed authenticator or a second MFA device). Later: use an IAM user for daily work, root only for billing/emergencies.</li>
+</ul>
+<h3 id="152-aws-budgets-monthly-cost-guard">15.2 AWS Budgets (<code>monthly-cost-guard</code>)</h3>
+<ul>
+<li>A budget is an <strong>alarm, not a limit</strong>: AWS keeps billing after it fires.</li>
+<li>Cost data updates ~3 times a day, so alerts lag; use several low thresholds.</li>
+<li><strong>Actual</strong> = real spend crossed a line. <strong>Forecasted</strong> = AWS predicts you&#39;ll cross it by month-end (earliest warning).</li>
+<li><strong>Credits trap:</strong> by default credits are subtracted, so cost shows $0 and alerts never fire until credits run out. We <strong>excluded Charge type: Credit</strong> (now under Scope → Filter specific AWS cost dimensions).</li>
+<li>Ours: $50/month, alerts at 20% ($10), 50% ($25), 100% ($50) actual + 100% forecasted.</li>
+<li><strong>Unblended costs:</strong> what each usage actually cost at the time; the plain number (others matter for Reserved Instances / Savings Plans).</li>
+<li>Habit: <strong>stop the EC2 instance</strong> after demos.</li>
+</ul>
+<h3 id="153-regions">15.3 Regions</h3>
+<ul>
+<li>The URL showed <code>ap-southeast-2</code> (Sydney). For Delhi users, create servers in <strong><code>ap-south-1</code> (Mumbai)</strong>: lower latency, and data stays in India (helps with the DPDP Act). Billing, IAM and Budgets are global.</li>
+</ul>
+<hr>
+<h2 id="16-hosting-and-infrastructure-decisions">16. Hosting and infrastructure decisions</h2>
+<h3 id="161-where-spring-boot-runs-one-ec2-instance">16.1 Where Spring Boot runs: one EC2 instance</h3>
+<ul>
+<li>Next.js on <strong>Vercel</strong> (free); Spring Boot + Postgres + Redis on <strong>one EC2 instance</strong> with Docker Compose; <strong>Caddy</strong> in front for HTTPS (automatic Let&#39;s Encrypt certificates).</li>
+<li>Why: WebSockets need an always-on server (free platforms that sleep drop connections); load balancers/RDS/Elastic Beanstalk add $15–30/month each; one instance ≈ $18/month ≈ 5 months of credits.</li>
+<li>Details to remember:<ul>
+<li><strong>t4g = ARM (Graviton):</strong> build <code>linux/arm64</code> images in CI, or use t3 (Intel). The <code>postgis/postgis</code> image has historically been Intel-only.</li>
+<li><strong>Memory:</strong> JVM + Postgres + Redis in 2 GB is tight → cap heap <code>-Xmx512m</code>, or t4g.medium (4 GB).</li>
+<li><strong>HTTPS needs a domain</strong> pointing at the server; use an <strong>Elastic IP</strong> so the address doesn&#39;t change (billed while the instance is stopped).</li>
+</ul>
+</li>
+<li>Deploy at the start of Phase 2, not before.</li>
+</ul>
+<h3 id="162-why-no-kubernetes-proposed-stash-idea-2">16.2 Why no Kubernetes (Proposed Stash idea 2)</h3>
+<ul>
+<li>Kubernetes manages <strong>many containers across many servers</strong> (restarts, load spreading, rolling deploys, autoscaling).</li>
+<li>We have 1 server, 1 app. EKS costs ~$73/month for the control plane alone; k3s needs RAM we don&#39;t have; weeks of config for 2 devs.</li>
+<li>Plan: write manifests and test them on a <strong>local</strong> cluster (<code>kind</code>/<code>minikube</code>) for $0. Interview line: &quot;Production runs on Docker Compose because one instance is enough; I tested Kubernetes manifests locally for when we scale.&quot;</li>
+</ul>
+<h3 id="163-c-in-the-project-proposed-stash-idea-1">16.3 C++ in the project (Proposed Stash idea 1)</h3>
+<ul>
+<li>Use each language where it genuinely fits. C++ = an <strong>offline</strong> road-distance engine: build a road graph from OpenStreetMap data, run multithreaded <strong>Dijkstra</strong> between ~500 localities, load the distance matrix into Postgres. Replaces the &quot;straight-line × 1.4&quot; shortcut without a paid routing API.</li>
+</ul>
+<hr>
+<h2 id="17-terminal-basics">17. Terminal basics</h2>
+<ul>
+<li>Every terminal has a <strong>current directory</strong> (shown in the prompt).</li>
+<li><strong><code>.\file</code></strong> (PowerShell) / <strong><code>./file</code></strong> (bash) = &quot;this folder&#39;s file&quot;. PowerShell won&#39;t run programs from the current folder unless you say so; &quot;not recognized as the name of a cmdlet&quot; usually means you&#39;re in the wrong folder.</li>
+<li><code>cd apps\api</code> = go into a folder; <code>cd ..</code> = up one level; <code>cd ..\..</code> = up two.</li>
+<li><strong>Environment variable:</strong> a named value the OS gives programs at start (e.g. <code>DB_PASSWORD</code>, <code>JAVA_HOME</code>).</li>
+<li>After installing a tool (like the JDK), <strong>open a new terminal</strong>; old ones don&#39;t see the updated PATH.</li>
+</ul>
+<hr>
+<h2 id="18-command-cheat-sheet">18. Command cheat sheet</h2>
+<h3 id="database-from-namastute">Database (from <code>Namastute</code>)</h3>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d      # start Postgres
+docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
+docker compose -f infra/docker-compose.yml down       # stop (keeps data)
+docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d namastute   # SQL prompt
+</code></pre>
+<h3 id="api-from-appsapi">API (from <code>apps/api</code>)</h3>
+<pre><code class="language-bash">.\mvnw.cmd spring-boot:run    # run the app (http://localhost:8080/actuator/health)
+.\mvnw.cmd test               # run tests (needs Postgres up)
+</code></pre>
+<h3 id="web-from-appsweb">Web (from <code>apps/web</code>)</h3>
+<pre><code class="language-bash">pnpm install
+pnpm dev      # http://localhost:3000
+pnpm lint
+pnpm build    # production build, same as CI
+</code></pre>
+<h3 id="git">Git</h3>
+<pre><code class="language-bash">git switch main &amp;&amp; git pull
+git switch -c feat/short-description
+git status
+git diff --staged
+git add &lt;paths&gt;
+git commit -m &quot;type: description&quot;
+git push -u origin &lt;branch&gt;       # first push of a branch
+gh pr create --base main --title &quot;type: description&quot; --body &quot;...&quot;
+gh pr checks &lt;number&gt;
+git branch -D &lt;merged-branch&gt;
+git fetch --prune
+</code></pre>
+<hr>
+<h2 id="19-glossary">19. Glossary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Annotation</td>
+<td><code>@Something</code> tag adding information to code without changing it</td>
+</tr>
+<tr>
+<td>ApplicationContext</td>
+<td>Spring&#39;s IoC container</td>
+</tr>
+<tr>
+<td>Bean</td>
+<td>An object created and managed by Spring</td>
+</tr>
+<tr>
+<td>BOM</td>
+<td>Bill of Materials: a list of library versions tested together</td>
+</tr>
+<tr>
+<td>Bytecode</td>
+<td>Compiled <code>.class</code> instructions run by the JVM</td>
+</tr>
+<tr>
+<td>Checksum</td>
+<td>A fingerprint of a file&#39;s contents; changes if the file changes</td>
+</tr>
+<tr>
+<td>Classpath</td>
+<td>All libraries available to the app at runtime</td>
+</tr>
+<tr>
+<td>Connection pool</td>
+<td>Reusable, ready-made database connections</td>
+</tr>
+<tr>
+<td>Container (Docker)</td>
+<td>A running, isolated copy of an image</td>
+</tr>
+<tr>
+<td>CI</td>
+<td>Continuous Integration: automatic build + test on every change</td>
+</tr>
+<tr>
+<td>DDL</td>
+<td>SQL that changes structure (<code>create table</code>)</td>
+</tr>
+<tr>
+<td>DI</td>
+<td>Dependency Injection: dependencies handed in from outside</td>
+</tr>
+<tr>
+<td>Extension (Postgres)</td>
+<td>Add-on giving the database new abilities (PostGIS)</td>
+</tr>
+<tr>
+<td>Healthcheck</td>
+<td>A test of whether a service is really ready</td>
+</tr>
+<tr>
+<td>Hot reload</td>
+<td>Browser updates automatically when a file is saved</td>
+</tr>
+<tr>
+<td>Image (Docker)</td>
+<td>Packaged, read-only snapshot of a program and its environment</td>
+</tr>
+<tr>
+<td>IoC</td>
+<td>Inversion of Control: the framework creates and wires objects</td>
+</tr>
+<tr>
+<td>JDBC</td>
+<td>Java&#39;s standard database API</td>
+</tr>
+<tr>
+<td>JPA / Hibernate</td>
+<td>Java&#39;s ORM standard / its implementation</td>
+</tr>
+<tr>
+<td>Lifecycle (Maven)</td>
+<td>Ordered build phases: compile → test → package → verify</td>
+</tr>
+<tr>
+<td>Linter</td>
+<td>Tool that flags likely bugs without running code</td>
+</tr>
+<tr>
+<td>Lockfile</td>
+<td>Exact versions of all installed packages</td>
+</tr>
+<tr>
+<td>Migration</td>
+<td>A versioned SQL change to the database structure</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>Object-Relational Mapping: objects ↔ table rows</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>Numbered &quot;door&quot; a program listens on</td>
+</tr>
+<tr>
+<td>Registry</td>
+<td>Online store of packages or images (Maven Central, npm, Docker Hub)</td>
+</tr>
+<tr>
+<td>Runner</td>
+<td>The VM that runs a CI job</td>
+</tr>
+<tr>
+<td>Schema (DB)</td>
+<td>A namespace for tables inside a database</td>
+</tr>
+<tr>
+<td>Singleton</td>
+<td>One shared instance of a bean</td>
+</tr>
+<tr>
+<td>SNAPSHOT</td>
+<td>A Maven version still in development</td>
+</tr>
+<tr>
+<td>Squash merge</td>
+<td>All PR commits combined into one commit on <code>main</code></td>
+</tr>
+<tr>
+<td>SRID 4326</td>
+<td>ID of the GPS coordinate system (WGS 84)</td>
+</tr>
+<tr>
+<td>Starter</td>
+<td>One dependency bringing a tested set of libraries</td>
+</tr>
+<tr>
+<td>TOTP</td>
+<td>Time-based one-time password (authenticator apps)</td>
+</tr>
+<tr>
+<td>Volume</td>
+<td>Docker storage that outlives containers</td>
+</tr>
+<tr>
+<td>YAML</td>
+<td>Indentation-based settings format</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="20-interview-questions-to-practise">20. Interview questions to practise</h2>
+<ol>
+<li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
+<li>What is Inversion of Control? What problem does dependency injection solve?</li>
+<li>How does Spring Boot decide to create a database connection pool without any setup code?</li>
+<li>Why use Flyway instead of <code>ddl-auto: update</code>? What happens if someone edits an applied migration?</li>
+<li>What&#39;s the difference between a Docker image and a container? A container and a VM?</li>
+<li>Why does CI run on a clean machine? Give an example of something it caught in this project.</li>
+<li>What does &quot;require branches to be up to date before merging&quot; protect against?</li>
+<li>Why is an AWS budget not enough on its own to stop spending? Why exclude credits?</li>
+<li>Why not Kubernetes for this project? When would you add it?</li>
+<li>What&#39;s the difference between a unit test and an integration test? Which kind is <code>contextLoads</code>?</li>
+</ol>
+
+
+</main>
+<script>
+  // Highlight the section being read and open its topic in the sidebar
+  const links = new Map([...document.querySelectorAll("nav a")].map(a => [a.getAttribute("href").slice(1), a]));
+  const seen = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const a = links.get(e.target.id);
+      if (!a) continue;
+      document.querySelectorAll("nav a.active").forEach(x => x.classList.remove("active"));
+      a.classList.add("active");
+      const d = a.closest("details");
+      if (d) d.open = true;
+    }
+  }, { rootMargin: "0px 0px -75% 0px" });
+  document.querySelectorAll("main h2[id], main h3[id]").forEach(h => seen.observe(h));
+</script>
+<script type="module">
+  if (document.querySelector("pre.mermaid")) {
+    const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs");
+    mermaid.initialize({ startOnLoad: false, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" });
+    await mermaid.run();
+  }
+</script>
+</body>
+</html>
