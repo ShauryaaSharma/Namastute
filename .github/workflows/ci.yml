@@ -1,0 +1,54 @@
+name: CI                              # shown in GitHub's Actions tab
+
+on:                                   # the events that start this workflow
+  pull_request:                       # any PR being opened or updated
+  push:
+    branches: [main]                  # anything merged into main
+
+jobs:
+  api:                                # job 1: the Spring Boot backend
+    runs-on: ubuntu-latest            # a fresh Linux VM
+    defaults:
+      run:
+        working-directory: apps/api   # run commands from this folder
+    services:
+      postgres:                       # a Postgres container beside the job, like our docker-compose
+        image: postgis/postgis:16-3.5
+        env:
+          POSTGRES_DB: namastute
+          POSTGRES_USER: namastute
+          POSTGRES_PASSWORD: namastute
+        ports:
+          - 5432:5432
+        options: >-                   # wait until Postgres is actually ready
+          --health-cmd "pg_isready -U namastute -d namastute"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5     # download the repo onto the VM
+      - uses: actions/setup-java@v5   # install Java
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven                # reuse downloaded jars between runs (much faster)
+      - run: ./mvnw -B verify         # compile + all tests; -B = batch mode, cleaner logs
+
+  web:                                # job 2: the Next.js frontend (runs in parallel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4    # install pnpm
+        with:
+          package_json_file: apps/web/package.json   # use the pnpm version declared there
+      - uses: actions/setup-node@v5   # install Node.js
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile   # install exactly what the lockfile says
+      - run: pnpm lint
+      - run: pnpm build

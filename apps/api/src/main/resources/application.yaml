@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: api
+  datasource:                       # the database connection (JDBC)
+    url: jdbc:postgresql://localhost:5432/namastute
+    username: namastute
+    password: ${DB_PASSWORD:namastute}
+  jpa:
+    hibernate:
+      ddl-auto: validate            # Hibernate only checks the tables; Flyway creates them
+    open-in-view: false

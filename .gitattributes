@@ -1,0 +1,6 @@
+# Store text files with LF in git and check them out with LF on every OS
+* text=auto eol=lf
+
+# Windows batch scripts must keep CRLF or cmd.exe misreads them
+*.cmd text eol=crlf
+*.bat text eol=crlf
