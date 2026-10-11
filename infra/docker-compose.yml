@@ -1,0 +1,20 @@
+name: namastute
+services:                         # the list of containers to run
+  postgres:                       # our name for this container
+    image: postgis/postgis:16-3.5 # Postgres 16 + PostGIS 3.5, from Docker Hub
+    environment:                  # settings the image reads on its first start
+      POSTGRES_DB: namastute      # create a database with this name
+      POSTGRES_USER: namastute    # and this user...
+      POSTGRES_PASSWORD: namastute  # ...with this password (local dev only, never use in production)
+    ports:
+      - "5432:5432"               # Windows port : container port
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # keep the data in the 'pgdata' volume
+    healthcheck:                  # how Docker checks the DB is actually ready
+      test: ["CMD-SHELL", "pg_isready -U namastute -d namastute"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:                         # declare the named volume used above
