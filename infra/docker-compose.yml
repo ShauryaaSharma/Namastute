@@ -15,6 +15,15 @@ services:                         # the list of containers to run
       interval: 5s
       timeout: 3s
       retries: 10
+  redis:
+    image: redis:7.4-alpine          # Redis 7.4; "alpine" = built on a tiny Linux, small download
+    ports:
+      - "6379:6379"                  # Redis's standard port
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]   # healthy when Redis answers PING with PONG
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   pgdata:                         # declare the named volume used above

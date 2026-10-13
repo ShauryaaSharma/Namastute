@@ -47,7 +47,7 @@
 <details><summary><a href="#4-maven">4. Maven</a></summary><a class="sub" href="#41-what-building-means">4.1 What &quot;building&quot; means</a><a class="sub" href="#42-mavens-pieces">4.2 Maven&#x27;s pieces</a><a class="sub" href="#43-the-maven-wrapper-mvnw">4.3 The Maven wrapper (mvnw)</a><a class="sub" href="#44-inside-our-pomxml">4.4 Inside our pom.xml</a></details>
 <details><summary><a href="#5-the-generated-spring-project">5. The generated Spring project</a></summary><a class="sub" href="#51-startspringio-settings-we-chose">5.1 start.spring.io settings we chose</a><a class="sub" href="#52-files">5.2 Files</a><a class="sub" href="#53-our-applicationyaml">5.3 Our application.yaml</a></details>
 <details><summary><a href="#6-databases-postgres-postgis-sql">6. Databases: Postgres, PostGIS, SQL</a></summary><a class="sub" href="#psql-postgress-command-line-client">psql (Postgres&#x27;s command-line client)</a></details>
-<details><summary><a href="#7-docker-and-docker-compose">7. Docker and Docker Compose</a></summary><a class="sub" href="#71-why-not-install-postgres-on-windows">7.1 Why not install Postgres on Windows?</a><a class="sub" href="#72-core-terms">7.2 Core terms</a><a class="sub" href="#73-docker-compose">7.3 Docker Compose</a><a class="sub" href="#74-docker-vs-docker-compose">7.4 docker vs docker compose</a><a class="sub" href="#75-getting-inside-a-container">7.5 Getting inside a container</a></details>
+<details><summary><a href="#7-docker-and-docker-compose">7. Docker and Docker Compose</a></summary><a class="sub" href="#71-why-not-install-postgres-on-windows">7.1 Why not install Postgres on Windows?</a><a class="sub" href="#72-core-terms">7.2 Core terms</a><a class="sub" href="#73-docker-compose">7.3 Docker Compose</a><a class="sub" href="#74-docker-vs-docker-compose">7.4 docker vs docker compose</a><a class="sub" href="#75-getting-inside-a-container">7.5 Getting inside a container</a><a class="sub" href="#76-image-vs-build-and-the---build-flag">7.6 image: vs build: and the --build flag</a></details>
 <a class="topic" href="#8-connecting-spring-to-the-database-jdbc-jpa-hibernate">8. Connecting Spring to the database: JDBC, JPA, Hibernate</a>
 <a class="topic" href="#9-flyway-database-migrations">9. Flyway: database migrations</a>
 <details><summary><a href="#10-testing-and-spring-modulith">10. Testing and Spring Modulith</a></summary><a class="sub" href="#101-tests">10.1 Tests</a><a class="sub" href="#102-spring-modulith">10.2 Spring Modulith</a></details>
@@ -58,14 +58,20 @@
 <details><summary><a href="#15-aws-account-security-and-cost-control">15. AWS: account security and cost control</a></summary><a class="sub" href="#151-root-user-and-mfa">15.1 Root user and MFA</a><a class="sub" href="#152-aws-budgets-monthly-cost-guard">15.2 AWS Budgets (monthly-cost-guard)</a><a class="sub" href="#153-regions">15.3 Regions</a></details>
 <details><summary><a href="#16-hosting-and-infrastructure-decisions">16. Hosting and infrastructure decisions</a></summary><a class="sub" href="#161-where-spring-boot-runs-one-ec2-instance">16.1 Where Spring Boot runs: one EC2 instance</a><a class="sub" href="#162-why-no-kubernetes-proposed-stash-idea-2">16.2 Why no Kubernetes (Proposed Stash idea 2)</a><a class="sub" href="#163-c-in-the-project-proposed-stash-idea-1">16.3 C++ in the project (Proposed Stash idea 1)</a></details>
 <a class="topic" href="#17-terminal-basics">17. Terminal basics</a>
-<details><summary><a href="#18-command-cheat-sheet">18. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#19-glossary">19. Glossary</a>
-<a class="topic" href="#20-interview-questions-to-practise">20. Interview questions to practise</a>
+<details><summary><a href="#18-http-and-rest-apis">18. HTTP and REST APIs</a></summary><a class="sub" href="#181-request-and-response">18.1 Request and response</a><a class="sub" href="#182-parts-of-a-request">18.2 Parts of a request</a><a class="sub" href="#183-parts-of-a-response">18.3 Parts of a response</a><a class="sub" href="#184-status-codes">18.4 Status codes</a><a class="sub" href="#185-json-apis-rest-controllers">18.5 JSON, APIs, REST, controllers</a><a class="sub" href="#186-http-is-stateless">18.6 HTTP is stateless</a></details>
+<details><summary><a href="#19-authentication-and-phone-otp">19. Authentication and phone OTP</a></summary><a class="sub" href="#191-authentication-vs-authorization">19.1 Authentication vs authorization</a><a class="sub" href="#192-why-phone-otp">19.2 Why phone OTP</a><a class="sub" href="#193-the-flow">19.3 The flow</a><a class="sub" href="#194-our-slices">19.4 Our slices</a></details>
+<details><summary><a href="#20-hashing-hmac-and-keeping-otps-safe">20. Hashing, HMAC and keeping OTPs safe</a></summary><a class="sub" href="#201-hashing">20.1 Hashing</a><a class="sub" href="#202-why-a-plain-hash-isnt-enough-for-a-6-digit-code">20.2 Why a plain hash isn&#x27;t enough for a 6-digit code</a><a class="sub" href="#203-hmac">20.3 HMAC</a><a class="sub" href="#204-all-the-protections">20.4 All the protections</a></details>
+<details><summary><a href="#21-redis">21. Redis</a></summary><a class="sub" href="#211-what-it-is">21.1 What it is</a><a class="sub" href="#212-what-goes-in-redis-vs-postgres">21.2 What goes in Redis vs Postgres</a><a class="sub" href="#213-commands">21.3 Commands</a><a class="sub" href="#214-atomic-operations-and-race-conditions">21.4 Atomic operations and race conditions</a><a class="sub" href="#215-hands-on-lab-the-otp-flow-by-hand-what-each-line-did">21.5 Hands-on lab: the OTP flow by hand (what each line did)</a></details>
+<details><summary><a href="#22-rate-limiting">22. Rate limiting</a></summary><a class="sub" href="#221-why">22.1 Why</a><a class="sub" href="#222-our-rules">22.2 Our rules</a><a class="sub" href="#223-fixed-window-counter">22.3 Fixed window counter</a></details>
+<details><summary><a href="#23-code-walkthrough-the-otp-service">23. Code walkthrough: the OTP service</a></summary><a class="sub" href="#231-the-package-and-imports">23.1 The package and imports</a><a class="sub" href="#232-the-class">23.2 The class</a><a class="sub" href="#233-the-constants-the-rules-in-one-place">23.3 The constants (the rules, in one place)</a><a class="sub" href="#234-the-rate-limit-counter-script-lua">23.4 The rate-limit counter script (Lua)</a><a class="sub" href="#235-the-fields-what-each-otpservice-object-holds">23.5 The fields (what each OtpService object holds)</a><a class="sub" href="#236-the-constructor">23.6 The constructor</a><a class="sub" href="#237-requestotp-sending-a-code">23.7 requestOtp: sending a code</a><a class="sub" href="#238-verify-checking-a-code">23.8 verify: checking a code</a><a class="sub" href="#239-hit-the-counter-helper">23.9 hit: the counter helper</a><a class="sub" href="#2310-hmac-the-fingerprint">23.10 hmac: the fingerprint</a><a class="sub" href="#2311-small-helpers">23.11 Small helpers</a><a class="sub" href="#2312-the-tests-otpservicetestjava">23.12 The tests (OtpServiceTest.java)</a></details>
+<details><summary><a href="#24-command-cheat-sheet">24. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#25-glossary">25. Glossary</a>
+<a class="topic" href="#26-interview-questions-to-practise">26. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-12 (project scaffold complete: Spring Boot api, Next.js web, Postgres in Docker, CI).</p>
+<p>Last updated: 2026-10-13 (OTP service written and explained line by line; Redis added to CI).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -86,9 +92,15 @@
 <li><a href="#15-aws-account-security-and-cost-control">AWS: account security and cost control</a></li>
 <li><a href="#16-hosting-and-infrastructure-decisions">Hosting and infrastructure decisions</a></li>
 <li><a href="#17-terminal-basics">Terminal basics</a></li>
-<li><a href="#18-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#19-glossary">Glossary</a></li>
-<li><a href="#20-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#18-http-and-rest-apis">HTTP and REST APIs</a></li>
+<li><a href="#19-authentication-and-phone-otp">Authentication and phone OTP</a></li>
+<li><a href="#20-hashing-hmac-and-keeping-otps-safe">Hashing, HMAC and keeping OTPs safe</a></li>
+<li><a href="#21-redis">Redis</a></li>
+<li><a href="#22-rate-limiting">Rate limiting</a></li>
+<li><a href="#23-code-walkthrough-the-otp-service">Code walkthrough: the OTP service</a></li>
+<li><a href="#24-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#25-glossary">Glossary</a></li>
+<li><a href="#26-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -462,6 +474,14 @@ public class GroupService {
 </li>
 <li>Leave with <code>exit</code> or <strong>Ctrl+D</strong>. The container keeps running.</li>
 </ul>
+<h3 id="76-image-vs-build-and-the---build-flag">7.6 <code>image:</code> vs <code>build:</code> and the <code>--build</code> flag</h3>
+<ul>
+<li><code>image:</code> = a ready-made image, <strong>pulled</strong> from a registry (all our services today).</li>
+<li><code>build:</code> = an image built on your machine from a <strong>Dockerfile</strong> (a step-by-step recipe: base image, copy files, start command).</li>
+<li><code>up --build</code> rebuilds <code>build:</code> services so code changes get in. Useless for <code>image:</code> services; we&#39;ll need it for the api&#39;s Dockerfile in Phase 2.</li>
+<li>After editing the compose file, plain <code>up -d</code> creates new services and recreates only changed ones.</li>
+<li>To update a ready-made image: <code>docker compose ... pull</code>, then <code>up -d</code> (or change the tag).</li>
+</ul>
 <hr>
 <h2 id="8-connecting-spring-to-the-database-jdbc-jpa-hibernate">8. Connecting Spring to the database: JDBC, JPA, Hibernate</h2>
 <ul>
@@ -572,6 +592,7 @@ public class GroupService {
 <li><strong>PR:</strong> a request to merge a branch into <code>main</code>; where review and CI happen.</li>
 <li><strong>Draft PR:</strong> marked not ready; can&#39;t merge but CI runs.</li>
 <li><strong>Squash merge:</strong> all the branch&#39;s commits become <strong>one</strong> new commit on <code>main</code> (title = PR title). Keeps history clean.</li>
+<li><strong>Check the PR title before merging.</strong> GitHub fills it from the branch name (PR #3 merged as <code>Docs/learning notes</code>); edit it to <code>type: description</code> so <code>main</code>&#39;s history stays clean.</li>
 <li>After a squash merge, <code>git branch -d</code> refuses to delete the branch (git doesn&#39;t see its original commits in <code>main</code>); use <code>-D</code> once you know it&#39;s merged.</li>
 <li><code>git fetch --prune</code> removes local records of deleted remote branches.</li>
 </ul>
@@ -726,7 +747,641 @@ then <code>git add --renormalize .</code> to re-apply to existing files.</li>
 <li>After installing a tool (like the JDK), <strong>open a new terminal</strong>; old ones don&#39;t see the updated PATH.</li>
 </ul>
 <hr>
-<h2 id="18-command-cheat-sheet">18. Command cheat sheet</h2>
+<h2 id="18-http-and-rest-apis">18. HTTP and REST APIs</h2>
+<h3 id="181-request-and-response">18.1 Request and response</h3>
+<ul>
+<li>Browser (frontend) and Spring (backend) talk using <strong>HTTP</strong>, a <strong>protocol</strong> (agreed message format).</li>
+<li>Always a <strong>request</strong> from the client, then a <strong>response</strong> from the server. The server never speaks first.</li>
+</ul>
+<h3 id="182-parts-of-a-request">18.2 Parts of a request</h3>
+<pre><code>POST /api/v1/auth/otp HTTP/1.1          ← method + path
+Host: api.namastute.in                  ← headers (extra information)
+Content-Type: application/json
+
+{&quot;phone&quot;: &quot;+919876543210&quot;}              ← body
+</code></pre>
+<ul>
+<li><strong>Method</strong> = kind of action: <code>GET</code> read (no body), <code>POST</code> create/trigger, <code>PATCH</code> change part, <code>DELETE</code> remove.</li>
+<li><strong>Path</strong> = which thing. <strong>Headers</strong> = information about the request. <strong>Body</strong> = the data.</li>
+</ul>
+<h3 id="183-parts-of-a-response">18.3 Parts of a response</h3>
+<pre><code>HTTP/1.1 429 Too Many Requests          ← status code
+Content-Type: application/json
+
+{&quot;error&quot;: {&quot;code&quot;: &quot;OTP_RATE_LIMITED&quot;, &quot;message&quot;: &quot;Try again in 12 minutes&quot;}}
+</code></pre>
+<p>Our error body always has this shape: a machine-readable <code>code</code> the frontend can switch on, and a human-readable <code>message</code>.</p>
+<h3 id="184-status-codes">18.4 Status codes</h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Meaning</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2xx</td>
+<td>Success</td>
+<td><code>200 OK</code>, <code>201 Created</code>, <code>204 No Content</code></td>
+</tr>
+<tr>
+<td>4xx</td>
+<td>Client&#39;s fault</td>
+<td><code>400</code> invalid input, <code>401</code> not logged in, <code>403</code> not allowed, <code>404</code> not found, <code>409</code> conflict (group full), <code>429</code> too many requests</td>
+</tr>
+<tr>
+<td>5xx</td>
+<td>Server&#39;s fault</td>
+<td><code>500</code> bug/crash</td>
+</tr>
+</tbody></table>
+<h3 id="185-json-apis-rest-controllers">18.5 JSON, APIs, REST, controllers</h3>
+<ul>
+<li><strong>JSON:</strong> text format for bodies: <code>{&quot;key&quot;: value}</code>, lists in <code>[...]</code>. Spring converts Java objects ↔ JSON automatically.</li>
+<li><strong>API:</strong> the set of requests a program accepts (ours: Design v0.0.2 §3.5).</li>
+<li><strong>REST:</strong> URLs name <em>things</em> (<code>/trips/42</code>), methods say what to do with them.</li>
+<li><strong>Endpoint:</strong> one method + path, e.g. <code>POST /api/v1/auth/otp</code>.</li>
+<li><strong>Controller:</strong> a <code>@RestController</code> class whose methods handle endpoints. Tomcat receives the request → Spring finds the method → JSON body becomes a Java object → result becomes JSON.</li>
+</ul>
+<h3 id="186-http-is-stateless">18.6 HTTP is stateless</h3>
+<p>Each request stands alone; the server doesn&#39;t remember previous ones. So after login, <strong>every request must carry proof of identity</strong> (our JWT). This is why login systems look the way they do.</p>
+<hr>
+<h2 id="19-authentication-and-phone-otp">19. Authentication and phone OTP</h2>
+<h3 id="191-authentication-vs-authorization">19.1 Authentication vs authorization</h3>
+<ul>
+<li><strong>Authentication:</strong> <em>who are you?</em></li>
+<li><strong>Authorization:</strong> <em>what may you do?</em> (e.g. join a women-only group)</li>
+</ul>
+<h3 id="192-why-phone-otp">19.2 Why phone OTP</h3>
+<ul>
+<li><strong>OTP</strong> = One-Time Password: short code, single use, expires fast.</li>
+<li>No passwords to forget/reuse/leak; every traveller has a phone; proves the number is real (trust between strangers).</li>
+<li>Trade-off: each SMS costs money and anyone reading the SMS can log in → needs rate limiting.</li>
+</ul>
+<h3 id="193-the-flow">19.3 The flow</h3>
+<pre><code>Browser                         Spring API                       Redis            SMS provider
+  |  POST /auth/otp {phone}         |                               |                    |
+  |--------------------------------&gt;|  rate limit OK? -------------&gt;|                    |
+  |                                 |  make random 6-digit code     |                    |
+  |                                 |  store HMAC of code, 5 min --&gt;|                    |
+  |                                 |  send code -------------------------------------&gt;  |  SMS to phone
+  |  204 No Content                 |                               |                    |
+  |&lt;--------------------------------|                               |                    |
+  |  POST /auth/verify {phone,code} |                               |                    |
+  |--------------------------------&gt;|  fetch stored HMAC ----------&gt;|                    |
+  |                                 |  HMAC(code) == stored?        |                    |
+  |                                 |  yes → delete it, find or create user in Postgres  |
+  |  200 OK  (tokens)               |                               |                    |
+  |&lt;--------------------------------|                               |                    |
+</code></pre>
+<ol>
+<li><code>POST /auth/otp {phone}</code> → rate-limit check → random 6-digit code → store its <strong>HMAC</strong> in Redis for 5 min → send SMS → <code>204 No Content</code>.</li>
+<li><code>POST /auth/verify {phone, code}</code> → fetch stored HMAC → compare → on match delete it, <strong>find or create</strong> the user in Postgres → return tokens.</li>
+</ol>
+<ul>
+<li>No separate sign-up: the first successful verify creates the user.</li>
+</ul>
+<h3 id="194-our-slices">19.4 Our slices</h3>
+<p><code>feat/otp-api</code> (request + verify) → <code>feat/auth-tokens</code> (JWT, refresh, Spring Security) → <code>feat/otp-ui</code> (login screen).</p>
+<hr>
+<h2 id="20-hashing-hmac-and-keeping-otps-safe">20. Hashing, HMAC and keeping OTPs safe</h2>
+<h3 id="201-hashing">20.1 Hashing</h3>
+<ul>
+<li>A <strong>hash function</strong> turns any input into a fixed-length fingerprint (SHA-256 → 64 hex characters).</li>
+<li><strong>One-way:</strong> no formula to get the input back. <strong>Deterministic:</strong> same input → same fingerprint, so you can check a guess without storing the original.</li>
+<li>Store the hash, not the code: a leaked Redis shows fingerprints, not usable codes. (Flyway&#39;s checksum is also a hash.)</li>
+</ul>
+<h3 id="202-why-a-plain-hash-isnt-enough-for-a-6-digit-code">20.2 Why a plain hash isn&#39;t enough for a 6-digit code</h3>
+<p>Only 1,000,000 possible codes. An attacker with a stolen fingerprint hashes all of them in under a second and finds the match.</p>
+<h3 id="203-hmac">20.3 HMAC</h3>
+<ul>
+<li><strong>HMAC</strong> = a hash that mixes in a <strong>secret key</strong> only the server knows: <code>HMAC(secret, code)</code>.</li>
+<li>Without the secret, an attacker can&#39;t compute fingerprints to compare, so trying all codes is useless.</li>
+<li>The secret lives in an environment variable on the server, never in git or Redis. (AWS MFA&#39;s TOTP also uses HMAC with a shared secret.)</li>
+</ul>
+<h3 id="204-all-the-protections">20.4 All the protections</h3>
+<table>
+<thead>
+<tr>
+<th>Protection</th>
+<th>Rule</th>
+<th>Stops</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Secure random</td>
+<td><code>SecureRandom</code> (cryptographically secure), not <code>Random</code> (predictable)</td>
+<td>Guessing the next code</td>
+</tr>
+<tr>
+<td>Expiry (TTL)</td>
+<td>5 minutes</td>
+<td>Old codes used later</td>
+</tr>
+<tr>
+<td>Attempt limit</td>
+<td>5 wrong tries → code deleted</td>
+<td>Guessing (5 in 1,000,000)</td>
+</tr>
+<tr>
+<td>Single use</td>
+<td>Deleted on success</td>
+<td>Reusing an intercepted code</td>
+</tr>
+<tr>
+<td>Constant-time compare</td>
+<td><code>MessageDigest.isEqual</code>, not <code>equals</code></td>
+<td><strong>Timing attacks</strong> (a normal compare stops at the first difference, leaking information through response time)</td>
+</tr>
+<tr>
+<td>Never log codes</td>
+<td></td>
+<td>Leaks through logs</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="21-redis">21. Redis</h2>
+<h3 id="211-what-it-is">21.1 What it is</h3>
+<ul>
+<li>A <strong>key-value store</strong>: save a <strong>value</strong> under a <strong>key</strong>, fetch it by key.</li>
+<li>Keeps data in <strong>RAM</strong>, so operations take microseconds (Postgres reads disk and does much more per query).</li>
+<li>Each key can have a <strong>TTL</strong> (time to live); Redis deletes it automatically when it runs out.</li>
+</ul>
+<h3 id="212-what-goes-in-redis-vs-postgres">21.2 What goes in Redis vs Postgres</h3>
+<ul>
+<li>OTPs are <strong>temporary</strong> (5 min) and <strong>high-churn</strong> (created, checked, deleted constantly). In Postgres, expired rows would pile up and need a <strong>cleanup job</strong>; Redis&#39;s TTL removes them for free.</li>
+<li>Rate-limit counters are hit on <strong>every</strong> request, so speed matters.</li>
+<li>Redis: <strong>temporary, high-churn, fast</strong> data that&#39;s fine to lose (OTPs, rate-limit counters, live location). If Redis forgets an OTP, the user requests another.</li>
+<li>Postgres: <strong>permanent</strong> data (users, trips, groups).</li>
+<li>So our Redis service has <strong>no volume</strong> on purpose.</li>
+</ul>
+<h3 id="213-commands">21.3 Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SET key value EX 300</code></td>
+<td>Save with a 300 s TTL</td>
+</tr>
+<tr>
+<td><code>GET key</code></td>
+<td>Read (<code>(nil)</code> if missing/expired)</td>
+</tr>
+<tr>
+<td><code>DEL key</code></td>
+<td>Delete (returns how many keys were deleted)</td>
+</tr>
+<tr>
+<td><code>TTL key</code></td>
+<td>Seconds left; <code>-2</code> = key doesn&#39;t exist, <code>-1</code> = no expiry</td>
+</tr>
+<tr>
+<td><code>INCR key</code></td>
+<td>Add 1 atomically; creates it at 1 if missing</td>
+</tr>
+<tr>
+<td><code>EXPIRE key 900</code></td>
+<td>Set a TTL on an existing key (returns 1 if applied)</td>
+</tr>
+<tr>
+<td><code>KEYS pattern</code></td>
+<td>List matching keys; <strong>local only</strong>, it blocks a busy server</td>
+</tr>
+<tr>
+<td><code>PING</code></td>
+<td>Health check (answers <code>PONG</code>)</td>
+</tr>
+</tbody></table>
+<p>Open it with: <code>docker compose -f infra/docker-compose.yml exec redis redis-cli</code> (leave with <code>exit</code>).</p>
+<h3 id="214-atomic-operations-and-race-conditions">21.4 Atomic operations and race conditions</h3>
+<ul>
+<li><strong>Atomic</strong> = happens as one indivisible step. Two simultaneous <code>INCR</code>s both count.</li>
+<li>Doing &quot;read 4, add 1, save 5&quot; in separate steps from Java, two requests could both read 4 and both save 5, losing a count. That&#39;s a <strong>race condition</strong> (same family as the &quot;last seat in a group&quot; problem).</li>
+<li><strong>Gotcha:</strong> <code>INCR</code> then <code>EXPIRE</code> are <em>two</em> commands. If the app crashes between them, the counter has no TTL and the phone stays blocked forever. Fix: send both as one atomic unit (a Redis transaction/pipeline or a small Lua script), or check for a missing TTL.</li>
+</ul>
+<h3 id="215-hands-on-lab-the-otp-flow-by-hand-what-each-line-did">21.5 Hands-on lab: the OTP flow by hand (what each line did)</h3>
+<p><strong>A. Store an OTP and watch it age</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SET otp:+919876543210 &quot;fakehash123&quot; EX 300</code></td>
+<td><code>OK</code></td>
+<td>Saves a value under the key, with a 300 s TTL. The key name <code>otp:&lt;phone&gt;</code> is a <strong>naming convention</strong>: prefix says <em>what</em> it is, then <em>whose</em>.</td>
+</tr>
+<tr>
+<td><code>GET otp:+919876543210</code></td>
+<td><code>&quot;fakehash123&quot;</code></td>
+<td>Reads it back by key. In the app, this is where verify fetches the stored HMAC.</td>
+</tr>
+<tr>
+<td><code>TTL ...</code> (twice)</td>
+<td><code>280</code>, then <code>266</code></td>
+<td>Seconds left. It counts down by itself: Redis tracks time per key.</td>
+</tr>
+</tbody></table>
+<p><strong>B. Automatic expiry</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SET short &quot;bye&quot; EX 10</code></td>
+<td><code>OK</code></td>
+<td>A key that lives 10 s.</td>
+</tr>
+<tr>
+<td><code>GET short</code> (at once)</td>
+<td><code>&quot;bye&quot;</code></td>
+<td>Still alive.</td>
+</tr>
+<tr>
+<td><code>GET short</code> (after 10 s)</td>
+<td><code>(nil)</code></td>
+<td>Redis <strong>deleted it on its own</strong>; <code>nil</code> = nothing there. No cleanup job needed.</td>
+</tr>
+<tr>
+<td><code>TTL short</code></td>
+<td><code>-2</code></td>
+<td><code>-2</code> = key doesn&#39;t exist (<code>-1</code> would be &quot;exists, never expires&quot;).</td>
+</tr>
+</tbody></table>
+<p><strong>C. Fixed-window rate limiter</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>INCR rate:otp:phone:...</code></td>
+<td><code>1</code></td>
+<td>Key didn&#39;t exist → created at 0 and incremented to 1. First request of the window.</td>
+</tr>
+<tr>
+<td><code>EXPIRE ... 900</code></td>
+<td><code>1</code></td>
+<td>Starts the 15-minute window (<code>1</code> = TTL applied; <code>0</code> if the key were missing).</td>
+</tr>
+<tr>
+<td><code>INCR</code> ×3 more</td>
+<td><code>2</code>, <code>3</code>, <code>4</code></td>
+<td>Requests 2 and 3 are allowed (≤ 3). <strong>4 &gt; 3 → the app would reply 429.</strong></td>
+</tr>
+<tr>
+<td><code>TTL ...</code></td>
+<td><code>882</code></td>
+<td>The window is running; at 0 the counter vanishes and the phone may request again.</td>
+</tr>
+</tbody></table>
+<p><strong>D. Single use</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DEL otp:+919876543210</code></td>
+<td><code>1</code></td>
+<td>Number of keys deleted. In the app, a correct code is deleted at once so it can&#39;t be reused.</td>
+</tr>
+<tr>
+<td><code>GET otp:...</code></td>
+<td><code>(nil)</code></td>
+<td>Proves it&#39;s gone.</td>
+</tr>
+<tr>
+<td><code>KEYS *</code></td>
+<td>only <code>rate:otp:phone:...</code></td>
+<td>The OTP is gone; the counter stays until its window ends. (<code>KEYS</code> is for local exploring only.)</td>
+</tr>
+</tbody></table>
+<p><strong>Lesson hidden in C:</strong> <code>INCR</code> and <code>EXPIRE</code> were two separate commands. If the app crashed between them, the counter would never expire and the phone would be blocked forever. In code they must run as one atomic unit (see 21.4).</p>
+<hr>
+<h2 id="22-rate-limiting">22. Rate limiting</h2>
+<h3 id="221-why">22.1 Why</h3>
+<p>Stops someone requesting thousands of OTPs to <em>someone else&#39;s</em> number (harassment + our SMS bill) and endless code guessing.</p>
+<h3 id="222-our-rules">22.2 Our rules</h3>
+<ul>
+<li>Per phone: <strong>3 OTPs / 15 minutes</strong>.</li>
+<li>Per <strong>IP address</strong> (the network address a request comes from): <strong>10 / hour</strong>, to stop cycling through many numbers.</li>
+<li>Resend cooldown: <strong>30 seconds</strong>.</li>
+</ul>
+<h3 id="223-fixed-window-counter">22.3 Fixed window counter</h3>
+<pre><code>count = INCR rate:otp:phone:&lt;phone&gt;
+if count == 1: EXPIRE rate:otp:phone:&lt;phone&gt; 900
+if count &gt; 3:  reject with 429
+</code></pre>
+<ul>
+<li>Simple; the TTL resets the window by itself.</li>
+<li><strong>Weakness:</strong> bursts at the window edge (3 at 14:59 + 3 at 15:01 = 6 in two minutes). Sliding window or token bucket fix it; fine for protecting SMS spend. A classic interview trade-off.</li>
+</ul>
+<hr>
+<h2 id="23-code-walkthrough-the-otp-service">23. Code walkthrough: the OTP service</h2>
+<p>File: <code>apps/api/src/main/java/com/namastute/auth/OtpService.java</code>. This is the <strong>service layer</strong> for OTP login: all the rules from topics 19–22, with no HTTP in it. Read it next to the file.</p>
+<h3 id="231-the-package-and-imports">23.1 The package and imports</h3>
+<pre><code class="language-java">package com.namastute.auth;
+</code></pre>
+<ul>
+<li>The file belongs to the <strong><code>auth</code> module</strong> (topic 10.2). Java requires the package to match the folder path.</li>
+</ul>
+<pre><code class="language-java">import com.namastute.shared.ApiException;
+import java.time.Duration;
+import java.security.MessageDigest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+...
+</code></pre>
+<ul>
+<li>An <strong>import</strong> names a class that lives in another package so this file can use it by its short name. Without <code>import java.time.Duration;</code>, you&#39;d have to write <code>java.time.Duration</code> every time.</li>
+<li><code>java.*</code> / <code>javax.*</code> = Java&#39;s built-in library. <code>org.springframework.*</code> = Spring. <code>com.namastute.*</code> = our code.</li>
+</ul>
+<h3 id="232-the-class">23.2 The class</h3>
+<pre><code class="language-java">@Service
+class OtpService {
+</code></pre>
+<ul>
+<li><strong><code>@Service</code></strong> tells Spring: &quot;create one of these at startup and manage it&quot; (a <strong>bean</strong>, topic 2.4). The controller asks for an <code>OtpService</code> in its constructor and Spring hands it this object (<strong>dependency injection</strong>, 2.5).</li>
+<li><strong>No <code>public</code></strong> → <strong>package-private</strong>: only classes in <code>com.namastute.auth</code> can use it. Other modules can&#39;t reach into our internals (topic 10.2).</li>
+</ul>
+<h3 id="233-the-constants-the-rules-in-one-place">23.3 The constants (the rules, in one place)</h3>
+<pre><code class="language-java">private static final Duration OTP_TTL = Duration.ofMinutes(5);
+private static final int MAX_ATTEMPTS = 5;
+private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
+private static final int PHONE_LIMIT = 3;
+private static final Duration PHONE_WINDOW = Duration.ofMinutes(15);
+private static final int IP_LIMIT = 10;
+private static final Duration IP_WINDOW = Duration.ofHours(1);
+</code></pre>
+<ul>
+<li><strong><code>private</code></strong>: only this class can see it. <strong><code>static</code></strong>: one copy shared by the whole class, not one per object. <strong><code>final</code></strong>: can never be reassigned. Together = a <strong>constant</strong>, written in <code>UPPER_SNAKE_CASE</code>.</li>
+<li><strong><code>Duration</code></strong> = Java&#39;s type for an amount of time. <code>Duration.ofMinutes(5)</code> can&#39;t be confused with &quot;5 seconds&quot; the way a bare number <code>300</code> could.</li>
+<li><strong><code>int</code></strong> = a whole number.</li>
+<li>Why constants at the top: anyone reviewing the code sees every limit at a glance, and changing a rule is a one-line edit.</li>
+</ul>
+<h3 id="234-the-rate-limit-counter-script-lua">23.4 The rate-limit counter script (Lua)</h3>
+<pre><code class="language-java">private static final RedisScript&lt;Long&gt; HIT = RedisScript.of(&quot;&quot;&quot;
+        local count = redis.call(&#39;INCR&#39;, KEYS[1])
+        if count == 1 then redis.call(&#39;PEXPIRE&#39;, KEYS[1], ARGV[1]) end
+        return count
+        &quot;&quot;&quot;, Long.class);
+</code></pre>
+<ul>
+<li><strong>The problem it solves:</strong> a counter must never exist without a TTL, or a phone gets blocked forever (topic 21.4).</li>
+<li><strong>Why not the &quot;SET NX, then INCR&quot; trick from the lesson:</strong> it&#39;s two separate commands. In a tiny gap at the <em>end</em> of a window, the old key can expire between them, and then <code>INCR</code> creates a fresh key <strong>with no TTL</strong>: the same bug, just rarer. Rare bugs in rate limiting still lock real users out, so we close it completely.</li>
+<li><strong>Lua</strong> is a small programming language Redis can run <strong>inside itself</strong>. Redis runs a whole script as <strong>one atomic step</strong>: no other command can run in the middle, and a crash of <em>our</em> app can&#39;t split it.</li>
+<li>Line by line, inside the script:<ul>
+<li><code>local count = redis.call(&#39;INCR&#39;, KEYS[1])</code>: run <code>INCR</code> on the key we pass in; store the new value in a variable <code>count</code>.</li>
+<li><code>if count == 1 then redis.call(&#39;PEXPIRE&#39;, KEYS[1], ARGV[1]) end</code>: if this was the <strong>first</strong> hit (the key was just created), give it a TTL. <code>PEXPIRE</code> = <code>EXPIRE</code> in <strong>milliseconds</strong>. <code>ARGV[1]</code> is the window length we pass in.</li>
+<li><code>return count</code>: send the count back to Java.</li>
+</ul>
+</li>
+<li><code>KEYS[1]</code> / <code>ARGV[1]</code>: Redis scripts receive <strong>keys</strong> and <strong>arguments</strong> as two separate lists, numbered from 1.</li>
+<li><code>&quot;&quot;&quot;...&quot;&quot;&quot;</code> is a Java <strong>text block</strong>: a string that spans several lines, so the script stays readable.</li>
+<li><code>RedisScript.of(script, Long.class)</code> wraps the script and says &quot;the result is a <code>Long</code>&quot; (a whole number object).</li>
+<li><code>RedisScript&lt;Long&gt;</code>: the <code>&lt;Long&gt;</code> is a <strong>generic type parameter</strong>: &quot;a RedisScript that returns a Long&quot;. The compiler uses it to check we treat the result as a number.</li>
+</ul>
+<h3 id="235-the-fields-what-each-otpservice-object-holds">23.5 The fields (what each OtpService object holds)</h3>
+<pre><code class="language-java">private final StringRedisTemplate redis;
+private final SmsSender sms;
+private final SecretKeySpec hmacKey;
+private final SecureRandom random = new SecureRandom();
+</code></pre>
+<ul>
+<li><strong>Fields</strong> are variables that belong to the object and live as long as it does.</li>
+<li><code>redis</code>: Spring&#39;s Redis client for string keys and values (topic 21; Spring creates it automatically from the Redis starter).</li>
+<li><code>sms</code>: <strong>the interface</strong>, not a concrete class. Today Spring fills it with <code>LogSmsSender</code>; later a real provider, with no change here (<strong>polymorphism</strong>).</li>
+<li><code>hmacKey</code>: our secret, prepared once as a key object for the HMAC algorithm.</li>
+<li><code>random</code>: <strong><code>SecureRandom</code></strong>, a cryptographically secure random generator. Ordinary <code>Random</code> can be predicted from its past outputs.</li>
+<li><code>final</code>: each field is set once in the constructor and never changes. That makes the object safe to share between many simultaneous requests (it&#39;s a <strong>singleton</strong> bean, topic 2.5).</li>
+</ul>
+<h3 id="236-the-constructor">23.6 The constructor</h3>
+<pre><code class="language-java">OtpService(StringRedisTemplate redis, SmsSender sms,
+           @Value(&quot;${namastute.otp.hmac-secret}&quot;) String secret) {
+    this.redis = redis;
+    this.sms = sms;
+    this.hmacKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), &quot;HmacSHA256&quot;);
+}
+</code></pre>
+<ul>
+<li>The <strong>constructor</strong> runs once, when Spring creates the object. Its parameters are what Spring <strong>injects</strong>.</li>
+<li><strong><code>@Value(&quot;${namastute.otp.hmac-secret}&quot;)</code></strong>: read this setting from <code>application.yaml</code>, which itself reads the environment variable <code>OTP_HMAC_SECRET</code> (or the dev default).</li>
+<li><code>this.redis = redis</code>: <code>this.redis</code> is the <strong>field</strong>; <code>redis</code> alone is the <strong>parameter</strong>. Copy the parameter into the field.</li>
+<li><code>secret.getBytes(StandardCharsets.UTF_8)</code>: turn the text into <strong>bytes</strong> using <strong>UTF-8</strong>, the standard way of encoding characters as numbers. Crypto works on bytes, not text.</li>
+<li><code>new SecretKeySpec(bytes, &quot;HmacSHA256&quot;)</code>: wrap those bytes as a key for the HMAC-SHA256 algorithm. Built once here, reused for every code.</li>
+</ul>
+<h3 id="237-requestotp-sending-a-code">23.7 <code>requestOtp</code>: sending a code</h3>
+<pre><code class="language-java">void requestOtp(String phone, String ip) {
+</code></pre>
+<ul>
+<li><code>void</code>: returns nothing. Success = finishing without an exception; failure = throwing <code>ApiException</code>.</li>
+</ul>
+<p><strong>Step 1: the 30-second cooldown</strong></p>
+<pre><code class="language-java">Boolean cooldownStarted = redis.opsForValue().setIfAbsent(cooldownKey(phone), &quot;1&quot;, RESEND_COOLDOWN);
+if (!Boolean.TRUE.equals(cooldownStarted)) {
+    throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, &quot;OTP_COOLDOWN&quot;,
+            &quot;Wait 30 seconds before requesting another code&quot;);
+}
+</code></pre>
+<ul>
+<li><code>opsForValue()</code>: the group of commands for plain string values (<code>SET</code>, <code>GET</code>, …).</li>
+<li><code>setIfAbsent(key, &quot;1&quot;, 30s)</code> = Redis <code>SET key 1 EX 30 NX</code>: create the key <strong>only if it doesn&#39;t exist</strong>. Returns <code>true</code> if it created it (no code sent in the last 30 s), <code>false</code> if it already existed.</li>
+<li>It&#39;s <strong>one atomic command</strong>: two requests at the same instant can&#39;t both get <code>true</code>.</li>
+<li><code>Boolean</code> (capital B) is an object that could be <code>null</code> in rare cases. <code>Boolean.TRUE.equals(x)</code> is true only when <code>x</code> is exactly <code>true</code>, and safely false for <code>false</code> <strong>or</strong> <code>null</code>. (<code>!x</code> on a <code>null</code> would crash with a <code>NullPointerException</code>.)</li>
+<li><code>!</code> means &quot;not&quot;. So: if we did <strong>not</strong> start a new cooldown, someone requested within 30 s → <strong>429</strong>.</li>
+<li><code>throw</code> stops the method immediately; the exception travels up to <code>ApiExceptionHandler</code>, which sends <code>{&quot;error&quot;: {&quot;code&quot;: &quot;OTP_COOLDOWN&quot;, ...}}</code> with status 429.</li>
+</ul>
+<p><strong>Step 2 and 3: the rate limits</strong></p>
+<pre><code class="language-java">if (hit(&quot;rate:otp:phone:&quot; + phone, PHONE_WINDOW) &gt; PHONE_LIMIT) {
+    throw rateLimited();
+}
+if (hit(&quot;rate:otp:ip:&quot; + ip, IP_WINDOW) &gt; IP_LIMIT) {
+    throw rateLimited();
+}
+</code></pre>
+<ul>
+<li><code>&quot;rate:otp:phone:&quot; + phone</code>: <code>+</code> joins strings, building the key <code>rate:otp:phone:+919876543210</code>.</li>
+<li><code>hit(...)</code> counts this request and returns the count (see 23.9). More than 3 in the window → reject.</li>
+<li>The IP limit catches one attacker cycling through many phone numbers.</li>
+<li>Order matters: cooldown first, so impatient double-clicks are rejected <em>without</em> using up the 3-per-15-minutes allowance.</li>
+</ul>
+<p><strong>Step 4: generate the code</strong></p>
+<pre><code class="language-java">String code = String.format(&quot;%06d&quot;, random.nextInt(1_000_000));
+</code></pre>
+<ul>
+<li><code>random.nextInt(1_000_000)</code>: a secure random whole number from 0 to 999,999. (<code>_</code> is just a readable separator.)</li>
+<li><code>String.format(&quot;%06d&quot;, n)</code>: write the number with at least 6 digits, padding with zeros: <code>42</code> → <code>&quot;000042&quot;</code>. Every code is exactly 6 digits.</li>
+</ul>
+<p><strong>Step 5: store the HMAC, reset attempts</strong></p>
+<pre><code class="language-java">redis.opsForValue().set(codeKey(phone), hmac(code), OTP_TTL);
+redis.delete(triesKey(phone));
+</code></pre>
+<ul>
+<li><code>set(key, value, 5 min)</code> = <code>SET otp:code:&lt;phone&gt; &lt;hmac&gt; EX 300</code>. One atomic command: the value and its TTL are saved together.</li>
+<li>We store <strong><code>hmac(code)</code></strong>, never the code itself (topic 20).</li>
+<li>If the user requests a new code, it <strong>overwrites</strong> the old one, so only the latest code works.</li>
+<li><code>delete(triesKey)</code>: a new code starts with zero wrong attempts.</li>
+</ul>
+<p><strong>Step 6: send the SMS</strong></p>
+<pre><code class="language-java">sms.send(phone, &quot;Your Namastute code is &quot; + code + &quot;. It expires in 5 minutes.&quot;);
+</code></pre>
+<ul>
+<li>Calls whichever <code>SmsSender</code> Spring injected. In development, <code>LogSmsSender</code> prints it to the console.</li>
+<li><strong>Why store before sending:</strong> if we sent first and then crashed before storing, the user would hold a code the server never saved, a guaranteed failure. Store first, and the worst case is a stored code whose SMS never arrived; the user simply asks again.</li>
+</ul>
+<h3 id="238-verify-checking-a-code">23.8 <code>verify</code>: checking a code</h3>
+<pre><code class="language-java">void verify(String phone, String code) {
+</code></pre>
+<p><strong>Step 1: is there a code at all?</strong></p>
+<pre><code class="language-java">String stored = redis.opsForValue().get(codeKey(phone));
+if (stored == null) {
+    throw invalidCode();
+}
+</code></pre>
+<ul>
+<li><code>get</code> = Redis <code>GET</code>. Returns the stored HMAC, or <code>null</code> if there&#39;s no key (never requested, already used, or expired).</li>
+<li>We answer <strong>400 <code>OTP_INVALID</code>, &quot;Code is wrong or expired&quot;</strong> for all of these on purpose. Saying &quot;no code exists for this number&quot; would tell an attacker something.</li>
+</ul>
+<p><strong>Step 2: count the attempt</strong></p>
+<pre><code class="language-java">if (hit(triesKey(phone), OTP_TTL) &gt; MAX_ATTEMPTS) {
+    redis.delete(List.of(codeKey(phone), triesKey(phone)));
+    throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, &quot;OTP_TOO_MANY_ATTEMPTS&quot;,
+            &quot;Too many wrong codes, request a new one&quot;);
+}
+</code></pre>
+<ul>
+<li>Every attempt is counted <strong>before</strong> comparing, so there&#39;s no way to guess without being counted.</li>
+<li>More than 5 attempts → delete both keys (the code is now useless) and answer <strong>429</strong>. Guessing a 6-digit code in 5 tries: 5 in 1,000,000.</li>
+<li><code>List.of(a, b)</code>: a fixed list of two keys; <code>delete(list)</code> = Redis <code>DEL a b</code> in one command.</li>
+</ul>
+<p><strong>Step 3: compare, safely</strong></p>
+<pre><code class="language-java">boolean matches = MessageDigest.isEqual(
+        hmac(code).getBytes(StandardCharsets.UTF_8),
+        stored.getBytes(StandardCharsets.UTF_8));
+</code></pre>
+<ul>
+<li>Compute the HMAC of the code the user typed and compare it to the stored HMAC. We never need the original code back; matching fingerprints are enough (topic 20.1).</li>
+<li><code>MessageDigest.isEqual</code> compares in <strong>constant time</strong> (topic 20.4), so response timing leaks nothing.</li>
+<li><code>boolean</code> (small b) is a plain true/false that can&#39;t be <code>null</code>.</li>
+</ul>
+<p><strong>Step 4: succeed only once</strong></p>
+<pre><code class="language-java">// Only the request whose DEL actually removes the code wins, so two simultaneous correct guesses can&#39;t both pass
+if (!matches || !Boolean.TRUE.equals(redis.delete(codeKey(phone)))) {
+    throw invalidCode();
+}
+redis.delete(triesKey(phone));
+</code></pre>
+<ul>
+<li><code>||</code> means &quot;or&quot;, and it&#39;s <strong>short-circuit</strong>: if <code>!matches</code> is true (wrong code), Java doesn&#39;t evaluate the right side at all, so a wrong guess <strong>never deletes</strong> the code.</li>
+<li>If the code matches, we <code>delete</code> the code key. <code>delete</code> returns <code>true</code> <strong>only if this call actually removed the key</strong>.</li>
+<li><strong>The race it prevents:</strong> two requests arrive at the same instant with the correct code (say an attacker who intercepted the SMS, racing the real user). Both pass steps 1–3. Redis handles commands one at a time, so only <strong>one</strong> <code>DEL</code> finds the key and gets <code>true</code>; the other gets <code>false</code> → <code>OTP_INVALID</code>. <strong>The code can only ever be used once.</strong></li>
+<li>Finally, clean up the attempt counter. Reaching the end of the method without an exception = <strong>verified</strong>.</li>
+</ul>
+<h3 id="239-hit-the-counter-helper">23.9 <code>hit</code>: the counter helper</h3>
+<pre><code class="language-java">private long hit(String key, Duration window) {
+    Long count = redis.execute(HIT, List.of(key), String.valueOf(window.toMillis()));
+    if (count == null) {
+        throw new IllegalStateException(&quot;Redis returned no count for &quot; + key);
+    }
+    return count;
+}
+</code></pre>
+<ul>
+<li><code>private</code>: only used inside this class. Written once, used for all three counters (phone, IP, attempts).</li>
+<li><code>redis.execute(script, keys, args...)</code>: run the Lua script from 23.4. <code>List.of(key)</code> becomes <code>KEYS[1]</code>; the window in milliseconds (<code>window.toMillis()</code>, turned into text with <code>String.valueOf</code>) becomes <code>ARGV[1]</code>.</li>
+<li>The result is a <code>Long</code> object that, in theory, could be <code>null</code>. We treat that as a broken setup and stop with a clear message rather than a confusing crash later.</li>
+<li><code>IllegalStateException</code>: Java&#39;s standard &quot;something is in a state that should be impossible&quot; exception. Not an <code>ApiException</code>, so it becomes a <strong>500</strong>: a server problem, not the user&#39;s fault.</li>
+<li><code>return count</code>: Java automatically converts the <code>Long</code> object to a plain <code>long</code> number (<strong>unboxing</strong>).</li>
+</ul>
+<h3 id="2310-hmac-the-fingerprint">23.10 <code>hmac</code>: the fingerprint</h3>
+<pre><code class="language-java">private String hmac(String code) {
+    try {
+        Mac mac = Mac.getInstance(&quot;HmacSHA256&quot;);
+        mac.init(hmacKey);
+        return HexFormat.of().formatHex(mac.doFinal(code.getBytes(StandardCharsets.UTF_8)));
+    } catch (GeneralSecurityException e) {
+        throw new IllegalStateException(&quot;HmacSHA256 unavailable&quot;, e);
+    }
+}
+</code></pre>
+<ul>
+<li><code>Mac.getInstance(&quot;HmacSHA256&quot;)</code>: get Java&#39;s built-in HMAC-SHA256 calculator. (<strong>MAC</strong> = Message Authentication Code.)</li>
+<li><code>mac.init(hmacKey)</code>: load our secret key into it.</li>
+<li><code>mac.doFinal(bytes)</code>: compute the fingerprint: 32 bytes.</li>
+<li><code>HexFormat.of().formatHex(...)</code>: write those bytes as <strong>hex</strong> text (<code>0-9</code>, <code>a-f</code>, two characters per byte) → 64 characters, easy to store in Redis.</li>
+<li><code>try { ... } catch (GeneralSecurityException e) { ... }</code>: Java forces us to handle this <strong>checked exception</strong> (one the compiler makes you deal with). It can&#39;t actually happen, because every Java installation includes HMAC-SHA256, so we convert it into a clear unchecked exception, keeping the original <code>e</code> attached as the <strong>cause</strong> for debugging.</li>
+</ul>
+<h3 id="2311-small-helpers">23.11 Small helpers</h3>
+<pre><code class="language-java">private static String codeKey(String phone) { return &quot;otp:code:&quot; + phone; }
+private static String triesKey(String phone) { return &quot;otp:tries:&quot; + phone; }
+private static String cooldownKey(String phone) { return &quot;otp:cooldown:&quot; + phone; }
+private static ApiException invalidCode() { return new ApiException(HttpStatus.BAD_REQUEST, &quot;OTP_INVALID&quot;, &quot;Code is wrong or expired&quot;); }
+private static ApiException rateLimited() { return new ApiException(HttpStatus.TOO_MANY_REQUESTS, &quot;OTP_RATE_LIMITED&quot;, &quot;Too many codes requested, try again later&quot;); }
+</code></pre>
+<ul>
+<li>One place builds each key name, so a typo can&#39;t make <code>requestOtp</code> and <code>verify</code> use different keys.</li>
+<li>The two error helpers <strong>return</strong> an exception and the caller <strong>throws</strong> it (<code>throw invalidCode();</code>). Same error everywhere, written once.</li>
+<li><code>static</code>: they don&#39;t use any fields, so they don&#39;t need an object.</li>
+</ul>
+<h3 id="2312-the-tests-otpservicetestjava">23.12 The tests (<code>OtpServiceTest.java</code>)</h3>
+<ul>
+<li><strong><code>@SpringBootTest</code></strong>: an <strong>integration test</strong>: starts the whole app with the real Redis and Postgres from Docker.</li>
+<li><strong>The fake SMS:</strong> a <code>@TestConfiguration</code> adds a <code>CapturingSms</code> bean marked <strong><code>@Primary</code></strong> (&quot;when there are two <code>SmsSender</code>s, inject this one&quot;). It just remembers the last message, so a test can read the code the way a user reads their phone.</li>
+<li><strong><code>@BeforeEach cleanRedis()</code></strong>: runs before every test and deletes that test&#39;s keys, so tests don&#39;t affect each other.</li>
+<li><strong><code>@Autowired</code></strong>: in tests, fields can be injected directly (allowed in tests; in app code we use constructors).</li>
+<li><strong>What each test proves:</strong><table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>correctCodeWorksOnlyOnce</code></td>
+<td>Right code passes; reusing it gives <code>OTP_INVALID</code> (single use)</td>
+</tr>
+<tr>
+<td><code>secondRequestWithinCooldownIsRejected</code></td>
+<td>Two requests within 30 s → <code>OTP_COOLDOWN</code></td>
+</tr>
+<tr>
+<td><code>fourthRequestInWindowIsRateLimited</code></td>
+<td>4th request in 15 min → <code>OTP_RATE_LIMITED</code>, and the counter <strong>has a TTL</strong> (the &quot;blocked forever&quot; bug is gone)</td>
+</tr>
+<tr>
+<td><code>sixthWrongGuessLocksTheCode</code></td>
+<td>5 wrong guesses → <code>OTP_INVALID</code>; 6th → <code>OTP_TOO_MANY_ATTEMPTS</code> and the code is deleted</td>
+</tr>
+<tr>
+<td><code>storesHmacNotTheCode</code></td>
+<td>Redis holds a 64-character HMAC that doesn&#39;t contain the code</td>
+</tr>
+</tbody></table>
+</li>
+<li><strong>AssertJ</strong> (<code>assertThat(x).isEqualTo(y)</code>) reads like a sentence and gives clear failure messages.</li>
+<li><code>catchThrowable(() -&gt; ...)</code> runs the code and <strong>captures</strong> the exception instead of letting it fail the test, so we can check its error code. <code>() -&gt; ...</code> is a <strong>lambda</strong>: a small piece of code passed around as a value, run later.</li>
+<li><strong>CI</strong> now also starts a Redis service, otherwise these tests would fail on GitHub.</li>
+</ul>
+<hr>
+<h2 id="24-command-cheat-sheet">24. Command cheat sheet</h2>
 <h3 id="database-from-namastute">Database (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d      # start Postgres
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
@@ -736,6 +1391,9 @@ docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d na
 <h3 id="api-from-appsapi">API (from <code>apps/api</code>)</h3>
 <pre><code class="language-bash">.\mvnw.cmd spring-boot:run    # run the app (http://localhost:8080/actuator/health)
 .\mvnw.cmd test               # run tests (needs Postgres up)
+</code></pre>
+<h3 id="redis-from-namastute">Redis (from <code>Namastute</code>)</h3>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml exec redis redis-cli   # then SET/GET/TTL/INCR..., exit to leave
 </code></pre>
 <h3 id="web-from-appsweb">Web (from <code>apps/web</code>)</h3>
 <pre><code class="language-bash">pnpm install
@@ -757,7 +1415,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="19-glossary">19. Glossary</h2>
+<h2 id="25-glossary">25. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -906,12 +1564,84 @@ git fetch --prune
 <td>Docker storage that outlives containers</td>
 </tr>
 <tr>
+<td>Atomic</td>
+<td>Happens as one indivisible step; can&#39;t be interleaved</td>
+</tr>
+<tr>
+<td>Authentication / Authorization</td>
+<td>Who you are / what you may do</td>
+</tr>
+<tr>
+<td>Dockerfile</td>
+<td>Recipe for building your own image</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>One HTTP method + path the API accepts</td>
+</tr>
+<tr>
+<td>Hash</td>
+<td>One-way fixed-length fingerprint of data</td>
+</tr>
+<tr>
+<td>HMAC</td>
+<td>A hash mixed with a secret key</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>Request/response protocol between browser and server</td>
+</tr>
+<tr>
+<td>IP address</td>
+<td>The network address a request comes from</td>
+</tr>
+<tr>
+<td>JSON</td>
+<td>Text format for data: <code>{&quot;key&quot;: value}</code></td>
+</tr>
+<tr>
+<td>Key-value store</td>
+<td>Database that saves values under keys (Redis)</td>
+</tr>
+<tr>
+<td>OTP</td>
+<td>One-time password</td>
+</tr>
+<tr>
+<td>Race condition</td>
+<td>Bug where the result depends on the timing of simultaneous operations</td>
+</tr>
+<tr>
+<td>Rate limiting</td>
+<td>Capping how often something can be done</td>
+</tr>
+<tr>
+<td>REST</td>
+<td>API style: URLs name things, methods say what to do</td>
+</tr>
+<tr>
+<td>Stateless</td>
+<td>Each request stands alone; the server remembers nothing between them</td>
+</tr>
+<tr>
+<td>Status code</td>
+<td>3-digit result of an HTTP request (2xx/4xx/5xx)</td>
+</tr>
+<tr>
+<td>Timing attack</td>
+<td>Learning secrets from how long comparisons take</td>
+</tr>
+<tr>
+<td>TTL</td>
+<td>Time to live: automatic expiry of a key</td>
+</tr>
+<tr>
 <td>YAML</td>
 <td>Indentation-based settings format</td>
 </tr>
 </tbody></table>
 <hr>
-<h2 id="20-interview-questions-to-practise">20. Interview questions to practise</h2>
+<h2 id="26-interview-questions-to-practise">26. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -923,6 +1653,11 @@ git fetch --prune
 <li>Why is an AWS budget not enough on its own to stop spending? Why exclude credits?</li>
 <li>Why not Kubernetes for this project? When would you add it?</li>
 <li>What&#39;s the difference between a unit test and an integration test? Which kind is <code>contextLoads</code>?</li>
+<li>Why is HTTP called stateless, and what does that force a login system to do?</li>
+<li>Why store an HMAC of the OTP instead of a plain SHA-256 hash?</li>
+<li>Why keep OTPs in Redis rather than Postgres? What happens if Redis loses them?</li>
+<li>Explain a fixed-window rate limiter and its weakness. What would you use instead?</li>
+<li>What is a race condition? Give one from this project and how to prevent it.</li>
 </ol>
 
 
