@@ -3,7 +3,7 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export type Profile = { id: string; phone: string; name: string | null };
+export type Profile = { id: string; phone: string; name: string | null; upiId: string | null };
 type TokenResponse = { accessToken: string; expiresIn: number };
 
 export class ApiError extends Error {
@@ -75,6 +75,11 @@ export async function verifyOtp(phone: string, code: string): Promise<void> {
 
 export function getMe(): Promise<Profile> {
   return request<Profile>("/api/v1/me");
+}
+
+// Fields left out are not changed; upiId "" removes it
+export function updateMe(changes: { name?: string; upiId?: string }): Promise<Profile> {
+  return request<Profile>("/api/v1/me", { method: "PATCH", body: JSON.stringify(changes) });
 }
 
 // On page load: memory was wiped, so use the refresh cookie (if any) to log back in silently

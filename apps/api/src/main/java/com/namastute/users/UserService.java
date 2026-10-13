@@ -1,8 +1,10 @@
 package com.namastute.users;
 
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 // The users module's public API: other modules (auth) call these methods, never the repository directly
 @Service
@@ -30,9 +32,25 @@ public class UserService {
     }
 
     Profile profile(UUID id) {
-        User user = users.findById(id).orElseThrow();
-        return new Profile(user.getId(), user.getPhone(), user.getName());
+        return toProfile(users.findById(id).orElseThrow());
     }
 
-    record Profile(UUID id, String phone, String name) {}
+    // null = leave unchanged; an empty upiId = remove it. No save() call: see Learning Notes 31.3 (dirty checking).
+    @Transactional
+    Profile updateProfile(UUID id, String name, String upiId) {
+        User user = users.findById(id).orElseThrow();
+        if (name != null) {
+            user.changeName(name);
+        }
+        if (upiId != null) {
+            user.changeUpiId(upiId.isEmpty() ? null : upiId.toLowerCase(Locale.ROOT));
+        }
+        return toProfile(user);
+    }
+
+    private static Profile toProfile(User user) {
+        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId());
+    }
+
+    record Profile(UUID id, String phone, String name, String upiId) {}
 }

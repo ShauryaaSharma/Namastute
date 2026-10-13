@@ -71,14 +71,16 @@
 <details><summary><a href="#28-browsers-origins-and-cors">28. Browsers, origins and CORS</a></summary><a class="sub" href="#281-origin">28.1 Origin</a><a class="sub" href="#282-same-origin-policy">28.2 Same-Origin Policy</a><a class="sub" href="#283-cors-cross-origin-resource-sharing">28.3 CORS (Cross-Origin Resource Sharing)</a><a class="sub" href="#284-origin-vs-site-and-a-production-decision">28.4 Origin vs site, and a production decision</a></details>
 <details><summary><a href="#29-react-and-nextjs-in-the-browser">29. React and Next.js in the browser</a></summary><a class="sub" href="#291-server-vs-client-components">29.1 Server vs Client Components</a><a class="sub" href="#292-state-hooks-events">29.2 State, hooks, events</a><a class="sub" href="#293-fetch-promises-asyncawait">29.3 fetch, Promises, async/await</a><a class="sub" href="#294-staying-logged-in">29.4 Staying logged in</a><a class="sub" href="#295-environment-variables-in-nextjs">29.5 Environment variables in Next.js</a></details>
 <details><summary><a href="#30-code-walkthrough-cors-and-the-login-screen">30. Code walkthrough: CORS and the login screen</a></summary><a class="sub" href="#301-api-securityconfigjava-cors-part">30.1 API: SecurityConfig.java (CORS part)</a><a class="sub" href="#302-libapits-the-only-file-that-talks-to-the-api">30.2 lib/api.ts: the only file that talks to the API</a><a class="sub" href="#303-apploginpagetsx-the-login-screen">30.3 app/login/page.tsx: the login screen</a><a class="sub" href="#304-appsession-boxtsx-and-apppagetsx">30.4 app/session-box.tsx and app/page.tsx</a><a class="sub" href="#305-small-changes">30.5 Small changes</a><a class="sub" href="#306-verified-in-a-real-browser">30.6 Verified in a real browser</a></details>
-<details><summary><a href="#31-command-cheat-sheet">31. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#32-glossary">32. Glossary</a>
-<a class="topic" href="#33-interview-questions-to-practise">33. Interview questions to practise</a>
+<details><summary><a href="#31-updating-data-patch-dirty-checking-unicode">31. Updating data: PATCH, dirty checking, Unicode</a></summary><a class="sub" href="#311-patch-and-partial-updates">31.1 PATCH and partial updates</a><a class="sub" href="#312-validating-names-for-india-unicode-categories">31.2 Validating names for India: Unicode categories</a><a class="sub" href="#313-changing-data-with-jpa-dirty-checking">31.3 Changing data with JPA: dirty checking</a><a class="sub" href="#314-privacy-by-design">31.4 Privacy by design</a><a class="sub" href="#315-testing-protected-endpoints-without-logging-in">31.5 Testing protected endpoints without logging in</a><a class="sub" href="#316-reusing-frontend-logic-a-custom-hook">31.6 Reusing frontend logic: a custom hook</a></details>
+<details><summary><a href="#32-code-walkthrough-the-profile">32. Code walkthrough: the profile</a></summary><a class="sub" href="#321-usersuserjava-additions">32.1 users/User.java (additions)</a><a class="sub" href="#322-usersuserservicejava-additions">32.2 users/UserService.java (additions)</a><a class="sub" href="#323-usersmecontrollerjava-additions">32.3 users/MeController.java (additions)</a><a class="sub" href="#324-profiletestjava">32.4 ProfileTest.java</a><a class="sub" href="#325-libuse-actionts-new">32.5 lib/use-action.ts (new)</a><a class="sub" href="#326-libapits-additions">32.6 lib/api.ts (additions)</a><a class="sub" href="#327-apploginpagetsx-changes">32.7 app/login/page.tsx (changes)</a><a class="sub" href="#328-appprofilepagetsx-new">32.8 app/profile/page.tsx (new)</a><a class="sub" href="#329-appsession-boxtsx-changes">32.9 app/session-box.tsx (changes)</a><a class="sub" href="#3210-verified-in-a-real-browser">32.10 Verified in a real browser</a></details>
+<details><summary><a href="#33-command-cheat-sheet">33. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#34-glossary">34. Glossary</a>
+<a class="topic" href="#35-interview-questions-to-practise">35. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-13 (login screen: CORS, origins, React state/effects, silent refresh).</p>
+<p>Last updated: 2026-10-13 (profile: PATCH, dirty checking, Unicode names, custom hook).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -112,9 +114,11 @@
 <li><a href="#28-browsers-origins-and-cors">Browsers, origins and CORS</a></li>
 <li><a href="#29-react-and-nextjs-in-the-browser">React and Next.js in the browser</a></li>
 <li><a href="#30-code-walkthrough-cors-and-the-login-screen">Code walkthrough: CORS and the login screen</a></li>
-<li><a href="#31-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#32-glossary">Glossary</a></li>
-<li><a href="#33-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#31-updating-data-patch-dirty-checking-unicode">Updating data: PATCH, dirty checking, Unicode</a></li>
+<li><a href="#32-code-walkthrough-the-profile">Code walkthrough: the profile</a></li>
+<li><a href="#33-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#34-glossary">Glossary</a></li>
+<li><a href="#35-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -2173,7 +2177,258 @@ useEffect(() =&gt; {
 <h3 id="306-verified-in-a-real-browser">30.6 Verified in a real browser</h3>
 <p>Invalid number → instant message, no request · valid number → code sent, timer counts down · wrong code → &quot;Code is wrong or expired&quot; · right code → home shows &quot;Logged in as +91…&quot; · preflight <code>OPTIONS</code> → 200 before each call · page reload → <strong>one</strong> silent refresh → still logged in · <code>document.cookie</code> is empty (HttpOnly works) and nothing in <code>localStorage</code> · logout → reload shows &quot;Log in&quot;.</p>
 <hr>
-<h2 id="31-command-cheat-sheet">31. Command cheat sheet</h2>
+<h2 id="31-updating-data-patch-dirty-checking-unicode">31. Updating data: PATCH, dirty checking, Unicode</h2>
+<h3 id="311-patch-and-partial-updates">31.1 PATCH and partial updates</h3>
+<ul>
+<li><strong><code>PUT</code></strong> = replace the whole thing (send every field). <strong><code>PATCH</code></strong> = change <strong>part</strong> of it (send only what changes).</li>
+<li>Our <code>PATCH /api/v1/me</code> rules:<ul>
+<li>field <strong>left out</strong> of the JSON → arrives in Java as <code>null</code> → <strong>unchanged</strong>;</li>
+<li><code>&quot;upiId&quot;: &quot;&quot;</code> (empty string) → <strong>remove</strong> the UPI ID;</li>
+<li>any other value → validated, then saved.</li>
+</ul>
+</li>
+<li>This &quot;absent vs empty&quot; distinction is the classic PATCH design question. <code>null</code> can&#39;t mean both &quot;don&#39;t touch&quot; and &quot;remove&quot;, so we give &quot;remove&quot; its own value (<code>&quot;&quot;</code>).</li>
+<li><strong>Users can only edit themselves:</strong> the id comes from the <strong>token</strong> (<code>jwt.getSubject()</code>), never from the URL or body. There&#39;s no <code>PATCH /users/{id}</code> that someone could point at another person&#39;s id.</li>
+</ul>
+<h3 id="312-validating-names-for-india-unicode-categories">31.2 Validating names for India: Unicode categories</h3>
+<ul>
+<li><strong>Unicode</strong> gives every character in every script a <strong>category</strong>. In regex:<ul>
+<li><code>\p{L}</code> = any <strong>letter</strong> (a, अ, க, অ…);</li>
+<li><code>\p{M}</code> = any <strong>combining mark</strong>: a sign that attaches to the letter before it.</li>
+</ul>
+</li>
+<li>In Indian scripts, <strong>vowel signs (matras) are marks, not letters</strong>: in <code>की</code>, <code>क</code> is a letter and <code>ी</code> is a mark. A rule allowing only <code>\p{L}</code> rejected <code>केशव दीक्षित</code>; the test caught it. Our rule allows letters <strong>and</strong> marks, so Hindi, Tamil, Bengali names all work.</li>
+<li>In JavaScript the same classes need the <strong><code>u</code> flag</strong> (Unicode mode): <code>/^\p{L}.../u</code>.</li>
+<li><strong>Client checks are for friendly instant messages; server checks are for safety.</strong> Both use the same rules.</li>
+</ul>
+<h3 id="313-changing-data-with-jpa-dirty-checking">31.3 Changing data with JPA: dirty checking</h3>
+<ul>
+<li>So far we only <em>inserted</em> (<code>save</code>) and <em>read</em>. To <strong>update</strong>:<ol>
+<li>load the entity (<code>findById</code>);</li>
+<li>change its fields (<code>user.changeName(...)</code>);</li>
+<li><strong>that&#39;s it</strong>: no <code>save()</code> call.</li>
+</ol>
+</li>
+<li><strong>Dirty checking:</strong> inside a <strong>transaction</strong>, Hibernate remembers each loaded entity&#39;s original values. When the transaction <strong>commits</strong> (at the end of the <code>@Transactional</code> method), it compares, finds changed (&quot;<strong>dirty</strong>&quot;) fields, and writes an <code>UPDATE</code> for just those.</li>
+<li>That&#39;s why <code>updateProfile</code> is <strong><code>@Transactional</code></strong>: without a transaction around it, there&#39;s no commit moment, so the changes would never be written.</li>
+<li><code>@Transactional</code> also means <strong>all or nothing</strong>: if something throws halfway, every change in the method is rolled back.</li>
+</ul>
+<h3 id="314-privacy-by-design">31.4 Privacy by design</h3>
+<ul>
+<li>The UPI ID is <strong>personal data</strong>. Rule (design §4.4): shown only to the user themselves and their own group members.</li>
+<li>Today only <code>/me</code> returns it, so it&#39;s safe. Every future endpoint that returns <em>other</em> users must leave it out unless the caller is in the same group.</li>
+<li>Stored lower-cased (UPI IDs are case-insensitive), so later comparisons are simple.</li>
+</ul>
+<h3 id="315-testing-protected-endpoints-without-logging-in">31.5 Testing protected endpoints without logging in</h3>
+<ul>
+<li><code>spring-boot-starter-security-oauth2-resource-server-test</code> adds <strong><code>jwt()</code></strong>: <code>mvc.perform(get(...).with(jwt().jwt(j -&gt; j.subject(id))))</code> means &quot;this request carries a valid token for user <code>id</code>&quot;.</li>
+<li>The full OTP → token flow is already tested in <code>AuthFlowTest</code>; profile tests only need &quot;logged in as X&quot;, so they skip it. Faster, and each test checks one thing.</li>
+</ul>
+<h3 id="316-reusing-frontend-logic-a-custom-hook">31.6 Reusing frontend logic: a custom hook</h3>
+<ul>
+<li>Login and profile forms both need &quot;busy while saving&quot; + &quot;show the error&quot;. Copying that code twice means fixing bugs twice.</li>
+<li>A <strong>custom hook</strong> is your own function starting with <code>use</code> that bundles hooks (<code>useState</code>) and logic, so components can share it: <code>const { busy, error, setError, run } = useAction();</code>.</li>
+<li>Rule of thumb: extract when the <strong>same</strong> logic is needed in a second place, not &quot;in case we need it later&quot;.</li>
+</ul>
+<hr>
+<h2 id="32-code-walkthrough-the-profile">32. Code walkthrough: the profile</h2>
+<h3 id="321-usersuserjava-additions">32.1 <code>users/User.java</code> (additions)</h3>
+<pre><code class="language-java">private String upiId;
+</code></pre>
+<ul>
+<li>Maps to the <code>upi_id</code> column (Spring&#39;s naming rule turns <code>upiId</code> into <code>upi_id</code>).</li>
+</ul>
+<pre><code class="language-java">void changeName(String name) { this.name = name; }
+void changeUpiId(String upiId) { this.upiId = upiId; }
+</code></pre>
+<ul>
+<li>The only ways to modify a user. Named methods rather than generic setters make it clear <strong>what</strong> can change; later they&#39;re the natural place for rules (e.g. &quot;banned users can&#39;t rename&quot;).</li>
+</ul>
+<h3 id="322-usersuserservicejava-additions">32.2 <code>users/UserService.java</code> (additions)</h3>
+<pre><code class="language-java">@Transactional
+Profile updateProfile(UUID id, String name, String upiId) {
+    User user = users.findById(id).orElseThrow();
+    if (name != null) {
+        user.changeName(name);
+    }
+    if (upiId != null) {
+        user.changeUpiId(upiId.isEmpty() ? null : upiId.toLowerCase(Locale.ROOT));
+    }
+    return toProfile(user);
+}
+</code></pre>
+<ul>
+<li><code>@Transactional</code>: start a transaction; commit when the method returns (31.3).</li>
+<li><code>findById(id).orElseThrow()</code>: load the user. The id comes from a valid token, so the user exists; if not, something is badly wrong, and an exception (500) is right.</li>
+<li><code>if (name != null)</code>: only change what was sent (31.1).</li>
+<li><code>upiId.isEmpty() ? null : ...</code>: <code>&quot;&quot;</code> means remove → store <code>null</code>.</li>
+<li><code>toLowerCase(Locale.ROOT)</code>: lower-case with <strong>language-neutral</strong> rules. Plain <code>toLowerCase()</code> uses the computer&#39;s language; on a Turkish system, <code>I</code> becomes <code>ı</code> (dotless i), a famous bug.</li>
+<li>No <code>save()</code>: dirty checking writes the <code>UPDATE</code> at commit.</li>
+</ul>
+<pre><code class="language-java">private static Profile toProfile(User user) { ... }
+record Profile(UUID id, String phone, String name, String upiId) {}
+</code></pre>
+<ul>
+<li>One place converts an entity into the response record; <code>profile()</code> and <code>updateProfile()</code> both use it.</li>
+</ul>
+<h3 id="323-usersmecontrollerjava-additions">32.3 <code>users/MeController.java</code> (additions)</h3>
+<pre><code class="language-java">static final String NAME = &quot;^\\p{L}([\\p{L}\\p{M} .&#39;-]*[\\p{L}\\p{M}.])?$&quot;;
+</code></pre>
+<p>Read it piece by piece:</p>
+<ul>
+<li><code>^\p{L}</code>: must <strong>start</strong> with a letter (not a space or a dot).</li>
+<li><code>( ... )?</code>: the rest is optional (the <code>@Size(min = 2)</code> rule handles length).</li>
+<li><code>[\p{L}\p{M} .&#39;-]*</code>: then any number of letters, marks, spaces, dots, apostrophes, hyphens (<code>D&#39;Souza</code>, <code>Pinto-Rao</code>, <code>Jr.</code>).</li>
+<li><code>[\p{L}\p{M}.]$</code>: must <strong>end</strong> with a letter, mark or dot, so no trailing space.</li>
+<li><code>\\</code> is doubled because <code>\</code> is also Java&#39;s escape character inside strings.</li>
+</ul>
+<pre><code class="language-java">static final String UPI_ID_OR_EMPTY = &quot;^$|^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$&quot;;
+</code></pre>
+<ul>
+<li><code>^$</code> = the empty string (remove). <code>|</code> = <strong>or</strong>.</li>
+<li><code>[a-zA-Z0-9._-]{2,256}</code>: the handle: 2–256 of letters, digits, <code>.</code>, <code>_</code>, <code>-</code>.</li>
+<li><code>@[a-zA-Z]{2,64}</code>: <code>@</code> then the bank&#39;s handle, letters only (<code>okaxis</code>, <code>ybl</code>).</li>
+</ul>
+<pre><code class="language-java">record UpdateMe(
+        @Size(min = 2, max = 60, message = &quot;must be 2 to 60 characters&quot;)
+        @Pattern(regexp = NAME, message = &quot;...&quot;)
+        String name,
+        @Pattern(regexp = UPI_ID_OR_EMPTY, message = &quot;must look like yourname@bank&quot;)
+        String upiId) {}
+</code></pre>
+<ul>
+<li>The PATCH body. Bean Validation <strong>skips <code>null</code> fields</strong> (<code>@Size</code> and <code>@Pattern</code> treat null as valid), which is exactly &quot;left out = unchanged&quot;.</li>
+</ul>
+<pre><code class="language-java">@PatchMapping(&quot;/api/v1/me&quot;)
+UserService.Profile update(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateMe req) {
+    return users.updateProfile(UUID.fromString(jwt.getSubject()), req.name(), req.upiId());
+}
+</code></pre>
+<ul>
+<li><code>@PatchMapping</code>: handles <code>PATCH /api/v1/me</code>. The user id comes <strong>only</strong> from the token (31.1). Returns the updated profile as JSON.</li>
+</ul>
+<h3 id="324-profiletestjava">32.4 <code>ProfileTest.java</code></h3>
+<ul>
+<li><code>freshUser()</code> creates a user with a random number before each test, so tests never affect each other.</li>
+<li><code>jwt().jwt(j -&gt; j.subject(userId.toString()))</code>: a fake-but-accepted token for that user (31.5).<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>newUserHasNoNameOrUpiId</code></td>
+<td>A new user starts with neither</td>
+</tr>
+<tr>
+<td><code>setsNameAndUpiIdLowercased</code></td>
+<td>Both saved; <code>Keshav.D@OkAxis</code> stored as <code>keshav.d@okaxis</code></td>
+</tr>
+<tr>
+<td><code>leftOutFieldIsUnchangedAndEmptyUpiIdRemovesIt</code></td>
+<td>The PATCH rules from 31.1</td>
+</tr>
+<tr>
+<td><code>acceptsNamesInAnyScript</code></td>
+<td>Hindi, Tamil, Bengali, <code>D&#39;Souza-Pinto Jr.</code></td>
+</tr>
+<tr>
+<td><code>rejectsBadInput</code></td>
+<td>Too short, leading space, <code>&lt;script&gt;</code>, UPI without <code>@bank</code>, bank with digits → 400 <code>VALIDATION_FAILED</code></td>
+</tr>
+<tr>
+<td><code>needsLogin</code></td>
+<td>No token → 401</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="325-libuse-actionts-new">32.5 <code>lib/use-action.ts</code> (new)</h3>
+<pre><code class="language-ts">export function useAction() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(&quot;&quot;);
+  async function run(action: () =&gt; Promise&lt;void&gt;) { ... }
+  return { busy, error, setError, run };
+}
+</code></pre>
+<ul>
+<li>The busy/error logic that used to live inside the login page, moved here unchanged (31.6). It returns an <strong>object</strong>, and callers pick what they need with <strong>destructuring</strong>: <code>const { busy, error, run } = useAction();</code>.</li>
+</ul>
+<h3 id="326-libapits-additions">32.6 <code>lib/api.ts</code> (additions)</h3>
+<pre><code class="language-ts">export type Profile = { id: string; phone: string; name: string | null; upiId: string | null };
+
+export function updateMe(changes: { name?: string; upiId?: string }): Promise&lt;Profile&gt; {
+  return request&lt;Profile&gt;(&quot;/api/v1/me&quot;, { method: &quot;PATCH&quot;, body: JSON.stringify(changes) });
+}
+</code></pre>
+<ul>
+<li><code>name?:</code> = an <strong>optional property</strong>: it may be missing entirely. <code>JSON.stringify</code> leaves out missing properties, which the API treats as &quot;unchanged&quot;.</li>
+</ul>
+<h3 id="327-apploginpagetsx-changes">32.7 <code>app/login/page.tsx</code> (changes)</h3>
+<ul>
+<li>Uses <code>useAction()</code> instead of its own copy.</li>
+<li>After a successful verify:<pre><code class="language-ts">const me = await getMe();
+router.replace(me.name ? &quot;/&quot; : &quot;/profile&quot;);
+</code></pre>
+First login (no name yet) → profile page; afterwards → home. The decision is made <strong>before</strong> navigating, so there&#39;s no flash of the wrong page.</li>
+</ul>
+<h3 id="328-appprofilepagetsx-new">32.8 <code>app/profile/page.tsx</code> (new)</h3>
+<pre><code class="language-tsx">const NAME = /^\p{L}([\p{L}\p{M} .&#39;-]*[\p{L}\p{M}.])?$/u;
+const UPI_ID = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/;
+</code></pre>
+<ul>
+<li>The same rules as the API, in JavaScript (<code>u</code> flag for <code>\p{...}</code>).</li>
+</ul>
+<pre><code class="language-tsx">useEffect(() =&gt; {
+  restoreSession()
+    .then((profile) =&gt; {
+      if (!profile) return router.replace(&quot;/login&quot;);
+      setMe(profile); setName(profile.name ?? &quot;&quot;); setUpiId(profile.upiId ?? &quot;&quot;);
+    })
+    .catch(() =&gt; router.replace(&quot;/login&quot;));
+}, [router]);
+</code></pre>
+<ul>
+<li>On load: not logged in → login page. Otherwise <strong>prefill</strong> the form with saved values (<code>?? &quot;&quot;</code> turns <code>null</code> into an empty box).</li>
+<li><code>[router]</code> in the dependency array: the effect uses <code>router</code>, so React&#39;s rules ask us to list it (it never actually changes).</li>
+</ul>
+<pre><code class="language-tsx">function save(e: FormEvent) {
+  e.preventDefault();
+  const cleanName = name.trim();
+  const cleanUpi = upiId.trim();
+  if (... !NAME.test(cleanName)) { setError(&quot;Enter your name ...&quot;); return; }
+  if (cleanUpi &amp;&amp; !UPI_ID.test(cleanUpi)) { setError(&quot;A UPI ID looks like ...&quot;); return; }
+  run(async () =&gt; { await updateMe({ name: cleanName, upiId: cleanUpi }); router.replace(&quot;/&quot;); });
+}
+</code></pre>
+<ul>
+<li><code>.trim()</code> removes spaces people accidentally type at the ends, so the strict API rule isn&#39;t hit by a stray space.</li>
+<li>Check locally first for a clear message, then send. An empty UPI box sends <code>&quot;&quot;</code>, which removes it.</li>
+</ul>
+<p><strong>The markup:</strong></p>
+<ul>
+<li>Heading says &quot;Complete your profile&quot; for a new user, &quot;Your profile&quot; afterwards.</li>
+<li>Each input has a <code>&lt;label htmlFor&gt;</code> and a short help line linked with <strong><code>aria-describedby</code></strong>, so screen readers read the help after the label.</li>
+<li><code>autoComplete=&quot;name&quot;</code> lets the browser offer the user&#39;s saved name; <code>autoCapitalize=&quot;none&quot;</code> and <code>spellCheck={false}</code> stop phones &quot;correcting&quot; a UPI ID.</li>
+<li><code>if (!me) return &lt;p&gt;Loading…&lt;/p&gt;;</code>: nothing editable shows until the saved values are loaded, so the form never flashes empty.</li>
+</ul>
+<h3 id="329-appsession-boxtsx-changes">32.9 <code>app/session-box.tsx</code> (changes)</h3>
+<ul>
+<li>Shows the <strong>name</strong> when there is one, else the phone: <code>{user.name ?? user.phone}</code>.</li>
+<li>Adds an &quot;Edit profile&quot; / &quot;Complete your profile&quot; link.</li>
+</ul>
+<h3 id="3210-verified-in-a-real-browser">32.10 Verified in a real browser</h3>
+<p>New number → after the code, lands on <strong>Complete your profile</strong> · invalid UPI → friendly message · Hindi name + <code>Keshav.D@OkAxis</code> → home shows the name, database has <code>keshav.d@okaxis</code> · Edit profile → form prefilled · clear the UPI ID → database value <code>null</code> · logged out → <code>/profile</code> redirects to <code>/login</code>.</p>
+<hr>
+<h2 id="33-command-cheat-sheet">33. Command cheat sheet</h2>
+<h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
+<pre><code class="language-bash">git switch main
+git pull
+git branch -D &lt;merged-branch&gt;
+git fetch --prune
+git switch -c &lt;type/next-feature&gt;
+</code></pre>
 <h3 id="database-from-namastute">Database (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d      # start Postgres
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
@@ -2207,7 +2462,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="32-glossary">32. Glossary</h2>
+<h2 id="34-glossary">34. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -2551,9 +2806,29 @@ git fetch --prune
 <td>Web Locks API</td>
 <td>Browser-wide lock shared by all tabs (<code>navigator.locks</code>)</td>
 </tr>
+<tr>
+<td>Combining mark</td>
+<td>Unicode sign that attaches to the previous letter (Indian vowel signs); <code>\p{M}</code></td>
+</tr>
+<tr>
+<td>Custom hook</td>
+<td>Your own <code>use...</code> function bundling React state and logic for reuse</td>
+</tr>
+<tr>
+<td>Dirty checking</td>
+<td>Hibernate detects changed fields and writes them at commit</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>HTTP method for changing part of a resource</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>HTTP method for replacing a whole resource</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="33-interview-questions-to-practise">33. Interview questions to practise</h2>
+<h2 id="35-interview-questions-to-practise">35. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -2583,6 +2858,10 @@ git fetch --prune
 <li>Server vs Client Components in Next.js: how do you choose?</li>
 <li>Why could two refresh calls at once log a user out everywhere, and how did we prevent it?</li>
 <li>Why is validating input in the browser not enough?</li>
+<li>PATCH vs PUT. How do you tell &quot;leave unchanged&quot; apart from &quot;remove&quot; in a PATCH?</li>
+<li>Why does updating a JPA entity need no save() call, and why must the method be @Transactional?</li>
+<li>A name regex using only \p{L} rejected Hindi names. Why, and what&#39;s the fix?</li>
+<li>Why must the user id for PATCH /me come from the token rather than the request?</li>
 </ol>
 
 

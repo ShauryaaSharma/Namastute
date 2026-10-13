@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-13 (login screen: CORS, origins, React state/effects, silent refresh).
+Last updated: 2026-10-13 (profile: PATCH, dirty checking, Unicode names, custom hook).
 
 ---
 
@@ -38,9 +38,11 @@ Last updated: 2026-10-13 (login screen: CORS, origins, React state/effects, sile
 28. [Browsers, origins and CORS](#28-browsers-origins-and-cors)
 29. [React and Next.js in the browser](#29-react-and-nextjs-in-the-browser)
 30. [Code walkthrough: CORS and the login screen](#30-code-walkthrough-cors-and-the-login-screen)
-31. [Command cheat sheet](#31-command-cheat-sheet)
-32. [Glossary](#32-glossary)
-33. [Interview questions to practise](#33-interview-questions-to-practise)
+31. [Updating data: PATCH, dirty checking, Unicode](#31-updating-data-patch-dirty-checking-unicode)
+32. [Code walkthrough: the profile](#32-code-walkthrough-the-profile)
+33. [Command cheat sheet](#33-command-cheat-sheet)
+34. [Glossary](#34-glossary)
+35. [Interview questions to practise](#35-interview-questions-to-practise)
 
 ---
 
@@ -1692,7 +1694,227 @@ Invalid number → instant message, no request · valid number → code sent, ti
 
 ---
 
-## 31. Command cheat sheet
+## 31. Updating data: PATCH, dirty checking, Unicode
+
+### 31.1 PATCH and partial updates
+- **`PUT`** = replace the whole thing (send every field). **`PATCH`** = change **part** of it (send only what changes).
+- Our `PATCH /api/v1/me` rules:
+  - field **left out** of the JSON → arrives in Java as `null` → **unchanged**;
+  - `"upiId": ""` (empty string) → **remove** the UPI ID;
+  - any other value → validated, then saved.
+- This "absent vs empty" distinction is the classic PATCH design question. `null` can't mean both "don't touch" and "remove", so we give "remove" its own value (`""`).
+- **Users can only edit themselves:** the id comes from the **token** (`jwt.getSubject()`), never from the URL or body. There's no `PATCH /users/{id}` that someone could point at another person's id.
+
+### 31.2 Validating names for India: Unicode categories
+- **Unicode** gives every character in every script a **category**. In regex:
+  - `\p{L}` = any **letter** (a, अ, க, অ…);
+  - `\p{M}` = any **combining mark**: a sign that attaches to the letter before it.
+- In Indian scripts, **vowel signs (matras) are marks, not letters**: in `की`, `क` is a letter and `ी` is a mark. A rule allowing only `\p{L}` rejected `केशव दीक्षित`; the test caught it. Our rule allows letters **and** marks, so Hindi, Tamil, Bengali names all work.
+- In JavaScript the same classes need the **`u` flag** (Unicode mode): `/^\p{L}.../u`.
+- **Client checks are for friendly instant messages; server checks are for safety.** Both use the same rules.
+
+### 31.3 Changing data with JPA: dirty checking
+- So far we only *inserted* (`save`) and *read*. To **update**:
+  1. load the entity (`findById`);
+  2. change its fields (`user.changeName(...)`);
+  3. **that's it**: no `save()` call.
+- **Dirty checking:** inside a **transaction**, Hibernate remembers each loaded entity's original values. When the transaction **commits** (at the end of the `@Transactional` method), it compares, finds changed ("**dirty**") fields, and writes an `UPDATE` for just those.
+- That's why `updateProfile` is **`@Transactional`**: without a transaction around it, there's no commit moment, so the changes would never be written.
+- `@Transactional` also means **all or nothing**: if something throws halfway, every change in the method is rolled back.
+
+### 31.4 Privacy by design
+- The UPI ID is **personal data**. Rule (design §4.4): shown only to the user themselves and their own group members.
+- Today only `/me` returns it, so it's safe. Every future endpoint that returns *other* users must leave it out unless the caller is in the same group.
+- Stored lower-cased (UPI IDs are case-insensitive), so later comparisons are simple.
+
+### 31.5 Testing protected endpoints without logging in
+- `spring-boot-starter-security-oauth2-resource-server-test` adds **`jwt()`**: `mvc.perform(get(...).with(jwt().jwt(j -> j.subject(id))))` means "this request carries a valid token for user `id`".
+- The full OTP → token flow is already tested in `AuthFlowTest`; profile tests only need "logged in as X", so they skip it. Faster, and each test checks one thing.
+
+### 31.6 Reusing frontend logic: a custom hook
+- Login and profile forms both need "busy while saving" + "show the error". Copying that code twice means fixing bugs twice.
+- A **custom hook** is your own function starting with `use` that bundles hooks (`useState`) and logic, so components can share it: `const { busy, error, setError, run } = useAction();`.
+- Rule of thumb: extract when the **same** logic is needed in a second place, not "in case we need it later".
+
+---
+
+## 32. Code walkthrough: the profile
+
+### 32.1 `users/User.java` (additions)
+```java
+private String upiId;
+```
+- Maps to the `upi_id` column (Spring's naming rule turns `upiId` into `upi_id`).
+
+```java
+void changeName(String name) { this.name = name; }
+void changeUpiId(String upiId) { this.upiId = upiId; }
+```
+- The only ways to modify a user. Named methods rather than generic setters make it clear **what** can change; later they're the natural place for rules (e.g. "banned users can't rename").
+
+### 32.2 `users/UserService.java` (additions)
+```java
+@Transactional
+Profile updateProfile(UUID id, String name, String upiId) {
+    User user = users.findById(id).orElseThrow();
+    if (name != null) {
+        user.changeName(name);
+    }
+    if (upiId != null) {
+        user.changeUpiId(upiId.isEmpty() ? null : upiId.toLowerCase(Locale.ROOT));
+    }
+    return toProfile(user);
+}
+```
+- `@Transactional`: start a transaction; commit when the method returns (31.3).
+- `findById(id).orElseThrow()`: load the user. The id comes from a valid token, so the user exists; if not, something is badly wrong, and an exception (500) is right.
+- `if (name != null)`: only change what was sent (31.1).
+- `upiId.isEmpty() ? null : ...`: `""` means remove → store `null`.
+- `toLowerCase(Locale.ROOT)`: lower-case with **language-neutral** rules. Plain `toLowerCase()` uses the computer's language; on a Turkish system, `I` becomes `ı` (dotless i), a famous bug.
+- No `save()`: dirty checking writes the `UPDATE` at commit.
+
+```java
+private static Profile toProfile(User user) { ... }
+record Profile(UUID id, String phone, String name, String upiId) {}
+```
+- One place converts an entity into the response record; `profile()` and `updateProfile()` both use it.
+
+### 32.3 `users/MeController.java` (additions)
+```java
+static final String NAME = "^\\p{L}([\\p{L}\\p{M} .'-]*[\\p{L}\\p{M}.])?$";
+```
+Read it piece by piece:
+- `^\p{L}`: must **start** with a letter (not a space or a dot).
+- `( ... )?`: the rest is optional (the `@Size(min = 2)` rule handles length).
+- `[\p{L}\p{M} .'-]*`: then any number of letters, marks, spaces, dots, apostrophes, hyphens (`D'Souza`, `Pinto-Rao`, `Jr.`).
+- `[\p{L}\p{M}.]$`: must **end** with a letter, mark or dot, so no trailing space.
+- `\\` is doubled because `\` is also Java's escape character inside strings.
+
+```java
+static final String UPI_ID_OR_EMPTY = "^$|^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$";
+```
+- `^$` = the empty string (remove). `|` = **or**.
+- `[a-zA-Z0-9._-]{2,256}`: the handle: 2–256 of letters, digits, `.`, `_`, `-`.
+- `@[a-zA-Z]{2,64}`: `@` then the bank's handle, letters only (`okaxis`, `ybl`).
+
+```java
+record UpdateMe(
+        @Size(min = 2, max = 60, message = "must be 2 to 60 characters")
+        @Pattern(regexp = NAME, message = "...")
+        String name,
+        @Pattern(regexp = UPI_ID_OR_EMPTY, message = "must look like yourname@bank")
+        String upiId) {}
+```
+- The PATCH body. Bean Validation **skips `null` fields** (`@Size` and `@Pattern` treat null as valid), which is exactly "left out = unchanged".
+
+```java
+@PatchMapping("/api/v1/me")
+UserService.Profile update(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateMe req) {
+    return users.updateProfile(UUID.fromString(jwt.getSubject()), req.name(), req.upiId());
+}
+```
+- `@PatchMapping`: handles `PATCH /api/v1/me`. The user id comes **only** from the token (31.1). Returns the updated profile as JSON.
+
+### 32.4 `ProfileTest.java`
+- `freshUser()` creates a user with a random number before each test, so tests never affect each other.
+- `jwt().jwt(j -> j.subject(userId.toString()))`: a fake-but-accepted token for that user (31.5).
+| Test | Proves |
+|---|---|
+| `newUserHasNoNameOrUpiId` | A new user starts with neither |
+| `setsNameAndUpiIdLowercased` | Both saved; `Keshav.D@OkAxis` stored as `keshav.d@okaxis` |
+| `leftOutFieldIsUnchangedAndEmptyUpiIdRemovesIt` | The PATCH rules from 31.1 |
+| `acceptsNamesInAnyScript` | Hindi, Tamil, Bengali, `D'Souza-Pinto Jr.` |
+| `rejectsBadInput` | Too short, leading space, `<script>`, UPI without `@bank`, bank with digits → 400 `VALIDATION_FAILED` |
+| `needsLogin` | No token → 401 |
+
+### 32.5 `lib/use-action.ts` (new)
+```ts
+export function useAction() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function run(action: () => Promise<void>) { ... }
+  return { busy, error, setError, run };
+}
+```
+- The busy/error logic that used to live inside the login page, moved here unchanged (31.6). It returns an **object**, and callers pick what they need with **destructuring**: `const { busy, error, run } = useAction();`.
+
+### 32.6 `lib/api.ts` (additions)
+```ts
+export type Profile = { id: string; phone: string; name: string | null; upiId: string | null };
+
+export function updateMe(changes: { name?: string; upiId?: string }): Promise<Profile> {
+  return request<Profile>("/api/v1/me", { method: "PATCH", body: JSON.stringify(changes) });
+}
+```
+- `name?:` = an **optional property**: it may be missing entirely. `JSON.stringify` leaves out missing properties, which the API treats as "unchanged".
+
+### 32.7 `app/login/page.tsx` (changes)
+- Uses `useAction()` instead of its own copy.
+- After a successful verify:
+  ```ts
+  const me = await getMe();
+  router.replace(me.name ? "/" : "/profile");
+  ```
+  First login (no name yet) → profile page; afterwards → home. The decision is made **before** navigating, so there's no flash of the wrong page.
+
+### 32.8 `app/profile/page.tsx` (new)
+```tsx
+const NAME = /^\p{L}([\p{L}\p{M} .'-]*[\p{L}\p{M}.])?$/u;
+const UPI_ID = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/;
+```
+- The same rules as the API, in JavaScript (`u` flag for `\p{...}`).
+
+```tsx
+useEffect(() => {
+  restoreSession()
+    .then((profile) => {
+      if (!profile) return router.replace("/login");
+      setMe(profile); setName(profile.name ?? ""); setUpiId(profile.upiId ?? "");
+    })
+    .catch(() => router.replace("/login"));
+}, [router]);
+```
+- On load: not logged in → login page. Otherwise **prefill** the form with saved values (`?? ""` turns `null` into an empty box).
+- `[router]` in the dependency array: the effect uses `router`, so React's rules ask us to list it (it never actually changes).
+
+```tsx
+function save(e: FormEvent) {
+  e.preventDefault();
+  const cleanName = name.trim();
+  const cleanUpi = upiId.trim();
+  if (... !NAME.test(cleanName)) { setError("Enter your name ..."); return; }
+  if (cleanUpi && !UPI_ID.test(cleanUpi)) { setError("A UPI ID looks like ..."); return; }
+  run(async () => { await updateMe({ name: cleanName, upiId: cleanUpi }); router.replace("/"); });
+}
+```
+- `.trim()` removes spaces people accidentally type at the ends, so the strict API rule isn't hit by a stray space.
+- Check locally first for a clear message, then send. An empty UPI box sends `""`, which removes it.
+
+**The markup:**
+- Heading says "Complete your profile" for a new user, "Your profile" afterwards.
+- Each input has a `<label htmlFor>` and a short help line linked with **`aria-describedby`**, so screen readers read the help after the label.
+- `autoComplete="name"` lets the browser offer the user's saved name; `autoCapitalize="none"` and `spellCheck={false}` stop phones "correcting" a UPI ID.
+- `if (!me) return <p>Loading…</p>;`: nothing editable shows until the saved values are loaded, so the form never flashes empty.
+
+### 32.9 `app/session-box.tsx` (changes)
+- Shows the **name** when there is one, else the phone: `{user.name ?? user.phone}`.
+- Adds an "Edit profile" / "Complete your profile" link.
+
+### 32.10 Verified in a real browser
+New number → after the code, lands on **Complete your profile** · invalid UPI → friendly message · Hindi name + `Keshav.D@OkAxis` → home shows the name, database has `keshav.d@okaxis` · Edit profile → form prefilled · clear the UPI ID → database value `null` · logged out → `/profile` redirects to `/login`.
+
+---
+
+## 33. Command cheat sheet
+
+### After a PR is merged (from `Namastute`)
+```bash
+git switch main
+git pull
+git branch -D <merged-branch>
+git fetch --prune
+git switch -c <type/next-feature>
+```
 
 ### Database (from `Namastute`)
 ```bash
@@ -1738,7 +1960,7 @@ git fetch --prune
 
 ---
 
-## 32. Glossary
+## 34. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -1826,10 +2048,15 @@ git fetch --prune
 | State | Data a component remembers; changing it redraws the component |
 | StrictMode | React dev mode that runs effects twice to expose unsafe ones |
 | Web Locks API | Browser-wide lock shared by all tabs (`navigator.locks`) |
+| Combining mark | Unicode sign that attaches to the previous letter (Indian vowel signs); `\p{M}` |
+| Custom hook | Your own `use...` function bundling React state and logic for reuse |
+| Dirty checking | Hibernate detects changed fields and writes them at commit |
+| PATCH | HTTP method for changing part of a resource |
+| PUT | HTTP method for replacing a whole resource |
 
 ---
 
-## 33. Interview questions to practise
+## 35. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -1859,3 +2086,7 @@ git fetch --prune
 26. Server vs Client Components in Next.js: how do you choose?
 27. Why could two refresh calls at once log a user out everywhere, and how did we prevent it?
 28. Why is validating input in the browser not enough?
+29. PATCH vs PUT. How do you tell "leave unchanged" apart from "remove" in a PATCH?
+30. Why does updating a JPA entity need no save() call, and why must the method be @Transactional?
+31. A name regex using only \p{L} rejected Hindi names. Why, and what's the fix?
+32. Why must the user id for PATCH /me come from the token rather than the request?
