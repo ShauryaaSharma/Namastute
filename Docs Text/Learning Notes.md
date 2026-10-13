@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-13 (OTP service written and explained line by line; Redis added to CI).
+Last updated: 2026-10-13 (login tokens: JWT, refresh rotation, Spring Security, users module).
 
 ---
 
@@ -31,9 +31,13 @@ Last updated: 2026-10-13 (OTP service written and explained line by line; Redis 
 21. [Redis](#21-redis)
 22. [Rate limiting](#22-rate-limiting)
 23. [Code walkthrough: the OTP service](#23-code-walkthrough-the-otp-service)
-24. [Command cheat sheet](#24-command-cheat-sheet)
-25. [Glossary](#25-glossary)
-26. [Interview questions to practise](#26-interview-questions-to-practise)
+24. [Login tokens: JWT, refresh tokens, cookies](#24-login-tokens-jwt-refresh-tokens-cookies)
+25. [Spring Security](#25-spring-security)
+26. [JPA entities and Spring Data repositories](#26-jpa-entities-and-spring-data-repositories)
+27. [Code walkthrough: tokens, security and users](#27-code-walkthrough-tokens-security-and-users)
+28. [Command cheat sheet](#28-command-cheat-sheet)
+29. [Glossary](#29-glossary)
+30. [Interview questions to practise](#30-interview-questions-to-practise)
 
 ---
 
@@ -988,7 +992,404 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 
 ---
 
-## 24. Command cheat sheet
+## 24. Login tokens: JWT, refresh tokens, cookies
+
+### 24.1 Two ways to remember who's logged in
+HTTP is stateless (18.6), so after login the browser needs proof it sends with every request.
+| | Server sessions | Tokens (ours) |
+|---|---|---|
+| What the browser holds | A random **session ID** in a cookie | A **signed token** that itself says who you are |
+| What the server does per request | **Looks up** the session in storage | **Checks the signature** (maths, no lookup) |
+| Log someone out instantly | Easy: delete the record | Hard: a token is valid until it expires |
+| Many server instances / WebSockets | Need a shared session store | Work as-is |
+
+- **Cookie:** a small piece of data the server asks the browser to store and **send back automatically** with every request to that site.
+
+### 24.2 JWT (JSON Web Token)
+`header.payload.signature`, each part **Base64URL**-encoded (an *encoding* using URL-safe characters, **not** encryption).
+- **Header:** the algorithm, e.g. `{"alg":"HS256"}`.
+- **Payload = claims:** `sub` (subject: our user id), `iat` (issued at), `exp` (expires), `iss` (issuer: `namastute-api`).
+- **Signature:** `HMAC-SHA256(secret, header.payload)`, the same algorithm as our OTPs.
+- **Key fact: readable by anyone, changeable by no one.** Never put secrets in a JWT. Editing the payload breaks the signature.
+- **HS256 vs RS256:** HS256 = one shared secret signs *and* verifies (right when one service does both, like ours). RS256 = a private key signs, a public key verifies (needed when *other* services must check tokens without being able to create them).
+
+### 24.3 Access token + refresh token
+| | Access token | Refresh token |
+|---|---|---|
+| Form | JWT | 32 random bytes (Base64URL text) |
+| Lifetime | 15 minutes | 30 days |
+| Sent | Every API request: `Authorization: Bearer <token>` | Only to `/api/v1/auth/refresh` (and `/logout`) |
+| Checked by | Signature + `exp`, no database | Lookup in the `sessions` table |
+| Revocable | No (expires soon) | Yes |
+- **Bearer** = "whoever carries this is trusted", so tokens must be protected.
+- Short access tokens limit the damage of a stolen one; the refresh token avoids asking for an OTP every 15 minutes.
+
+### 24.4 Rotation and reuse detection
+- **Rotation:** each refresh token works **once**; using it returns a new one and revokes the old.
+- **Reuse detection:** if an already-used refresh token comes back, someone holds a copy (thief or victim, we can't tell), so **all of that user's sessions are revoked**.
+
+### 24.5 Hash, but not HMAC
+`sessions.token_hash` = **plain SHA-256** of the refresh token. Safe because the token has 2²⁵⁶ (about 10⁷⁷) possibilities, impossible to try. The 6-digit OTP needed HMAC because 10⁶ can be tried in a second. **The size of the input space decides.**
+
+### 24.6 Where the browser keeps tokens
+- **XSS (Cross-Site Scripting):** attacker's JavaScript runs on our page and reads whatever JS can read.
+- **CSRF (Cross-Site Request Forgery):** another site makes the user's browser send a request to our API; the browser attaches our cookies automatically.
+- **Access token:** a JavaScript variable in memory (not `localStorage`, which any XSS could read forever).
+- **Refresh token:** a cookie with:
+  - `HttpOnly`: JavaScript can't read it (stops XSS theft).
+  - `Secure`: only sent over HTTPS (browsers treat `http://localhost` as secure too).
+  - `SameSite=Lax`: not attached to POSTs started by other sites (stops CSRF).
+  - `Path=/api/v1/auth`: only sent to auth endpoints, not every request.
+  - `Max-Age`: how long the browser keeps it; `0` deletes it.
+
+---
+
+## 25. Spring Security
+
+### 25.1 Filters
+- A **filter** inspects a request **before** it reaches a controller; it can add information or reject the request.
+- Spring Security is a **chain of filters**. The **bearer token filter** reads `Authorization: Bearer ...`, asks the **`JwtDecoder`** to check signature, `exp` and issuer, and if valid records the **authenticated principal** (who's calling). Missing/invalid on a protected path → **401**, controller never runs.
+- **401** = who are you? (no/bad token). **403** = known, but not allowed.
+
+### 25.2 Our rules (`SecurityFilterChain`)
+- Public: `POST /api/v1/auth/otp|verify|refresh|logout`, `/actuator/health`, `/error`.
+- Everything else: must be authenticated.
+- **Stateless:** never create server sessions.
+- **CSRF protection off:** not needed because the API reads the `Authorization` header (browsers never add it on their own) and the refresh cookie is `SameSite=Lax`.
+- `/error` is public because Spring forwards failed requests there; if it were protected, a real server error would wrongly show as 401.
+
+### 25.3 The starter
+`spring-boot-starter-security-oauth2-resource-server` (Boot 4 name; the old `spring-boot-starter-oauth2-resource-server` is **deprecated**). "**OAuth2 resource server**" = an API that accepts bearer tokens. Includes **Nimbus**, the library that creates/checks JWTs.
+
+---
+
+## 26. JPA entities and Spring Data repositories
+
+- **Entity:** a class marked `@Entity` that maps to a table (`User` ↔ `users`); each field ↔ a column. Spring Boot's naming rule turns `userId` into `user_id`.
+- We map **only the columns the code uses**. On insert, the others get their **database defaults** (`verification = 'unverified'`, `role = 'user'`, `created_at = now()`).
+- `ddl-auto: validate` (8) checks every mapped field matches a real column at startup, so a typo fails fast.
+- **Repository:** an interface extending `JpaRepository<Entity, IdType>`. Spring **generates the implementation**: `save`, `findById`, `delete`… plus **derived queries** built from method names: `findByPhone(String phone)` → `select ... where phone = ?`.
+- **`@Query`** writes a query by hand in **JPQL** (SQL-like, but uses entity and field names: `Session s`, `s.revokedAt`). **`@Modifying`** marks it as an update/delete, and it returns how many rows changed.
+- **`Optional<T>`:** a box that holds a value or is empty. Forces the caller to handle "not found" (`.map(...)`, `.orElseGet(...)`, `.orElseThrow()`), instead of a surprise `null`.
+- **Transaction:** a group of database changes that either **all happen or none do**. `@Transactional` starts one around a method.
+- **Forward-only migration in practice:** `users.name` was `NOT NULL`, but OTP login only knows the phone. V1 can't be edited, so **`V2__users_name_optional.sql`** runs `alter table users alter column name drop not null;`.
+
+---
+
+## 27. Code walkthrough: tokens, security and users
+
+Files in `apps/api/src/main/java/com/namastute/`. Read each part next to its file.
+
+### 27.1 `users/User.java`: the entity
+```java
+@Entity
+@Table(name = "users")
+class User {
+```
+- `@Entity`: "Hibernate, this class is stored in a table." `@Table(name = "users")`: which table (the class name `User` alone would map to a table called `user`).
+
+```java
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+```
+- `@Id`: this field is the **primary key** (the column that uniquely identifies a row).
+- `@GeneratedValue(strategy = GenerationType.UUID)`: Hibernate creates a random **UUID** (a 128-bit unique id like `3f2a...`) when saving a new user.
+
+```java
+    private String phone;
+    private String name;
+```
+- Plain fields map to columns with the same name. `name` can be `null` now (V2).
+
+```java
+    protected User() { }
+    User(String phone) { this.phone = phone; }
+```
+- **JPA requires a no-argument constructor**: when loading a row, Hibernate creates an empty object, then fills its fields. `protected` keeps our own code from using it by mistake.
+- The second constructor is the one *we* use to create a new user from a phone number.
+
+```java
+    UUID getId() { return id; }
+    ...
+```
+- **Getters**: read-only access to the fields. No setters: nothing in this slice needs to change a user.
+
+### 27.2 `users/UserRepository.java`
+```java
+interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByPhone(String phone);
+}
+```
+- `JpaRepository<User, UUID>`: a repository for `User` entities whose id type is `UUID`. We get `save`, `findById`, `saveAndFlush` and more for free.
+- `findByPhone`: Spring reads the name (`find` + `By` + `Phone`) and generates `select * from users where phone = ?`. Returns `Optional` because there may be no such user.
+- Package-private: only the `users` module may touch the table directly.
+
+### 27.3 `users/UserService.java`: the module's public API
+```java
+@Service
+public class UserService {
+```
+- `public`, unlike almost everything else: this is the **one door** other modules (like `auth`) use into `users`. Spring Modulith's test checks they don't go around it.
+
+```java
+    public UUID findOrCreateByPhone(String phone) {
+        return users.findByPhone(phone)
+                .map(User::getId)
+                .orElseGet(() -> create(phone));
+    }
+```
+- `findByPhone(phone)`: an `Optional<User>`.
+- `.map(User::getId)`: if a user is inside the box, replace it with its id. `User::getId` is a **method reference**: shorthand for `user -> user.getId()`.
+- `.orElseGet(() -> create(phone))`: if the box is empty, run `create(phone)` and use its result. (`orElseGet` only runs the lambda when needed; `orElse` would always run it.)
+
+```java
+    private UUID create(String phone) {
+        try {
+            return users.saveAndFlush(new User(phone)).getId();
+        } catch (DataIntegrityViolationException e) {
+            return users.findByPhone(phone).orElseThrow().getId();
+        }
+    }
+```
+- `saveAndFlush`: insert the row **now** (flush = send the SQL immediately), so any database error happens here, inside the `try`.
+- **The race it handles:** two first-time logins for the same new number at the same instant. Both find no user, both insert. `phone` is `unique` in the table, so the second insert fails with `DataIntegrityViolationException` (Spring's exception for a broken database constraint). We then simply load the user the other request just created. Same idea as `DEL` returning `true` (23.8): **let the database decide the winner**.
+
+```java
+    Profile profile(UUID id) { ... }
+    record Profile(UUID id, String phone, String name) {}
+```
+- Package-private: only `MeController` needs it. `Profile` is a DTO record, turned into the JSON response. We return a record rather than the entity, so internal fields never leak into the API by accident.
+
+### 27.4 `users/MeController.java`: the first protected endpoint
+```java
+@GetMapping("/api/v1/me")
+UserService.Profile me(@AuthenticationPrincipal Jwt jwt) {
+    return users.profile(UUID.fromString(jwt.getSubject()));
+}
+```
+- `@GetMapping`: handles `GET /api/v1/me`. It's not in the public list, so Spring Security has **already** checked the token before this runs.
+- `@AuthenticationPrincipal Jwt jwt`: Spring hands us the **decoded, verified** token of the caller.
+- `jwt.getSubject()`: the `sub` claim, our user id as text. `UUID.fromString` turns it back into a `UUID`.
+- Returning a record (not a `ResponseEntity`) means "200 OK with this as JSON".
+
+### 27.5 `V2__users_name_optional.sql`
+```sql
+alter table users alter column name drop not null;
+```
+- Removes the `NOT NULL` rule from `users.name`. A new file, because V1 already ran everywhere (9).
+
+### 27.6 `auth/Session.java` and `auth/SessionRepository.java`
+- `Session` is an entity for the `sessions` table: `id`, `userId` (→ `user_id`), `tokenHash`, `expiresAt`, `revokedAt`.
+- `Instant`: Java's type for an exact moment in time (stored as `timestamptz`, a timestamp with time zone).
+- `userId` is a plain `UUID`, not a link to the `User` entity: `auth` doesn't reach into `users`' internals.
+
+```java
+@Modifying
+@Transactional
+@Query("update Session s set s.revokedAt = :now where s.id = :id and s.revokedAt is null")
+int revokeIfActive(UUID id, Instant now);
+```
+- A hand-written JPQL update. `:now` and `:id` are **named parameters**, filled from the method arguments (never glued into the text, so no SQL injection).
+- `and s.revokedAt is null`: only revoke it if it's **still active**.
+- Returns `int`, the number of rows changed: **1** = "this call revoked it", **0** = "someone already had". This is the race-safe check used by rotation (27.7).
+- `@Transactional`: update queries must run inside a transaction; each call is its own small one.
+- `revokeAllForUser`: the same, for every active session of a user (reuse detection, logout everywhere).
+
+### 27.7 `auth/RefreshTokens.java`
+```java
+static final Duration LIFETIME = Duration.ofDays(30);
+```
+- Package-visible (no `private`) so the controller can use the same value for the cookie's `Max-Age`.
+
+```java
+record Rotated(UUID userId, String token) {}
+```
+- A small record to **return two values** from `rotate`: whose session it was, and the new token.
+
+**`create(userId)`: a new login session**
+```java
+byte[] bytes = new byte[32];
+random.nextBytes(bytes);
+String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+sessions.save(new Session(userId, sha256(token), Instant.now().plus(LIFETIME)));
+return token;
+```
+- `new byte[32]`: an array of 32 bytes = 256 bits. `random.nextBytes(bytes)`: fill it from `SecureRandom`.
+- `Base64.getUrlEncoder().withoutPadding()`: turn the bytes into cookie-safe text (`A–Z a–z 0–9 - _`, no trailing `=`).
+- Save only `sha256(token)` with an expiry 30 days from now. The **raw token** goes back to the user once and is never stored.
+
+**`rotate(token)`: use a refresh token**
+```java
+Session session = sessions.findByTokenHash(sha256(token)).orElseThrow(RefreshTokens::invalid);
+```
+- Hash what the browser sent and look it up. Unknown → throw `invalid()` (401).
+
+```java
+if (session.getRevokedAt() != null || sessions.revokeIfActive(session.getId(), now) == 0) {
+    sessions.revokeAllForUser(session.getUserId(), now);
+    throw invalid();
+}
+```
+- **Left side:** the token was already used or logged out, so this is a **replay**.
+- **Right side** (only checked if the left is false, short-circuit `||`): try to revoke it. If that returns **0**, another request revoked it a moment earlier: two requests used the same token, also a replay.
+- Either way: **revoke every session for this user** (everyone logs in again, the thief's copy dies) and answer 401.
+- No `@Transactional` around this method **on purpose**: if it were one transaction, the `throw` would **roll back** the "revoke all", undoing the protection. Each repository call commits on its own.
+
+```java
+if (session.getExpiresAt().isBefore(now)) {
+    throw invalid();
+}
+return new Rotated(session.getUserId(), create(session.getUserId()));
+```
+- Older than 30 days → 401. Otherwise issue a brand-new refresh token for the same user.
+
+**`revoke(token)`: logout**
+- Find the session and revoke it if present. `ifPresent(s -> ...)` runs the lambda only when the `Optional` has a value. Unknown tokens are silently ignored: logout always "succeeds".
+
+**`sha256(token)`**
+- `MessageDigest.getInstance("SHA-256").digest(bytes)`: plain SHA-256 (no secret; see 24.5), written as 64 hex characters.
+
+### 27.8 `auth/AccessTokens.java`: issuing JWTs
+```java
+JwtClaimsSet claims = JwtClaimsSet.builder()
+        .issuer(ISSUER)
+        .subject(userId.toString())
+        .issuedAt(now)
+        .expiresAt(now.plus(LIFETIME))
+        .build();
+```
+- A **builder** collects values step by step, then `build()` creates the finished, unchangeable object. It reads clearly when there are many fields.
+- The claims: issuer `namastute-api`, subject = user id (only the id; the payload is public), issued now, expires in 15 minutes.
+
+```java
+JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+```
+- **JWS** (JSON Web Signature) = a *signed* JWT. The header says "signed with HS256".
+- `encoder.encode(...)` signs it with our secret; `getTokenValue()` gives the `xxx.yyy.zzz` text.
+
+### 27.9 `auth/SecurityConfig.java`
+```java
+@Configuration
+class SecurityConfig {
+```
+- `@Configuration`: a class whose `@Bean` methods **create beans** for Spring. Used when we need to build an object ourselves (from a library) rather than mark our own class `@Service`.
+
+```java
+this.jwtKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+```
+- The JWT secret from `namastute.jwt.secret` (env `JWT_SECRET`), as an HMAC key. HS256 needs **at least 32 bytes**; Nimbus refuses shorter keys at startup.
+
+```java
+@Bean
+SecurityFilterChain api(HttpSecurity http) throws Exception {
+    return http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -> a
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/otp", ...).permitAll()
+                    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                    .requestMatchers("/error").permitAll()
+                    .anyRequest().authenticated())
+            .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))
+            .build();
+}
+```
+- `HttpSecurity http`: Spring hands us a configuration builder for the filter chain.
+- `.csrf(...disable)`: see 25.2. `AbstractHttpConfigurer::disable` is a method reference meaning "call `disable()` on it".
+- `.sessionManagement(... STATELESS)`: never create server sessions.
+- `.authorizeHttpRequests(...)`: the rules, checked **top to bottom**, first match wins. `permitAll()` = anyone; `.anyRequest().authenticated()` = everything else needs a valid token.
+- `.oauth2ResourceServer(o -> o.jwt(...))`: turn on the bearer token filter using our `JwtDecoder` bean. `Customizer.withDefaults()` = "default settings".
+- `throws Exception`: the builder methods declare checked exceptions; we let them propagate (a broken security config should stop the app).
+
+```java
+@Bean
+JwtEncoder jwtEncoder() {
+    return new NimbusJwtEncoder(new ImmutableSecret<>(jwtKey));
+}
+```
+- The object `AccessTokens` uses to **sign** tokens. `ImmutableSecret` wraps our key in the form Nimbus expects.
+
+```java
+@Bean
+JwtDecoder jwtDecoder() {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtKey).macAlgorithm(MacAlgorithm.HS256).build();
+    decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(AccessTokens.ISSUER));
+    return decoder;
+}
+```
+- The object the security filter uses to **check** tokens: same key, HS256 only (a token claiming another algorithm is rejected).
+- `createDefaultWithIssuer(...)`: the default checks (signature, `exp`, not-before) **plus** "`iss` must be `namastute-api`".
+
+### 27.10 `auth/AuthController.java` (renamed from `OtpController`)
+New since 23:
+```java
+record TokenResponse(String accessToken, long expiresIn) {}
+```
+- The JSON body after login/refresh: `{"accessToken": "...", "expiresIn": 900}` (seconds), so the frontend knows when to refresh.
+
+```java
+@PostMapping("/verify")
+ResponseEntity<TokenResponse> verify(@Valid @RequestBody VerifyRequest req) {
+    otp.verify(req.phone(), req.code());
+    UUID userId = users.findOrCreateByPhone(req.phone());
+    return tokens(userId, refreshTokens.create(userId));
+}
+```
+- Check the code (throws on failure) → find or create the user → start a session → return tokens. Each line is one step of the flow; the logic lives in the services.
+
+```java
+@PostMapping("/refresh")
+ResponseEntity<TokenResponse> refresh(@CookieValue(name = REFRESH_COOKIE, required = false) String token) {
+```
+- `@CookieValue`: read the `refresh_token` cookie the browser sent. `required = false` → `null` if missing, so we can answer our own 401 JSON instead of Spring's generic 400.
+- `rotate(token)` → new tokens for that user.
+
+```java
+@PostMapping("/logout")
+... refreshTokens.revoke(token);
+... .header(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString())
+```
+- Revoke the session, and send the same cookie with an empty value and `Max-Age=0`, which tells the browser to **delete** it. Answers 204.
+
+```java
+private ResponseEntity<TokenResponse> tokens(UUID userId, String refreshToken) {
+    return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, refreshCookie(refreshToken, RefreshTokens.LIFETIME).toString())
+            .body(new TokenResponse(accessTokens.issue(userId), AccessTokens.LIFETIME.toSeconds()));
+}
+```
+- One helper for verify and refresh: **200**, a `Set-Cookie` header carrying the refresh token, and the access token in the body.
+- `Set-Cookie` is the response header that asks the browser to store a cookie.
+
+```java
+private static ResponseCookie refreshCookie(String value, Duration maxAge) {
+    return ResponseCookie.from(REFRESH_COOKIE, value)
+            .httpOnly(true).secure(true).sameSite("Lax").path("/api/v1/auth").maxAge(maxAge)
+            .build();
+}
+```
+- Spring's cookie builder; each flag is explained in 24.6.
+
+### 27.11 The tests
+- **`CapturingSms`** (now its own test file, shared by both test classes): the fake SMS sender, plus a nested `@TestConfiguration` that tests bring in with `@Import(CapturingSms.Config.class)`.
+- **`AuthFlowTest`**: `@AutoConfigureMockMvc` gives a **`MockMvc`**, which sends fake HTTP requests through the **whole** stack (filters, security, controllers) without opening a real port.
+  - `mvc.perform(post(...).contentType(...).content(...))` = send a request; `.andExpect(status().isOk())` = check the status; `jsonPath("$.phone")` = check a field of the JSON response (`$` = the root).
+  - `JsonPath.read(body, "$.accessToken")` = pull a value out of JSON text.
+  - `.cookie(...)` sends a cookie; `getCookie(...)` reads one from a `Set-Cookie` response.
+  | Test | Proves |
+  |---|---|
+  | `accessTokenOpensProtectedEndpoint` | Token → `/me` 200 with the right phone; no token or a fake token → 401 |
+  | `sameUserOnEveryLogin` | Logging in twice gives the same user id (find, not create) |
+  | `refreshRotatesAndReuseLogsOutEverywhere` | Refresh returns a new, different cookie; replaying the old one → 401 **and** the new one stops working |
+  | `logoutRevokesRefreshToken` | Logout deletes the cookie (`Max-Age=0`) and the token no longer refreshes |
+  | `refreshCookieIsLockedDown` | The cookie is `HttpOnly`, `Secure`, `Path=/api/v1/auth`, `SameSite=Lax` |
+- `throws Exception` on tests: `perform` declares checked exceptions; in a test, letting them fail the test is exactly right.
+
+---
+
+## 28. Command cheat sheet
 
 ### Database (from `Namastute`)
 ```bash
@@ -1034,7 +1435,7 @@ git fetch --prune
 
 ---
 
-## 25. Glossary
+## 29. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -1092,10 +1493,27 @@ git fetch --prune
 | Timing attack | Learning secrets from how long comparisons take |
 | TTL | Time to live: automatic expiry of a key |
 | YAML | Indentation-based settings format |
+| Access token | Short-lived JWT sent with every request |
+| Base64URL | Encoding bytes as URL-safe text (not encryption) |
+| Bearer token | A token whose holder is trusted; sent as `Authorization: Bearer ...` |
+| Claim | A statement inside a JWT (`sub`, `exp`, `iss`, `iat`) |
+| Cookie | Data the browser stores and sends back automatically |
+| CSRF | Another site making the user's browser send requests to us |
+| Entity | A class mapped to a database table |
+| Filter | Code that inspects a request before the controller |
+| JPQL | SQL-like query language using entity and field names |
+| JWT | JSON Web Token: header.payload.signature |
+| Optional | A box that holds a value or is empty |
+| Principal | The authenticated caller of a request |
+| Refresh token | Long-lived random token used only to get new access tokens |
+| Repository | Interface whose database code Spring generates |
+| Rotation | Replacing a token every time it's used |
+| Transaction | Database changes that all happen or none do |
+| XSS | Attacker's script running on our page |
 
 ---
 
-## 26. Interview questions to practise
+## 30. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -1112,3 +1530,10 @@ git fetch --prune
 13. Why keep OTPs in Redis rather than Postgres? What happens if Redis loses them?
 14. Explain a fixed-window rate limiter and its weakness. What would you use instead?
 15. What is a race condition? Give one from this project and how to prevent it.
+16. Sessions vs JWTs: trade-offs? Why do we use both an access and a refresh token?
+17. Anyone can read a JWT's payload. Why is it still safe to trust it?
+18. When would you choose RS256 over HS256?
+19. Why is a plain SHA-256 fine for refresh tokens but not for OTP codes?
+20. How does refresh-token reuse detection work, and why must its "revoke all" not be inside the same transaction as the error?
+21. What do HttpOnly, Secure and SameSite each protect against?
+22. What does Spring Security's filter chain do with a request before your controller runs?

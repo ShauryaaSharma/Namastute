@@ -64,14 +64,18 @@
 <details><summary><a href="#21-redis">21. Redis</a></summary><a class="sub" href="#211-what-it-is">21.1 What it is</a><a class="sub" href="#212-what-goes-in-redis-vs-postgres">21.2 What goes in Redis vs Postgres</a><a class="sub" href="#213-commands">21.3 Commands</a><a class="sub" href="#214-atomic-operations-and-race-conditions">21.4 Atomic operations and race conditions</a><a class="sub" href="#215-hands-on-lab-the-otp-flow-by-hand-what-each-line-did">21.5 Hands-on lab: the OTP flow by hand (what each line did)</a></details>
 <details><summary><a href="#22-rate-limiting">22. Rate limiting</a></summary><a class="sub" href="#221-why">22.1 Why</a><a class="sub" href="#222-our-rules">22.2 Our rules</a><a class="sub" href="#223-fixed-window-counter">22.3 Fixed window counter</a></details>
 <details><summary><a href="#23-code-walkthrough-the-otp-service">23. Code walkthrough: the OTP service</a></summary><a class="sub" href="#231-the-package-and-imports">23.1 The package and imports</a><a class="sub" href="#232-the-class">23.2 The class</a><a class="sub" href="#233-the-constants-the-rules-in-one-place">23.3 The constants (the rules, in one place)</a><a class="sub" href="#234-the-rate-limit-counter-script-lua">23.4 The rate-limit counter script (Lua)</a><a class="sub" href="#235-the-fields-what-each-otpservice-object-holds">23.5 The fields (what each OtpService object holds)</a><a class="sub" href="#236-the-constructor">23.6 The constructor</a><a class="sub" href="#237-requestotp-sending-a-code">23.7 requestOtp: sending a code</a><a class="sub" href="#238-verify-checking-a-code">23.8 verify: checking a code</a><a class="sub" href="#239-hit-the-counter-helper">23.9 hit: the counter helper</a><a class="sub" href="#2310-hmac-the-fingerprint">23.10 hmac: the fingerprint</a><a class="sub" href="#2311-small-helpers">23.11 Small helpers</a><a class="sub" href="#2312-the-tests-otpservicetestjava">23.12 The tests (OtpServiceTest.java)</a></details>
-<details><summary><a href="#24-command-cheat-sheet">24. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#25-glossary">25. Glossary</a>
-<a class="topic" href="#26-interview-questions-to-practise">26. Interview questions to practise</a>
+<details><summary><a href="#24-login-tokens-jwt-refresh-tokens-cookies">24. Login tokens: JWT, refresh tokens, cookies</a></summary><a class="sub" href="#241-two-ways-to-remember-whos-logged-in">24.1 Two ways to remember who&#x27;s logged in</a><a class="sub" href="#242-jwt-json-web-token">24.2 JWT (JSON Web Token)</a><a class="sub" href="#243-access-token--refresh-token">24.3 Access token + refresh token</a><a class="sub" href="#244-rotation-and-reuse-detection">24.4 Rotation and reuse detection</a><a class="sub" href="#245-hash-but-not-hmac">24.5 Hash, but not HMAC</a><a class="sub" href="#246-where-the-browser-keeps-tokens">24.6 Where the browser keeps tokens</a></details>
+<details><summary><a href="#25-spring-security">25. Spring Security</a></summary><a class="sub" href="#251-filters">25.1 Filters</a><a class="sub" href="#252-our-rules-securityfilterchain">25.2 Our rules (SecurityFilterChain)</a><a class="sub" href="#253-the-starter">25.3 The starter</a></details>
+<a class="topic" href="#26-jpa-entities-and-spring-data-repositories">26. JPA entities and Spring Data repositories</a>
+<details><summary><a href="#27-code-walkthrough-tokens-security-and-users">27. Code walkthrough: tokens, security and users</a></summary><a class="sub" href="#271-usersuserjava-the-entity">27.1 users/User.java: the entity</a><a class="sub" href="#272-usersuserrepositoryjava">27.2 users/UserRepository.java</a><a class="sub" href="#273-usersuserservicejava-the-modules-public-api">27.3 users/UserService.java: the module&#x27;s public API</a><a class="sub" href="#274-usersmecontrollerjava-the-first-protected-endpoint">27.4 users/MeController.java: the first protected endpoint</a><a class="sub" href="#275-v2__users_name_optionalsql">27.5 V2__users_name_optional.sql</a><a class="sub" href="#276-authsessionjava-and-authsessionrepositoryjava">27.6 auth/Session.java and auth/SessionRepository.java</a><a class="sub" href="#277-authrefreshtokensjava">27.7 auth/RefreshTokens.java</a><a class="sub" href="#278-authaccesstokensjava-issuing-jwts">27.8 auth/AccessTokens.java: issuing JWTs</a><a class="sub" href="#279-authsecurityconfigjava">27.9 auth/SecurityConfig.java</a><a class="sub" href="#2710-authauthcontrollerjava-renamed-from-otpcontroller">27.10 auth/AuthController.java (renamed from OtpController)</a><a class="sub" href="#2711-the-tests">27.11 The tests</a></details>
+<details><summary><a href="#28-command-cheat-sheet">28. Command cheat sheet</a></summary><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#29-glossary">29. Glossary</a>
+<a class="topic" href="#30-interview-questions-to-practise">30. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-13 (OTP service written and explained line by line; Redis added to CI).</p>
+<p>Last updated: 2026-10-13 (login tokens: JWT, refresh rotation, Spring Security, users module).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -98,9 +102,13 @@
 <li><a href="#21-redis">Redis</a></li>
 <li><a href="#22-rate-limiting">Rate limiting</a></li>
 <li><a href="#23-code-walkthrough-the-otp-service">Code walkthrough: the OTP service</a></li>
-<li><a href="#24-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#25-glossary">Glossary</a></li>
-<li><a href="#26-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#24-login-tokens-jwt-refresh-tokens-cookies">Login tokens: JWT, refresh tokens, cookies</a></li>
+<li><a href="#25-spring-security">Spring Security</a></li>
+<li><a href="#26-jpa-entities-and-spring-data-repositories">JPA entities and Spring Data repositories</a></li>
+<li><a href="#27-code-walkthrough-tokens-security-and-users">Code walkthrough: tokens, security and users</a></li>
+<li><a href="#28-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#29-glossary">Glossary</a></li>
+<li><a href="#30-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -1381,7 +1389,479 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 <li><strong>CI</strong> now also starts a Redis service, otherwise these tests would fail on GitHub.</li>
 </ul>
 <hr>
-<h2 id="24-command-cheat-sheet">24. Command cheat sheet</h2>
+<h2 id="24-login-tokens-jwt-refresh-tokens-cookies">24. Login tokens: JWT, refresh tokens, cookies</h2>
+<h3 id="241-two-ways-to-remember-whos-logged-in">24.1 Two ways to remember who&#39;s logged in</h3>
+<p>HTTP is stateless (18.6), so after login the browser needs proof it sends with every request.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Server sessions</th>
+<th>Tokens (ours)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What the browser holds</td>
+<td>A random <strong>session ID</strong> in a cookie</td>
+<td>A <strong>signed token</strong> that itself says who you are</td>
+</tr>
+<tr>
+<td>What the server does per request</td>
+<td><strong>Looks up</strong> the session in storage</td>
+<td><strong>Checks the signature</strong> (maths, no lookup)</td>
+</tr>
+<tr>
+<td>Log someone out instantly</td>
+<td>Easy: delete the record</td>
+<td>Hard: a token is valid until it expires</td>
+</tr>
+<tr>
+<td>Many server instances / WebSockets</td>
+<td>Need a shared session store</td>
+<td>Work as-is</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Cookie:</strong> a small piece of data the server asks the browser to store and <strong>send back automatically</strong> with every request to that site.</li>
+</ul>
+<h3 id="242-jwt-json-web-token">24.2 JWT (JSON Web Token)</h3>
+<p><code>header.payload.signature</code>, each part <strong>Base64URL</strong>-encoded (an <em>encoding</em> using URL-safe characters, <strong>not</strong> encryption).</p>
+<ul>
+<li><strong>Header:</strong> the algorithm, e.g. <code>{&quot;alg&quot;:&quot;HS256&quot;}</code>.</li>
+<li><strong>Payload = claims:</strong> <code>sub</code> (subject: our user id), <code>iat</code> (issued at), <code>exp</code> (expires), <code>iss</code> (issuer: <code>namastute-api</code>).</li>
+<li><strong>Signature:</strong> <code>HMAC-SHA256(secret, header.payload)</code>, the same algorithm as our OTPs.</li>
+<li><strong>Key fact: readable by anyone, changeable by no one.</strong> Never put secrets in a JWT. Editing the payload breaks the signature.</li>
+<li><strong>HS256 vs RS256:</strong> HS256 = one shared secret signs <em>and</em> verifies (right when one service does both, like ours). RS256 = a private key signs, a public key verifies (needed when <em>other</em> services must check tokens without being able to create them).</li>
+</ul>
+<h3 id="243-access-token--refresh-token">24.3 Access token + refresh token</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Access token</th>
+<th>Refresh token</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Form</td>
+<td>JWT</td>
+<td>32 random bytes (Base64URL text)</td>
+</tr>
+<tr>
+<td>Lifetime</td>
+<td>15 minutes</td>
+<td>30 days</td>
+</tr>
+<tr>
+<td>Sent</td>
+<td>Every API request: <code>Authorization: Bearer &lt;token&gt;</code></td>
+<td>Only to <code>/api/v1/auth/refresh</code> (and <code>/logout</code>)</td>
+</tr>
+<tr>
+<td>Checked by</td>
+<td>Signature + <code>exp</code>, no database</td>
+<td>Lookup in the <code>sessions</code> table</td>
+</tr>
+<tr>
+<td>Revocable</td>
+<td>No (expires soon)</td>
+<td>Yes</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Bearer</strong> = &quot;whoever carries this is trusted&quot;, so tokens must be protected.</li>
+<li>Short access tokens limit the damage of a stolen one; the refresh token avoids asking for an OTP every 15 minutes.</li>
+</ul>
+<h3 id="244-rotation-and-reuse-detection">24.4 Rotation and reuse detection</h3>
+<ul>
+<li><strong>Rotation:</strong> each refresh token works <strong>once</strong>; using it returns a new one and revokes the old.</li>
+<li><strong>Reuse detection:</strong> if an already-used refresh token comes back, someone holds a copy (thief or victim, we can&#39;t tell), so <strong>all of that user&#39;s sessions are revoked</strong>.</li>
+</ul>
+<h3 id="245-hash-but-not-hmac">24.5 Hash, but not HMAC</h3>
+<p><code>sessions.token_hash</code> = <strong>plain SHA-256</strong> of the refresh token. Safe because the token has 2²⁵⁶ (about 10⁷⁷) possibilities, impossible to try. The 6-digit OTP needed HMAC because 10⁶ can be tried in a second. <strong>The size of the input space decides.</strong></p>
+<h3 id="246-where-the-browser-keeps-tokens">24.6 Where the browser keeps tokens</h3>
+<ul>
+<li><strong>XSS (Cross-Site Scripting):</strong> attacker&#39;s JavaScript runs on our page and reads whatever JS can read.</li>
+<li><strong>CSRF (Cross-Site Request Forgery):</strong> another site makes the user&#39;s browser send a request to our API; the browser attaches our cookies automatically.</li>
+<li><strong>Access token:</strong> a JavaScript variable in memory (not <code>localStorage</code>, which any XSS could read forever).</li>
+<li><strong>Refresh token:</strong> a cookie with:<ul>
+<li><code>HttpOnly</code>: JavaScript can&#39;t read it (stops XSS theft).</li>
+<li><code>Secure</code>: only sent over HTTPS (browsers treat <code>http://localhost</code> as secure too).</li>
+<li><code>SameSite=Lax</code>: not attached to POSTs started by other sites (stops CSRF).</li>
+<li><code>Path=/api/v1/auth</code>: only sent to auth endpoints, not every request.</li>
+<li><code>Max-Age</code>: how long the browser keeps it; <code>0</code> deletes it.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="25-spring-security">25. Spring Security</h2>
+<h3 id="251-filters">25.1 Filters</h3>
+<ul>
+<li>A <strong>filter</strong> inspects a request <strong>before</strong> it reaches a controller; it can add information or reject the request.</li>
+<li>Spring Security is a <strong>chain of filters</strong>. The <strong>bearer token filter</strong> reads <code>Authorization: Bearer ...</code>, asks the <strong><code>JwtDecoder</code></strong> to check signature, <code>exp</code> and issuer, and if valid records the <strong>authenticated principal</strong> (who&#39;s calling). Missing/invalid on a protected path → <strong>401</strong>, controller never runs.</li>
+<li><strong>401</strong> = who are you? (no/bad token). <strong>403</strong> = known, but not allowed.</li>
+</ul>
+<h3 id="252-our-rules-securityfilterchain">25.2 Our rules (<code>SecurityFilterChain</code>)</h3>
+<ul>
+<li>Public: <code>POST /api/v1/auth/otp|verify|refresh|logout</code>, <code>/actuator/health</code>, <code>/error</code>.</li>
+<li>Everything else: must be authenticated.</li>
+<li><strong>Stateless:</strong> never create server sessions.</li>
+<li><strong>CSRF protection off:</strong> not needed because the API reads the <code>Authorization</code> header (browsers never add it on their own) and the refresh cookie is <code>SameSite=Lax</code>.</li>
+<li><code>/error</code> is public because Spring forwards failed requests there; if it were protected, a real server error would wrongly show as 401.</li>
+</ul>
+<h3 id="253-the-starter">25.3 The starter</h3>
+<p><code>spring-boot-starter-security-oauth2-resource-server</code> (Boot 4 name; the old <code>spring-boot-starter-oauth2-resource-server</code> is <strong>deprecated</strong>). &quot;<strong>OAuth2 resource server</strong>&quot; = an API that accepts bearer tokens. Includes <strong>Nimbus</strong>, the library that creates/checks JWTs.</p>
+<hr>
+<h2 id="26-jpa-entities-and-spring-data-repositories">26. JPA entities and Spring Data repositories</h2>
+<ul>
+<li><strong>Entity:</strong> a class marked <code>@Entity</code> that maps to a table (<code>User</code> ↔ <code>users</code>); each field ↔ a column. Spring Boot&#39;s naming rule turns <code>userId</code> into <code>user_id</code>.</li>
+<li>We map <strong>only the columns the code uses</strong>. On insert, the others get their <strong>database defaults</strong> (<code>verification = &#39;unverified&#39;</code>, <code>role = &#39;user&#39;</code>, <code>created_at = now()</code>).</li>
+<li><code>ddl-auto: validate</code> (8) checks every mapped field matches a real column at startup, so a typo fails fast.</li>
+<li><strong>Repository:</strong> an interface extending <code>JpaRepository&lt;Entity, IdType&gt;</code>. Spring <strong>generates the implementation</strong>: <code>save</code>, <code>findById</code>, <code>delete</code>… plus <strong>derived queries</strong> built from method names: <code>findByPhone(String phone)</code> → <code>select ... where phone = ?</code>.</li>
+<li><strong><code>@Query</code></strong> writes a query by hand in <strong>JPQL</strong> (SQL-like, but uses entity and field names: <code>Session s</code>, <code>s.revokedAt</code>). <strong><code>@Modifying</code></strong> marks it as an update/delete, and it returns how many rows changed.</li>
+<li><strong><code>Optional&lt;T&gt;</code>:</strong> a box that holds a value or is empty. Forces the caller to handle &quot;not found&quot; (<code>.map(...)</code>, <code>.orElseGet(...)</code>, <code>.orElseThrow()</code>), instead of a surprise <code>null</code>.</li>
+<li><strong>Transaction:</strong> a group of database changes that either <strong>all happen or none do</strong>. <code>@Transactional</code> starts one around a method.</li>
+<li><strong>Forward-only migration in practice:</strong> <code>users.name</code> was <code>NOT NULL</code>, but OTP login only knows the phone. V1 can&#39;t be edited, so <strong><code>V2__users_name_optional.sql</code></strong> runs <code>alter table users alter column name drop not null;</code>.</li>
+</ul>
+<hr>
+<h2 id="27-code-walkthrough-tokens-security-and-users">27. Code walkthrough: tokens, security and users</h2>
+<p>Files in <code>apps/api/src/main/java/com/namastute/</code>. Read each part next to its file.</p>
+<h3 id="271-usersuserjava-the-entity">27.1 <code>users/User.java</code>: the entity</h3>
+<pre><code class="language-java">@Entity
+@Table(name = &quot;users&quot;)
+class User {
+</code></pre>
+<ul>
+<li><code>@Entity</code>: &quot;Hibernate, this class is stored in a table.&quot; <code>@Table(name = &quot;users&quot;)</code>: which table (the class name <code>User</code> alone would map to a table called <code>user</code>).</li>
+</ul>
+<pre><code class="language-java">    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+</code></pre>
+<ul>
+<li><code>@Id</code>: this field is the <strong>primary key</strong> (the column that uniquely identifies a row).</li>
+<li><code>@GeneratedValue(strategy = GenerationType.UUID)</code>: Hibernate creates a random <strong>UUID</strong> (a 128-bit unique id like <code>3f2a...</code>) when saving a new user.</li>
+</ul>
+<pre><code class="language-java">    private String phone;
+    private String name;
+</code></pre>
+<ul>
+<li>Plain fields map to columns with the same name. <code>name</code> can be <code>null</code> now (V2).</li>
+</ul>
+<pre><code class="language-java">    protected User() { }
+    User(String phone) { this.phone = phone; }
+</code></pre>
+<ul>
+<li><strong>JPA requires a no-argument constructor</strong>: when loading a row, Hibernate creates an empty object, then fills its fields. <code>protected</code> keeps our own code from using it by mistake.</li>
+<li>The second constructor is the one <em>we</em> use to create a new user from a phone number.</li>
+</ul>
+<pre><code class="language-java">    UUID getId() { return id; }
+    ...
+</code></pre>
+<ul>
+<li><strong>Getters</strong>: read-only access to the fields. No setters: nothing in this slice needs to change a user.</li>
+</ul>
+<h3 id="272-usersuserrepositoryjava">27.2 <code>users/UserRepository.java</code></h3>
+<pre><code class="language-java">interface UserRepository extends JpaRepository&lt;User, UUID&gt; {
+    Optional&lt;User&gt; findByPhone(String phone);
+}
+</code></pre>
+<ul>
+<li><code>JpaRepository&lt;User, UUID&gt;</code>: a repository for <code>User</code> entities whose id type is <code>UUID</code>. We get <code>save</code>, <code>findById</code>, <code>saveAndFlush</code> and more for free.</li>
+<li><code>findByPhone</code>: Spring reads the name (<code>find</code> + <code>By</code> + <code>Phone</code>) and generates <code>select * from users where phone = ?</code>. Returns <code>Optional</code> because there may be no such user.</li>
+<li>Package-private: only the <code>users</code> module may touch the table directly.</li>
+</ul>
+<h3 id="273-usersuserservicejava-the-modules-public-api">27.3 <code>users/UserService.java</code>: the module&#39;s public API</h3>
+<pre><code class="language-java">@Service
+public class UserService {
+</code></pre>
+<ul>
+<li><code>public</code>, unlike almost everything else: this is the <strong>one door</strong> other modules (like <code>auth</code>) use into <code>users</code>. Spring Modulith&#39;s test checks they don&#39;t go around it.</li>
+</ul>
+<pre><code class="language-java">    public UUID findOrCreateByPhone(String phone) {
+        return users.findByPhone(phone)
+                .map(User::getId)
+                .orElseGet(() -&gt; create(phone));
+    }
+</code></pre>
+<ul>
+<li><code>findByPhone(phone)</code>: an <code>Optional&lt;User&gt;</code>.</li>
+<li><code>.map(User::getId)</code>: if a user is inside the box, replace it with its id. <code>User::getId</code> is a <strong>method reference</strong>: shorthand for <code>user -&gt; user.getId()</code>.</li>
+<li><code>.orElseGet(() -&gt; create(phone))</code>: if the box is empty, run <code>create(phone)</code> and use its result. (<code>orElseGet</code> only runs the lambda when needed; <code>orElse</code> would always run it.)</li>
+</ul>
+<pre><code class="language-java">    private UUID create(String phone) {
+        try {
+            return users.saveAndFlush(new User(phone)).getId();
+        } catch (DataIntegrityViolationException e) {
+            return users.findByPhone(phone).orElseThrow().getId();
+        }
+    }
+</code></pre>
+<ul>
+<li><code>saveAndFlush</code>: insert the row <strong>now</strong> (flush = send the SQL immediately), so any database error happens here, inside the <code>try</code>.</li>
+<li><strong>The race it handles:</strong> two first-time logins for the same new number at the same instant. Both find no user, both insert. <code>phone</code> is <code>unique</code> in the table, so the second insert fails with <code>DataIntegrityViolationException</code> (Spring&#39;s exception for a broken database constraint). We then simply load the user the other request just created. Same idea as <code>DEL</code> returning <code>true</code> (23.8): <strong>let the database decide the winner</strong>.</li>
+</ul>
+<pre><code class="language-java">    Profile profile(UUID id) { ... }
+    record Profile(UUID id, String phone, String name) {}
+</code></pre>
+<ul>
+<li>Package-private: only <code>MeController</code> needs it. <code>Profile</code> is a DTO record, turned into the JSON response. We return a record rather than the entity, so internal fields never leak into the API by accident.</li>
+</ul>
+<h3 id="274-usersmecontrollerjava-the-first-protected-endpoint">27.4 <code>users/MeController.java</code>: the first protected endpoint</h3>
+<pre><code class="language-java">@GetMapping(&quot;/api/v1/me&quot;)
+UserService.Profile me(@AuthenticationPrincipal Jwt jwt) {
+    return users.profile(UUID.fromString(jwt.getSubject()));
+}
+</code></pre>
+<ul>
+<li><code>@GetMapping</code>: handles <code>GET /api/v1/me</code>. It&#39;s not in the public list, so Spring Security has <strong>already</strong> checked the token before this runs.</li>
+<li><code>@AuthenticationPrincipal Jwt jwt</code>: Spring hands us the <strong>decoded, verified</strong> token of the caller.</li>
+<li><code>jwt.getSubject()</code>: the <code>sub</code> claim, our user id as text. <code>UUID.fromString</code> turns it back into a <code>UUID</code>.</li>
+<li>Returning a record (not a <code>ResponseEntity</code>) means &quot;200 OK with this as JSON&quot;.</li>
+</ul>
+<h3 id="275-v2__users_name_optionalsql">27.5 <code>V2__users_name_optional.sql</code></h3>
+<pre><code class="language-sql">alter table users alter column name drop not null;
+</code></pre>
+<ul>
+<li>Removes the <code>NOT NULL</code> rule from <code>users.name</code>. A new file, because V1 already ran everywhere (9).</li>
+</ul>
+<h3 id="276-authsessionjava-and-authsessionrepositoryjava">27.6 <code>auth/Session.java</code> and <code>auth/SessionRepository.java</code></h3>
+<ul>
+<li><code>Session</code> is an entity for the <code>sessions</code> table: <code>id</code>, <code>userId</code> (→ <code>user_id</code>), <code>tokenHash</code>, <code>expiresAt</code>, <code>revokedAt</code>.</li>
+<li><code>Instant</code>: Java&#39;s type for an exact moment in time (stored as <code>timestamptz</code>, a timestamp with time zone).</li>
+<li><code>userId</code> is a plain <code>UUID</code>, not a link to the <code>User</code> entity: <code>auth</code> doesn&#39;t reach into <code>users</code>&#39; internals.</li>
+</ul>
+<pre><code class="language-java">@Modifying
+@Transactional
+@Query(&quot;update Session s set s.revokedAt = :now where s.id = :id and s.revokedAt is null&quot;)
+int revokeIfActive(UUID id, Instant now);
+</code></pre>
+<ul>
+<li>A hand-written JPQL update. <code>:now</code> and <code>:id</code> are <strong>named parameters</strong>, filled from the method arguments (never glued into the text, so no SQL injection).</li>
+<li><code>and s.revokedAt is null</code>: only revoke it if it&#39;s <strong>still active</strong>.</li>
+<li>Returns <code>int</code>, the number of rows changed: <strong>1</strong> = &quot;this call revoked it&quot;, <strong>0</strong> = &quot;someone already had&quot;. This is the race-safe check used by rotation (27.7).</li>
+<li><code>@Transactional</code>: update queries must run inside a transaction; each call is its own small one.</li>
+<li><code>revokeAllForUser</code>: the same, for every active session of a user (reuse detection, logout everywhere).</li>
+</ul>
+<h3 id="277-authrefreshtokensjava">27.7 <code>auth/RefreshTokens.java</code></h3>
+<pre><code class="language-java">static final Duration LIFETIME = Duration.ofDays(30);
+</code></pre>
+<ul>
+<li>Package-visible (no <code>private</code>) so the controller can use the same value for the cookie&#39;s <code>Max-Age</code>.</li>
+</ul>
+<pre><code class="language-java">record Rotated(UUID userId, String token) {}
+</code></pre>
+<ul>
+<li>A small record to <strong>return two values</strong> from <code>rotate</code>: whose session it was, and the new token.</li>
+</ul>
+<p><strong><code>create(userId)</code>: a new login session</strong></p>
+<pre><code class="language-java">byte[] bytes = new byte[32];
+random.nextBytes(bytes);
+String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+sessions.save(new Session(userId, sha256(token), Instant.now().plus(LIFETIME)));
+return token;
+</code></pre>
+<ul>
+<li><code>new byte[32]</code>: an array of 32 bytes = 256 bits. <code>random.nextBytes(bytes)</code>: fill it from <code>SecureRandom</code>.</li>
+<li><code>Base64.getUrlEncoder().withoutPadding()</code>: turn the bytes into cookie-safe text (<code>A–Z a–z 0–9 - _</code>, no trailing <code>=</code>).</li>
+<li>Save only <code>sha256(token)</code> with an expiry 30 days from now. The <strong>raw token</strong> goes back to the user once and is never stored.</li>
+</ul>
+<p><strong><code>rotate(token)</code>: use a refresh token</strong></p>
+<pre><code class="language-java">Session session = sessions.findByTokenHash(sha256(token)).orElseThrow(RefreshTokens::invalid);
+</code></pre>
+<ul>
+<li>Hash what the browser sent and look it up. Unknown → throw <code>invalid()</code> (401).</li>
+</ul>
+<pre><code class="language-java">if (session.getRevokedAt() != null || sessions.revokeIfActive(session.getId(), now) == 0) {
+    sessions.revokeAllForUser(session.getUserId(), now);
+    throw invalid();
+}
+</code></pre>
+<ul>
+<li><strong>Left side:</strong> the token was already used or logged out, so this is a <strong>replay</strong>.</li>
+<li><strong>Right side</strong> (only checked if the left is false, short-circuit <code>||</code>): try to revoke it. If that returns <strong>0</strong>, another request revoked it a moment earlier: two requests used the same token, also a replay.</li>
+<li>Either way: <strong>revoke every session for this user</strong> (everyone logs in again, the thief&#39;s copy dies) and answer 401.</li>
+<li>No <code>@Transactional</code> around this method <strong>on purpose</strong>: if it were one transaction, the <code>throw</code> would <strong>roll back</strong> the &quot;revoke all&quot;, undoing the protection. Each repository call commits on its own.</li>
+</ul>
+<pre><code class="language-java">if (session.getExpiresAt().isBefore(now)) {
+    throw invalid();
+}
+return new Rotated(session.getUserId(), create(session.getUserId()));
+</code></pre>
+<ul>
+<li>Older than 30 days → 401. Otherwise issue a brand-new refresh token for the same user.</li>
+</ul>
+<p><strong><code>revoke(token)</code>: logout</strong></p>
+<ul>
+<li>Find the session and revoke it if present. <code>ifPresent(s -&gt; ...)</code> runs the lambda only when the <code>Optional</code> has a value. Unknown tokens are silently ignored: logout always &quot;succeeds&quot;.</li>
+</ul>
+<p><strong><code>sha256(token)</code></strong></p>
+<ul>
+<li><code>MessageDigest.getInstance(&quot;SHA-256&quot;).digest(bytes)</code>: plain SHA-256 (no secret; see 24.5), written as 64 hex characters.</li>
+</ul>
+<h3 id="278-authaccesstokensjava-issuing-jwts">27.8 <code>auth/AccessTokens.java</code>: issuing JWTs</h3>
+<pre><code class="language-java">JwtClaimsSet claims = JwtClaimsSet.builder()
+        .issuer(ISSUER)
+        .subject(userId.toString())
+        .issuedAt(now)
+        .expiresAt(now.plus(LIFETIME))
+        .build();
+</code></pre>
+<ul>
+<li>A <strong>builder</strong> collects values step by step, then <code>build()</code> creates the finished, unchangeable object. It reads clearly when there are many fields.</li>
+<li>The claims: issuer <code>namastute-api</code>, subject = user id (only the id; the payload is public), issued now, expires in 15 minutes.</li>
+</ul>
+<pre><code class="language-java">JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+</code></pre>
+<ul>
+<li><strong>JWS</strong> (JSON Web Signature) = a <em>signed</em> JWT. The header says &quot;signed with HS256&quot;.</li>
+<li><code>encoder.encode(...)</code> signs it with our secret; <code>getTokenValue()</code> gives the <code>xxx.yyy.zzz</code> text.</li>
+</ul>
+<h3 id="279-authsecurityconfigjava">27.9 <code>auth/SecurityConfig.java</code></h3>
+<pre><code class="language-java">@Configuration
+class SecurityConfig {
+</code></pre>
+<ul>
+<li><code>@Configuration</code>: a class whose <code>@Bean</code> methods <strong>create beans</strong> for Spring. Used when we need to build an object ourselves (from a library) rather than mark our own class <code>@Service</code>.</li>
+</ul>
+<pre><code class="language-java">this.jwtKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), &quot;HmacSHA256&quot;);
+</code></pre>
+<ul>
+<li>The JWT secret from <code>namastute.jwt.secret</code> (env <code>JWT_SECRET</code>), as an HMAC key. HS256 needs <strong>at least 32 bytes</strong>; Nimbus refuses shorter keys at startup.</li>
+</ul>
+<pre><code class="language-java">@Bean
+SecurityFilterChain api(HttpSecurity http) throws Exception {
+    return http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -&gt; a
+                    .requestMatchers(HttpMethod.POST, &quot;/api/v1/auth/otp&quot;, ...).permitAll()
+                    .requestMatchers(&quot;/actuator/health&quot;, &quot;/actuator/health/**&quot;).permitAll()
+                    .requestMatchers(&quot;/error&quot;).permitAll()
+                    .anyRequest().authenticated())
+            .oauth2ResourceServer(o -&gt; o.jwt(Customizer.withDefaults()))
+            .build();
+}
+</code></pre>
+<ul>
+<li><code>HttpSecurity http</code>: Spring hands us a configuration builder for the filter chain.</li>
+<li><code>.csrf(...disable)</code>: see 25.2. <code>AbstractHttpConfigurer::disable</code> is a method reference meaning &quot;call <code>disable()</code> on it&quot;.</li>
+<li><code>.sessionManagement(... STATELESS)</code>: never create server sessions.</li>
+<li><code>.authorizeHttpRequests(...)</code>: the rules, checked <strong>top to bottom</strong>, first match wins. <code>permitAll()</code> = anyone; <code>.anyRequest().authenticated()</code> = everything else needs a valid token.</li>
+<li><code>.oauth2ResourceServer(o -&gt; o.jwt(...))</code>: turn on the bearer token filter using our <code>JwtDecoder</code> bean. <code>Customizer.withDefaults()</code> = &quot;default settings&quot;.</li>
+<li><code>throws Exception</code>: the builder methods declare checked exceptions; we let them propagate (a broken security config should stop the app).</li>
+</ul>
+<pre><code class="language-java">@Bean
+JwtEncoder jwtEncoder() {
+    return new NimbusJwtEncoder(new ImmutableSecret&lt;&gt;(jwtKey));
+}
+</code></pre>
+<ul>
+<li>The object <code>AccessTokens</code> uses to <strong>sign</strong> tokens. <code>ImmutableSecret</code> wraps our key in the form Nimbus expects.</li>
+</ul>
+<pre><code class="language-java">@Bean
+JwtDecoder jwtDecoder() {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtKey).macAlgorithm(MacAlgorithm.HS256).build();
+    decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(AccessTokens.ISSUER));
+    return decoder;
+}
+</code></pre>
+<ul>
+<li>The object the security filter uses to <strong>check</strong> tokens: same key, HS256 only (a token claiming another algorithm is rejected).</li>
+<li><code>createDefaultWithIssuer(...)</code>: the default checks (signature, <code>exp</code>, not-before) <strong>plus</strong> &quot;<code>iss</code> must be <code>namastute-api</code>&quot;.</li>
+</ul>
+<h3 id="2710-authauthcontrollerjava-renamed-from-otpcontroller">27.10 <code>auth/AuthController.java</code> (renamed from <code>OtpController</code>)</h3>
+<p>New since 23:</p>
+<pre><code class="language-java">record TokenResponse(String accessToken, long expiresIn) {}
+</code></pre>
+<ul>
+<li>The JSON body after login/refresh: <code>{&quot;accessToken&quot;: &quot;...&quot;, &quot;expiresIn&quot;: 900}</code> (seconds), so the frontend knows when to refresh.</li>
+</ul>
+<pre><code class="language-java">@PostMapping(&quot;/verify&quot;)
+ResponseEntity&lt;TokenResponse&gt; verify(@Valid @RequestBody VerifyRequest req) {
+    otp.verify(req.phone(), req.code());
+    UUID userId = users.findOrCreateByPhone(req.phone());
+    return tokens(userId, refreshTokens.create(userId));
+}
+</code></pre>
+<ul>
+<li>Check the code (throws on failure) → find or create the user → start a session → return tokens. Each line is one step of the flow; the logic lives in the services.</li>
+</ul>
+<pre><code class="language-java">@PostMapping(&quot;/refresh&quot;)
+ResponseEntity&lt;TokenResponse&gt; refresh(@CookieValue(name = REFRESH_COOKIE, required = false) String token) {
+</code></pre>
+<ul>
+<li><code>@CookieValue</code>: read the <code>refresh_token</code> cookie the browser sent. <code>required = false</code> → <code>null</code> if missing, so we can answer our own 401 JSON instead of Spring&#39;s generic 400.</li>
+<li><code>rotate(token)</code> → new tokens for that user.</li>
+</ul>
+<pre><code class="language-java">@PostMapping(&quot;/logout&quot;)
+... refreshTokens.revoke(token);
+... .header(HttpHeaders.SET_COOKIE, refreshCookie(&quot;&quot;, Duration.ZERO).toString())
+</code></pre>
+<ul>
+<li>Revoke the session, and send the same cookie with an empty value and <code>Max-Age=0</code>, which tells the browser to <strong>delete</strong> it. Answers 204.</li>
+</ul>
+<pre><code class="language-java">private ResponseEntity&lt;TokenResponse&gt; tokens(UUID userId, String refreshToken) {
+    return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, refreshCookie(refreshToken, RefreshTokens.LIFETIME).toString())
+            .body(new TokenResponse(accessTokens.issue(userId), AccessTokens.LIFETIME.toSeconds()));
+}
+</code></pre>
+<ul>
+<li>One helper for verify and refresh: <strong>200</strong>, a <code>Set-Cookie</code> header carrying the refresh token, and the access token in the body.</li>
+<li><code>Set-Cookie</code> is the response header that asks the browser to store a cookie.</li>
+</ul>
+<pre><code class="language-java">private static ResponseCookie refreshCookie(String value, Duration maxAge) {
+    return ResponseCookie.from(REFRESH_COOKIE, value)
+            .httpOnly(true).secure(true).sameSite(&quot;Lax&quot;).path(&quot;/api/v1/auth&quot;).maxAge(maxAge)
+            .build();
+}
+</code></pre>
+<ul>
+<li>Spring&#39;s cookie builder; each flag is explained in 24.6.</li>
+</ul>
+<h3 id="2711-the-tests">27.11 The tests</h3>
+<ul>
+<li><strong><code>CapturingSms</code></strong> (now its own test file, shared by both test classes): the fake SMS sender, plus a nested <code>@TestConfiguration</code> that tests bring in with <code>@Import(CapturingSms.Config.class)</code>.</li>
+<li><strong><code>AuthFlowTest</code></strong>: <code>@AutoConfigureMockMvc</code> gives a <strong><code>MockMvc</code></strong>, which sends fake HTTP requests through the <strong>whole</strong> stack (filters, security, controllers) without opening a real port.<ul>
+<li><code>mvc.perform(post(...).contentType(...).content(...))</code> = send a request; <code>.andExpect(status().isOk())</code> = check the status; <code>jsonPath(&quot;$.phone&quot;)</code> = check a field of the JSON response (<code>$</code> = the root).</li>
+<li><code>JsonPath.read(body, &quot;$.accessToken&quot;)</code> = pull a value out of JSON text.</li>
+<li><code>.cookie(...)</code> sends a cookie; <code>getCookie(...)</code> reads one from a <code>Set-Cookie</code> response.<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>accessTokenOpensProtectedEndpoint</code></td>
+<td>Token → <code>/me</code> 200 with the right phone; no token or a fake token → 401</td>
+</tr>
+<tr>
+<td><code>sameUserOnEveryLogin</code></td>
+<td>Logging in twice gives the same user id (find, not create)</td>
+</tr>
+<tr>
+<td><code>refreshRotatesAndReuseLogsOutEverywhere</code></td>
+<td>Refresh returns a new, different cookie; replaying the old one → 401 <strong>and</strong> the new one stops working</td>
+</tr>
+<tr>
+<td><code>logoutRevokesRefreshToken</code></td>
+<td>Logout deletes the cookie (<code>Max-Age=0</code>) and the token no longer refreshes</td>
+</tr>
+<tr>
+<td><code>refreshCookieIsLockedDown</code></td>
+<td>The cookie is <code>HttpOnly</code>, <code>Secure</code>, <code>Path=/api/v1/auth</code>, <code>SameSite=Lax</code></td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+</li>
+<li><code>throws Exception</code> on tests: <code>perform</code> declares checked exceptions; in a test, letting them fail the test is exactly right.</li>
+</ul>
+<hr>
+<h2 id="28-command-cheat-sheet">28. Command cheat sheet</h2>
 <h3 id="database-from-namastute">Database (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d      # start Postgres
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
@@ -1415,7 +1895,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="25-glossary">25. Glossary</h2>
+<h2 id="29-glossary">29. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -1639,9 +2119,77 @@ git fetch --prune
 <td>YAML</td>
 <td>Indentation-based settings format</td>
 </tr>
+<tr>
+<td>Access token</td>
+<td>Short-lived JWT sent with every request</td>
+</tr>
+<tr>
+<td>Base64URL</td>
+<td>Encoding bytes as URL-safe text (not encryption)</td>
+</tr>
+<tr>
+<td>Bearer token</td>
+<td>A token whose holder is trusted; sent as <code>Authorization: Bearer ...</code></td>
+</tr>
+<tr>
+<td>Claim</td>
+<td>A statement inside a JWT (<code>sub</code>, <code>exp</code>, <code>iss</code>, <code>iat</code>)</td>
+</tr>
+<tr>
+<td>Cookie</td>
+<td>Data the browser stores and sends back automatically</td>
+</tr>
+<tr>
+<td>CSRF</td>
+<td>Another site making the user&#39;s browser send requests to us</td>
+</tr>
+<tr>
+<td>Entity</td>
+<td>A class mapped to a database table</td>
+</tr>
+<tr>
+<td>Filter</td>
+<td>Code that inspects a request before the controller</td>
+</tr>
+<tr>
+<td>JPQL</td>
+<td>SQL-like query language using entity and field names</td>
+</tr>
+<tr>
+<td>JWT</td>
+<td>JSON Web Token: header.payload.signature</td>
+</tr>
+<tr>
+<td>Optional</td>
+<td>A box that holds a value or is empty</td>
+</tr>
+<tr>
+<td>Principal</td>
+<td>The authenticated caller of a request</td>
+</tr>
+<tr>
+<td>Refresh token</td>
+<td>Long-lived random token used only to get new access tokens</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>Interface whose database code Spring generates</td>
+</tr>
+<tr>
+<td>Rotation</td>
+<td>Replacing a token every time it&#39;s used</td>
+</tr>
+<tr>
+<td>Transaction</td>
+<td>Database changes that all happen or none do</td>
+</tr>
+<tr>
+<td>XSS</td>
+<td>Attacker&#39;s script running on our page</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="26-interview-questions-to-practise">26. Interview questions to practise</h2>
+<h2 id="30-interview-questions-to-practise">30. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -1658,6 +2206,13 @@ git fetch --prune
 <li>Why keep OTPs in Redis rather than Postgres? What happens if Redis loses them?</li>
 <li>Explain a fixed-window rate limiter and its weakness. What would you use instead?</li>
 <li>What is a race condition? Give one from this project and how to prevent it.</li>
+<li>Sessions vs JWTs: trade-offs? Why do we use both an access and a refresh token?</li>
+<li>Anyone can read a JWT&#39;s payload. Why is it still safe to trust it?</li>
+<li>When would you choose RS256 over HS256?</li>
+<li>Why is a plain SHA-256 fine for refresh tokens but not for OTP codes?</li>
+<li>How does refresh-token reuse detection work, and why must its &quot;revoke all&quot; not be inside the same transaction as the error?</li>
+<li>What do HttpOnly, Secure and SameSite each protect against?</li>
+<li>What does Spring Security&#39;s filter chain do with a request before your controller runs?</li>
 </ol>
 
 
