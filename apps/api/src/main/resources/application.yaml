@@ -11,6 +11,7 @@ spring:
     open-in-view: false
 
 namastute:
+  web-origin: ${WEB_ORIGIN:http://localhost:3000}
   otp:
     hmac-secret: ${OTP_HMAC_SECRET:dev-only-not-a-real-secret}
   jwt:
