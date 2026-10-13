@@ -20,6 +20,8 @@ class User {
 
     private String name;
 
+    private String upiId;   // private: only ever shown to the user and their own group members (design 4.4)
+
     protected User() {
         // required by JPA: Hibernate creates the object empty, then fills the fields from the row
     }
@@ -38,5 +40,17 @@ class User {
 
     String getName() {
         return name;
+    }
+
+    String getUpiId() {
+        return upiId;
+    }
+
+    void changeName(String name) {
+        this.name = name;
+    }
+
+    void changeUpiId(String upiId) {
+        this.upiId = upiId;
     }
 }

@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { ApiError, requestOtp, verifyOtp } from "@/lib/api";
+import { getMe, requestOtp, verifyOtp } from "@/lib/api";
+import { useAction } from "@/lib/use-action";
 
 const RESEND_SECONDS = 30; // matches the API's resend cooldown
 
@@ -11,8 +12,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [digits, setDigits] = useState(""); // the 10 digits after +91
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { busy, error, setError, run } = useAction();
   const [resendIn, setResendIn] = useState(0);
 
   const phone = `+91${digits}`;
@@ -23,18 +23,6 @@ export default function LoginPage() {
     const timer = setTimeout(() => setResendIn(resendIn - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendIn]);
-
-  async function run(action: () => Promise<void>) {
-    setBusy(true);
-    setError("");
-    try {
-      await action();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Can't reach Namastute. Check your connection and try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   function sendCode(e?: FormEvent) {
     e?.preventDefault();
@@ -54,7 +42,8 @@ export default function LoginPage() {
     e.preventDefault();
     run(async () => {
       await verifyOtp(phone, code);
-      router.replace("/");
+      const me = await getMe();
+      router.replace(me.name ? "/" : "/profile"); // first login: ask for a name before anything else
     });
   }
 

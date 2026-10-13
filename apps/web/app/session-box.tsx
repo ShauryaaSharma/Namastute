@@ -25,13 +25,18 @@ export default function SessionBox() {
   }
 
   return (
-    <div className="mt-6 flex items-center gap-4">
+    <div className="mt-6 flex flex-col gap-2">
       <p>
-        Logged in as <strong>{user.phone}</strong>
+        Logged in as <strong>{user.name ?? user.phone}</strong>
       </p>
-      <button onClick={() => logout().finally(() => setUser(null))} className="underline">
-        Log out
-      </button>
+      <div className="flex gap-4">
+        <Link href="/profile" className="underline">
+          {user.name ? "Edit profile" : "Complete your profile"}
+        </Link>
+        <button onClick={() => logout().finally(() => setUser(null))} className="underline">
+          Log out
+        </button>
+      </div>
     </div>
   );
 }
