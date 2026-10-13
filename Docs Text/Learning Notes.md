@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-13 (profile: PATCH, dirty checking, Unicode names, custom hook).
+Last updated: 2026-10-14 (trips: maps, geocoding, PostGIS in Java, time zones).
 
 ---
 
@@ -40,9 +40,12 @@ Last updated: 2026-10-13 (profile: PATCH, dirty checking, Unicode names, custom 
 30. [Code walkthrough: CORS and the login screen](#30-code-walkthrough-cors-and-the-login-screen)
 31. [Updating data: PATCH, dirty checking, Unicode](#31-updating-data-patch-dirty-checking-unicode)
 32. [Code walkthrough: the profile](#32-code-walkthrough-the-profile)
-33. [Command cheat sheet](#33-command-cheat-sheet)
-34. [Glossary](#34-glossary)
-35. [Interview questions to practise](#35-interview-questions-to-practise)
+33. [Places, maps and geocoding](#33-places-maps-and-geocoding)
+34. [Time zones, enums and trip rules](#34-time-zones-enums-and-trip-rules)
+35. [Code walkthrough: trips](#35-code-walkthrough-trips)
+36. [Command cheat sheet](#36-command-cheat-sheet)
+37. [Glossary](#37-glossary)
+38. [Interview questions to practise](#38-interview-questions-to-practise)
 
 ---
 
@@ -1905,7 +1908,239 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 
 ---
 
-## 33. Command cheat sheet
+## 33. Places, maps and geocoding
+
+### 33.1 Coordinates
+- **Latitude:** north–south position, −90° (South Pole) to 90° (North Pole). **Longitude:** east–west, −180° to 180°, measured from Greenwich. Delhi ≈ 28.6° N, 77.2° E.
+- **The order trap:** people say "lat, lng", but maths-style libraries (Java's **JTS**, PostGIS, GeoJSON) use **(x, y) = (longitude, latitude)**. Swap them and Delhi (28.6, 77.2) becomes a point in the Indian Ocean. Our code only ever builds points through `Geo.point(lat, lng)`, and a test asks PostGIS itself which number is the latitude.
+- **WKT** (Well-Known Text): a text format for shapes: `SRID=4326;POINT(77.0865 28.5555)`, longitude first.
+
+### 33.2 `geography` vs `geometry` in PostGIS
+- `geometry`: points on a **flat plane**; distances come out in "degrees", meaningless for real travel.
+- `geography`: points on the **round Earth**; distances in **metres**. Ours: `geography(point, 4326)`.
+
+### 33.3 Distance on a sphere: the haversine formula
+- The shortest path between two points on a sphere is a **great circle** (the curve a plane flies). The **haversine formula** computes its length from two lat/lng pairs and the Earth's radius (6,371 km).
+- That's **straight-line** ("as the crow flies") distance. Roads are longer, so we multiply by **1.4** (a known shortcut, Proposed Stash idea 1 replaces it with real road data).
+
+### 33.4 Spatial data in Java: Hibernate Spatial
+- `hibernate-spatial` teaches Hibernate the PostGIS types. A `geography` column maps to a JTS **`Point`** field with `@JdbcTypeCode(SqlTypes.GEOGRAPHY)`.
+- **JTS** (Java Topology Suite): the standard Java library for shapes: points, lines, polygons. A `GeometryFactory` creates them with a fixed SRID (4326).
+
+### 33.5 Data migrations (reference data)
+- `V3__seed_terminals.sql` **inserts rows**, not structure: the three IGI terminals and their pickup points. Versioned like any migration, so every database has the same terminals.
+- The coordinates are approximate; the PM's on-site corrections will ship as a **new** migration (`V4…`), never by editing V3.
+
+### 33.6 Maps in the browser
+- **Leaflet:** a small, popular JavaScript map library. A map is built from **tiles**: 256×256 images, loaded for the area and zoom level you're viewing.
+- **OpenStreetMap (OSM):** a free, community-made world map. Its licence (**ODbL**) requires showing "**© OpenStreetMap contributors**". OSM's own tile servers are for light use only; a production app uses a tile provider.
+- Leaflet needs the browser's `window`, which doesn't exist during server rendering. So the map component is loaded with **`dynamic(() => import(...), { ssr: false })`**: "only load this in the browser". In Next.js 16 this is only allowed inside a Client Component.
+- **Accessibility:** a map can't be used by keyboard or screen reader, so the **search box** is the accessible way to set a destination; the map is an extra.
+
+### 33.7 Geocoding
+- **Forward geocoding:** text → coordinates ("DLF Phase 3" → 28.49, 77.09). **Reverse geocoding:** coordinates → place name.
+- **Nominatim** = OSM's free geocoder. Usage policy: about **1 request per second**, **no search-as-you-type**. So our search runs on a button / Enter, and reverse geocoding only on a map click.
+- **Privacy:** other travellers only ever see an **area label** ("Hauz Khas, Delhi"), never the exact pin (design §4.4). The label is built at neighbourhood level (`zoom=16`), never a house number.
+- Using a third-party geocoder sends the user's destination to that third party. Fine for development; part of the provider decision before launch (open question 2).
+- All geocoding lives in **one file** (`lib/geocode.ts`), so switching to Ola Maps or Google changes only that file.
+
+---
+
+## 34. Time zones, enums and trip rules
+
+### 34.1 Time zones
+- The database stores **instants in UTC** (`timestamptz`). Java's `Instant` and JSON strings ending in `Z` ("Zulu" = UTC) are UTC too.
+- Users think in **IST** (UTC+05:30). An airport in Delhi is always IST, **whatever time zone the user's phone is set to**, so we convert with an explicit `+05:30`, not "the phone's local time".
+- `<input type="datetime-local">` gives `"2026-10-14T00:49"`: a time **with no zone**. `lib/time.ts` is the **one place** that attaches `+05:30` and converts to UTC.
+- Verified: 00:49 IST was stored as **19:19 UTC the previous day**.
+
+### 34.2 Next.js Cache Components and "now"
+- Our Next.js config has **Cache Components** on: pages are **prerendered** (built ahead of time) where possible.
+- Calling `Date.now()` while rendering would freeze the build machine's "now" into the page, stale for every visitor. Next.js 16 stops the build with an error. Fix: compute time-dependent values **in the browser, after load** (inside `useEffect`).
+
+### 34.3 Postgres enum types from Java
+- `trip_status` is a **Postgres enum** (a column type allowing only listed words). Java maps it with `@Enumerated(EnumType.STRING)` + `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`, and the Java enum's names must match exactly (lower case here).
+- **Gotcha found by the tests:** in JPQL, Hibernate writes enum **literals** as `'expired'::Status`, a cast to a type named after the *Java class*, which doesn't exist. Inserts and parameters work fine. Fix: the two bulk updates are **native SQL** (`nativeQuery = true`), where `'expired'` is plain text that Postgres converts to the enum itself.
+
+### 34.4 Trip rules and where each is enforced
+| Rule | Where | Why there |
+|---|---|---|
+| Seats 1–3, bags 0–6, lat/lng in range, area ≤ 120 chars, flight like `AI 865` | Bean Validation on the request | Shape of the input |
+| Terminal must exist | Service (`UNKNOWN_TERMINAL`) | Needs the database |
+| Exit time between now (−5 min grace) and +24 h | Service (`EXIT_TIME_OUT_OF_RANGE`) | Needs "now" |
+| Destination ≤ 100 km from the terminal | Service (`DESTINATION_TOO_FAR`) | Not an airport cab ride otherwise |
+| Women-only only for ID-verified women | Service (`WOMEN_ONLY_NEEDS_VERIFICATION`, 403); refused for all until verification exists | The rule exists from day one |
+| **One active trip per user** | **Database** unique index `trip_one_active` → 409 `ACTIVE_TRIP_EXISTS` | Two simultaneous requests can't both pass; same "let the database decide" idea as `UserService.create` |
+| Can't cancel someone else's trip | SQL `where user_id = :userId` → 404 | Don't even reveal it exists |
+
+- **Stale trips:** a trip expires at exit + 60 min (design §3.7). There's no scheduled job yet, so: `current` simply ignores old trips, and `create` first marks the user's stale trips `expired`, otherwise a forgotten trip would block a new one through the unique index. A scheduled job will do this for everyone later.
+
+### 34.5 Status codes used
+- **201 Created:** a new thing was made (`POST /trips`).
+- **204 No Content:** success with nothing to return (no current trip; cancel done).
+- **409 Conflict:** the request clashes with the current state (already have a trip).
+- **404 Not Found:** also used for "exists but isn't yours", so nobody can probe for other users' trips.
+
+---
+
+## 35. Code walkthrough: trips
+
+### 35.1 `pom.xml` and `V3__seed_terminals.sql`
+- `hibernate-spatial` added (version managed by Spring Boot's BOM).
+- V3 inserts DEL-T1/T2/T3 with `pickup = 'SRID=4326;POINT(lng lat)'` and a note that they're approximate.
+
+### 35.2 `trips/Geo.java`
+```java
+private static final GeometryFactory WGS84 = new GeometryFactory(new PrecisionModel(), 4326);
+
+static Point point(double lat, double lng) {
+    return WGS84.createPoint(new Coordinate(lng, lat));   // x = longitude, y = latitude
+}
+```
+- One factory for all points, fixed to SRID 4326. `point(lat, lng)` takes the human order and passes `Coordinate(x = lng, y = lat)`, so the swap happens in **one** place. `lat(p)` = `p.getY()`, `lng(p)` = `p.getX()`.
+
+```java
+static double distanceKm(Point a, Point b) {
+    double dLat = Math.toRadians(lat(b) - lat(a));
+    double dLng = Math.toRadians(lng(b) - lng(a));
+    double h = Math.pow(Math.sin(dLat / 2), 2)
+            + Math.cos(Math.toRadians(lat(a))) * Math.cos(Math.toRadians(lat(b))) * Math.pow(Math.sin(dLng / 2), 2);
+    return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
+}
+```
+- The haversine formula (33.3). Trigonometry in Java works in **radians**, so degrees are converted first. `h` is the "haversine" of the angle between the points; `2 × R × asin(√h)` turns it into a distance.
+- `final class` + `private Geo() {}`: a **utility class**: only static helpers, can't be extended or instantiated.
+
+### 35.3 `trips/Terminal.java`
+- Read-only entity for `terminals`. `@Id private String id;` (`DEL-T3`; the id is text, not a UUID).
+- `@JdbcTypeCode(SqlTypes.GEOGRAPHY) private Point pickup;`: the PostGIS `geography` column as a JTS `Point`.
+
+### 35.4 `trips/TripRequest.java`
+- Entity for `trip_requests`. Field types chosen to match the columns exactly, because `ddl-auto: validate` checks them:
+  - `float soloKm` ↔ `real` (4-byte decimal); `double` would expect `double precision`.
+  - `short seats, bags` ↔ `smallint`.
+  - `Instant exitAt` ↔ `timestamptz`.
+- `enum Status { searching, grouped, cancelled, expired, done }`: lower-case names to match the Postgres enum labels.
+- `@Enumerated(EnumType.STRING)` stores the name (not a number); `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` says the column is a Postgres enum (34.3).
+- The constructor sets `status = Status.searching`: every new trip starts searching.
+
+### 35.5 `trips/TripRepository.java`
+```java
+Optional<TripRequest> findFirstByUserIdAndStatusIn(UUID userId, Collection<TripRequest.Status> statuses);
+```
+- A derived query: `where user_id = ? and status in (?, ?) limit 1`.
+
+```java
+@Query(nativeQuery = true, value = """
+        update trip_requests set status = 'expired'
+        where user_id = :userId and status = 'searching' and exit_at < :cutoff""")
+int expireStale(UUID userId, Instant cutoff);
+```
+- **Native SQL** (34.3). Marks this user's old searching trips expired; returns how many.
+- `cancel(id, userId)`: same style; the `user_id = :userId` condition is the ownership check, and it only cancels `searching` trips. Returns 1 or 0.
+
+### 35.6 `trips/TripService.java`
+**Constants** at the top: 5-minute grace, 24-hour limit, 60-minute expiry, 100 km limit, and `ACTIVE` = searching or grouped.
+
+**Records:** `CreateTrip` (what the controller passes in) and `TripView` (what the API returns: id, terminal id and name, flight, exit time, area, lat/lng, seats, bags, women-only, status, km).
+
+**`create(userId, req)`**, step by step:
+1. `terminals.findById(...).orElseThrow(...)`: unknown terminal → 400.
+2. Exit time window check against `Instant.now()`.
+3. `if (req.womenOnly())` → 403 (shortcut until ID verification).
+4. `Geo.point(...)` and `Geo.distanceKm(terminal pickup, dest)`; > 100 km → 400.
+5. `trips.expireStale(userId, now − 60 min)`: clear the way (34.4).
+6. `saveAndFlush(new TripRequest(...))` inside `try`. The flight number is normalised (`"ai 865"` → `"AI865"`), the area trimmed, and `soloKm = straight × 1.4`.
+7. `catch (DataIntegrityViolationException e)` → 409 `ACTIVE_TRIP_EXISTS`: the unique index refused a second active trip.
+
+**`current(userId)`**
+```java
+return trips.findFirstByUserIdAndStatusIn(userId, ACTIVE)
+        .filter(t -> t.getExitAt().isAfter(Instant.now().minus(EXPIRES_AFTER)))
+        .map(t -> view(t, terminals.findById(t.getTerminalId()).orElseThrow()));
+```
+- `Optional.filter(...)`: keep the trip only if it hasn't expired; otherwise the result becomes empty. A read never changes data.
+
+**`cancel(userId, tripId)`**: if the update changed 0 rows → 404 (not found, not yours, or no longer searching: same answer).
+
+**`view(...)`**: builds `TripView`; `Math.round(km * 10) / 10.0` rounds to one decimal.
+
+### 35.7 `trips/TripController.java`
+- `CreateTripRequest`: the validated request body (34.4). `Double destLat` (object, not `double`) so `@NotNull` can catch a **missing** value; a primitive would silently become 0.0, which is a real place (in the Atlantic).
+- `@GetMapping("/api/v1/terminals")`: maps each `Terminal` to `TerminalView(id, name, lat, lng, pickupNote)` using `stream().map(...).toList()`.
+- `@PostMapping("/api/v1/trips")` → `ResponseEntity.status(HttpStatus.CREATED).body(trip)`: **201**.
+- `@GetMapping("/api/v1/trips/current")`: `.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build())`: 200 with the trip, or 204.
+- `@DeleteMapping("/api/v1/trips/{id}")` with **`@PathVariable UUID id`**: `{id}` in the path is copied into the parameter (and must be a valid UUID, or Spring answers 400).
+
+### 35.8 Tests
+- **`GeoTest`** (unit, no Spring): lat/lng kept apart; T3 → Connaught Place ≈ 15 km; distance symmetric, zero to itself.
+- **`TripsTest`** (HTTP + Spring Security with `jwt()`):
+  | Test | Proves |
+  |---|---|
+  | `listsTheThreeIgiTerminals` | V3 seed is there (`$[?(@.id == 'DEL-T3')]` is a JsonPath **filter**) |
+  | `createsTripAndStoresTheDestinationTheRightWayRound` | 201; and `ST_Y`/`ST_X` from PostGIS confirm latitude and longitude weren't swapped; km in range |
+  | `currentTripThenCancel` | current → 200, cancel → 204, current → 204, cancel again → 404 |
+  | `onlyOneActiveTripAtATime` | second create → 409 |
+  | `staleTripDoesNotBlockANewOne` | a trip moved 2 h into the past is ignored and gets marked `expired` when a new one is created |
+  | `cannotCancelSomeoneElsesTrip` | another user gets 404 |
+  | `rejectsBadRequests` | unknown terminal, past/too-far-future time, Mumbai destination, women-only, 4 seats, bad flight number |
+  | `needsLogin` | no token → 401 |
+- `JdbcTemplate`: Spring's helper for running plain SQL in tests (e.g. moving a trip into the past).
+- `"""...""".formatted(exitAt)`: a text block with a `%s` placeholder filled by `formatted`.
+
+### 35.9 `lib/time.ts`
+```ts
+export function istInputValue(minutesFromNow: number): string {
+  const shifted = new Date(Date.now() + (minutesFromNow + IST_OFFSET_MINUTES) * 60_000);
+  return shifted.toISOString().slice(0, 16);
+}
+```
+- Trick: shift "now" forward by 5 h 30 min, then print it **as UTC**; the digits are the IST wall-clock time. `.slice(0, 16)` keeps `YYYY-MM-DDTHH:mm`, the format `datetime-local` wants.
+- `istInputToIso(value)`: `new Date(value + ":00+05:30").toISOString()`: attach the IST offset, then convert to UTC.
+- `formatIst(iso)`: `Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", ... })` formats any instant as Indian time, e.g. "14 Oct 2026, 12:49 am".
+
+### 35.10 `lib/geocode.ts`
+- `searchPlaces(query)`: `GET /search` with `countrycodes=in`, a Delhi NCR `viewbox` and `bounded=1` (only results inside the box), `limit=5`. Returns `{lat, lng, name, area}` per result. `new URLSearchParams({...})` builds a correctly escaped query string.
+- `areaAt(lat, lng)`: `GET /reverse` at `zoom=16` (neighbourhood level).
+- `areaLabel(r)`: picks the first available of neighbourhood / suburb / quarter / residential / village, plus city / town / district, removes duplicates, and joins with ", ". Never a house number.
+  - `.filter((part, i, all): part is string => !!part && all.indexOf(part) === i)`: keep non-empty parts appearing for the first time. `part is string` is a **type guard**: it tells TypeScript the result has no `undefined`s.
+
+### 35.11 `lib/api.ts` (additions)
+- Types `Terminal`, `NewTrip`, `Trip`. `Omit<NewTrip, "flightNo"> & {...}` = "everything in NewTrip except flightNo, plus these fields": TypeScript **utility types**.
+- `getTerminals`, `createTrip` (POST), `cancelTrip` (DELETE).
+- `getCurrentTrip`: `(await request(...)) ?? null`: a 204 gives `undefined`, turned into `null` = "no trip".
+
+### 35.12 `app/trip/new/destination-map.tsx`
+- `import "leaflet/dist/leaflet.css"`: Leaflet's styles (without them the tiles appear scattered).
+- **Refs** (`useRef`): values that survive redraws **without** causing one: the map `<div>`, the Leaflet map object, the marker layer, and the latest `onPick`. Leaflet manages its own drawing, so it lives in refs, not state.
+- Effect 1 (`[]`, runs once): create the map centred on the airport, add OSM tiles with attribution, a layer group for markers, and a click handler. The **cleanup** `m.remove()` destroys the map; React's development mode mounts twice, and without cleanup you'd get "Map container is already initialized".
+- `latestOnPick` + an effect without dependencies keeps the click handler calling the **newest** `onPick` without recreating the map.
+- Effect 2 (`[pickup, destination]`): clear the layer, draw blue (pickup) and red (destination) `circleMarker`s, pan to the destination. Circle markers need no image files (Leaflet's default pin images often break in bundled apps).
+- `role="application"` + `aria-label`: tells screen-reader users what the area is and points them to the search box.
+
+### 35.13 `app/trip/new/page.tsx`
+- `dynamic(() => import("./destination-map"), { ssr: false, loading: ... })`: load the map only in the browser, with a placeholder (33.6).
+- On load: not logged in → `/login`; no name → `/profile`; else set the default exit time (in the browser, 34.2) and load terminals.
+- `pickup = terminals.find(t => t.id === terminalId)`: **derived** from state, never stored separately.
+- `pickOnMap(point)`: set the pin, show "Finding the area…", then fill in the reverse-geocoded label (empty if the lookup fails; the user can type one).
+- Search: Enter in the search box calls `e.preventDefault()` so it searches instead of submitting the trip form (a form can't contain another form). Results are buttons; choosing one sets the pin and area.
+- Two separate `useAction()`s (`search`, `submit`): each has its own busy state and error, so a failed search doesn't disable the Save button.
+- `save`: requires a destination and area, converts the exit time with `istInputToIso`, sends `createTrip`, then goes home.
+- `<fieldset>` + `<legend>`: groups the destination controls under one heading for screen readers.
+- `<input type="datetime-local" min max>`: the picker itself limits choices to now…+24 h (the API still checks).
+- The disabled women-only checkbox shows the feature exists and why it's unavailable.
+
+### 35.14 `app/current-trip.tsx` and `app/session-box.tsx`
+- `CurrentTrip`: loads your trip (`undefined` = loading, `null` = none). Shows "Plan a trip", or the trip (terminal → area, IST time, seats/bags/flight, km) with **Cancel**.
+- `` `seat${trip.seats > 1 ? "s" : ""}` ``: simple plurals.
+- `SessionBox` renders `<CurrentTrip />` only when the user has a name.
+
+### 35.15 Verified in a real browser
+Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search "DLF Phase 3" with Enter → results (form not submitted) · choose → blue pickup + red destination on the map, area "Sector 25A, Gurgaon" · click elsewhere → "Hauz Khas, Delhi" · submit → home shows "Terminal 3 → Hauz Khas, Delhi, 12:49 am, 1 seat, 2 bags, flight AI865, about 13.9 km" · database: 00:49 IST stored as 19:19 UTC, latitude/longitude correct · Cancel → back to "Plan a trip".
+
+---
+
+## 36. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -1960,7 +2195,7 @@ git fetch --prune
 
 ---
 
-## 34. Glossary
+## 37. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -2053,10 +2288,22 @@ git fetch --prune
 | Dirty checking | Hibernate detects changed fields and writes them at commit |
 | PATCH | HTTP method for changing part of a resource |
 | PUT | HTTP method for replacing a whole resource |
+| Geocoding | Text → coordinates (forward) or coordinates → place name (reverse) |
+| geography (PostGIS) | Points on the round Earth; distances in metres |
+| Great circle | Shortest path between two points on a sphere |
+| Haversine | Formula for great-circle distance from two lat/lng pairs |
+| JTS | Java Topology Suite: Java's standard shapes library (Point…) |
+| Latitude / longitude | North–south / east–west position in degrees |
+| Native query | Plain SQL in a repository (`nativeQuery = true`) |
+| Postgres enum | A column type allowing only listed values (`trip_status`) |
+| Prerendering | Building a page ahead of time instead of per visitor |
+| Ref (React) | A value kept between redraws without causing one (`useRef`) |
+| Tile | One square image of a map at a given zoom level |
+| WKT | Well-Known Text: `POINT(lng lat)` |
 
 ---
 
-## 35. Interview questions to practise
+## 38. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -2090,3 +2337,9 @@ git fetch --prune
 30. Why does updating a JPA entity need no save() call, and why must the method be @Transactional?
 31. A name regex using only \p{L} rejected Hindi names. Why, and what's the fix?
 32. Why must the user id for PATCH /me come from the token rather than the request?
+33. geometry vs geography in PostGIS: which do you use for real distances, and why?
+34. Why is latitude/longitude order a common bug, and how did we guard against it?
+35. Why store times in UTC, and how do you handle a time zone for an airport regardless of the user's phone?
+36. How does the database enforce "one active trip per user", and why not only check it in Java?
+37. Why answer 404 instead of 403 when someone tries to cancel another user's trip?
+38. Why must a map library like Leaflet be loaded with ssr: false in Next.js?

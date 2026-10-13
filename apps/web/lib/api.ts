@@ -82,6 +82,45 @@ export function updateMe(changes: { name?: string; upiId?: string }): Promise<Pr
   return request<Profile>("/api/v1/me", { method: "PATCH", body: JSON.stringify(changes) });
 }
 
+export type Terminal = { id: string; name: string; lat: number; lng: number; pickupNote: string };
+
+export type NewTrip = {
+  terminalId: string;
+  flightNo: string;
+  exitAt: string; // ISO instant in UTC, see lib/time.ts
+  destLat: number;
+  destLng: number;
+  destArea: string;
+  seats: number;
+  bags: number;
+  womenOnly: boolean;
+};
+
+export type Trip = Omit<NewTrip, "flightNo"> & {
+  id: string;
+  terminalName: string;
+  flightNo: string | null;
+  status: "searching" | "grouped" | "cancelled" | "expired" | "done";
+  soloKm: number;
+};
+
+export function getTerminals(): Promise<Terminal[]> {
+  return request<Terminal[]>("/api/v1/terminals");
+}
+
+export function createTrip(trip: NewTrip): Promise<Trip> {
+  return request<Trip>("/api/v1/trips", { method: "POST", body: JSON.stringify(trip) });
+}
+
+// null when you have no active trip (the API answers 204 No Content)
+export async function getCurrentTrip(): Promise<Trip | null> {
+  return (await request<Trip | undefined>("/api/v1/trips/current")) ?? null;
+}
+
+export async function cancelTrip(id: string): Promise<void> {
+  await request<void>(`/api/v1/trips/${id}`, { method: "DELETE" });
+}
+
 // On page load: memory was wiped, so use the refresh cookie (if any) to log back in silently
 export async function restoreSession(): Promise<Profile | null> {
   if (!accessToken && !(await refreshSession())) return null;

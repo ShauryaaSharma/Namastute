@@ -73,14 +73,17 @@
 <details><summary><a href="#30-code-walkthrough-cors-and-the-login-screen">30. Code walkthrough: CORS and the login screen</a></summary><a class="sub" href="#301-api-securityconfigjava-cors-part">30.1 API: SecurityConfig.java (CORS part)</a><a class="sub" href="#302-libapits-the-only-file-that-talks-to-the-api">30.2 lib/api.ts: the only file that talks to the API</a><a class="sub" href="#303-apploginpagetsx-the-login-screen">30.3 app/login/page.tsx: the login screen</a><a class="sub" href="#304-appsession-boxtsx-and-apppagetsx">30.4 app/session-box.tsx and app/page.tsx</a><a class="sub" href="#305-small-changes">30.5 Small changes</a><a class="sub" href="#306-verified-in-a-real-browser">30.6 Verified in a real browser</a></details>
 <details><summary><a href="#31-updating-data-patch-dirty-checking-unicode">31. Updating data: PATCH, dirty checking, Unicode</a></summary><a class="sub" href="#311-patch-and-partial-updates">31.1 PATCH and partial updates</a><a class="sub" href="#312-validating-names-for-india-unicode-categories">31.2 Validating names for India: Unicode categories</a><a class="sub" href="#313-changing-data-with-jpa-dirty-checking">31.3 Changing data with JPA: dirty checking</a><a class="sub" href="#314-privacy-by-design">31.4 Privacy by design</a><a class="sub" href="#315-testing-protected-endpoints-without-logging-in">31.5 Testing protected endpoints without logging in</a><a class="sub" href="#316-reusing-frontend-logic-a-custom-hook">31.6 Reusing frontend logic: a custom hook</a></details>
 <details><summary><a href="#32-code-walkthrough-the-profile">32. Code walkthrough: the profile</a></summary><a class="sub" href="#321-usersuserjava-additions">32.1 users/User.java (additions)</a><a class="sub" href="#322-usersuserservicejava-additions">32.2 users/UserService.java (additions)</a><a class="sub" href="#323-usersmecontrollerjava-additions">32.3 users/MeController.java (additions)</a><a class="sub" href="#324-profiletestjava">32.4 ProfileTest.java</a><a class="sub" href="#325-libuse-actionts-new">32.5 lib/use-action.ts (new)</a><a class="sub" href="#326-libapits-additions">32.6 lib/api.ts (additions)</a><a class="sub" href="#327-apploginpagetsx-changes">32.7 app/login/page.tsx (changes)</a><a class="sub" href="#328-appprofilepagetsx-new">32.8 app/profile/page.tsx (new)</a><a class="sub" href="#329-appsession-boxtsx-changes">32.9 app/session-box.tsx (changes)</a><a class="sub" href="#3210-verified-in-a-real-browser">32.10 Verified in a real browser</a></details>
-<details><summary><a href="#33-command-cheat-sheet">33. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#34-glossary">34. Glossary</a>
-<a class="topic" href="#35-interview-questions-to-practise">35. Interview questions to practise</a>
+<details><summary><a href="#33-places-maps-and-geocoding">33. Places, maps and geocoding</a></summary><a class="sub" href="#331-coordinates">33.1 Coordinates</a><a class="sub" href="#332-geography-vs-geometry-in-postgis">33.2 geography vs geometry in PostGIS</a><a class="sub" href="#333-distance-on-a-sphere-the-haversine-formula">33.3 Distance on a sphere: the haversine formula</a><a class="sub" href="#334-spatial-data-in-java-hibernate-spatial">33.4 Spatial data in Java: Hibernate Spatial</a><a class="sub" href="#335-data-migrations-reference-data">33.5 Data migrations (reference data)</a><a class="sub" href="#336-maps-in-the-browser">33.6 Maps in the browser</a><a class="sub" href="#337-geocoding">33.7 Geocoding</a></details>
+<details><summary><a href="#34-time-zones-enums-and-trip-rules">34. Time zones, enums and trip rules</a></summary><a class="sub" href="#341-time-zones">34.1 Time zones</a><a class="sub" href="#342-nextjs-cache-components-and-now">34.2 Next.js Cache Components and &quot;now&quot;</a><a class="sub" href="#343-postgres-enum-types-from-java">34.3 Postgres enum types from Java</a><a class="sub" href="#344-trip-rules-and-where-each-is-enforced">34.4 Trip rules and where each is enforced</a><a class="sub" href="#345-status-codes-used">34.5 Status codes used</a></details>
+<details><summary><a href="#35-code-walkthrough-trips">35. Code walkthrough: trips</a></summary><a class="sub" href="#351-pomxml-and-v3__seed_terminalssql">35.1 pom.xml and V3__seed_terminals.sql</a><a class="sub" href="#352-tripsgeojava">35.2 trips/Geo.java</a><a class="sub" href="#353-tripsterminaljava">35.3 trips/Terminal.java</a><a class="sub" href="#354-tripstriprequestjava">35.4 trips/TripRequest.java</a><a class="sub" href="#355-tripstriprepositoryjava">35.5 trips/TripRepository.java</a><a class="sub" href="#356-tripstripservicejava">35.6 trips/TripService.java</a><a class="sub" href="#357-tripstripcontrollerjava">35.7 trips/TripController.java</a><a class="sub" href="#358-tests">35.8 Tests</a><a class="sub" href="#359-libtimets">35.9 lib/time.ts</a><a class="sub" href="#3510-libgeocodets">35.10 lib/geocode.ts</a><a class="sub" href="#3511-libapits-additions">35.11 lib/api.ts (additions)</a><a class="sub" href="#3512-apptripnewdestination-maptsx">35.12 app/trip/new/destination-map.tsx</a><a class="sub" href="#3513-apptripnewpagetsx">35.13 app/trip/new/page.tsx</a><a class="sub" href="#3514-appcurrent-triptsx-and-appsession-boxtsx">35.14 app/current-trip.tsx and app/session-box.tsx</a><a class="sub" href="#3515-verified-in-a-real-browser">35.15 Verified in a real browser</a></details>
+<details><summary><a href="#36-command-cheat-sheet">36. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#37-glossary">37. Glossary</a>
+<a class="topic" href="#38-interview-questions-to-practise">38. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-13 (profile: PATCH, dirty checking, Unicode names, custom hook).</p>
+<p>Last updated: 2026-10-14 (trips: maps, geocoding, PostGIS in Java, time zones).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -116,9 +119,12 @@
 <li><a href="#30-code-walkthrough-cors-and-the-login-screen">Code walkthrough: CORS and the login screen</a></li>
 <li><a href="#31-updating-data-patch-dirty-checking-unicode">Updating data: PATCH, dirty checking, Unicode</a></li>
 <li><a href="#32-code-walkthrough-the-profile">Code walkthrough: the profile</a></li>
-<li><a href="#33-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#34-glossary">Glossary</a></li>
-<li><a href="#35-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#33-places-maps-and-geocoding">Places, maps and geocoding</a></li>
+<li><a href="#34-time-zones-enums-and-trip-rules">Time zones, enums and trip rules</a></li>
+<li><a href="#35-code-walkthrough-trips">Code walkthrough: trips</a></li>
+<li><a href="#36-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#37-glossary">Glossary</a></li>
+<li><a href="#38-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -2421,7 +2427,319 @@ const UPI_ID = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/;
 <h3 id="3210-verified-in-a-real-browser">32.10 Verified in a real browser</h3>
 <p>New number → after the code, lands on <strong>Complete your profile</strong> · invalid UPI → friendly message · Hindi name + <code>Keshav.D@OkAxis</code> → home shows the name, database has <code>keshav.d@okaxis</code> · Edit profile → form prefilled · clear the UPI ID → database value <code>null</code> · logged out → <code>/profile</code> redirects to <code>/login</code>.</p>
 <hr>
-<h2 id="33-command-cheat-sheet">33. Command cheat sheet</h2>
+<h2 id="33-places-maps-and-geocoding">33. Places, maps and geocoding</h2>
+<h3 id="331-coordinates">33.1 Coordinates</h3>
+<ul>
+<li><strong>Latitude:</strong> north–south position, −90° (South Pole) to 90° (North Pole). <strong>Longitude:</strong> east–west, −180° to 180°, measured from Greenwich. Delhi ≈ 28.6° N, 77.2° E.</li>
+<li><strong>The order trap:</strong> people say &quot;lat, lng&quot;, but maths-style libraries (Java&#39;s <strong>JTS</strong>, PostGIS, GeoJSON) use <strong>(x, y) = (longitude, latitude)</strong>. Swap them and Delhi (28.6, 77.2) becomes a point in the Indian Ocean. Our code only ever builds points through <code>Geo.point(lat, lng)</code>, and a test asks PostGIS itself which number is the latitude.</li>
+<li><strong>WKT</strong> (Well-Known Text): a text format for shapes: <code>SRID=4326;POINT(77.0865 28.5555)</code>, longitude first.</li>
+</ul>
+<h3 id="332-geography-vs-geometry-in-postgis">33.2 <code>geography</code> vs <code>geometry</code> in PostGIS</h3>
+<ul>
+<li><code>geometry</code>: points on a <strong>flat plane</strong>; distances come out in &quot;degrees&quot;, meaningless for real travel.</li>
+<li><code>geography</code>: points on the <strong>round Earth</strong>; distances in <strong>metres</strong>. Ours: <code>geography(point, 4326)</code>.</li>
+</ul>
+<h3 id="333-distance-on-a-sphere-the-haversine-formula">33.3 Distance on a sphere: the haversine formula</h3>
+<ul>
+<li>The shortest path between two points on a sphere is a <strong>great circle</strong> (the curve a plane flies). The <strong>haversine formula</strong> computes its length from two lat/lng pairs and the Earth&#39;s radius (6,371 km).</li>
+<li>That&#39;s <strong>straight-line</strong> (&quot;as the crow flies&quot;) distance. Roads are longer, so we multiply by <strong>1.4</strong> (a known shortcut, Proposed Stash idea 1 replaces it with real road data).</li>
+</ul>
+<h3 id="334-spatial-data-in-java-hibernate-spatial">33.4 Spatial data in Java: Hibernate Spatial</h3>
+<ul>
+<li><code>hibernate-spatial</code> teaches Hibernate the PostGIS types. A <code>geography</code> column maps to a JTS <strong><code>Point</code></strong> field with <code>@JdbcTypeCode(SqlTypes.GEOGRAPHY)</code>.</li>
+<li><strong>JTS</strong> (Java Topology Suite): the standard Java library for shapes: points, lines, polygons. A <code>GeometryFactory</code> creates them with a fixed SRID (4326).</li>
+</ul>
+<h3 id="335-data-migrations-reference-data">33.5 Data migrations (reference data)</h3>
+<ul>
+<li><code>V3__seed_terminals.sql</code> <strong>inserts rows</strong>, not structure: the three IGI terminals and their pickup points. Versioned like any migration, so every database has the same terminals.</li>
+<li>The coordinates are approximate; the PM&#39;s on-site corrections will ship as a <strong>new</strong> migration (<code>V4…</code>), never by editing V3.</li>
+</ul>
+<h3 id="336-maps-in-the-browser">33.6 Maps in the browser</h3>
+<ul>
+<li><strong>Leaflet:</strong> a small, popular JavaScript map library. A map is built from <strong>tiles</strong>: 256×256 images, loaded for the area and zoom level you&#39;re viewing.</li>
+<li><strong>OpenStreetMap (OSM):</strong> a free, community-made world map. Its licence (<strong>ODbL</strong>) requires showing &quot;<strong>© OpenStreetMap contributors</strong>&quot;. OSM&#39;s own tile servers are for light use only; a production app uses a tile provider.</li>
+<li>Leaflet needs the browser&#39;s <code>window</code>, which doesn&#39;t exist during server rendering. So the map component is loaded with <strong><code>dynamic(() =&gt; import(...), { ssr: false })</code></strong>: &quot;only load this in the browser&quot;. In Next.js 16 this is only allowed inside a Client Component.</li>
+<li><strong>Accessibility:</strong> a map can&#39;t be used by keyboard or screen reader, so the <strong>search box</strong> is the accessible way to set a destination; the map is an extra.</li>
+</ul>
+<h3 id="337-geocoding">33.7 Geocoding</h3>
+<ul>
+<li><strong>Forward geocoding:</strong> text → coordinates (&quot;DLF Phase 3&quot; → 28.49, 77.09). <strong>Reverse geocoding:</strong> coordinates → place name.</li>
+<li><strong>Nominatim</strong> = OSM&#39;s free geocoder. Usage policy: about <strong>1 request per second</strong>, <strong>no search-as-you-type</strong>. So our search runs on a button / Enter, and reverse geocoding only on a map click.</li>
+<li><strong>Privacy:</strong> other travellers only ever see an <strong>area label</strong> (&quot;Hauz Khas, Delhi&quot;), never the exact pin (design §4.4). The label is built at neighbourhood level (<code>zoom=16</code>), never a house number.</li>
+<li>Using a third-party geocoder sends the user&#39;s destination to that third party. Fine for development; part of the provider decision before launch (open question 2).</li>
+<li>All geocoding lives in <strong>one file</strong> (<code>lib/geocode.ts</code>), so switching to Ola Maps or Google changes only that file.</li>
+</ul>
+<hr>
+<h2 id="34-time-zones-enums-and-trip-rules">34. Time zones, enums and trip rules</h2>
+<h3 id="341-time-zones">34.1 Time zones</h3>
+<ul>
+<li>The database stores <strong>instants in UTC</strong> (<code>timestamptz</code>). Java&#39;s <code>Instant</code> and JSON strings ending in <code>Z</code> (&quot;Zulu&quot; = UTC) are UTC too.</li>
+<li>Users think in <strong>IST</strong> (UTC+05:30). An airport in Delhi is always IST, <strong>whatever time zone the user&#39;s phone is set to</strong>, so we convert with an explicit <code>+05:30</code>, not &quot;the phone&#39;s local time&quot;.</li>
+<li><code>&lt;input type=&quot;datetime-local&quot;&gt;</code> gives <code>&quot;2026-10-14T00:49&quot;</code>: a time <strong>with no zone</strong>. <code>lib/time.ts</code> is the <strong>one place</strong> that attaches <code>+05:30</code> and converts to UTC.</li>
+<li>Verified: 00:49 IST was stored as <strong>19:19 UTC the previous day</strong>.</li>
+</ul>
+<h3 id="342-nextjs-cache-components-and-now">34.2 Next.js Cache Components and &quot;now&quot;</h3>
+<ul>
+<li>Our Next.js config has <strong>Cache Components</strong> on: pages are <strong>prerendered</strong> (built ahead of time) where possible.</li>
+<li>Calling <code>Date.now()</code> while rendering would freeze the build machine&#39;s &quot;now&quot; into the page, stale for every visitor. Next.js 16 stops the build with an error. Fix: compute time-dependent values <strong>in the browser, after load</strong> (inside <code>useEffect</code>).</li>
+</ul>
+<h3 id="343-postgres-enum-types-from-java">34.3 Postgres enum types from Java</h3>
+<ul>
+<li><code>trip_status</code> is a <strong>Postgres enum</strong> (a column type allowing only listed words). Java maps it with <code>@Enumerated(EnumType.STRING)</code> + <code>@JdbcTypeCode(SqlTypes.NAMED_ENUM)</code>, and the Java enum&#39;s names must match exactly (lower case here).</li>
+<li><strong>Gotcha found by the tests:</strong> in JPQL, Hibernate writes enum <strong>literals</strong> as <code>&#39;expired&#39;::Status</code>, a cast to a type named after the <em>Java class</em>, which doesn&#39;t exist. Inserts and parameters work fine. Fix: the two bulk updates are <strong>native SQL</strong> (<code>nativeQuery = true</code>), where <code>&#39;expired&#39;</code> is plain text that Postgres converts to the enum itself.</li>
+</ul>
+<h3 id="344-trip-rules-and-where-each-is-enforced">34.4 Trip rules and where each is enforced</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Where</th>
+<th>Why there</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Seats 1–3, bags 0–6, lat/lng in range, area ≤ 120 chars, flight like <code>AI 865</code></td>
+<td>Bean Validation on the request</td>
+<td>Shape of the input</td>
+</tr>
+<tr>
+<td>Terminal must exist</td>
+<td>Service (<code>UNKNOWN_TERMINAL</code>)</td>
+<td>Needs the database</td>
+</tr>
+<tr>
+<td>Exit time between now (−5 min grace) and +24 h</td>
+<td>Service (<code>EXIT_TIME_OUT_OF_RANGE</code>)</td>
+<td>Needs &quot;now&quot;</td>
+</tr>
+<tr>
+<td>Destination ≤ 100 km from the terminal</td>
+<td>Service (<code>DESTINATION_TOO_FAR</code>)</td>
+<td>Not an airport cab ride otherwise</td>
+</tr>
+<tr>
+<td>Women-only only for ID-verified women</td>
+<td>Service (<code>WOMEN_ONLY_NEEDS_VERIFICATION</code>, 403); refused for all until verification exists</td>
+<td>The rule exists from day one</td>
+</tr>
+<tr>
+<td><strong>One active trip per user</strong></td>
+<td><strong>Database</strong> unique index <code>trip_one_active</code> → 409 <code>ACTIVE_TRIP_EXISTS</code></td>
+<td>Two simultaneous requests can&#39;t both pass; same &quot;let the database decide&quot; idea as <code>UserService.create</code></td>
+</tr>
+<tr>
+<td>Can&#39;t cancel someone else&#39;s trip</td>
+<td>SQL <code>where user_id = :userId</code> → 404</td>
+<td>Don&#39;t even reveal it exists</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Stale trips:</strong> a trip expires at exit + 60 min (design §3.7). There&#39;s no scheduled job yet, so: <code>current</code> simply ignores old trips, and <code>create</code> first marks the user&#39;s stale trips <code>expired</code>, otherwise a forgotten trip would block a new one through the unique index. A scheduled job will do this for everyone later.</li>
+</ul>
+<h3 id="345-status-codes-used">34.5 Status codes used</h3>
+<ul>
+<li><strong>201 Created:</strong> a new thing was made (<code>POST /trips</code>).</li>
+<li><strong>204 No Content:</strong> success with nothing to return (no current trip; cancel done).</li>
+<li><strong>409 Conflict:</strong> the request clashes with the current state (already have a trip).</li>
+<li><strong>404 Not Found:</strong> also used for &quot;exists but isn&#39;t yours&quot;, so nobody can probe for other users&#39; trips.</li>
+</ul>
+<hr>
+<h2 id="35-code-walkthrough-trips">35. Code walkthrough: trips</h2>
+<h3 id="351-pomxml-and-v3__seed_terminalssql">35.1 <code>pom.xml</code> and <code>V3__seed_terminals.sql</code></h3>
+<ul>
+<li><code>hibernate-spatial</code> added (version managed by Spring Boot&#39;s BOM).</li>
+<li>V3 inserts DEL-T1/T2/T3 with <code>pickup = &#39;SRID=4326;POINT(lng lat)&#39;</code> and a note that they&#39;re approximate.</li>
+</ul>
+<h3 id="352-tripsgeojava">35.2 <code>trips/Geo.java</code></h3>
+<pre><code class="language-java">private static final GeometryFactory WGS84 = new GeometryFactory(new PrecisionModel(), 4326);
+
+static Point point(double lat, double lng) {
+    return WGS84.createPoint(new Coordinate(lng, lat));   // x = longitude, y = latitude
+}
+</code></pre>
+<ul>
+<li>One factory for all points, fixed to SRID 4326. <code>point(lat, lng)</code> takes the human order and passes <code>Coordinate(x = lng, y = lat)</code>, so the swap happens in <strong>one</strong> place. <code>lat(p)</code> = <code>p.getY()</code>, <code>lng(p)</code> = <code>p.getX()</code>.</li>
+</ul>
+<pre><code class="language-java">static double distanceKm(Point a, Point b) {
+    double dLat = Math.toRadians(lat(b) - lat(a));
+    double dLng = Math.toRadians(lng(b) - lng(a));
+    double h = Math.pow(Math.sin(dLat / 2), 2)
+            + Math.cos(Math.toRadians(lat(a))) * Math.cos(Math.toRadians(lat(b))) * Math.pow(Math.sin(dLng / 2), 2);
+    return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
+}
+</code></pre>
+<ul>
+<li>The haversine formula (33.3). Trigonometry in Java works in <strong>radians</strong>, so degrees are converted first. <code>h</code> is the &quot;haversine&quot; of the angle between the points; <code>2 × R × asin(√h)</code> turns it into a distance.</li>
+<li><code>final class</code> + <code>private Geo() {}</code>: a <strong>utility class</strong>: only static helpers, can&#39;t be extended or instantiated.</li>
+</ul>
+<h3 id="353-tripsterminaljava">35.3 <code>trips/Terminal.java</code></h3>
+<ul>
+<li>Read-only entity for <code>terminals</code>. <code>@Id private String id;</code> (<code>DEL-T3</code>; the id is text, not a UUID).</li>
+<li><code>@JdbcTypeCode(SqlTypes.GEOGRAPHY) private Point pickup;</code>: the PostGIS <code>geography</code> column as a JTS <code>Point</code>.</li>
+</ul>
+<h3 id="354-tripstriprequestjava">35.4 <code>trips/TripRequest.java</code></h3>
+<ul>
+<li>Entity for <code>trip_requests</code>. Field types chosen to match the columns exactly, because <code>ddl-auto: validate</code> checks them:<ul>
+<li><code>float soloKm</code> ↔ <code>real</code> (4-byte decimal); <code>double</code> would expect <code>double precision</code>.</li>
+<li><code>short seats, bags</code> ↔ <code>smallint</code>.</li>
+<li><code>Instant exitAt</code> ↔ <code>timestamptz</code>.</li>
+</ul>
+</li>
+<li><code>enum Status { searching, grouped, cancelled, expired, done }</code>: lower-case names to match the Postgres enum labels.</li>
+<li><code>@Enumerated(EnumType.STRING)</code> stores the name (not a number); <code>@JdbcTypeCode(SqlTypes.NAMED_ENUM)</code> says the column is a Postgres enum (34.3).</li>
+<li>The constructor sets <code>status = Status.searching</code>: every new trip starts searching.</li>
+</ul>
+<h3 id="355-tripstriprepositoryjava">35.5 <code>trips/TripRepository.java</code></h3>
+<pre><code class="language-java">Optional&lt;TripRequest&gt; findFirstByUserIdAndStatusIn(UUID userId, Collection&lt;TripRequest.Status&gt; statuses);
+</code></pre>
+<ul>
+<li>A derived query: <code>where user_id = ? and status in (?, ?) limit 1</code>.</li>
+</ul>
+<pre><code class="language-java">@Query(nativeQuery = true, value = &quot;&quot;&quot;
+        update trip_requests set status = &#39;expired&#39;
+        where user_id = :userId and status = &#39;searching&#39; and exit_at &lt; :cutoff&quot;&quot;&quot;)
+int expireStale(UUID userId, Instant cutoff);
+</code></pre>
+<ul>
+<li><strong>Native SQL</strong> (34.3). Marks this user&#39;s old searching trips expired; returns how many.</li>
+<li><code>cancel(id, userId)</code>: same style; the <code>user_id = :userId</code> condition is the ownership check, and it only cancels <code>searching</code> trips. Returns 1 or 0.</li>
+</ul>
+<h3 id="356-tripstripservicejava">35.6 <code>trips/TripService.java</code></h3>
+<p><strong>Constants</strong> at the top: 5-minute grace, 24-hour limit, 60-minute expiry, 100 km limit, and <code>ACTIVE</code> = searching or grouped.</p>
+<p><strong>Records:</strong> <code>CreateTrip</code> (what the controller passes in) and <code>TripView</code> (what the API returns: id, terminal id and name, flight, exit time, area, lat/lng, seats, bags, women-only, status, km).</p>
+<p><strong><code>create(userId, req)</code></strong>, step by step:</p>
+<ol>
+<li><code>terminals.findById(...).orElseThrow(...)</code>: unknown terminal → 400.</li>
+<li>Exit time window check against <code>Instant.now()</code>.</li>
+<li><code>if (req.womenOnly())</code> → 403 (shortcut until ID verification).</li>
+<li><code>Geo.point(...)</code> and <code>Geo.distanceKm(terminal pickup, dest)</code>; &gt; 100 km → 400.</li>
+<li><code>trips.expireStale(userId, now − 60 min)</code>: clear the way (34.4).</li>
+<li><code>saveAndFlush(new TripRequest(...))</code> inside <code>try</code>. The flight number is normalised (<code>&quot;ai 865&quot;</code> → <code>&quot;AI865&quot;</code>), the area trimmed, and <code>soloKm = straight × 1.4</code>.</li>
+<li><code>catch (DataIntegrityViolationException e)</code> → 409 <code>ACTIVE_TRIP_EXISTS</code>: the unique index refused a second active trip.</li>
+</ol>
+<p><strong><code>current(userId)</code></strong></p>
+<pre><code class="language-java">return trips.findFirstByUserIdAndStatusIn(userId, ACTIVE)
+        .filter(t -&gt; t.getExitAt().isAfter(Instant.now().minus(EXPIRES_AFTER)))
+        .map(t -&gt; view(t, terminals.findById(t.getTerminalId()).orElseThrow()));
+</code></pre>
+<ul>
+<li><code>Optional.filter(...)</code>: keep the trip only if it hasn&#39;t expired; otherwise the result becomes empty. A read never changes data.</li>
+</ul>
+<p><strong><code>cancel(userId, tripId)</code></strong>: if the update changed 0 rows → 404 (not found, not yours, or no longer searching: same answer).</p>
+<p><strong><code>view(...)</code></strong>: builds <code>TripView</code>; <code>Math.round(km * 10) / 10.0</code> rounds to one decimal.</p>
+<h3 id="357-tripstripcontrollerjava">35.7 <code>trips/TripController.java</code></h3>
+<ul>
+<li><code>CreateTripRequest</code>: the validated request body (34.4). <code>Double destLat</code> (object, not <code>double</code>) so <code>@NotNull</code> can catch a <strong>missing</strong> value; a primitive would silently become 0.0, which is a real place (in the Atlantic).</li>
+<li><code>@GetMapping(&quot;/api/v1/terminals&quot;)</code>: maps each <code>Terminal</code> to <code>TerminalView(id, name, lat, lng, pickupNote)</code> using <code>stream().map(...).toList()</code>.</li>
+<li><code>@PostMapping(&quot;/api/v1/trips&quot;)</code> → <code>ResponseEntity.status(HttpStatus.CREATED).body(trip)</code>: <strong>201</strong>.</li>
+<li><code>@GetMapping(&quot;/api/v1/trips/current&quot;)</code>: <code>.map(ResponseEntity::ok).orElseGet(() -&gt; ResponseEntity.noContent().build())</code>: 200 with the trip, or 204.</li>
+<li><code>@DeleteMapping(&quot;/api/v1/trips/{id}&quot;)</code> with <strong><code>@PathVariable UUID id</code></strong>: <code>{id}</code> in the path is copied into the parameter (and must be a valid UUID, or Spring answers 400).</li>
+</ul>
+<h3 id="358-tests">35.8 Tests</h3>
+<ul>
+<li><strong><code>GeoTest</code></strong> (unit, no Spring): lat/lng kept apart; T3 → Connaught Place ≈ 15 km; distance symmetric, zero to itself.</li>
+<li><strong><code>TripsTest</code></strong> (HTTP + Spring Security with <code>jwt()</code>):<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>listsTheThreeIgiTerminals</code></td>
+<td>V3 seed is there (<code>$[?(@.id == &#39;DEL-T3&#39;)]</code> is a JsonPath <strong>filter</strong>)</td>
+</tr>
+<tr>
+<td><code>createsTripAndStoresTheDestinationTheRightWayRound</code></td>
+<td>201; and <code>ST_Y</code>/<code>ST_X</code> from PostGIS confirm latitude and longitude weren&#39;t swapped; km in range</td>
+</tr>
+<tr>
+<td><code>currentTripThenCancel</code></td>
+<td>current → 200, cancel → 204, current → 204, cancel again → 404</td>
+</tr>
+<tr>
+<td><code>onlyOneActiveTripAtATime</code></td>
+<td>second create → 409</td>
+</tr>
+<tr>
+<td><code>staleTripDoesNotBlockANewOne</code></td>
+<td>a trip moved 2 h into the past is ignored and gets marked <code>expired</code> when a new one is created</td>
+</tr>
+<tr>
+<td><code>cannotCancelSomeoneElsesTrip</code></td>
+<td>another user gets 404</td>
+</tr>
+<tr>
+<td><code>rejectsBadRequests</code></td>
+<td>unknown terminal, past/too-far-future time, Mumbai destination, women-only, 4 seats, bad flight number</td>
+</tr>
+<tr>
+<td><code>needsLogin</code></td>
+<td>no token → 401</td>
+</tr>
+</tbody></table>
+</li>
+<li><code>JdbcTemplate</code>: Spring&#39;s helper for running plain SQL in tests (e.g. moving a trip into the past).</li>
+<li><code>&quot;&quot;&quot;...&quot;&quot;&quot;.formatted(exitAt)</code>: a text block with a <code>%s</code> placeholder filled by <code>formatted</code>.</li>
+</ul>
+<h3 id="359-libtimets">35.9 <code>lib/time.ts</code></h3>
+<pre><code class="language-ts">export function istInputValue(minutesFromNow: number): string {
+  const shifted = new Date(Date.now() + (minutesFromNow + IST_OFFSET_MINUTES) * 60_000);
+  return shifted.toISOString().slice(0, 16);
+}
+</code></pre>
+<ul>
+<li>Trick: shift &quot;now&quot; forward by 5 h 30 min, then print it <strong>as UTC</strong>; the digits are the IST wall-clock time. <code>.slice(0, 16)</code> keeps <code>YYYY-MM-DDTHH:mm</code>, the format <code>datetime-local</code> wants.</li>
+<li><code>istInputToIso(value)</code>: <code>new Date(value + &quot;:00+05:30&quot;).toISOString()</code>: attach the IST offset, then convert to UTC.</li>
+<li><code>formatIst(iso)</code>: <code>Intl.DateTimeFormat(&quot;en-IN&quot;, { timeZone: &quot;Asia/Kolkata&quot;, ... })</code> formats any instant as Indian time, e.g. &quot;14 Oct 2026, 12:49 am&quot;.</li>
+</ul>
+<h3 id="3510-libgeocodets">35.10 <code>lib/geocode.ts</code></h3>
+<ul>
+<li><code>searchPlaces(query)</code>: <code>GET /search</code> with <code>countrycodes=in</code>, a Delhi NCR <code>viewbox</code> and <code>bounded=1</code> (only results inside the box), <code>limit=5</code>. Returns <code>{lat, lng, name, area}</code> per result. <code>new URLSearchParams({...})</code> builds a correctly escaped query string.</li>
+<li><code>areaAt(lat, lng)</code>: <code>GET /reverse</code> at <code>zoom=16</code> (neighbourhood level).</li>
+<li><code>areaLabel(r)</code>: picks the first available of neighbourhood / suburb / quarter / residential / village, plus city / town / district, removes duplicates, and joins with &quot;, &quot;. Never a house number.<ul>
+<li><code>.filter((part, i, all): part is string =&gt; !!part &amp;&amp; all.indexOf(part) === i)</code>: keep non-empty parts appearing for the first time. <code>part is string</code> is a <strong>type guard</strong>: it tells TypeScript the result has no <code>undefined</code>s.</li>
+</ul>
+</li>
+</ul>
+<h3 id="3511-libapits-additions">35.11 <code>lib/api.ts</code> (additions)</h3>
+<ul>
+<li>Types <code>Terminal</code>, <code>NewTrip</code>, <code>Trip</code>. <code>Omit&lt;NewTrip, &quot;flightNo&quot;&gt; &amp; {...}</code> = &quot;everything in NewTrip except flightNo, plus these fields&quot;: TypeScript <strong>utility types</strong>.</li>
+<li><code>getTerminals</code>, <code>createTrip</code> (POST), <code>cancelTrip</code> (DELETE).</li>
+<li><code>getCurrentTrip</code>: <code>(await request(...)) ?? null</code>: a 204 gives <code>undefined</code>, turned into <code>null</code> = &quot;no trip&quot;.</li>
+</ul>
+<h3 id="3512-apptripnewdestination-maptsx">35.12 <code>app/trip/new/destination-map.tsx</code></h3>
+<ul>
+<li><code>import &quot;leaflet/dist/leaflet.css&quot;</code>: Leaflet&#39;s styles (without them the tiles appear scattered).</li>
+<li><strong>Refs</strong> (<code>useRef</code>): values that survive redraws <strong>without</strong> causing one: the map <code>&lt;div&gt;</code>, the Leaflet map object, the marker layer, and the latest <code>onPick</code>. Leaflet manages its own drawing, so it lives in refs, not state.</li>
+<li>Effect 1 (<code>[]</code>, runs once): create the map centred on the airport, add OSM tiles with attribution, a layer group for markers, and a click handler. The <strong>cleanup</strong> <code>m.remove()</code> destroys the map; React&#39;s development mode mounts twice, and without cleanup you&#39;d get &quot;Map container is already initialized&quot;.</li>
+<li><code>latestOnPick</code> + an effect without dependencies keeps the click handler calling the <strong>newest</strong> <code>onPick</code> without recreating the map.</li>
+<li>Effect 2 (<code>[pickup, destination]</code>): clear the layer, draw blue (pickup) and red (destination) <code>circleMarker</code>s, pan to the destination. Circle markers need no image files (Leaflet&#39;s default pin images often break in bundled apps).</li>
+<li><code>role=&quot;application&quot;</code> + <code>aria-label</code>: tells screen-reader users what the area is and points them to the search box.</li>
+</ul>
+<h3 id="3513-apptripnewpagetsx">35.13 <code>app/trip/new/page.tsx</code></h3>
+<ul>
+<li><code>dynamic(() =&gt; import(&quot;./destination-map&quot;), { ssr: false, loading: ... })</code>: load the map only in the browser, with a placeholder (33.6).</li>
+<li>On load: not logged in → <code>/login</code>; no name → <code>/profile</code>; else set the default exit time (in the browser, 34.2) and load terminals.</li>
+<li><code>pickup = terminals.find(t =&gt; t.id === terminalId)</code>: <strong>derived</strong> from state, never stored separately.</li>
+<li><code>pickOnMap(point)</code>: set the pin, show &quot;Finding the area…&quot;, then fill in the reverse-geocoded label (empty if the lookup fails; the user can type one).</li>
+<li>Search: Enter in the search box calls <code>e.preventDefault()</code> so it searches instead of submitting the trip form (a form can&#39;t contain another form). Results are buttons; choosing one sets the pin and area.</li>
+<li>Two separate <code>useAction()</code>s (<code>search</code>, <code>submit</code>): each has its own busy state and error, so a failed search doesn&#39;t disable the Save button.</li>
+<li><code>save</code>: requires a destination and area, converts the exit time with <code>istInputToIso</code>, sends <code>createTrip</code>, then goes home.</li>
+<li><code>&lt;fieldset&gt;</code> + <code>&lt;legend&gt;</code>: groups the destination controls under one heading for screen readers.</li>
+<li><code>&lt;input type=&quot;datetime-local&quot; min max&gt;</code>: the picker itself limits choices to now…+24 h (the API still checks).</li>
+<li>The disabled women-only checkbox shows the feature exists and why it&#39;s unavailable.</li>
+</ul>
+<h3 id="3514-appcurrent-triptsx-and-appsession-boxtsx">35.14 <code>app/current-trip.tsx</code> and <code>app/session-box.tsx</code></h3>
+<ul>
+<li><code>CurrentTrip</code>: loads your trip (<code>undefined</code> = loading, <code>null</code> = none). Shows &quot;Plan a trip&quot;, or the trip (terminal → area, IST time, seats/bags/flight, km) with <strong>Cancel</strong>.</li>
+<li><code>`seat${trip.seats &gt; 1 ? &quot;s&quot; : &quot;&quot;}`</code>: simple plurals.</li>
+<li><code>SessionBox</code> renders <code>&lt;CurrentTrip /&gt;</code> only when the user has a name.</li>
+</ul>
+<h3 id="3515-verified-in-a-real-browser">35.15 Verified in a real browser</h3>
+<p>Log in → <strong>Plan a trip</strong> · form defaults to T3 and now + 30 min IST · search &quot;DLF Phase 3&quot; with Enter → results (form not submitted) · choose → blue pickup + red destination on the map, area &quot;Sector 25A, Gurgaon&quot; · click elsewhere → &quot;Hauz Khas, Delhi&quot; · submit → home shows &quot;Terminal 3 → Hauz Khas, Delhi, 12:49 am, 1 seat, 2 bags, flight AI865, about 13.9 km&quot; · database: 00:49 IST stored as 19:19 UTC, latitude/longitude correct · Cancel → back to &quot;Plan a trip&quot;.</p>
+<hr>
+<h2 id="36-command-cheat-sheet">36. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -2462,7 +2780,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="34-glossary">34. Glossary</h2>
+<h2 id="37-glossary">37. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -2826,9 +3144,57 @@ git fetch --prune
 <td>PUT</td>
 <td>HTTP method for replacing a whole resource</td>
 </tr>
+<tr>
+<td>Geocoding</td>
+<td>Text → coordinates (forward) or coordinates → place name (reverse)</td>
+</tr>
+<tr>
+<td>geography (PostGIS)</td>
+<td>Points on the round Earth; distances in metres</td>
+</tr>
+<tr>
+<td>Great circle</td>
+<td>Shortest path between two points on a sphere</td>
+</tr>
+<tr>
+<td>Haversine</td>
+<td>Formula for great-circle distance from two lat/lng pairs</td>
+</tr>
+<tr>
+<td>JTS</td>
+<td>Java Topology Suite: Java&#39;s standard shapes library (Point…)</td>
+</tr>
+<tr>
+<td>Latitude / longitude</td>
+<td>North–south / east–west position in degrees</td>
+</tr>
+<tr>
+<td>Native query</td>
+<td>Plain SQL in a repository (<code>nativeQuery = true</code>)</td>
+</tr>
+<tr>
+<td>Postgres enum</td>
+<td>A column type allowing only listed values (<code>trip_status</code>)</td>
+</tr>
+<tr>
+<td>Prerendering</td>
+<td>Building a page ahead of time instead of per visitor</td>
+</tr>
+<tr>
+<td>Ref (React)</td>
+<td>A value kept between redraws without causing one (<code>useRef</code>)</td>
+</tr>
+<tr>
+<td>Tile</td>
+<td>One square image of a map at a given zoom level</td>
+</tr>
+<tr>
+<td>WKT</td>
+<td>Well-Known Text: <code>POINT(lng lat)</code></td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="35-interview-questions-to-practise">35. Interview questions to practise</h2>
+<h2 id="38-interview-questions-to-practise">38. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -2862,6 +3228,12 @@ git fetch --prune
 <li>Why does updating a JPA entity need no save() call, and why must the method be @Transactional?</li>
 <li>A name regex using only \p{L} rejected Hindi names. Why, and what&#39;s the fix?</li>
 <li>Why must the user id for PATCH /me come from the token rather than the request?</li>
+<li>geometry vs geography in PostGIS: which do you use for real distances, and why?</li>
+<li>Why is latitude/longitude order a common bug, and how did we guard against it?</li>
+<li>Why store times in UTC, and how do you handle a time zone for an airport regardless of the user&#39;s phone?</li>
+<li>How does the database enforce &quot;one active trip per user&quot;, and why not only check it in Java?</li>
+<li>Why answer 404 instead of 403 when someone tries to cancel another user&#39;s trip?</li>
+<li>Why must a map library like Leaflet be loaded with ssr: false in Next.js?</li>
 </ol>
 
 
