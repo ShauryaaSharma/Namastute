@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-13 (login tokens: JWT, refresh rotation, Spring Security, users module).
+Last updated: 2026-10-13 (login screen: CORS, origins, React state/effects, silent refresh).
 
 ---
 
@@ -35,9 +35,12 @@ Last updated: 2026-10-13 (login tokens: JWT, refresh rotation, Spring Security, 
 25. [Spring Security](#25-spring-security)
 26. [JPA entities and Spring Data repositories](#26-jpa-entities-and-spring-data-repositories)
 27. [Code walkthrough: tokens, security and users](#27-code-walkthrough-tokens-security-and-users)
-28. [Command cheat sheet](#28-command-cheat-sheet)
-29. [Glossary](#29-glossary)
-30. [Interview questions to practise](#30-interview-questions-to-practise)
+28. [Browsers, origins and CORS](#28-browsers-origins-and-cors)
+29. [React and Next.js in the browser](#29-react-and-nextjs-in-the-browser)
+30. [Code walkthrough: CORS and the login screen](#30-code-walkthrough-cors-and-the-login-screen)
+31. [Command cheat sheet](#31-command-cheat-sheet)
+32. [Glossary](#32-glossary)
+33. [Interview questions to practise](#33-interview-questions-to-practise)
 
 ---
 
@@ -1389,7 +1392,307 @@ private static ResponseCookie refreshCookie(String value, Duration maxAge) {
 
 ---
 
-## 28. Command cheat sheet
+## 28. Browsers, origins and CORS
+
+### 28.1 Origin
+**Origin = scheme + host + port.** `http://localhost:3000` (web) and `http://localhost:8080` (API) are **different origins**: change any one part and it's different.
+
+### 28.2 Same-Origin Policy
+- Browser rule: JavaScript from one origin may **send** requests to another origin but may **not read the response** unless that origin allows it.
+- Why: otherwise a malicious site open in another tab could call your bank's API (the browser attaches your bank cookies) and read your balance.
+- Enforced by the **browser** only. Postman and curl ignore it, which is why Postman worked before CORS existed.
+
+### 28.3 CORS (Cross-Origin Resource Sharing)
+- The server's permission slip, sent as response headers:
+  - `Access-Control-Allow-Origin: http://localhost:3000`: this origin may read responses.
+  - `Access-Control-Allow-Credentials: true`: and may send/receive cookies.
+- **Preflight:** for non-simple requests (JSON bodies, `Authorization` header), the browser first sends an automatic **`OPTIONS`** request asking permission; the real request only follows if the answer is yes. Visible in the browser's Network tab.
+- **Exactly one allowed origin, never `*`.** Browsers forbid `*` with credentials, and it would undo 28.2. Ours comes from `WEB_ORIGIN` (default `http://localhost:3000`).
+- A disallowed origin's preflight gets **403** with no allow headers (tested in `CorsTest`).
+
+### 28.4 Origin vs site, and a production decision
+- **Site** ≈ registrable domain, ignoring port and subdomains.
+  - `localhost:3000` ↔ `localhost:8080`: same site.
+  - `app.namastute.in` ↔ `api.namastute.in`: same site.
+  - `namastute.vercel.app` ↔ `api.namastute.in`: **different sites**.
+- `SameSite=Lax` cookies are only sent on **same-site** requests. If the web app stayed on `*.vercel.app` while the API is on our domain, the refresh cookie would never be sent, and users would be logged out every 15 minutes.
+- **Decision for deployment (Phase 2):** host the web app and API under the **same domain** (e.g. `app.namastute.in` + `api.namastute.in`); Vercel allows custom domains on the free plan.
+
+---
+
+## 29. React and Next.js in the browser
+
+### 29.1 Server vs Client Components
+- Next.js App Router components are **Server Components** by default: rendered on the server, sent as HTML.
+- Anything interactive (typing, clicks, remembering state, browser APIs) must be a **Client Component**: the file starts with the **directive** `"use client";` (a special instruction string at the very top, before imports).
+- `"use client"` marks a **boundary**: that file and what it imports run in the browser. Our home page is a Server Component that renders the client `SessionBox` inside it.
+
+### 29.2 State, hooks, events
+- **State:** data a component remembers between redraws. `const [code, setCode] = useState("")`. Calling the setter makes React **redraw** with the new value.
+- **Hook:** a React function starting with `use` that gives a component abilities (`useState`, `useEffect`, `useRouter`). Only in Client Components, and only at the top level of the component (not inside `if`s or loops).
+- **Effect (`useEffect`)**: code that runs **after** the component appears on screen, for things outside React (timers, network calls). The **dependency array** (`[resendIn]`) says when to run it again; `[]` = only once. A returned function is the **cleanup** (e.g. cancel a timer).
+- **Events:** `onSubmit={checkCode}`, `onChange={(e) => ...}`, `onClick`. `e.preventDefault()` stops the browser's default form behaviour (reloading the page).
+- **Controlled input:** `value={code}` + `onChange` that calls `setCode`: React state is the single source of truth for what's in the box.
+
+### 29.3 `fetch`, Promises, `async`/`await`
+- `fetch(url, options)`: the browser's function for HTTP requests.
+- It returns a **Promise**: a value that arrives later. `await` pauses an **`async`** function until it arrives.
+- `.then(fn)` / `.catch(fn)` / `.finally(fn)`: the non-`await` way to say "when it arrives / if it fails / either way".
+- `credentials: "include"`: send and accept cookies on a cross-origin request (the browser side of `Allow-Credentials`).
+
+### 29.4 Staying logged in
+- Access token in **memory only**; reloading wipes it.
+- **Silent refresh:** on page load, `POST /auth/refresh` with the cookie → new access token, user never notices.
+- **On 401 mid-use:** refresh once, retry the request once.
+- **The race we hit (and solved):** React's development mode **runs every effect twice** on purpose (React **StrictMode**, to expose effects that aren't safe to repeat), and users may open several tabs at once. Two simultaneous refreshes with the **same** cookie look exactly like token theft to our reuse detection (24.4), which would **log the user out everywhere**. So `refreshSession` allows **one refresh at a time**:
+  - in one tab: a shared in-flight Promise (a second caller gets the same Promise);
+  - across tabs: the **Web Locks API** (`navigator.locks.request`): a browser-wide lock, so the second tab waits, then uses the already-rotated cookie.
+  - Verified in the browser: page load sends exactly **one** refresh.
+
+### 29.5 Environment variables in Next.js
+- `NEXT_PUBLIC_API_URL` is readable in browser code. Next.js **copies its value into the JavaScript at build time** (changing it later needs a rebuild).
+- **Never put secrets in `NEXT_PUBLIC_` variables**: they end up in files anyone can download.
+- `.env.local` holds your values (git-ignored). `.env.example` documents which variables exist (committed; the `.gitignore` needed a `!.env.example` exception because `.env*` matched it).
+
+---
+
+## 30. Code walkthrough: CORS and the login screen
+
+### 30.1 API: `SecurityConfig.java` (CORS part)
+```java
+.cors(Customizer.withDefaults())
+```
+- Turns on Spring Security's CORS handling, using our `CorsConfigurationSource` bean. It runs **before** the login check, so preflight `OPTIONS` requests (which never carry a token) get answered instead of rejected with 401.
+
+```java
+@Bean
+CorsConfigurationSource corsConfigurationSource(@Value("${namastute.web-origin}") String webOrigin) {
+    CorsConfiguration cors = new CorsConfiguration();
+    cors.setAllowedOrigins(List.of(webOrigin));
+    cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE"));
+    cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+    cors.setAllowCredentials(true);
+    cors.setMaxAge(Duration.ofHours(1));
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/api/**", cors);
+    return source;
+}
+```
+- `@Value("${namastute.web-origin}")`: from `application.yaml` → env `WEB_ORIGIN`, default `http://localhost:3000`.
+- `setAllowedOrigins(List.of(webOrigin))`: exactly one origin.
+- `setAllowedMethods` / `setAllowedHeaders`: only what our API uses.
+- `setAllowCredentials(true)`: allows the refresh cookie.
+- `setMaxAge(1 hour)`: the browser may remember the preflight answer for an hour, saving an `OPTIONS` round trip per request.
+- `registerCorsConfiguration("/api/**", cors)`: apply to every path under `/api/` (`**` = any depth).
+
+**`CorsTest.java`**: sends a fake preflight from `http://localhost:3000` (expects 200 + allow headers) and from `https://evil.example` (expects 403, no allow header).
+
+### 30.2 `lib/api.ts`: the only file that talks to the API
+```ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+```
+- Read the env variable (29.5). `??` = "if the left side is `null`/`undefined`, use the right side".
+
+```ts
+export type Profile = { id: string; phone: string; name: string | null };
+type TokenResponse = { accessToken: string; expiresIn: number };
+```
+- **TypeScript types** describing the JSON shapes our API returns. `string | null` = "a string or null" (a **union type**). `export` lets other files use it.
+
+```ts
+export class ApiError extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) {
+    super(message);
+  }
+}
+```
+- Our own error type carrying the HTTP status and our error `code` (`OTP_INVALID`…). `readonly` in the constructor both declares and sets a read-only field.
+
+```ts
+let accessToken: string | null = null;
+let refreshing: Promise<boolean> | null = null;
+```
+- **Module-level variables**: they live as long as the page. `accessToken` is the token in memory; `refreshing` is the refresh currently in progress, if any.
+
+```ts
+function send(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  if (init.body) headers.set("Content-Type", "application/json");
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  return fetch(`${API_URL}${path}`, { ...init, headers, credentials: "include" });
+}
+```
+- One low-level request: adds the JSON header when there's a body, the `Bearer` token when we have one, and always `credentials: "include"`.
+- `` `Bearer ${accessToken}` `` is a **template literal**: backticks let you insert values with `${...}`.
+- `{ ...init, headers, credentials }`: the **spread** `...` copies all of `init`'s properties into a new object, then we add/override `headers` and `credentials`.
+
+```ts
+async function toError(res: Response): Promise<ApiError> {
+  const body = await res.json().catch(() => null);
+  return new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`,
+    body?.error?.message ?? "Something went wrong. Please try again.");
+}
+```
+- Turn a failed response into an `ApiError`. Spring Security's own 401s have an **empty body**, so `res.json()` fails; `.catch(() => null)` turns that into `null`.
+- `body?.error?.code`: **optional chaining**: if `body` or `body.error` is missing, the whole expression is `undefined` instead of crashing.
+
+```ts
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let res = await send(path, init);
+  if (res.status === 401 && !path.startsWith("/api/v1/auth/") && (await refreshSession())) {
+    res = await send(path, init);
+  }
+  if (!res.ok) throw await toError(res);
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+```
+- `<T>` is a **generic**: the caller says what type the response is (`request<Profile>(...)`).
+- On a 401 from a normal endpoint, refresh once and retry once (29.4). Not for `/auth/` endpoints: a wrong OTP is also a client error, and we must not loop.
+- `res.ok`: true for 2xx statuses. Otherwise throw our error.
+- `204` has no body, so return `undefined` instead of parsing JSON.
+
+```ts
+export function refreshSession(): Promise<boolean> {
+  const current = refreshing ?? refreshWithLock().finally(() => (refreshing = null));
+  refreshing = current;
+  return current;
+}
+```
+- If a refresh is already running, **reuse its Promise**; otherwise start one, and clear `refreshing` when it finishes (success or failure). This is the in-tab half of 29.4.
+
+```ts
+async function refreshWithLock(): Promise<boolean> {
+  return navigator.locks.request("namastute-refresh", async () => {
+    const res = await fetch(`${API_URL}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
+    accessToken = res.ok ? ((await res.json()) as TokenResponse).accessToken : null;
+    return res.ok;
+  });
+}
+```
+- `navigator.locks.request(name, fn)`: run `fn` while holding a **browser-wide lock** called `namastute-refresh`; another tab asking for the same lock waits. The cross-tab half of 29.4.
+- Sends the cookie, stores the new access token (or clears it on failure), returns `true`/`false`.
+- `cond ? a : b` = the **ternary operator**: `a` if `cond` is true, else `b`.
+
+```ts
+export async function verifyOtp(phone: string, code: string): Promise<void> {
+  const tokens = await request<TokenResponse>("/api/v1/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) });
+  accessToken = tokens.accessToken;
+}
+```
+- `JSON.stringify({ phone, code })` turns an object into JSON text. `{ phone, code }` is shorthand for `{ phone: phone, code: code }`.
+- On success, keep the access token in memory. The refresh cookie is stored by the browser automatically.
+
+```ts
+export async function restoreSession(): Promise<Profile | null> {
+  if (!accessToken && !(await refreshSession())) return null;
+  return getMe();
+}
+```
+- On page load: if there's no token in memory and refresh fails → logged out (`null`). Otherwise load the profile.
+
+```ts
+export async function logout(): Promise<void> {
+  try { await request<void>("/api/v1/auth/logout", { method: "POST" }); }
+  finally { accessToken = null; }
+}
+```
+- `try { } finally { }`: forget the token **even if** the logout request fails, so the user is never left half-logged-in on screen.
+
+### 30.3 `app/login/page.tsx`: the login screen
+```tsx
+"use client";
+```
+- Client Component: it has state and handles typing and clicks (29.1). The file `app/login/page.tsx` automatically becomes the `/login` URL.
+
+```tsx
+const router = useRouter();
+const [step, setStep] = useState<"phone" | "code">("phone");
+const [digits, setDigits] = useState("");
+const [code, setCode] = useState("");
+const [error, setError] = useState("");
+const [busy, setBusy] = useState(false);
+const [resendIn, setResendIn] = useState(0);
+```
+- `useRouter()` (from `next/navigation`): lets code change the page (`router.replace("/")`).
+- One piece of state per thing the screen must remember. `"phone" | "code"` = a union of two exact strings, so `step` can only ever be one of those.
+
+```tsx
+const phone = `+91${digits}`;
+```
+- The user types only 10 digits; the full E.164 number is **derived** from state on every redraw, not stored separately (no chance of the two disagreeing).
+
+```tsx
+useEffect(() => {
+  if (resendIn <= 0) return;
+  const timer = setTimeout(() => setResendIn(resendIn - 1), 1000);
+  return () => clearTimeout(timer);
+}, [resendIn]);
+```
+- The resend countdown. Each time `resendIn` changes, wait one second and subtract one, until 0. The cleanup cancels the pending timer if the component disappears. 30 seconds matches the API's cooldown, so the button never invites a request the API would reject.
+
+```tsx
+async function run(action: () => Promise<void>) {
+  setBusy(true); setError("");
+  try { await action(); }
+  catch (e) { setError(e instanceof ApiError ? e.message : "Can't reach Namastute. ..."); }
+  finally { setBusy(false); }
+}
+```
+- One helper for both buttons: show "busy", clear old errors, run the action, show its error message if it fails, always stop "busy".
+- `e instanceof ApiError`: our API answered with an error → show its message. Anything else (no network, server down) → a generic message.
+
+```tsx
+function sendCode(e?: FormEvent) {
+  e?.preventDefault();
+  if (!/^[6-9]\d{9}$/.test(digits)) { setError("Enter a 10-digit Indian mobile number."); return; }
+  run(async () => { await requestOtp(phone); setStep("code"); setCode(""); setResendIn(RESEND_SECONDS); });
+}
+```
+- `e?` = optional parameter: the form passes an event; the "Resend" button calls it without one.
+- `/^[6-9]\d{9}$/` is the same rule as the API's regex (without `+91`), checked **first** for an instant message. The API still checks too: client checks are for convenience, server checks are for safety.
+- On success: move to the code step and start the timer.
+
+```tsx
+function checkCode(e: FormEvent) {
+  e.preventDefault();
+  run(async () => { await verifyOtp(phone, code); router.replace("/"); });
+}
+```
+- On success go home. `replace` (not `push`) so the browser's Back button doesn't return to the login form.
+
+**The markup** (`return (...)`):
+- `{step === "phone" ? (<form>...) : (<form>...)}`: show one of the two forms depending on `step`.
+- `<label htmlFor="phone">` + `<input id="phone">`: links the label to the box, so screen readers announce it and clicking the label focuses the box (**accessibility**).
+- `inputMode="numeric"`: phones show a number keypad.
+- `autoComplete="one-time-code"`: phones offer to **auto-fill the code from the SMS**.
+- `onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}`: keep only digits (`\D` = any non-digit; `g` = everywhere).
+- `disabled={busy || code.length !== 6}`: the button only works with a full 6-digit code and no request running.
+- `<p role="alert" aria-live="polite">`: screen readers **announce** error messages when they appear.
+
+### 30.4 `app/session-box.tsx` and `app/page.tsx`
+```tsx
+const [user, setUser] = useState<Profile | null | undefined>(undefined);
+useEffect(() => {
+  restoreSession().then(setUser).catch(() => setUser(null));
+}, []);
+```
+- Three states in one variable: `undefined` = still checking, `null` = logged out, a `Profile` = logged in.
+- On first appearance (`[]`), try the silent refresh. `.then(setUser)` passes the result straight to `setUser`; any failure → logged out.
+- Then: "Checking your session…", a `<Link href="/login">` (Next.js's link: navigates without reloading the page), or "Logged in as …" with a Log out button.
+
+`app/page.tsx` stays a **Server Component** (static heading and text) and renders `<SessionBox />`, the only part that needs the browser.
+
+### 30.5 Small changes
+- `app/layout.tsx`: page title "Namastute" instead of the template's "Create Next App".
+- `.env.example` (committed) and `.env.local` (git-ignored): `NEXT_PUBLIC_API_URL=http://localhost:8080`.
+- `apps/web/.gitignore`: `!.env.example` exception.
+
+### 30.6 Verified in a real browser
+Invalid number → instant message, no request · valid number → code sent, timer counts down · wrong code → "Code is wrong or expired" · right code → home shows "Logged in as +91…" · preflight `OPTIONS` → 200 before each call · page reload → **one** silent refresh → still logged in · `document.cookie` is empty (HttpOnly works) and nothing in `localStorage` · logout → reload shows "Log in".
+
+---
+
+## 31. Command cheat sheet
 
 ### Database (from `Namastute`)
 ```bash
@@ -1435,7 +1738,7 @@ git fetch --prune
 
 ---
 
-## 29. Glossary
+## 32. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -1510,10 +1813,23 @@ git fetch --prune
 | Rotation | Replacing a token every time it's used |
 | Transaction | Database changes that all happen or none do |
 | XSS | Attacker's script running on our page |
+| Client Component | React component that runs in the browser (`"use client"`) |
+| CORS | Server headers allowing another origin to read responses |
+| Effect | Code run after a component appears (`useEffect`) |
+| Hook | React function starting with `use` that gives components abilities |
+| Origin | Scheme + host + port |
+| Preflight | Browser's automatic `OPTIONS` permission check before a cross-origin request |
+| Promise | A value that will arrive later; `await` waits for it |
+| Same-Origin Policy | Browser rule: scripts can't read other origins' responses by default |
+| Server Component | React component rendered on the server (Next.js default) |
+| Site | Registrable domain, ignoring port and subdomains |
+| State | Data a component remembers; changing it redraws the component |
+| StrictMode | React dev mode that runs effects twice to expose unsafe ones |
+| Web Locks API | Browser-wide lock shared by all tabs (`navigator.locks`) |
 
 ---
 
-## 30. Interview questions to practise
+## 33. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -1537,3 +1853,9 @@ git fetch --prune
 20. How does refresh-token reuse detection work, and why must its "revoke all" not be inside the same transaction as the error?
 21. What do HttpOnly, Secure and SameSite each protect against?
 22. What does Spring Security's filter chain do with a request before your controller runs?
+23. What problem does the Same-Origin Policy solve, and why doesn't it apply to Postman?
+24. What is a CORS preflight, and why must `Allow-Origin` never be `*` with credentials?
+25. Origin vs site: why does it matter for SameSite cookies when deploying?
+26. Server vs Client Components in Next.js: how do you choose?
+27. Why could two refresh calls at once log a user out everywhere, and how did we prevent it?
+28. Why is validating input in the browser not enough?

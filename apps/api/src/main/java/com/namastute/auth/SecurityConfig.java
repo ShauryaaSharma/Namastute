@@ -2,6 +2,8 @@ package com.namastute.auth;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,9 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 class SecurityConfig {
@@ -36,6 +41,7 @@ class SecurityConfig {
                 // CSRF tokens aren't needed: the API reads the Authorization header, which browsers never add on their own,
                 // and the refresh cookie is SameSite=Lax, so other sites can't make the browser POST it
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())   // uses the corsConfigurationSource bean below
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/otp", "/api/v1/auth/verify",
@@ -45,6 +51,20 @@ class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))
                 .build();
+    }
+
+    // Lets the web app (a different origin) call the API from the browser, with cookies
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(@Value("${namastute.web-origin}") String webOrigin) {
+        CorsConfiguration cors = new CorsConfiguration();
+        cors.setAllowedOrigins(List.of(webOrigin));   // exactly one origin, never "*"
+        cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE"));
+        cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cors.setAllowCredentials(true);               // allow the refresh-token cookie
+        cors.setMaxAge(Duration.ofHours(1));          // browsers may cache the preflight answer for an hour
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", cors);
+        return source;
     }
 
     @Bean
