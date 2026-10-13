@@ -134,3 +134,18 @@ export async function logout(): Promise<void> {
     accessToken = null;
   }
 }
+
+// Another traveller you could share a cab with. Only what they may see: no phone, exact destination or UPI ID.
+export type Match = {
+  firstName: string;
+  destArea: string;
+  minutesAfterYou: number; // negative = they're out before you
+  seats: number;
+  bags: number;
+  detourKm: number; // rounded to 0.5 km
+};
+
+// Best first, at most 5; only for your own active trip
+export function getMatches(tripId: string): Promise<Match[]> {
+  return request<Match[]>(`/api/v1/trips/${tripId}/matches`);
+}

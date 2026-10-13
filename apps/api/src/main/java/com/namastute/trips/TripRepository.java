@@ -2,6 +2,7 @@ package com.namastute.trips;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,4 +31,21 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
             update trip_requests set status = 'cancelled'
             where id = :id and user_id = :userId and status = 'searching'""")
     int cancel(UUID id, UUID userId);
+
+    // Stage 1 of matching: cheap filters the indexes can answer (trip_search, trip_dest_gist). MatchRanker does the rest.
+    // shortcut: "destinations within 15 km" misses riders going much further down the same road;
+    // filter by direction from the airport (bearing) once that matters.
+    @Query(nativeQuery = true, value = """
+            select t.* from trip_requests me
+            join trip_requests t
+              on t.terminal_id = me.terminal_id
+             and t.status = 'searching'
+             and t.exit_at between me.exit_at - interval '30 minutes' and me.exit_at + interval '30 minutes'
+             and t.user_id <> me.user_id
+             and ST_DWithin(t.dest, me.dest, 15000)
+            where me.id = :tripId
+              and not exists (select 1 from blocks b
+                              where (b.blocker_id = me.user_id and b.blocked_id = t.user_id)
+                                 or (b.blocker_id = t.user_id and b.blocked_id = me.user_id))""")
+    List<TripRequest> matchCandidates(UUID tripId);
 }

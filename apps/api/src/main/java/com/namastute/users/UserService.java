@@ -1,12 +1,15 @@
 package com.namastute.users;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// The users module's public API: other modules (auth) call these methods, never the repository directly
+// The users module's public API: other modules (auth, trips) call these methods, never the repository directly
 @Service
 public class UserService {
 
@@ -29,6 +32,15 @@ public class UserService {
             // Another request created this phone's user a moment ago (unique constraint on phone); use theirs
             return users.findByPhone(phone).orElseThrow().getId();
         }
+    }
+
+    // For showing other travellers (trips module): first names only, all ids in ONE query (no N+1).
+    public Map<UUID, String> firstNames(Collection<UUID> ids) {
+        Map<UUID, String> names = new HashMap<>();
+        for (User user : users.findAllById(ids)) {
+            names.put(user.getId(), user.getName() == null ? "Traveller" : user.getName().split(" ")[0]);
+        }
+        return names;
     }
 
     Profile profile(UUID id) {
