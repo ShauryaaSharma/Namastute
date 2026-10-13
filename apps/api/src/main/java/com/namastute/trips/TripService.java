@@ -1,10 +1,12 @@
 package com.namastute.trips;
 
 import com.namastute.shared.ApiException;
+import com.namastute.users.UserService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.locationtech.jts.geom.Point;
@@ -28,12 +30,17 @@ class TripService {
                     String destArea, double destLat, double destLng, int seats, int bags,
                     boolean womenOnly, String status, double soloKm) {}
 
+    // What another traveller may see about a match: never phone, exact destination or UPI ID (design 4.4)
+    record MatchView(String firstName, String destArea, long minutesAfterYou, int seats, int bags, double detourKm) {}
+
     private final TripRepository trips;
     private final TerminalRepository terminals;
+    private final UserService users;
 
-    TripService(TripRepository trips, TerminalRepository terminals) {
+    TripService(TripRepository trips, TerminalRepository terminals, UserService users) {
         this.trips = trips;
         this.terminals = terminals;
+        this.users = users;
     }
 
     TripView create(UUID userId, CreateTrip req) {
@@ -83,6 +90,26 @@ class TripService {
             // Same answer whether it doesn't exist or belongs to someone else: we don't reveal other users' trips
             throw new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "No active trip to cancel");
         }
+    }
+
+    // Only for your own active trip: anyone else's trip id gets the same 404 as a missing one
+    List<MatchView> matches(UUID userId, UUID tripId) {
+        TripRequest mine = trips.findById(tripId)
+                .filter(t -> t.getUserId().equals(userId) && t.getStatus() == TripRequest.Status.searching
+                        && t.getExitAt().isAfter(Instant.now().minus(EXPIRES_AFTER)))
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "No active trip with that id"));
+        Point pickup = terminals.findById(mine.getTerminalId()).orElseThrow().getPickup();
+
+        List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, trips.matchCandidates(tripId));
+        Map<UUID, String> names = users.firstNames(ranked.stream().map(r -> r.trip().getUserId()).toList());
+        return ranked.stream().map(r -> new MatchView(
+                names.get(r.trip().getUserId()),
+                r.trip().getDestArea(),
+                Duration.between(mine.getExitAt(), r.trip().getExitAt()).toMinutes(),
+                r.trip().getSeats(),
+                r.trip().getBags(),
+                Math.round(r.detourKm() * 2) / 2.0   // nearest 0.5 km: exact numbers could help locate their destination
+        )).toList();
     }
 
     List<Terminal> terminals() {

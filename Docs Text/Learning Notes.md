@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (trips: maps, geocoding, PostGIS in Java, time zones).
+Last updated: 2026-10-14 (matching: concepts + code walkthrough).
 
 ---
 
@@ -43,9 +43,12 @@ Last updated: 2026-10-14 (trips: maps, geocoding, PostGIS in Java, time zones).
 33. [Places, maps and geocoding](#33-places-maps-and-geocoding)
 34. [Time zones, enums and trip rules](#34-time-zones-enums-and-trip-rules)
 35. [Code walkthrough: trips](#35-code-walkthrough-trips)
-36. [Command cheat sheet](#36-command-cheat-sheet)
-37. [Glossary](#37-glossary)
-38. [Interview questions to practise](#38-interview-questions-to-practise)
+36. [Matching: two-stage search and spatial indexes](#36-matching-two-stage-search-and-spatial-indexes)
+37. [Matching: detours, pure functions, privacy, N+1](#37-matching-detours-pure-functions-privacy-n1)
+38. [Code walkthrough: matching](#38-code-walkthrough-matching)
+39. [Command cheat sheet](#39-command-cheat-sheet)
+40. [Glossary](#40-glossary)
+41. [Interview questions to practise](#41-interview-questions-to-practise)
 
 ---
 
@@ -2140,7 +2143,315 @@ Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search
 
 ---
 
-## 36. Command cheat sheet
+## 36. Matching: two-stage search and spatial indexes
+
+### 36.1 The problem
+- Input: **my trip** (terminal, exit time, destination, seats, bags). Output: the **5 best other travellers** to share a cab with.
+- "Best" needs real maths (route order, who rides how far extra). That maths is hard to write in SQL and slow to run on every row.
+
+### 36.2 Two-stage search
+- **Naive way 1:** load every trip into Java and do the maths on all of them. The `trip_requests` table keeps *every* trip ever (cancelled, expired, done), so this gets slower every day, uses memory, and ships thousands of rows over the network for nothing.
+- **Naive way 2:** do all the maths in SQL. Possible, but hard to read, hard to change and hard to test.
+- **Two-stage search** (also called **retrieve, then rank**: the same shape search engines and recommendation systems use):
+  1. **Prefilter / candidate generation** (database): cheap, coarse conditions that **indexes** can answer quickly. Throws away the obviously wrong rows. A **candidate** = a row that survived stage 1.
+  2. **Ranking** (Java): the exact, expensive rules on the few candidates left.
+- The rule for stage 1: it should **never throw away a good match** if it can help it; letting a few bad ones through is fine, stage 2 removes them.
+- Our stage 1: same terminal · status `searching` · exit time within ±30 min of mine · not me · nobody blocked anybody · destination within **15 km** of mine.
+- **Honest trade-off:** 15 km *can* throw away a good match: someone going 30 km further down the same highway (DLF Phase 3 → Manesar) is a perfect share but is more than 15 km away. We accept that for v1 ("heading the same way" ≈ "going to a nearby area"). A smarter prefilter would use **direction (bearing)** from the airport. Marked as a `shortcut:` in the code.
+
+### 36.3 Indexes recap: B-tree, composite, partial
+- An **index** is a separate, sorted copy of some columns pointing back to the rows, like the index at the back of a book. Without one, the database does a **sequential scan**: reads every row.
+- **B-tree:** Postgres's default index; a sorted tree. Great for `=`, `<`, `between`, `order by`.
+- **Composite index:** on several columns, e.g. `trip_search (terminal_id, exit_at)`. Sorted by the first column, then the second inside it, like a phone book (surname, then first name). Works best as "**equal** on the first, **range** on the second": `terminal_id = 'DEL-T3' and exit_at between …`.
+- **Partial index:** only contains rows matching a `where`. `trip_search … where status = 'searching'` holds only live trips, so it stays small however many old trips pile up.
+
+### 36.4 Why a B-tree can't do "near this point", and what GiST does
+- A B-tree needs **one sort order**. Points are **2-D**: sort by latitude and two places at the same latitude but 50 km apart sit side by side, while a place 1 km north is far away in the list. "Near" isn't "next to each other in a sorted list".
+- **GiST** (Generalized Search Tree): a Postgres framework for tree indexes over data that *can't* simply be sorted (shapes, ranges, text search). PostGIS uses it to build an **R-tree**:
+  - Every tree node stores a **bounding box**: the smallest rectangle containing everything below it.
+  - To find "within 15 km of X": make a box around X grown by 15 km, then walk down **only** into nodes whose boxes overlap it. Whole regions (Noida, Faridabad…) are skipped without looking at a single row inside.
+  - The boxes only *approximate* the answer, so Postgres then does the **exact** distance check on the survivors (shown as "Recheck Cond" / "Filter" in a plan). Two stages again, inside the database.
+- Ours (V1 migration): `create index trip_dest_gist on trip_requests using gist (dest);`
+
+### 36.5 `ST_DWithin`, not `ST_Distance < x`
+- `ST_DWithin(a, b, 15000)`: true if `a` and `b` are within 15,000 **metres** (geography). PostGIS knows how to turn it into the box search above, so the **index is used**.
+- `ST_Distance(a, b) < 15000` gives the same answer but calculates the distance for **every row** first: the index **can't** be used. Classic interview gotcha.
+
+### 36.6 Reading query plans: `EXPLAIN`
+- The **query planner** is the part of Postgres that decides *how* to run a query (which index, which order), using statistics about the table.
+- `EXPLAIN <query>` shows the chosen **plan** without running it. `EXPLAIN ANALYZE <query>` really runs it and adds real row counts and times.
+- Words you'll see:
+  - **Seq Scan:** reads every row.
+  - **Index Scan:** walks an index, then fetches matching rows.
+  - **Bitmap Index Scan → Bitmap Heap Scan:** collects matching row locations from an index first, then reads them in disk order. **BitmapAnd** combines two indexes.
+  - `cost=0.00..8.27`: the planner's *estimate* in its own units (not milliseconds). `rows=`: estimated rows.
+- **Gotcha:** on our dev database with ~10 trips the planner picks **Seq Scan**, and it's *right*: reading one 8 KB page is cheaper than walking an index. That isn't a bug. To see the index in dev: `set enable_seqscan = off;` (only in your own `psql` session, never in the app), or test with thousands of rows.
+- With real traffic the planner may prefer `trip_search` (few people leave one terminal in the same hour) and then check distance on those few rows. Also fine: it picks whichever index cuts the most rows.
+
+---
+
+## 37. Matching: detours, pure functions, privacy, N+1
+
+### 37.1 The detour model
+- **Pickup** = the terminal's cab pickup point. **Solo km** = straight-line km from pickup to my destination × `Geo.ROAD_FACTOR` (1.4). Already stored on every trip as `solo_km`.
+- **Shared route:** one cab, several drops. Order chosen **greedily**: from the pickup, go to the **nearest** remaining drop first.
+  - A **greedy algorithm** takes the best-looking step right now and never reconsiders. Not always the shortest order overall (that's the "travelling salesman problem"), but for 2–4 drops it's close enough and trivially simple.
+- Each rider's **ride km** = distance along the route until their drop. Whoever is dropped first rides exactly their solo km; the last one rides the whole route.
+- **Fairness rule (design §3.3):** nobody rides more than **max(3 km, 25 % of their solo km)** beyond their solo km. `max` because 25 % of a 4 km trip is only 1 km, too strict; 3 km is the floor.
+- **Capacity:** seats together ≤ 4 and bags together ≤ 4 (a sedan, design §3.3).
+- **Detour (extra km)** = shared route − the **longest** solo trip. That's how much further the cab drives than going straight to the farthest person, and exactly the extra km the last-dropped rider sits through.
+  - Why not "shared − *my* solo"? If Asha lives beyond me on the same road, the shared route is long only because Asha's own trip is long. I'm dropped first and ride 0 km extra, yet "shared − my solo" would call it a big detour and rank a perfect match low.
+- **Score** = detour km + 0.2 × |minutes apart|, **lowest first**. 0.2 means "1 km of detour is as bad as waiting 5 minutes".
+
+### 37.2 Worked example (from T3, my destination DLF Phase 3, my solo 9.7 km)
+| Who | Destination | Their solo | Dropped first | Shared route | Last rider's extra | Limit | Result |
+|---|---|---|---|---|---|---|---|
+| Neha | Cyber City | 9.4 | Neha | 10.0 | me +0.3 | 3.0 | ✅ detour 0.3 |
+| Asha | Sector 29 | 14.0 | me | 15.4 | Asha +1.4 | 3.5 | ✅ detour 1.4 |
+| Ravi | Dwarka Sec 21 | 3.9 | Ravi | 14.2 | me +4.5 | 3.0 | ❌ opposite direction |
+| Someone | Noida Sec 18 | 32.8 | — | — | — | — | ❌ 24 km from me, never reaches stage 2 |
+
+- Asha leaves 10 min after me: score 1.4 + 0.2 × 10 = **3.4**. Neha leaves 25 min after me: 0.3 + 0.2 × 25 = **5.3**. Asha is shown first.
+
+### 37.3 Pure functions
+- A **pure function**: its result depends **only on its inputs**, and it has **no side effects**.
+- A **side effect** is anything a function does besides returning a value: reading/writing the database, network calls, logging, reading the clock (`Instant.now()`), random numbers, changing shared variables.
+- Why it matters:
+  - **Tests are trivial:** "these inputs → this output". No Spring context, no database, no Docker: hundreds of cases run in milliseconds.
+  - **Deterministic:** same input, same answer, every time. No flaky tests.
+  - **Easy to reason about:** you can read it alone, without knowing what the rest of the app is doing.
+- The clock trap: a ranker that calls `Instant.now()` inside gives different answers at different times. Pass times **in** instead.
+- **Functional core, imperative shell:** keep the decision logic pure (`MatchRanker`), and put the messy parts (HTTP, auth, SQL, loading names) in a thin outer layer (`TripService`) that calls it.
+- What the tests cover: a perfect same-road match (detour 0) · opposite directions rejected · exactly at the limit · the 3 km floor vs 25 % · too many seats/bags · sorting by score · only the top 5 · no candidates.
+
+### 37.4 Privacy in matching
+- **Data minimisation:** send only what the screen needs. Matches show **first name, area label, minutes apart, seats, bags, detour km**. Never phone, surname, exact destination, UPI ID or user id. Strangers are being introduced; knowing exactly where a stranger is going late at night is a safety problem. India's **DPDP Act 2023** (Digital Personal Data Protection Act) also expects personal data to be used only for a clear purpose.
+- **How the code guarantees it:** a dedicated response **record** (DTO) containing only the allowed fields. An entity is never turned into JSON directly, so a column added later can't leak by accident.
+- **Only for your own trip:** matches for a trip that isn't yours → **404**, same idea as cancelling (don't reveal it exists).
+- **Leaks through numbers:** a number *derived* from a secret can reveal the secret. Detour km depends on the other person's exact destination; someone creating trips to several fake destinations and noting each detour could narrow it down (**trilateration**: finding a point from distances to known points). Mitigations: round detour to the **nearest 0.5 km**, the area label is already coarse, one active trip at a time.
+- **Blocks:** if either person blocked the other, neither sees the other. Checked in both directions.
+
+### 37.5 The N+1 query problem
+- Scenario: 5 matches, each needs the person's first name.
+- **Naive:** loop over the 5 trips and load each user → **1** query for the trips + **N** = 5 queries for names = **N+1** queries.
+- **Why it hurts:** every query is a **round trip** to the database (≈1 ms on your laptop, more in the cloud, plus connection-pool time). A list of 100 = 101 queries. It hides easily: with JPA relations (`@ManyToOne`, loaded lazily), `trip.getUser().getName()` in a loop quietly fires one query per row.
+- **Fix:** collect all the ids first, load them in **one** query (`where id in (…)`), and look names up in a `Map<UUID, String>`. (Or a SQL `join`.)
+- **In Namastute:** the `trips` module may not touch the `users` module's repository or entity (Spring Modulith's `ModularityTest` would fail), so `UserService` gets one public method that takes all the ids and returns id → first name, in one query.
+- **How to spot it:** turn on SQL logging (`logging.level.org.hibernate.SQL: debug`) and count the `select`s for one request.
+
+### 37.6 The whole request
+`GET /api/v1/trips/{id}/matches` → my trip, if it's mine and `searching` (else 404) → stage 1 SQL → stage 2 `MatchRanker` → top 5 → one query for their first names → response records with only the allowed fields.
+
+---
+
+## 38. Code walkthrough: matching
+
+No new migration: V1 already created `blocks`, `trip_search` and `trip_dest_gist`.
+
+### 38.1 `trips/MatchRanker.java`: stage 2, the pure function
+```java
+final class MatchRanker {
+    static final int TOP = 5;
+    static final int CAR_SEATS = 4;
+    static final int CAR_BAGS = 4;
+    static final double MIN_ALLOWANCE_KM = 3;
+    static final double ALLOWANCE = 0.25;
+    static final double KM_PER_MINUTE = 0.2;
+```
+- `final class` + `private MatchRanker() {}`: nobody can extend it or create one; it's just a home for a static function (like `Geo`).
+- Every number from the design is a **named constant**, so `rank` reads like the rule ("max(3 km, 25 %)") instead of magic numbers.
+
+```java
+    record Ranked(TripRequest trip, double detourKm, double score) {}
+```
+- The result: which trip, its detour and its score. It holds the candidate `TripRequest` itself, so the service doesn't need a lookup map to find the trip again.
+
+```java
+    static List<Ranked> rank(Point pickup, TripRequest mine, List<TripRequest> candidates) {
+        double mySolo = roadKm(pickup, mine.getDest());
+        List<Ranked> ok = new ArrayList<>();
+        for (TripRequest other : candidates) {
+```
+- **Inputs only:** the pickup point, my trip, the candidates. No repository, no `Instant.now()`. That's what makes it pure (37.3).
+- `TripRequest` is a JPA entity, but here it's used as a plain Java object: building one in a test needs no database.
+- `mySolo` is computed once, outside the loop.
+
+```java
+            if (mine.getSeats() + other.getSeats() > CAR_SEATS || mine.getBags() + other.getBags() > CAR_BAGS) {
+                continue;   // doesn't fit in the car
+            }
+```
+- The cheapest check first. `continue` = skip to the next candidate.
+
+```java
+            double theirSolo = roadKm(pickup, other.getDest());
+            double longest = Math.max(mySolo, theirSolo);
+            double route = Math.min(mySolo, theirSolo) + roadKm(mine.getDest(), other.getDest());
+            double detour = route - longest;
+```
+- The detour model of 37.1 in four lines. **Greedy** with two people = "drop whoever is nearer first", so the route is *nearer person's solo + the hop between the two destinations*.
+- The nearer person rides exactly their solo km; the farther person rides the whole route. So `route − longest` is both "how much further than going straight to the farthest person" and "the extra the last rider sits through".
+- It can never be negative (the triangle rule: going via a stop is never shorter than going straight), apart from tiny rounding like −0.0000001.
+
+```java
+            if (detour > Math.max(MIN_ALLOWANCE_KM, ALLOWANCE * longest)) {
+                continue;
+            }
+```
+- The fairness rule. Only the **last** rider has any extra, and the last rider is the one with the `longest` solo trip, so one check covers both people.
+
+```java
+            long minutes = Math.abs(Duration.between(mine.getExitAt(), other.getExitAt()).toMinutes());
+            ok.add(new Ranked(other, detour, detour + KM_PER_MINUTE * minutes));
+        }
+        return ok.stream().sorted(Comparator.comparingDouble(Ranked::score)).limit(TOP).toList();
+    }
+```
+- `Duration.between(a, b)`: time from `a` to `b` (negative if `b` is earlier); `Math.abs` because before or after doesn't matter for the score.
+- `Comparator.comparingDouble(Ranked::score)`: "sort by score, smallest first". `limit(TOP)` keeps 5.
+
+```java
+    private static double roadKm(Point a, Point b) {
+        return Geo.distanceKm(a, b) * Geo.ROAD_FACTOR;
+    }
+```
+- Reuses the haversine from `Geo` and the same 1.4 factor used for `solo_km`, so all distances are measured the same way.
+- **Pairs only:** groups of 3–4 come in the next slice (`feat/groups`), where the greedy route visits several drops.
+
+### 38.2 `trips/TripRepository.java`: stage 1, the SQL prefilter
+```sql
+select t.* from trip_requests me
+join trip_requests t
+  on t.terminal_id = me.terminal_id
+ and t.status = 'searching'
+ and t.exit_at between me.exit_at - interval '30 minutes' and me.exit_at + interval '30 minutes'
+ and t.user_id <> me.user_id
+ and ST_DWithin(t.dest, me.dest, 15000)
+where me.id = :tripId
+  and not exists (select 1 from blocks b
+                  where (b.blocker_id = me.user_id and b.blocked_id = t.user_id)
+                     or (b.blocker_id = t.user_id and b.blocked_id = me.user_id))
+```
+- A **self-join**: the table joined with itself under two names. `me` = my trip (one row, found by id), `t` = every other trip. Only **one** parameter (`:tripId`): terminal, time, user and destination all come from my row, so Java never has to pass a point into SQL.
+- `<>` means "not equal": never match yourself.
+- `ST_DWithin(t.dest, me.dest, 15000)`: within 15 km, index-friendly (36.5). Marked with a `shortcut:` comment (36.2).
+- `not exists (select 1 ...)`: "keep `t` only if no blocks row exists for this pair". `select 1` because we only care **whether** a row exists, not what's in it. Both directions are checked.
+- `select t.*` + return type `List<TripRequest>`: Hibernate turns each row into a `TripRequest`, including the geography column.
+- Native SQL because of the `'searching'` enum literal (34.3) and the PostGIS function.
+
+### 38.3 `users/UserService.java`: names in one query
+```java
+public Map<UUID, String> firstNames(Collection<UUID> ids) {
+    Map<UUID, String> names = new HashMap<>();
+    for (User user : users.findAllById(ids)) {
+        names.put(user.getId(), user.getName() == null ? "Traveller" : user.getName().split(" ")[0]);
+    }
+    return names;
+}
+```
+- `public`: this is the users module's **API**; trips may call it (Modulith's `ModularityTest` still passes). The repository stays hidden.
+- `findAllById(ids)`: Spring Data's built-in method, **one** `select ... where id in (...)`. That's the N+1 fix (37.5).
+- Returns **first names only**: the full name never leaves the users module for this purpose.
+- `split(" ")[0]`: the first word. The name rule (31.2) guarantees a name starts with a letter, so the first piece is never empty. Works for Hindi too: "केशव दीक्षित" → "केशव".
+- `"Traveller"` if someone never filled in a name (it's nullable since V2).
+
+### 38.4 `trips/TripService.java`: putting the stages together
+```java
+record MatchView(String firstName, String destArea, long minutesAfterYou, int seats, int bags, double detourKm) {}
+```
+- The **only** shape that leaves the server for a match: six fields. Privacy is enforced by what this record *doesn't* have (37.4).
+
+```java
+List<MatchView> matches(UUID userId, UUID tripId) {
+    TripRequest mine = trips.findById(tripId)
+            .filter(t -> t.getUserId().equals(userId) && t.getStatus() == TripRequest.Status.searching
+                    && t.getExitAt().isAfter(Instant.now().minus(EXPIRES_AFTER)))
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "No active trip with that id"));
+```
+- `Optional.filter`: keep the trip only if it's **mine**, still **searching**, and not stale. Missing, someone else's, cancelled or old → the same **404**, so nobody can probe other people's trip ids.
+
+```java
+    Point pickup = terminals.findById(mine.getTerminalId()).orElseThrow().getPickup();
+    List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, trips.matchCandidates(tripId));
+    Map<UUID, String> names = users.firstNames(ranked.stream().map(r -> r.trip().getUserId()).toList());
+```
+- The **imperative shell** (37.3): load from the database → stage 1 → stage 2 (pure) → names for **only the top 5**, in one call.
+
+```java
+    return ranked.stream().map(r -> new MatchView(
+            names.get(r.trip().getUserId()),
+            r.trip().getDestArea(),
+            Duration.between(mine.getExitAt(), r.trip().getExitAt()).toMinutes(),
+            r.trip().getSeats(),
+            r.trip().getBags(),
+            Math.round(r.detourKm() * 2) / 2.0
+    )).toList();
+```
+- `minutesAfterYou` keeps its **sign**: +10 = they're out 10 min after you, −10 = before.
+- `Math.round(x * 2) / 2.0`: round to the nearest **0.5** (1.38 → 2.76 → 3 → 1.5). Anti-trilateration (37.4).
+- The constructor gets a new parameter `UserService users`: constructor injection, as everywhere else.
+
+### 38.5 `trips/TripController.java`
+```java
+@GetMapping("/api/v1/trips/{id}/matches")
+List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+    return trips.matches(userId(jwt), id);
+}
+```
+- The caller's id comes from the **token**, never from the request (same as `/me`). Returning a `List` gives 200 with a JSON array; an empty list is `[]`.
+
+### 38.6 Tests
+- **`MatchRankerTest`** (unit, no Spring): 8 tests in **0.04 s**.
+  | Test | Proves |
+  |---|---|
+  | `riderFurtherDownTheSameRoadIsAGoodMatch` | worked example 37.2: detour ≈ 1.4, score ≈ 3.4 |
+  | `sameDestinationHasNoDetour` | detour 0; only minutes count (15 min → 3.0) |
+  | `oppositeDirectionIsRejected` | Dwarka vs DLF Phase 3 → no match |
+  | `shortTripsGetAtLeast3KmAllowance` | detour 2.2 accepted (25 % alone would say 1.4), 3.2 rejected |
+  | `longTripsGet25PercentAllowance` | detour 9.7 accepted (limit 10.9), 13.6 rejected (limit 11.3) |
+  | `everyoneMustFitInOneCar` | 4 seats/4 bags fine; 5 seats or 5 bags rejected |
+  | `lowestScoreFirstAndOnlyTheTop5` | 7 candidates → the right 5, in score order |
+  | `noCandidatesNoMatches` | empty in → empty out |
+  - Helper `at(kmSouth, kmEast)`: makes a destination at a chosen distance from the pickup. 1° latitude ≈ 111.19 km; 1° longitude ≈ 111.19 × cos(latitude) km (lines of longitude get closer towards the poles). That's how the boundary cases were built on purpose; each number in the test descriptions was checked separately.
+  - `isCloseTo(1.4, within(0.1))`: compare decimals with a tolerance; never test `double`s for exact equality.
+- **`MatchesTest`** (HTTP + database):
+  - `findsTheGoodMatchAndShowsOnlyWhatOthersMaySee`: me + six others at the same time, each excluded for exactly one reason (wrong direction, over 15 km, 90 min later, other terminal, blocked me), plus Asha, who should match. Result: exactly one match, Asha, with the six allowed fields only (`$[0].length()` = 6; `phone` and `destLat` don't exist).
+  - `onlyForYourOwnTrip`: someone else's trip id → 404 `TRIP_NOT_FOUND`.
+  - `@BeforeEach clearTerminal1()`: cancels leftover T1 trips. The tests run against the **dev database**, and trips from earlier runs would otherwise appear as extra matches. Only T1 is cleared, and only these tests use T1.
+- **Mistake caught by the test:** I first expected a 1.5 km detour, but the test uses **Terminal 1**, and my 1.4 km example was worked out from **Terminal 3**. From T1 the detour is 0.498 km → shown as 0.5. The code was right, my expectation wasn't. Always recompute expectations for the exact inputs.
+
+### 38.7 Web: `lib/api.ts` and `app/current-trip.tsx`
+- `type Match` mirrors `MatchView`; `getMatches(tripId)` = `GET /api/v1/trips/{id}/matches`.
+- `Matches` component, inside the trip card:
+  - `useState<Match[] | null>(null)`: `null` = still loading; a separate `failed` flag for errors.
+  - `useEffect(..., [tripId])`: fetch when the card appears (or the trip changes).
+  - Four states: error → "Couldn't load matches", loading → "Looking for co-travellers…", empty → "No one heading your way yet…", list → "People heading your way".
+  - `key={i}`: React needs a key per list item. Normally an id, but matches deliberately have **no ids** (privacy), and the list never reorders while shown, so the position is fine.
+  - `timing(10)` → "10 min after you", `timing(-5)` → "5 min before you", `timing(0)` → "at the same time as you".
+  - `detourKm === 0 ? "no detour" : ...`.
+  - `shortcut:` loaded once per page load; push notifications come with design §3.3 step 3.
+
+### 38.8 Verified in a real browser (two users, one tab, one after the other)
+- **A** (+919000000004, "केशव दीक्षित"): T3, out 01:17 IST, Sector 25A, Gurgaon → card shows "No one heading your way yet".
+- Log out → **B** (+919000000005, new): profile "Asha Rao" with a UPI ID → T3, out 01:27, Sector 29, Gurgaon → card shows **"केशव · out 10 min before you · Sector 25A, Gurgaon · 1 km detour"**.
+- Raw JSON in the network tab: `[{"firstName":"केशव","destArea":"Sector 25A, Gurgaon","minutesAfterYou":-10,"seats":1,"bags":1,"detourKm":1.0}]`. No phone, ids, coordinates or UPI ID.
+- Log out → A again → **"Asha · out 10 min after you · Sector 29, Gurgaon · 1 km detour"**.
+- Each `/matches` request appeared **twice** in the network log: React **StrictMode** runs effects twice in development (29.4). Harmless for a read; it doesn't happen in production.
+
+### 38.9 `EXPLAIN` on the real query (43 rows in the dev database)
+- Normal: `Seq Scan on trip_requests t` + `Hash Join`. With 43 rows, reading the whole table is cheapest, as predicted in 36.6.
+- After `set enable_seqscan = off;`:
+  ```
+  Index Scan using trip_dest_gist on trip_requests t
+    Index Cond: (dest && _st_expand(me.dest, '15000'))
+    Filter: (status = 'searching' AND ... AND st_dwithin(dest, me.dest, '15000', true))
+  ```
+  - `&&` = "bounding boxes overlap", and `_st_expand(me.dest, 15000)` = my point grown into a 15 km box: the **R-tree box search** from 36.4. The `Filter` line is the **exact** check on the survivors.
+  - `Nested Loop Anti Join` on `blocks`: an **anti join** keeps rows that have **no** partner, which is how Postgres runs `not exists`. It uses the `blocks` primary key index (`blocks_pkey`).
+
+---
+
+## 39. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -2157,6 +2468,13 @@ docker compose -f infra/docker-compose.yml up -d      # start Postgres
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
 docker compose -f infra/docker-compose.yml down       # stop (keeps data)
 docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d namastute   # SQL prompt
+```
+
+### Query plans (inside `psql`)
+```sql
+explain <query>;                 -- the plan Postgres would use (doesn't run it)
+explain analyze <query>;         -- runs it too: real row counts and times
+set enable_seqscan = off;        -- this session only: see whether an index CAN be used on a tiny table
 ```
 
 ### API (from `apps/api`)
@@ -2195,7 +2513,7 @@ git fetch --prune
 
 ---
 
-## 37. Glossary
+## 40. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -2300,10 +2618,28 @@ git fetch --prune
 | Ref (React) | A value kept between redraws without causing one (`useRef`) |
 | Tile | One square image of a map at a given zoom level |
 | WKT | Well-Known Text: `POINT(lng lat)` |
+| Bounding box | Smallest rectangle containing a shape or a group of shapes |
+| Candidate | A row that survived the cheap first stage of a search |
+| Composite index | One index over several columns, sorted by the first, then the next |
+| Data minimisation | Collect and share only the personal data a feature really needs |
+| EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
+| GiST | Generalized Search Tree: Postgres index framework for unsortable data like shapes |
+| Greedy algorithm | Takes the best-looking step now and never reconsiders |
+| N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
+| Partial index | Index holding only rows matching a `where` |
+| Pure function | Output depends only on inputs; no side effects |
+| Query planner | The part of Postgres that decides how to run a query |
+| R-tree | Tree of nested bounding boxes; how PostGIS indexes points |
+| Seq Scan | Reading every row of a table |
+| Side effect | Anything a function does besides returning a value (DB, network, clock…) |
+| Trilateration | Finding a hidden point from its distances to known points |
+| Two-stage search | Cheap prefilter in the database, then exact ranking in code |
+| Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
+| Self-join | A table joined with itself under two names (`me` and `t`) |
 
 ---
 
-## 38. Interview questions to practise
+## 41. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -2343,3 +2679,12 @@ git fetch --prune
 36. How does the database enforce "one active trip per user", and why not only check it in Java?
 37. Why answer 404 instead of 403 when someone tries to cancel another user's trip?
 38. Why must a map library like Leaflet be loaded with ssr: false in Next.js?
+39. Why split matching into a database prefilter and in-memory ranking? What must the prefilter never do?
+40. Why can't a B-tree answer "points within 15 km", and how does a GiST (R-tree) index do it?
+41. Why does `ST_DWithin` use a spatial index while `ST_Distance(...) < x` doesn't?
+42. `EXPLAIN` shows a Seq Scan even though an index exists. Is that a bug? How would you check?
+43. What is a pure function, and why is a pure ranker easier to test than one that reads the database or the clock?
+44. Define the detour for a shared cab. Why is "shared route − my solo route" a misleading measure?
+45. What is the N+1 query problem, how do you detect it, and how do you fix it across module boundaries?
+46. Which fields may a match show about another traveller, and how could even a distance number leak a secret?
+47. Our tests share the dev database. What problem did that cause for the matching test, and what are the proper fixes?

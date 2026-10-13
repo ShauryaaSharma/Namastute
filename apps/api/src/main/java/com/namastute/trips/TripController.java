@@ -67,6 +67,12 @@ class TripController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    // Up to 5 people to share a cab with, best first; 404 unless it's your own active trip
+    @GetMapping("/api/v1/trips/{id}/matches")
+    List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return trips.matches(userId(jwt), id);
+    }
+
     @DeleteMapping("/api/v1/trips/{id}")
     ResponseEntity<Void> cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         trips.cancel(userId(jwt), id);
