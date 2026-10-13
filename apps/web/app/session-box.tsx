@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { logout, restoreSession, type Profile } from "@/lib/api";
+import CurrentTrip from "./current-trip";
 
 // Shows who is logged in. undefined = still checking, null = logged out.
 export default function SessionBox() {
@@ -37,6 +38,7 @@ export default function SessionBox() {
           Log out
         </button>
       </div>
+      {user.name && <CurrentTrip />}
     </div>
   );
 }
