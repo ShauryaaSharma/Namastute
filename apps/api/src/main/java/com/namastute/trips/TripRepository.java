@@ -16,13 +16,32 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
 
     Optional<TripRequest> findFirstByUserIdAndStatusIn(UUID userId, Collection<TripRequest.Status> statuses);
 
-    // shortcut: expires a user's stale trips on demand; a scheduled job (design 3.7) will do this for everyone
+    // Expires one user's stale trips right away, so a forgotten trip can't block a new one until the next sweep
     @Modifying
     @Transactional
     @Query(nativeQuery = true, value = """
             update trip_requests set status = 'expired'
             where user_id = :userId and status = 'searching' and exit_at < :cutoff""")
     int expireStale(UUID userId, Instant cutoff);
+
+    // The background sweep for everyone (design 3.7): the database's own clock decides what's stale
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = """
+            update trip_requests set status = 'expired'
+            where status = 'searching' and exit_at < now() - interval '60 minutes'""")
+    int expireAllStale();
+
+    // grouped → done / expired, when the groups module finishes or expires a group
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = "update trip_requests set status = 'done' where id in (:ids) and status = 'grouped'")
+    int markDone(Collection<UUID> ids);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = "update trip_requests set status = 'expired' where id in (:ids) and status = 'grouped'")
+    int markExpired(Collection<UUID> ids);
 
     // Cancels only if it's this user's trip and still searching; returns 1 if cancelled, 0 otherwise
     @Modifying

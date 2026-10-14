@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (group chat: concepts + code walkthrough).
+Last updated: 2026-10-14 (expiry jobs: concepts + code walkthrough).
 
 ---
 
@@ -55,9 +55,11 @@ Last updated: 2026-10-14 (group chat: concepts + code walkthrough).
 45. [Real-time: WebSocket and STOMP](#45-real-time-websocket-and-stomp)
 46. [Chat: security, saving and history](#46-chat-security-saving-and-history)
 47. [Code walkthrough: group chat (slice 3)](#47-code-walkthrough-group-chat-slice-3)
-48. [Command cheat sheet](#48-command-cheat-sheet)
-49. [Glossary](#49-glossary)
-50. [Interview questions to practise](#50-interview-questions-to-practise)
+48. [Background jobs: sweeps, idempotency, time](#48-background-jobs-sweeps-idempotency-time)
+49. [Code walkthrough: expiry jobs](#49-code-walkthrough-expiry-jobs)
+50. [Command cheat sheet](#50-command-cheat-sheet)
+51. [Glossary](#51-glossary)
+52. [Interview questions to practise](#52-interview-questions-to-practise)
 
 ---
 
@@ -3063,7 +3065,109 @@ public record GroupChanged(UUID groupId, String systemMessage) {}
 
 ---
 
-## 48. Command cheat sheet
+## 48. Background jobs: sweeps, idempotency, time
+
+### 48.1 The problem
+- Some changes must happen **because time passed**, not because someone clicked: expire trips an hour after their exit time, lock a group 5 minutes before meeting, close groups long after meeting.
+- **Lazy expiry** (what we had): when *you* create a trip, *your* stale trips expire. Everyone else's stale data stays, and "lock 5 minutes before" can't be lazy: no request arrives at that moment.
+
+### 48.2 Background jobs: two shapes
+- A **background job** = code the server runs on its own, on a timer, with no HTTP request behind it.
+| Shape | How it works | Example |
+|---|---|---|
+| **Sweep** (periodic) | Every minute: find **everything** that's due, handle it in one go | `update trip_requests set status='expired' where status='searching' and exit_at < now() - interval '60 minutes'` |
+| **Delayed task** (per item) | On create: "do X to *this* item at time T" | "expire trip 42 at 13:15" |
+
+### 48.3 Tools and their traps
+- **Spring `@Scheduled`**: runs a method on a timer (`fixedDelay = 60_000` = every 60 s after the previous run finished). Needs `@EnableScheduling` once. Traps:
+  1. Timers live **in memory**: a delayed task held in memory is **lost on restart**.
+  2. **Every server runs it**: two API instances = two runs every minute.
+- **db-scheduler** (the design's choice): stores delayed tasks in a `scheduled_tasks` table, so they survive restarts and only one server takes each. Costs a library, a table, and keeping tasks in sync (e.g. rescheduling on a flight delay).
+- **Why our sweep avoids both traps:**
+  - The truth ("this trip's exit was 2 hours ago") lives **in the rows**, so after a restart the next sweep simply finds it.
+  - Every change is a **conditional UPDATE** (`... where status = 'open' and ...`): if two servers sweep at once, one changes the rows and the other changes **0**. With `UPDATE ... RETURNING id`, only the server that actually changed a group announces it.
+- **Decision (2026-10-14):** a 1-minute `@Scheduled` sweep, no new library. db-scheduler stays an option for per-item tasks later (flight-delay reschedules).
+
+### 48.4 Idempotency
+- **Idempotent** = running it twice has the same effect as once. "Set expired **where still searching**" is idempotent; "add 1 to a counter" isn't.
+- Jobs **will** run twice someday (retries, two servers, a crash halfway), so every job must be idempotent.
+
+### 48.5 Time and testing
+- Each server's clock drifts a little (**clock skew**). Comparing with the **database's `now()`** inside the SQL gives everyone one clock.
+- **Testing time-based code:** never wait an hour in a test. Move the data into the past (`set meet_at = now() - interval '5 hours'`) and **call the sweep method directly**.
+- **Precision:** a 1-minute sweep locks "5 minutes before" somewhere between T−5:00 and T−4:00. Fine for a cab.
+
+### 48.6 What our sweep does (decisions, 2026-10-14)
+| Job | Rule | Then |
+|---|---|---|
+| Expire trips | `searching` and exit time more than 60 min ago → `expired` | Replaces the lazy shortcut for everyone |
+| Expire unformed groups | `open` and meet time more than 30 min ago → `expired` | Members' trips → `expired` (runs **before** auto-lock, so a group missed while the server was down isn't locked after the fact) |
+| Auto-lock | `open` and meet time within 5 min → `locked` | Waiting requests declined; chat: "Locked automatically: meeting in 5 minutes" |
+| Finish | `locked` and meet time more than 4 hours ago → `done` | Members' trips → `done` (design §3.2 "or meet_at + 4 h") |
+
+---
+
+## 49. Code walkthrough: expiry jobs
+
+No new library, no new table: one `@Scheduled` sweep per module (48.3).
+
+### 49.1 `ApiApplication.java`
+- `@EnableScheduling`: switches on Spring's scheduler. Without it, `@Scheduled` methods are silently ignored.
+
+### 49.2 Trips: `TripRepository` + `TripService`
+```sql
+update trip_requests set status = 'expired'
+where status = 'searching' and exit_at < now() - interval '60 minutes'
+```
+- `expireAllStale()`: everyone's stale searching trips, judged by the **database's** clock (48.5).
+- `TripService.expireStaleTrips()` with `@Scheduled(fixedDelay = 60_000, initialDelay = 60_000)`:
+  - `fixedDelay`: wait 60 s **after the previous run finishes** (runs never overlap on one server).
+  - `initialDelay`: first run one minute after startup.
+  - It's a single statement, and the repository method is already `@Transactional`, so it can sit right in `TripService`.
+- The per-user `expireStale` in `create` stays: it clears your own forgotten trip **immediately**, instead of up to a minute later (the old `shortcut:` comment was reworded).
+- New public `markDone(ids)` / `markExpired(ids)`: `grouped → done` / `grouped → expired`, for the groups module.
+
+### 49.3 Groups: three jobs in `GroupService`
+Each is `@Transactional` and starts with a conditional `UPDATE ... RETURNING id`, so **only groups this run actually changed** get follow-ups and announcements (48.3–48.4).
+| Method | Statement | Then |
+|---|---|---|
+| `expireUnformed()` | `open` and `meet_at < now() - interval '30 minutes'` → `expired` | members' trips → `expired`; `GroupChanged` (cards refresh) |
+| `autoLock()` | `open` and `meet_at <= now() + interval '5 minutes'` → `locked` | waiting requests declined; `GroupChanged(id, "Locked automatically: meeting in 5 minutes")` |
+| `finish()` | `locked` and `meet_at < now() - interval '4 hours'` → `done` | members' trips → `done`; `GroupChanged` |
+- `memberTrips(groupIds)`: `where group_id in (:ids)`: a **list parameter** that `JdbcClient` expands into `in (?, ?, ...)`.
+- `declineWaitingRequests(groupId)`: pulled out of `lock()`, now shared by the manual lock and the auto-lock (one rule, one place).
+
+### 49.4 `GroupJobs.java`: why a separate class
+```java
+@Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
+void sweep() {
+    groups.expireUnformed();
+    groups.autoLock();
+    groups.finish();
+}
+```
+- **Self-invocation (40.3):** if `sweep()` lived inside `GroupService`, calling `this.autoLock()` would skip Spring's proxy, and the `@Transactional` on `autoLock` would be ignored. From a separate bean, each call goes through the proxy and gets **its own transaction**.
+- **Order matters:** `expireUnformed` runs **first**. A group whose meeting passed an hour ago (the server was down) expires, instead of being "auto-locked" an hour late.
+
+### 49.5 Tests (time travel without waiting, 48.5)
+| Test | Proves |
+|---|---|
+| `TripsTest.theSweepExpiresEveryonesStaleTrips` | a trip moved 2 h into the past expires for **any** user; a fresh trip stays `searching` |
+| `anOpenGroupLocksItselfFiveMinutesBeforeMeeting` | meeting in 3 min → `locked`, Neha's waiting request `declined`, exactly **one** "Locked automatically" message after running the sweep **twice**; a group meeting in 3 h stays `open` |
+| `aLockedGroupIsDoneFourHoursAfterMeeting` | `done`, trips `done`, and you're free to plan a new trip (current → 204) |
+| `aForgottenOpenGroupExpiresInsteadOfLocking` | 1 h past meeting and still open → `expired`, not locked |
+- **Idempotency proven:** with the auto-lock's `status = 'open'` condition loosened to `status in ('open', 'locked')`, the test went **red** ("expected: 1 but was: 2" messages). Restored → green.
+
+### 49.6 Verified in the running app
+- Real login as Keshav (group with Asha, set up through the API) → in the database, the group's `meet_at` moved to 3 minutes from now → **no clicks** → within a minute, Keshav's open page showed "locked, the booker is booking the cab", and the chat said "Locked automatically: meeting in 5 minutes 12:22 pm".
+- This proves the **timer itself** runs in the real app; the tests call the sweep directly.
+
+### 49.7 The Redis fix
+- The Windows "Redis" service is stopped and set to Manual (47.10). The API now uses the project's Docker Redis 7.4 as designed; `OtpServiceTest` passing confirmed the connection.
+
+---
+
+## 50. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3133,7 +3237,7 @@ git fetch --prune
 
 ---
 
-## 49. Glossary
+## 51. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -3310,10 +3414,15 @@ git fetch --prune
 | REQUIRES_NEW | Start a brand-new transaction, separate from any current one |
 | Outbox | Saving events in the same transaction as the change, then delivering them reliably |
 | Supply-chain risk | Danger of a malicious or broken release of a library you depend on |
+| Background job | Code the server runs on a timer, with no request behind it |
+| Sweep | A periodic job that handles everything that's due in one go |
+| @Scheduled | Spring annotation that runs a method on a timer (needs @EnableScheduling) |
+| Idempotent | Running it twice has the same effect as running it once |
+| Clock skew | Small differences between the clocks of different machines |
 
 ---
 
-## 50. Interview questions to practise
+## 52. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -3390,3 +3499,9 @@ git fetch --prune
 73. Why use an application event (GroupChanged) instead of groups calling chat directly?
 74. What goes wrong if a @TransactionalEventListener writes to the database without REQUIRES_NEW?
 75. Why must the server refuse STOMP SEND frames aimed straight at /topic/...?
+76. Lazy expiry vs a background sweep: what can't lazy expiry do?
+77. What are the two traps of in-memory scheduled tasks, and how does a sweep with conditional UPDATEs avoid them?
+78. What does idempotent mean, and why must background jobs be idempotent?
+79. How do you test code that depends on time without waiting?
+80. Why does GroupJobs live in its own class instead of a @Scheduled method inside GroupService?
+81. Why does the sweep expire forgotten open groups before auto-locking?

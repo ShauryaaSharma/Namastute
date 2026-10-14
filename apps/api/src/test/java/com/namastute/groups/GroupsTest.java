@@ -42,6 +42,7 @@ class GroupsTest {
     @Autowired UserService users;
     @Autowired JdbcTemplate jdbc;
     @Autowired GroupService groups;
+    @Autowired GroupJobs jobs;
 
     @Test
     void askThenAcceptFormsAGroupWithTheAskerAsMaker() throws Exception {
@@ -212,6 +213,70 @@ class GroupsTest {
         assertThat(jdbc.queryForObject("select seats_taken from groups where id = ?::uuid", Integer.class, group)).isEqualTo(4);
         assertThat(jdbc.queryForObject("select count(*) from group_members where group_id = ?::uuid and status = 'accepted'",
                 Integer.class, group)).isEqualTo(3);
+    }
+
+    // ---- Background jobs (Learning Notes 48): move the data into the past, then run the sweep directly ----
+
+    @Test
+    void anOpenGroupLocksItselfFiveMinutesBeforeMeeting() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao"), neha = user("Neha Gupta");
+        String ashaTrip = pair(keshav, asha);
+        trip(neha, 1, 1);
+        ask(neha, ashaTrip);
+        String group = groupOf(keshav);
+        jdbc.update("update groups set meet_at = now() + interval '3 minutes' where id = ?::uuid", group);
+        String notYet = groupOf(pairAndReturnMember(user("Ravi Kumar"), user("Tara Sen")));   // meets in 3 hours
+
+        jobs.sweep();
+        jobs.sweep();   // idempotent: the second run changes nothing and announces nothing
+
+        assertThat(groupStatus(group)).isEqualTo("locked");
+        assertThat(groupStatus(notYet)).isEqualTo("open");
+        mvc.perform(get("/api/v1/requests").with(as(neha))).andExpect(jsonPath("$.sent[0].status").value("declined"));
+        assertThat(jdbc.queryForObject("select count(*) from messages where group_id = ?::uuid and body = ?",
+                Integer.class, group, "Locked automatically: meeting in 5 minutes")).isEqualTo(1);
+    }
+
+    @Test
+    void aLockedGroupIsDoneFourHoursAfterMeeting() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+        String ashaTrip = pair(keshav, asha);
+        String group = groupOf(keshav);
+        lock(keshav, group);
+        jdbc.update("update groups set meet_at = now() - interval '5 hours' where id = ?::uuid", group);
+
+        jobs.sweep();
+
+        assertThat(groupStatus(group)).isEqualTo("done");
+        assertThat(tripStatus(ashaTrip)).isEqualTo("done");
+        mvc.perform(get("/api/v1/trips/current").with(as(keshav))).andExpect(status().isNoContent());   // free to plan the next one
+    }
+
+    @Test
+    void aForgottenOpenGroupExpiresInsteadOfLocking() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+        String ashaTrip = pair(keshav, asha);
+        String group = groupOf(keshav);
+        jdbc.update("update groups set meet_at = now() - interval '1 hour' where id = ?::uuid", group);
+
+        jobs.sweep();
+
+        assertThat(groupStatus(group)).isEqualTo("expired");
+        assertThat(tripStatus(ashaTrip)).isEqualTo("expired");
+    }
+
+    private String groupStatus(String groupId) {
+        return jdbc.queryForObject("select status::text from groups where id = ?::uuid", String.class, groupId);
+    }
+
+    private String tripStatus(String tripId) {
+        return jdbc.queryForObject("select status::text from trip_requests where id = ?::uuid", String.class, tripId);
+    }
+
+    // pair(), but returns a member's user id so groupOf() can find the group
+    private UUID pairAndReturnMember(UUID first, UUID second) throws Exception {
+        pair(first, second);
+        return first;
     }
 
     // ---- helpers ----

@@ -32,6 +32,7 @@ class TripsTest {
     @Autowired MockMvc mvc;
     @Autowired UserService users;
     @Autowired JdbcTemplate jdbc;
+    @Autowired TripService trips;
 
     UUID userId;
 
@@ -96,6 +97,22 @@ class TripsTest {
         createTrip(trip()).andExpect(status().isCreated());
         assertThat(jdbc.queryForObject("select status::text from trip_requests where id = ?::uuid", String.class, id))
                 .isEqualTo("expired");
+    }
+
+    @Test
+    void theSweepExpiresEveryonesStaleTrips() throws Exception {
+        String stale = JsonPath.read(createTrip(trip()).andReturn().getResponse().getContentAsString(), "$.id");
+        jdbc.update("update trip_requests set exit_at = now() - interval '2 hours' where id = ?::uuid", stale);
+        UUID someoneElse = users.findOrCreateByPhone("+9192" + String.format("%08d", (int) (Math.random() * 100_000_000)));
+        String fresh = JsonPath.read(mvc.perform(post("/api/v1/trips").with(jwt().jwt(j -> j.subject(someoneElse.toString())))
+                .contentType(MediaType.APPLICATION_JSON).content(trip())).andReturn().getResponse().getContentAsString(), "$.id");
+
+        trips.expireStaleTrips();   // the background job, called directly instead of waiting a minute
+
+        assertThat(jdbc.queryForObject("select status::text from trip_requests where id = ?::uuid", String.class, stale))
+                .isEqualTo("expired");
+        assertThat(jdbc.queryForObject("select status::text from trip_requests where id = ?::uuid", String.class, fresh))
+                .isEqualTo("searching");
     }
 
     @Test
