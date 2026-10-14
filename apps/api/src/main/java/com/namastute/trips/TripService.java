@@ -44,7 +44,7 @@ public class TripService {
 
     // What the groups module may know about a trip
     public record TripSummary(UUID id, UUID userId, String terminalId, Instant exitAt, String destArea,
-                              int seats, int bags, String status) {}
+                              int seats, int bags, String status, double soloKm) {}
 
     private final TripRepository trips;
     private final TerminalRepository terminals;
@@ -178,7 +178,7 @@ public class TripService {
 
     private static TripSummary summary(TripRequest t) {
         return new TripSummary(t.getId(), t.getUserId(), t.getTerminalId(), t.getExitAt(), t.getDestArea(),
-                t.getSeats(), t.getBags(), t.getStatus().name());
+                t.getSeats(), t.getBags(), t.getStatus().name(), t.getSoloKm());
     }
 
     List<Terminal> terminals() {

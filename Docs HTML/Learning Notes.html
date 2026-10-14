@@ -90,14 +90,16 @@
 <details><summary><a href="#47-code-walkthrough-group-chat-slice-3">47. Code walkthrough: group chat (slice 3)</a></summary><a class="sub" href="#471-the-shape">47.1 The shape</a><a class="sub" href="#472-events-between-modules-groupsgroupchangedjava">47.2 Events between modules: groups/GroupChanged.java</a><a class="sub" href="#473-chatchatservicejava">47.3 chat/ChatService.java</a><a class="sub" href="#474-chatstompauthjava-the-checkpoint-461462">47.4 chat/StompAuth.java: the checkpoint (46.1–46.2)</a><a class="sub" href="#475-chatwebsocketconfigjava-and-authsecurityconfigjava">47.5 chat/WebSocketConfig.java and auth/SecurityConfig.java</a><a class="sub" href="#476-chatchatcontrollerjava-one-controller-two-doors">47.6 chat/ChatController.java: one controller, two doors</a><a class="sub" href="#477-tests-chattest-6-tests-real-websocket-on-a-random-port">47.7 Tests: ChatTest (6 tests, real WebSocket on a random port)</a><a class="sub" href="#478-web">47.8 Web</a><a class="sub" href="#479-verified-in-a-real-browser-two-tabs-at-once">47.9 Verified in a real browser (two tabs at once)</a><a class="sub" href="#4710-found-while-testing-two-redis-servers-on-one-laptop">47.10 Found while testing: two Redis servers on one laptop</a></details>
 <details><summary><a href="#48-background-jobs-sweeps-idempotency-time">48. Background jobs: sweeps, idempotency, time</a></summary><a class="sub" href="#481-the-problem">48.1 The problem</a><a class="sub" href="#482-background-jobs-two-shapes">48.2 Background jobs: two shapes</a><a class="sub" href="#483-tools-and-their-traps">48.3 Tools and their traps</a><a class="sub" href="#484-idempotency">48.4 Idempotency</a><a class="sub" href="#485-time-and-testing">48.5 Time and testing</a><a class="sub" href="#486-what-our-sweep-does-decisions-2026-10-14">48.6 What our sweep does (decisions, 2026-10-14)</a></details>
 <details><summary><a href="#49-code-walkthrough-expiry-jobs">49. Code walkthrough: expiry jobs</a></summary><a class="sub" href="#491-apiapplicationjava">49.1 ApiApplication.java</a><a class="sub" href="#492-trips-triprepository--tripservice">49.2 Trips: TripRepository + TripService</a><a class="sub" href="#493-groups-three-jobs-in-groupservice">49.3 Groups: three jobs in GroupService</a><a class="sub" href="#494-groupjobsjava-why-a-separate-class">49.4 GroupJobs.java: why a separate class</a><a class="sub" href="#495-tests-time-travel-without-waiting-485">49.5 Tests (time travel without waiting, 48.5)</a><a class="sub" href="#496-verified-in-the-running-app">49.6 Verified in the running app</a><a class="sub" href="#497-the-redis-fix">49.7 The Redis fix</a></details>
-<details><summary><a href="#50-command-cheat-sheet">50. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#51-glossary">51. Glossary</a>
-<a class="topic" href="#52-interview-questions-to-practise">52. Interview questions to practise</a>
+<details><summary><a href="#50-money-fare-split-and-upi-links">50. Money: fare split and UPI links</a></summary><a class="sub" href="#501-finishing-the-ride-met-and-the-fare">50.1 Finishing the ride: met and the fare</a><a class="sub" href="#502-never-double-for-money">50.2 Never double for money</a><a class="sub" href="#503-the-split-and-rounding">50.3 The split and rounding</a><a class="sub" href="#504-upi-deep-links">50.4 UPI deep links</a><a class="sub" href="#505-decisions-2026-10-14">50.5 Decisions (2026-10-14)</a></details>
+<details><summary><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">51. Code walkthrough: fare split (and a pool-starvation bug)</a></summary><a class="sub" href="#511-groupsfaresplitjava-the-pure-function">51.1 groups/FareSplit.java: the pure function</a><a class="sub" href="#512-v5__here_atsql-and-tripsummarysolokm">51.2 V5__here_at.sql and TripSummary.soloKm</a><a class="sub" href="#513-groupservice-the-new-steps">51.3 GroupService: the new steps</a><a class="sub" href="#514-groupcontroller">51.4 GroupController</a><a class="sub" href="#515-the-pool-starvation-bug-found-by-a-new-test">51.5 The pool-starvation bug (found by a new test)</a><a class="sub" href="#516-web">51.6 Web</a><a class="sub" href="#517-verified-in-a-real-browser-two-tabs">51.7 Verified in a real browser (two tabs)</a></details>
+<details><summary><a href="#52-command-cheat-sheet">52. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#53-glossary">53. Glossary</a>
+<a class="topic" href="#54-interview-questions-to-practise">54. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (expiry jobs: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-14 (fare split: concepts + code walkthrough, pool-starvation fix).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -150,9 +152,11 @@
 <li><a href="#47-code-walkthrough-group-chat-slice-3">Code walkthrough: group chat (slice 3)</a></li>
 <li><a href="#48-background-jobs-sweeps-idempotency-time">Background jobs: sweeps, idempotency, time</a></li>
 <li><a href="#49-code-walkthrough-expiry-jobs">Code walkthrough: expiry jobs</a></li>
-<li><a href="#50-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#51-glossary">Glossary</a></li>
-<li><a href="#52-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#50-money-fare-split-and-upi-links">Money: fare split and UPI links</a></li>
+<li><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">Code walkthrough: fare split (and a pool-starvation bug)</a></li>
+<li><a href="#52-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#53-glossary">Glossary</a></li>
+<li><a href="#54-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -3941,6 +3945,7 @@ record MatchView(UUID tripId, List&lt;Rider&gt; riders, long minutesAfterYou, in
 <li><strong>The trap avoided:</strong> code that runs &quot;after commit&quot; still sits inside the finished transaction; database writes there are <strong>never committed</strong>. <code>REQUIRES_NEW</code> starts a fresh transaction for the system-message insert (Spring&#39;s docs warn about exactly this).</li>
 <li>Then it publishes <code>{&quot;groupId&quot;: ...}</code> to <code>/topic/groups.&lt;id&gt;.updated</code>: just &quot;something changed, refetch&quot;, no details, so nothing private can leak.</li>
 <li><code>shortcut:</code> if the app crashes between the commit and the listener, the system message is lost; Spring Modulith&#39;s event publication registry (an <strong>outbox</strong>: events saved in the same transaction and retried) would fix that.</li>
+<li><strong>⚠️ Replaced in 51.5:</strong> this design needed a second database connection per change and starved the connection pool under load. The listener now saves inside the same transaction and only broadcasts after commit.</li>
 </ul>
 </li>
 <li><code>record Updated(UUID groupId)</code>: <code>convertAndSend(dest, Map.of(...))</code> was <strong>ambiguous</strong> (there&#39;s an overload taking headers as a Map), and a small record is clearer anyway.</li>
@@ -4232,7 +4237,145 @@ void sweep() {
 <li>The Windows &quot;Redis&quot; service is stopped and set to Manual (47.10). The API now uses the project&#39;s Docker Redis 7.4 as designed; <code>OtpServiceTest</code> passing confirmed the connection.</li>
 </ul>
 <hr>
-<h2 id="50-command-cheat-sheet">50. Command cheat sheet</h2>
+<h2 id="50-money-fare-split-and-upi-links">50. Money: fare split and UPI links</h2>
+<h3 id="501-finishing-the-ride-met-and-the-fare">50.1 Finishing the ride: <code>met</code> and the fare</h3>
+<ul>
+<li>The group state machine (39.1) continues: <code>locked → met</code> when <strong>2 or more</strong> members tap <strong>&quot;I&#39;m here&quot;</strong> at the pickup; then the <strong>booker</strong> enters the real fare after the ride.</li>
+<li>Each step is one conditional <code>UPDATE</code> naming its starting state (<code>... where status = &#39;met&#39; and fare_total is null</code>), so the fare can&#39;t be entered twice: <strong>idempotent</strong> (48.4).</li>
+<li><strong>Golden rule:</strong> Namastute never touches the money. It does the arithmetic and hands out a UPI link.</li>
+</ul>
+<h3 id="502-never-double-for-money">50.2 Never <code>double</code> for money</h3>
+<ul>
+<li><code>double</code> is <strong>binary floating point</strong>: most decimal fractions can&#39;t be stored exactly (like 1/3 in decimal). <code>0.1 + 0.2</code> = <code>0.30000000000000004</code> in Java and JavaScript.</li>
+<li>Java: <strong><code>BigDecimal</code></strong> (exact decimals; project rule &quot;money as BigDecimal&quot;). Postgres: <strong><code>numeric(10,2)</code></strong> (exact; <code>groups.fare_total</code>, <code>group_members.share</code>).</li>
+<li>JavaScript numbers are doubles, but <strong>whole numbers</strong> are exact (up to 2⁵³), so whole-rupee shares are safe in the browser.</li>
+<li><strong>Minor units:</strong> some systems store paise as integers (₹354.50 → 35450): another way around floating point.</li>
+</ul>
+<h3 id="503-the-split-and-rounding">50.3 The split and rounding</h3>
+<ul>
+<li><strong>Rule (design §3.8):</strong> share = fare × your solo km ÷ everyone&#39;s solo km. The person going furthest pays most.</li>
+<li>Example: fare ₹600; Asha 14.0 km, Keshav 9.7 km (total 23.7): Asha 600 × 14.0 / 23.7 = 354.43 → <strong>₹354</strong>; Keshav (booker) = 600 − 354 = <strong>₹246</strong>.</li>
+<li><strong>Why the booker takes &quot;the rest&quot;:</strong> rounding each share separately can make the total ₹1 off (three people: 199.5 + 199.5 + 201 → 200 + 200 + 201 = ₹601). Everyone except the booker is rounded; booker = fare − the others, so the total is always exact.</li>
+<li><strong>Rounding modes:</strong> <code>HALF_UP</code> (.5 goes up, as at school), <code>HALF_EVEN</code> (banker&#39;s rounding: .5 goes to the even neighbour, no bias over many sums), <code>FLOOR</code> / <code>CEILING</code> (always down / up).</li>
+</ul>
+<h3 id="504-upi-deep-links">50.4 UPI deep links</h3>
+<ul>
+<li><strong>UPI</strong> (Unified Payments Interface): India&#39;s instant bank-to-bank payments. People are addressed by a <strong>UPI ID / VPA</strong> (virtual payment address), e.g. <code>asha.rao@okaxis</code>.</li>
+<li><strong>Deep link</strong> = a URL that opens an app: <code>upi://pay?pa=asha.rao@okaxis&amp;pn=Asha&amp;am=354.00&amp;cu=INR&amp;tn=Namastute%20cab</code> (<code>pa</code> payee address, <code>pn</code> payee name, <code>am</code> amount, <code>cu</code> currency, <code>tn</code> note). Android shows a chooser of UPI apps, pre-filled; the user confirms in their bank app.</li>
+<li><strong>URL encoding:</strong> spaces, <code>&amp;</code> and Hindi names must be encoded (<code>encodeURIComponent</code>).</li>
+<li><strong>iOS</strong> handles <code>upi://</code> unreliably → also show the UPI ID with a <strong>Copy</strong> button (<code>navigator.clipboard.writeText</code>).</li>
+<li><strong>We never confirm or hold payments:</strong> holding or routing other people&#39;s money needs <strong>RBI</strong> (Reserve Bank of India) authorisation; a link from member to booker keeps us out of that.</li>
+<li><strong>Safety:</strong> the link always uses the <strong>booker&#39;s own profile UPI ID</strong>, never something typed in chat, and UPI apps show the registered account name before you pay.</li>
+</ul>
+<h3 id="505-decisions-2026-10-14">50.5 Decisions (2026-10-14)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Split</td>
+<td>Proportional to solo distance</td>
+</tr>
+<tr>
+<td>Rounding</td>
+<td>Whole rupees, <code>HALF_UP</code>, booker absorbs the remainder</td>
+</tr>
+<tr>
+<td>&quot;I&#39;m here&quot;</td>
+<td>Included: 2+ taps → <code>met</code>; the fare can only be entered once <code>met</code></td>
+</tr>
+<tr>
+<td>Fare typos</td>
+<td>Entered once, after a confirm step that previews every share; no editing</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="51-code-walkthrough-fare-split-and-a-pool-starvation-bug">51. Code walkthrough: fare split (and a pool-starvation bug)</h2>
+<h3 id="511-groupsfaresplitjava-the-pure-function">51.1 <code>groups/FareSplit.java</code>: the pure function</h3>
+<pre><code class="language-java">static Map&lt;UUID, BigDecimal&gt; split(BigDecimal fare, Map&lt;UUID, Double&gt; soloKm, UUID booker)
+</code></pre>
+<ul>
+<li>For everyone except the booker: <code>fare.multiply(km).divide(totalKm, 0, mode)</code>. <code>divide(..., 0, mode)</code> = divide and round to <strong>0 decimal places</strong> (whole rupees) with the given rounding mode. The money stays <code>BigDecimal</code> the whole way; the km are only weights.</li>
+<li>The booker gets <code>fare.subtract(others)</code>, so the shares add up to the fare <strong>exactly</strong>.</li>
+<li><strong>Edge case found while writing it:</strong> a booker going 1 km with three others going 40 km, fare ₹50: the others round up to ₹17 each (₹51) and the booker would get −₹1. Then the others are rounded <strong>down</strong> instead (<code>FLOOR</code>), so nobody ever &quot;owes&quot; a negative amount.</li>
+<li><code>LinkedHashMap</code>: keeps the members in the order they were added (oldest first), so lists come out stable.</li>
+<li><strong><code>FareSplitTest</code></strong> (5 tests, no Spring): the ₹600 example (354 / 246), equal thirds of ₹1000 (333 + 333 + 334), <code>HALF_UP</code> on exactly .5 (199.5 → 200), paise staying with the booker (₹612.40 → 306 + 306.40), and the never-negative edge case. <code>isEqualByComparingTo(&quot;354&quot;)</code>: compares the value, ignoring scale (<code>354</code> vs <code>354.00</code>).</li>
+</ul>
+<h3 id="512-v5__here_atsql-and-tripsummarysolokm">51.2 <code>V5__here_at.sql</code> and <code>TripSummary.soloKm</code></h3>
+<ul>
+<li><code>alter table group_members add column here_at timestamptz;</code>: when each member tapped &quot;I&#39;m here&quot; (null = not yet).</li>
+<li><code>TripService.TripSummary</code> gains <code>soloKm</code>, the weight for the split; groups reads it through the public API, as always.</li>
+</ul>
+<h3 id="513-groupservice-the-new-steps">51.3 <code>GroupService</code>: the new steps</h3>
+<ul>
+<li><code>met</code> joins the active statuses (in <code>groupOf</code> and <code>isActiveMember</code>), so the card and chat keep working after meeting up.</li>
+<li><strong><code>here(userId, groupId)</code></strong>, <code>@Transactional</code>:<ol>
+<li><code>select ... for update</code> on the group row: <strong>pessimistic lock</strong> (40.5). Two members tapping at the same instant would otherwise each count only themselves (under READ COMMITTED neither sees the other&#39;s uncommitted tap), and the group would stay <code>locked</code> forever.</li>
+<li>Group still <code>open</code> → 409 <code>NOT_LOCKED</code>.</li>
+<li><code>update group_members set here_at = now() where ... and here_at is null</code>: 0 rows = you already tapped, so return quietly (<strong>idempotent</strong>).</li>
+<li><code>GroupChanged(&quot;&lt;name&gt; is here&quot;)</code>, then <code>update groups set status = &#39;met&#39; where id = ? and status = &#39;locked&#39; and (select count(*) ... here_at is not null) &gt;= 2</code>: the state move with the &quot;2 people&quot; rule inside the <code>WHERE</code>.</li>
+</ol>
+</li>
+<li><strong><code>farePreview(...)</code></strong>: checks &quot;met, you&#39;re the booker, no fare yet&quot; with one <code>count(*)</code>, then returns <code>ShareView(firstName, booker, share)</code> for everyone. <strong>Saves nothing.</strong></li>
+<li><strong><code>enterFare(...)</code></strong>, <code>@Transactional</code>: one conditional <code>UPDATE</code> checks all the rules at once: <code>set fare_total = ? where id = ? and status = &#39;met&#39; and booker_id = ? and fare_total is null</code>. 0 rows → 409 <code>CANNOT_ENTER_FARE</code> (not the booker, not met, or already entered). Then each member&#39;s <code>share</code> is saved, and <code>GroupChanged(&quot;Fare entered: ₹600. Check your share and pay the booker.&quot;)</code>.</li>
+<li>Entering the fare <strong>doesn&#39;t</strong> end the group: it stays <code>met</code>, so everyone keeps seeing their share. The 4-hour sweep now finishes <code>locked</code> <strong>and</strong> <code>met</code> groups.</li>
+<li><code>leave(...)</code> refuses once <code>met</code> (409 <code>ALREADY_MET</code>): the ride is on.</li>
+<li><code>GroupView</code> gains <code>fareTotal</code>; <code>MemberView</code> gains <code>here</code> and <code>share</code>.</li>
+</ul>
+<h3 id="514-groupcontroller">51.4 <code>GroupController</code></h3>
+<pre><code class="language-java">record FareRequest(@NotNull @DecimalMin(&quot;50&quot;) @DecimalMax(&quot;10000&quot;) @Digits(integer = 5, fraction = 2) BigDecimal total) {}
+</code></pre>
+<ul>
+<li>Money arrives as <code>BigDecimal</code> (JSON <code>600</code> or <code>612.40</code> is parsed exactly). <code>@Digits(fraction = 2)</code> refuses <code>601.555</code>.</li>
+<li><code>POST /api/v1/groups/{id}/here</code> (204), <code>POST .../fare/preview</code> (200, shares), <code>POST .../fare</code> (204).</li>
+</ul>
+<h3 id="515-the-pool-starvation-bug-found-by-a-new-test">51.5 The pool-starvation bug (found by a new test)</h3>
+<ul>
+<li>New test <code>simultaneousHereTapsStillMeetTheGroup</code>: 10 groups, 20 threads, everyone taps &quot;I&#39;m here&quot; at once. The first run <strong>hung for 30 seconds</strong> and failed.</li>
+<li><strong>Cause:</strong> the chat listener from slice 3 (47.3) ran <em>after commit</em> in a <code>REQUIRES_NEW</code> transaction. &quot;After commit&quot; code runs <strong>while the first connection is still held</strong>, so every group change briefly needed <strong>two</strong> database connections. The connection pool (<strong>HikariCP</strong>, 10 connections by default) ran out: 10 threads each held one connection and waited forever for a second. That&#39;s <strong>pool starvation</strong>, a kind of deadlock, and in production any burst of about 10 simultaneous group changes could have frozen the API for 30 seconds.</li>
+<li><strong>Fix (<code>ChatService.onGroupChanged</code>):</strong><pre><code class="language-java">@EventListener   // runs inside the publisher&#39;s transaction, on the same connection
+void onGroupChanged(GroupChanged event) {
+    // insert the system message now (same transaction: saved with the change, or not at all)
+    // ...then broadcast only after the commit:
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override public void afterCommit() { broadcast.run(); }
+    });
+}
+</code></pre>
+<ul>
+<li><code>@EventListener</code> (plain, not transactional) runs immediately, inside the groups transaction, so the insert reuses its connection.</li>
+<li><code>registerSynchronization(... afterCommit ...)</code>: &quot;run this when the transaction commits&quot;. The broadcast doesn&#39;t touch the database, so it needs no connection.</li>
+<li>No transaction (e.g. a decline) → broadcast right away.</li>
+<li><strong>Bonus:</strong> the system message is now saved <strong>atomically</strong> with the change, so the old <code>shortcut:</code> (&quot;lost if the app crashes after commit&quot;) is gone.</li>
+</ul>
+</li>
+<li>After the fix, the 20-thread test passes in about 3 seconds. <strong>Proven both ways:</strong> without the <code>for update</code> in <code>here()</code>, the same test fails (&quot;expected met, but was locked&quot;) on two runs out of two.</li>
+</ul>
+<h3 id="516-web">51.6 Web</h3>
+<ul>
+<li><code>lib/format.ts</code> <code>rupees(n)</code>: <code>Intl.NumberFormat(&quot;en-IN&quot;, { style: &quot;currency&quot;, currency: &quot;INR&quot; })</code>, giving &quot;₹246&quot;, &quot;₹306.40&quot;, and Indian grouping (₹1,00,000).</li>
+<li><code>lib/api.ts</code>: <code>imHere</code>, <code>previewFare</code>, <code>enterFare</code>; the <code>Group</code> type gains <code>fareTotal</code>, members gain <code>here</code> and <code>share</code>.</li>
+<li><code>app/group-card.tsx</code>: &quot;· here ✓&quot; per member; <strong>I&#39;m here at the pickup</strong> (locked or met, until you&#39;ve tapped); Lock only while <code>open</code> (a bug found in the browser test: it showed for a met group); Leave hidden once met; <code>&lt;FareSection&gt;</code> when met.</li>
+<li><code>app/fare-section.tsx</code>:<ul>
+<li><strong>Booker, no fare yet:</strong> amount box → &quot;Preview shares&quot; (client check ₹50–₹10,000; the API checks too) → the list → &quot;Confirm fare ₹600&quot;. Changing the amount clears the preview.</li>
+<li><strong>Booker, fare in:</strong> &quot;X owes you ₹246&quot;.</li>
+<li><strong>Member, fare in:</strong> &quot;Your share: ₹246, to Asha&quot; + <strong>Pay Asha ₹246 by UPI</strong> (<code>upi://pay?pa=…&amp;pn=…&amp;am=246.00&amp;cu=INR&amp;tn=…</code>, name and note <code>encodeURIComponent</code>-ed; the UPI ID left as is, since it only has safe characters) + UPI ID with <strong>Copy</strong> (<code>navigator.clipboard.writeText</code>) + &quot;Check the name your UPI app shows before paying&quot;.</li>
+</ul>
+</li>
+</ul>
+<h3 id="517-verified-in-a-real-browser-two-tabs">51.7 Verified in a real browser (two tabs)</h3>
+<ul>
+<li>Setup through the API: Asha asks, Keshav accepts; Asha (booker) locks and taps &quot;I&#39;m here&quot;.</li>
+<li><strong>Keshav:</strong> &quot;Asha (booker) · here ✓&quot; → <strong>I&#39;m here</strong> → &quot;you&#39;ve met up&quot;, both &quot;here ✓&quot;, Leave gone, chat &quot;You&#39;ve met up. Have a good ride!…&quot;.</li>
+<li><strong>Asha:</strong> ₹20 → &quot;Enter the fare you paid: ₹50 to ₹10,000.&quot; → ₹600 → preview <strong>केशव ₹246, You ₹354</strong> (the 50.3 example) → Confirm → &quot;केशव owes you ₹246&quot;.</li>
+<li><strong>Keshav&#39;s tab, live:</strong> &quot;Your share: ₹246, to Asha&quot;, <strong>Pay Asha ₹246 by UPI</strong> with <code>upi://pay?pa=asha.rao@okaxis&amp;pn=Asha&amp;am=246.00&amp;cu=INR&amp;tn=Namastute%20cab</code>.</li>
+<li>Not tested: actually tapping the UPI link (needs a phone with a UPI app) and the Copy button (clipboard permission in the test browser).</li>
+</ul>
+<hr>
+<h2 id="52-command-cheat-sheet">52. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -4286,7 +4429,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="51-glossary">51. Glossary</h2>
+<h2 id="53-glossary">53. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -5006,9 +5149,45 @@ git fetch --prune
 <td>Clock skew</td>
 <td>Small differences between the clocks of different machines</td>
 </tr>
+<tr>
+<td>Floating point</td>
+<td>How double stores numbers in binary; most decimal fractions are slightly off</td>
+</tr>
+<tr>
+<td>BigDecimal</td>
+<td>Java&#39;s exact decimal number type, used for money</td>
+</tr>
+<tr>
+<td>Minor units</td>
+<td>Money stored as an integer count of the smallest unit (paise)</td>
+</tr>
+<tr>
+<td>Rounding mode</td>
+<td>The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING</td>
+</tr>
+<tr>
+<td>UPI / VPA</td>
+<td>India&#39;s instant bank payments / a payment address like name@bank</td>
+</tr>
+<tr>
+<td>Deep link</td>
+<td>A URL that opens an app (e.g. <code>upi://pay?...</code>) instead of a web page</td>
+</tr>
+<tr>
+<td>Connection pool (HikariCP)</td>
+<td>A fixed set of reusable database connections (10 by default)</td>
+</tr>
+<tr>
+<td>Pool starvation</td>
+<td>Every connection is taken and threads wait forever for one more</td>
+</tr>
+<tr>
+<td>TransactionSynchronization</td>
+<td>Spring hook to run code at a transaction moment, e.g. afterCommit</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="52-interview-questions-to-practise">52. Interview questions to practise</h2>
+<h2 id="54-interview-questions-to-practise">54. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -5091,6 +5270,12 @@ git fetch --prune
 <li>How do you test code that depends on time without waiting?</li>
 <li>Why does GroupJobs live in its own class instead of a @Scheduled method inside GroupService?</li>
 <li>Why does the sweep expire forgotten open groups before auto-locking?</li>
+<li>Why must money never be stored in a double? What do you use in Java, Postgres and JavaScript?</li>
+<li>Rounding each share separately can make the total wrong. How does &quot;the booker absorbs the remainder&quot; fix it?</li>
+<li>What does a UPI deep link contain, and why doesn&#39;t Namastute confirm or hold payments?</li>
+<li>Two members tap &quot;I&#39;m here&quot; at the same instant and the group never becomes met. Why, and how does <code>select ... for update</code> fix it?</li>
+<li>How can an after-commit listener with REQUIRES_NEW starve a connection pool? How did we fix it?</li>
+<li>Why is the fare entered with one conditional UPDATE (<code>... and booker_id = ? and fare_total is null</code>) rather than checks in Java?</li>
 </ol>
 
 

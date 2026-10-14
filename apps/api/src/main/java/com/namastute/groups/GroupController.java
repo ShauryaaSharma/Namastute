@@ -1,8 +1,13 @@
 package com.namastute.groups;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +27,9 @@ class GroupController {
     record LeaveRequest(@Size(max = 300) String reason) {}
 
     record Created(UUID id) {}
+
+    // Money arrives as an exact decimal (BigDecimal), never a double (Learning Notes 50.2)
+    record FareRequest(@NotNull @DecimalMin("50") @DecimalMax("10000") @Digits(integer = 5, fraction = 2) BigDecimal total) {}
 
     private final GroupService groups;
 
@@ -71,6 +79,25 @@ class GroupController {
     ResponseEntity<Void> leave(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                                @Valid @RequestBody(required = false) LeaveRequest req) {
         groups.leave(userId(jwt), id, req == null ? null : req.reason());
+        return ResponseEntity.noContent().build();
+    }
+
+    // "I'm here" at the pickup point
+    @PostMapping("/api/v1/groups/{id}/here")
+    ResponseEntity<Void> here(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        groups.here(userId(jwt), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Booker only: everyone's share for this fare, before confirming. Saves nothing.
+    @PostMapping("/api/v1/groups/{id}/fare/preview")
+    List<GroupService.ShareView> farePreview(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody FareRequest req) {
+        return groups.farePreview(userId(jwt), id, req.total());
+    }
+
+    @PostMapping("/api/v1/groups/{id}/fare")
+    ResponseEntity<Void> enterFare(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody FareRequest req) {
+        groups.enterFare(userId(jwt), id, req.total());
         return ResponseEntity.noContent().build();
     }
 

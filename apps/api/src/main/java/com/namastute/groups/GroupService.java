@@ -4,8 +4,11 @@ import com.namastute.shared.ApiException;
 import com.namastute.trips.TripService;
 import com.namastute.trips.TripService.TripSummary;
 import com.namastute.users.UserService;
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,13 +33,18 @@ public class GroupService {
     record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
     record SentView(UUID id, UUID toTripId, String firstName, String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
-    record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you) {}
-    record GroupView(UUID id, String status, boolean youAreBooker, String bookerUpiId, List<MemberView> members) {}
+    // share: what this member owes the booker (the booker's own share is what they paid themselves); null until the fare
+    record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you, boolean here,
+                      BigDecimal share) {}
+    record GroupView(UUID id, String status, boolean youAreBooker, String bookerUpiId, BigDecimal fareTotal,
+                     List<MemberView> members) {}
+    record ShareView(String firstName, boolean booker, BigDecimal share) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}
     record Pending(UUID id, UUID fromTripId, UUID toTripId) {}
     record Member(UUID userId, UUID tripId) {}
-    record GroupRow(String status, UUID bookerId) {}
+    record GroupRow(String status, UUID bookerId, BigDecimal fareTotal) {}
+    record MemberRow(UUID userId, UUID tripId, OffsetDateTime hereAt, BigDecimal share) {}
 
     private final JdbcClient db;
     private final TripService trips;
@@ -175,6 +183,74 @@ public class GroupService {
         events.publishEvent(new GroupChanged(groupId, firstName(userId) + " locked the group and is booking the cab"));
     }
 
+    // ---- Finishing the ride (Learning Notes 50) ----
+
+    // "I'm here" at the pickup point. Once 2+ members are here, the group moves locked → met.
+    @Transactional
+    void here(UUID userId, UUID groupId) {
+        // Lock the group row first: two people tapping at the same moment would otherwise each count only themselves
+        // (READ COMMITTED doesn't show the other's uncommitted tap) and the group would never become met (Learning Notes 40)
+        GroupRow g = db.sql("select status, booker_id, fare_total from groups where id = ? for update")
+                .param(groupId).query(GroupRow.class).optional()
+                .filter(x -> isActiveMember(groupId, userId))
+                .orElseThrow(GroupService::groupNotFound);
+        if (g.status().equals("open")) {
+            throw conflict("NOT_LOCKED", "Tap this at the pickup point, once the booker has locked the group");
+        }
+        int marked = db.sql("update group_members set here_at = now() where group_id = ? and user_id = ? and status = 'accepted' and here_at is null")
+                .params(groupId, userId).update();
+        if (marked == 0) {
+            return;   // already here: tapping twice changes nothing
+        }
+        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " is here"));
+        int met = db.sql("""
+                        update groups set status = 'met'
+                        where id = ? and status = 'locked'
+                          and (select count(*) from group_members where group_id = ? and status = 'accepted' and here_at is not null) >= 2""")
+                .params(groupId, groupId).update();
+        if (met == 1) {
+            events.publishEvent(new GroupChanged(groupId, "You've met up. Have a good ride! The booker enters the fare afterwards."));
+        }
+    }
+
+    // What everyone would pay for this fare, shown to the booker before confirming. Nothing is saved.
+    List<ShareView> farePreview(UUID userId, UUID groupId, BigDecimal fare) {
+        if (db.sql("select count(*) from groups where id = ? and status = 'met' and booker_id = ? and fare_total is null")
+                .params(groupId, userId).query(Integer.class).single() == 0) {
+            throw cannotEnterFare();
+        }
+        Map<UUID, BigDecimal> shares = split(groupId, fare, userId);
+        Map<UUID, String> names = users.firstNames(List.copyOf(shares.keySet()));
+        return shares.entrySet().stream()
+                .map(e -> new ShareView(names.get(e.getKey()), e.getKey().equals(userId), e.getValue())).toList();
+    }
+
+    // The booker enters the real fare: once, only after meeting up (one conditional UPDATE checks all of it)
+    @Transactional
+    void enterFare(UUID userId, UUID groupId, BigDecimal fare) {
+        if (db.sql("update groups set fare_total = ? where id = ? and status = 'met' and booker_id = ? and fare_total is null")
+                .params(fare, groupId, userId).update() == 0) {
+            throw cannotEnterFare();
+        }
+        split(groupId, fare, userId).forEach((member, share) ->
+                db.sql("update group_members set share = ? where group_id = ? and user_id = ?").params(share, groupId, member).update());
+        events.publishEvent(new GroupChanged(groupId, "Fare entered: ₹" + fare.toPlainString() + ". Check your share and pay the booker."));
+    }
+
+    // Everyone still in the group, weighted by their solo km (design 3.8)
+    private Map<UUID, BigDecimal> split(UUID groupId, BigDecimal fare, UUID booker) {
+        List<Member> members = db.sql("select user_id, trip_id from group_members where group_id = ? and status = 'accepted' order by created_at, user_id")
+                .param(groupId).query(Member.class).list();
+        Map<UUID, TripSummary> memberTrips = byId(members.stream().map(Member::tripId).toList());
+        Map<UUID, Double> soloKm = new LinkedHashMap<>();
+        members.forEach(m -> soloKm.put(m.userId(), memberTrips.get(m.tripId()).soloKm()));
+        return FareSplit.split(fare, soloKm, booker);
+    }
+
+    private static ApiException cannotEnterFare() {
+        return conflict("CANNOT_ENTER_FARE", "Only the booker can enter the fare, once, after the group has met up");
+    }
+
     // ---- Background jobs (Learning Notes 48), run every minute by GroupJobs ----
     // Each is a conditional UPDATE ... RETURNING id: only groups this run actually changed are followed up and
     // announced, so a second run or a second server does nothing twice (idempotent). now() = the database's clock.
@@ -201,10 +277,11 @@ public class GroupService {
         }
     }
 
-    // locked, and the meeting was over 4 hours ago → done (design 3.2: "or meet_at + 4 h")
+    // locked or met, and the meeting was over 4 hours ago → done (design 3.2: "or meet_at + 4 h").
+    // Entering the fare doesn't end the group: members keep seeing their share until this runs.
     @Transactional
     void finish() {
-        List<UUID> ids = db.sql("update groups set status = 'done' where status = 'locked' and meet_at < now() - interval '4 hours' returning id")
+        List<UUID> ids = db.sql("update groups set status = 'done' where status in ('locked', 'met') and meet_at < now() - interval '4 hours' returning id")
                 .query(UUID.class).list();
         if (!ids.isEmpty()) {
             trips.markDone(memberTrips(ids));
@@ -229,9 +306,12 @@ public class GroupService {
     @Transactional
     void leave(UUID userId, UUID groupId, String reason) {
         // Pessimistic lock on the group row: we read it, then decide several writes (Learning Notes 40.5)
-        GroupRow g = db.sql("select status, booker_id from groups where id = ? and status in ('open', 'locked') for update")
+        GroupRow g = db.sql("select status, booker_id, fare_total from groups where id = ? and status in ('open', 'locked', 'met') for update")
                 .param(groupId).query(GroupRow.class).optional()
                 .orElseThrow(GroupService::groupNotFound);
+        if (g.status().equals("met")) {
+            throw conflict("ALREADY_MET", "You've met up already, so the ride is on: settle the fare instead of leaving");
+        }
         boolean wasLocked = g.status().equals("locked");
         if (wasLocked && (reason == null || reason.isBlank())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "REASON_REQUIRED", "Tell your group why you're leaving a locked group");
@@ -267,41 +347,44 @@ public class GroupService {
         events.publishEvent(new GroupChanged(groupId, firstName(userId) + " left" + (wasLocked ? ": " + reason.strip() : "")));
     }
 
-    // Your open or locked group: members and the booker's UPI ID (members only, design 4.4)
+    // Your open, locked or met group: members, who's here, the fare and shares, the booker's UPI ID (members only, design 4.4)
     Optional<GroupView> current(UUID userId) {
         Optional<Membership> membership = trips.activeTrip(userId).flatMap(t -> groupOf(t.id()));
         if (membership.isEmpty()) {
             return Optional.empty();
         }
         UUID groupId = membership.get().groupId();
-        GroupRow g = db.sql("select status, booker_id from groups where id = ?").param(groupId).query(GroupRow.class).single();
-        List<Member> members = db.sql("select user_id, trip_id from group_members where group_id = ? and status = 'accepted' order by created_at, user_id")
-                .param(groupId).query(Member.class).list();
-        Map<UUID, TripSummary> memberTrips = byId(members.stream().map(Member::tripId).toList());
-        Map<UUID, String> names = users.firstNames(members.stream().map(Member::userId).toList());
+        GroupRow g = db.sql("select status, booker_id, fare_total from groups where id = ?").param(groupId).query(GroupRow.class).single();
+        List<MemberRow> members = db.sql("""
+                        select user_id, trip_id, here_at, share from group_members
+                        where group_id = ? and status = 'accepted' order by created_at, user_id""")
+                .param(groupId).query(MemberRow.class).list();
+        Map<UUID, TripSummary> memberTrips = byId(members.stream().map(MemberRow::tripId).toList());
+        Map<UUID, String> names = users.firstNames(members.stream().map(MemberRow::userId).toList());
         List<MemberView> views = members.stream().map(m -> {
             TripSummary t = memberTrips.get(m.tripId());
             return new MemberView(names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
-                    m.userId().equals(g.bookerId()), m.userId().equals(userId));
+                    m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share());
         }).toList();
-        return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()), views));
+        return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
+                g.fareTotal(), views));
     }
 
-    // For the chat module: may this user read and write this group's chat? (accepted member of an open or locked group)
+    // For the chat module: may this user read and write this group's chat? (accepted member of an open, locked or met group)
     public boolean isActiveMember(UUID groupId, UUID userId) {
         return db.sql("""
                         select count(*) from group_members m join groups g on g.id = m.group_id
-                        where m.group_id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('open', 'locked')""")
+                        where m.group_id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('open', 'locked', 'met')""")
                 .params(groupId, userId).query(Integer.class).single() > 0;
     }
 
     record Membership(UUID groupId, String status) {}
 
-    // The open or locked group this trip is an accepted member of, if any
+    // The open, locked or met group this trip is an accepted member of, if any
     private Optional<Membership> groupOf(UUID tripId) {
         return db.sql("""
                         select g.id as group_id, g.status from group_members m join groups g on g.id = m.group_id
-                        where m.trip_id = ? and m.status = 'accepted' and g.status in ('open', 'locked')""")
+                        where m.trip_id = ? and m.status = 'accepted' and g.status in ('open', 'locked', 'met')""")
                 .param(tripId).query(Membership.class).optional();
     }
 
