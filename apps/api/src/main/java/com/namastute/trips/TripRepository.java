@@ -32,6 +32,17 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
             where id = :id and user_id = :userId and status = 'searching'""")
     int cancel(UUID id, UUID userId);
 
+    // State machine moves for the groups module: only trips still in the "from" state change (returns how many did)
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = "update trip_requests set status = 'grouped' where id in (:ids) and status = 'searching'")
+    int markGrouped(Collection<UUID> ids);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = "update trip_requests set status = 'searching' where id in (:ids) and status = 'grouped'")
+    int markSearching(Collection<UUID> ids);
+
     // Stage 1 of matching: cheap filters the indexes can answer (trip_search, trip_dest_gist). MatchRanker does the rest.
     // shortcut: "destinations within 15 km" misses riders going much further down the same road;
     // filter by direction from the airport (bearing) once that matters.

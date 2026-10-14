@@ -43,6 +43,11 @@ public class UserService {
         return names;
     }
 
+    // Only for the booker's own group members, so they can pay their share (design 4.4)
+    public String upiId(UUID id) {
+        return users.findById(id).map(User::getUpiId).orElse(null);
+    }
+
     Profile profile(UUID id) {
         return toProfile(users.findById(id).orElseThrow());
     }

@@ -60,7 +60,8 @@ class MatchesTest {
                 .andExpect(jsonPath("$[0].detourKm").value(0.5))   // 0.498 km from T1, shown to the nearest 0.5
                 .andExpect(jsonPath("$[0].seats").value(1))
                 .andExpect(jsonPath("$[0].bags").value(1))
-                .andExpect(jsonPath("$[0].length()").value(6))   // nothing else: no phone, exact destination, UPI ID or ids
+                .andExpect(jsonPath("$[0].tripId").isString())   // opaque handle for "ask to share"
+                .andExpect(jsonPath("$[0].length()").value(7))   // nothing else: no phone, exact destination, UPI ID or user id
                 .andExpect(jsonPath("$[0].phone").doesNotExist())
                 .andExpect(jsonPath("$[0].destLat").doesNotExist());
     }

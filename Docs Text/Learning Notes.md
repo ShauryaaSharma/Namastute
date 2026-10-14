@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (matching: concepts + code walkthrough).
+Last updated: 2026-10-14 (groups slice 2a: concepts + code walkthrough).
 
 ---
 
@@ -46,9 +46,12 @@ Last updated: 2026-10-14 (matching: concepts + code walkthrough).
 36. [Matching: two-stage search and spatial indexes](#36-matching-two-stage-search-and-spatial-indexes)
 37. [Matching: detours, pure functions, privacy, N+1](#37-matching-detours-pure-functions-privacy-n1)
 38. [Code walkthrough: matching](#38-code-walkthrough-matching)
-39. [Command cheat sheet](#39-command-cheat-sheet)
-40. [Glossary](#40-glossary)
-41. [Interview questions to practise](#41-interview-questions-to-practise)
+39. [Groups: state machines and consent](#39-groups-state-machines-and-consent)
+40. [Concurrency: the last-seat race](#40-concurrency-the-last-seat-race)
+41. [Code walkthrough: groups (slice 2a)](#41-code-walkthrough-groups-slice-2a)
+42. [Command cheat sheet](#42-command-cheat-sheet)
+43. [Glossary](#43-glossary)
+44. [Interview questions to practise](#44-interview-questions-to-practise)
 
 ---
 
@@ -2451,7 +2454,268 @@ List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVaria
 
 ---
 
-## 39. Command cheat sheet
+## 39. Groups: state machines and consent
+
+### 39.1 State machines
+- A **state machine** = a fixed list of **states** a thing can be in, plus the allowed **transitions** (arrows) between them. Anything not drawn is forbidden.
+- **Naive way:** a `status` column that any code can set to anything. Sooner or later a bug moves a `cancelled` group back to `open`, or a `done` trip to `searching`, and nobody notices.
+- Our three machines (design §3.2):
+  - **Trip:** `searching → grouped` (accepted into a group) · `grouped → searching` (left before the group is locked) · `searching → cancelled / expired` · `grouped → done`.
+  - **Group:** `open → locked` (someone is booking the cab: no more joins) · `open → cancelled` (last member leaves) · `locked → met → done` (later slices).
+  - **Member:** `requested → accepted / declined` · `accepted → left / removed`.
+- **How the database enforces it:** every transition is **one conditional `UPDATE`** that names the state it starts from:
+  ```sql
+  update groups set status = 'locked' where id = :id and status = 'open';
+  ```
+  If the group isn't `open` any more, **0 rows** change. The code checks the count and answers with an error, so an invalid transition can never sneak through. It's the same pattern as `cancel` in 35.5 (`... and status = 'searching'`).
+- ⚠️ **Two meanings of "lock":** a **group lock** (status `locked`: "I'm booking the cab, no more joins") is a product feature. A **database lock** (40.4) is how Postgres stops two transactions changing the same row at once. Same word, unrelated things.
+
+### 39.2 Consent: suggestions, not auto-assignment
+- Matching (slice 1) only **suggests**. Nobody ends up in a cab with a stranger without **both sides agreeing** (design §3.3, "suggestions + consent"): safety first; auto-assignment needs trust data we don't have yet.
+- **Join request** = "I'd like to share with you". It stays **pending** until the other side answers **accept** or **decline**.
+- **Who answers (team decision, 2026-10-14): any accepted member** of the group, not only its creator. Faster at the airport, and a group never gets stuck because one person stopped looking at their phone.
+- The newcomer consented by asking; one existing member consents by accepting. Every join needs both.
+- All the group rules we chose (who locks, leaving, reasons, reports) are in the table in 41.1.
+
+### 39.3 What a member may see
+- Before joining: first name, area, timing, seats, bags (37.4).
+- **After** being accepted into a group: the other members' first names, areas, seats and bags, and the booker's **UPI ID** (design: "shown only to group members"; it's needed to pay your share). Still never phone numbers or exact destinations.
+- To ask someone, the app needs a **handle** for their trip: its random UUID. An **opaque id** like this isn't personal data. It tells you nothing about the person, and every endpoint that takes it checks who's asking.
+
+---
+
+## 40. Concurrency: the last-seat race
+
+### 40.1 The problem
+- A group: capacity 4, **3 seats taken**. Two pending requests: Chirag (1 seat) and Divya (1 seat).
+- Asha accepts Chirag at the **same moment** Bilal accepts Divya. Both are allowed to (any member, 39.2). Only **one** of them may succeed.
+- **Concurrency:** two pieces of work running **at the same time** and touching the same data. Every web server does this: each request runs on its own **thread** (a separate line of execution inside the same program).
+
+### 40.2 Naive way: check, then act
+```java
+Group g = groups.findById(id);                 // 1. read: seatsTaken = 3
+if (g.seatsTaken() + 1 > g.capacity()) throw ...;   // 2. check: 3 + 1 ≤ 4, fine
+g.setSeatsTaken(g.seatsTaken() + 1);           // 3. act: write 4
+```
+| Time | Asha's request | Bilal's request |
+|---|---|---|
+| t1 | reads 3 | |
+| t2 | | reads 3 |
+| t3 | 3 + 1 ≤ 4 ✓ | |
+| t4 | | 3 + 1 ≤ 4 ✓ |
+| t5 | writes 4, Chirag accepted | |
+| t6 | | writes 4, Divya accepted |
+- **Five people** in a 4-seat car, and the database says 4. Bilal's write silently overwrote Asha's: a **lost update**.
+- This bug class is called **check-then-act** (or **TOCTOU**, time-of-check to time-of-use): the fact you checked was already stale when you acted on it. It passes every normal test and appears only under real traffic (the same idea as the "one active trip" race in 34.4, and the double refresh in 29.4).
+
+### 40.3 Transactions recap (ACID)
+- A **transaction** groups statements so they **all happen or none do** (31.3). The four guarantees, **ACID**:
+  - **Atomic:** all or nothing.
+  - **Consistent:** constraints (`check`, `unique`, foreign keys) hold after every commit.
+  - **Isolated:** concurrent transactions don't see each other's half-finished work.
+  - **Durable:** once committed, it survives a crash.
+- Accepting someone is **three changes** that must succeed together: the request becomes `accepted`, the group gets the seats, the newcomer's trip becomes `grouped`. If any one fails → **roll back** all three.
+- **`@Transactional` in Spring:**
+  - Rolls back automatically when the method throws an **unchecked** exception (`RuntimeException`, e.g. our `ApiException`); checked exceptions don't roll back by default.
+  - Works through a **proxy**: Spring wraps the bean and starts/commits the transaction around each call **from outside**. A method calling another `@Transactional` method **in the same class** skips the proxy (**self-invocation**) and gets no transaction of its own.
+  - Remember 24.4: there we deliberately *didn't* use `@Transactional`, because the "revoke all sessions" had to survive the exception. Here we *want* the rollback.
+- **But "isolated" doesn't fix 40.2 on its own.** Postgres's default isolation level, **READ COMMITTED**, lets two transactions read the same "3" at the same time. Isolation hides *uncommitted* changes; it doesn't stop two transactions making decisions from the same old value.
+
+### 40.4 The fix: one conditional `UPDATE` (design §3.4)
+```sql
+update groups
+set seats_taken = seats_taken + :seats, bags_taken = bags_taken + :bags
+where id = :group and status = 'open'
+  and seats_taken + :seats <= capacity;
+```
+- The **check and the change are one statement**, so there's no gap between them.
+- **Row lock:** when an `UPDATE` changes a row, Postgres **locks that row** until the transaction ends. A second `UPDATE` on the same row **waits**.
+- When it's allowed to continue, Postgres **re-checks the `WHERE` against the new, committed row** (READ COMMITTED behaviour for updates). Bilal's update now sees `seats_taken = 4`, `4 + 1 ≤ 4` is false → **0 rows** → "the group just filled up" (409).
+| Time | Asha | Bilal |
+|---|---|---|
+| t1 | `UPDATE` matches, locks row, 3 → 4 | |
+| t2 | | `UPDATE` waits for the lock |
+| t3 | commit | |
+| t4 | | re-checks: 4 + 1 ≤ 4? No → 0 rows → 409 `GROUP_FULL`, roll back |
+- **Last line of defence:** the table's `check (seats_taken <= capacity)` refuses any write that would overfill a group, even from buggy code.
+- The same trick protects the newcomer: `update trip_requests set status = 'grouped' where id = :trip and status = 'searching'`. If two groups accept the same person at once, only one update finds the trip still `searching`.
+
+### 40.5 Alternatives (interview favourites)
+- **Pessimistic locking:** `select ... for update` locks the row **while you read it**; others wait until you commit. Then check and update in Java. Correct, but the lock is held across more code, and it's easy to forget the `for update` on one path.
+- **Optimistic locking:** add a `version` column (JPA `@Version`). Every update says `where version = :old` and bumps it. If someone else changed the row first, 0 rows → `OptimisticLockException` → **retry** the whole operation. Great when conflicts are rare and the logic is complex.
+- **Why the conditional `UPDATE` wins here:** the whole check-and-change fits in **one statement**: no explicit locks, no retries, no version column.
+
+### 40.6 Deadlocks
+- **Deadlock:** transaction 1 holds row A and waits for row B; transaction 2 holds B and waits for A. Neither can ever continue.
+- Postgres **detects** it (after about 1 second) and kills one of them with an error; the other proceeds.
+- **Prevention:** always lock rows in the **same order** in every code path. For accept: the group row first, then member rows, then trips.
+
+### 40.7 Testing a race
+- Normal tests run one request at a time, so they **never** catch races. Design §3.4 asks for this test: **10 threads accept at once into a group with 1 free seat; exactly 1 must succeed.**
+- Tools from Java's standard library (`java.util.concurrent`):
+  - **`ExecutorService`:** a pool of threads that run tasks you submit.
+  - **`CountDownLatch`:** a gate. Every thread waits on `latch.await()`; one `countDown()` opens it, so all 10 start at the same instant (more overlap = more chance to expose a bug).
+  - **`AtomicInteger`:** a counter that's safe to increase from many threads at once (a plain `int++` from 10 threads can lose increments: the same lost-update problem, in Java memory).
+- It must run against **real Postgres**, because the protection lives in the database. We use the dev database, like the other integration tests; many projects use **Testcontainers** (a throwaway database in Docker per test run).
+- **Prove the test can fail:** temporarily replace the conditional `UPDATE` with the naive check-then-act and confirm the test goes red. A race test that has never failed proves nothing.
+
+---
+
+## 41. Code walkthrough: groups (slice 2a)
+
+### 41.1 The rules we chose (team decisions, 2026-10-14)
+| Rule | Choice |
+|---|---|
+| What a request links | **Your trip → their trip.** The group is created only when someone says yes, so asking never hides you from other people's matches |
+| Who answers | Person asked is alone → **only them**. Person asked is in a group → **any accepted member** |
+| Group maker | The **first asker**. The maker is the **booker** (`groups.booker_id`) and the only one who can **lock** |
+| Leaving an open group | Allowed, no reason needed. You go back to `searching` |
+| Leaving a locked group | Allowed, but a **reason is required**. The group sees it as an update; if a member (not the booker) leaves, it is also filed as a **report on the booker** |
+| Maker leaves | The **longest-standing** member becomes maker/booker, and a locked group **re-opens** |
+| Fewer than 2 left | Group **cancelled**, the last person goes back to `searching` |
+| Several requests | Allowed. When one is accepted, your other pending requests are **withdrawn** in the same transaction |
+| Ask again after "no" | Not with the same trip (`unique (from_trip_id, to_trip_id)`) |
+| Locking | Waiting requests to the group get **declined** |
+- Slice **2b** (next): open groups appear in matches, with a 3–4 drop route in the ranker.
+
+### 41.2 `V4__join_requests.sql`
+```sql
+create table join_requests (
+  id           uuid primary key default gen_random_uuid(),
+  from_trip_id uuid not null references trip_requests,
+  to_trip_id   uuid not null references trip_requests,
+  status       text not null default 'pending' check (status in ('pending','accepted','declined','withdrawn')),
+  created_at   timestamptz not null default now(),
+  unique (from_trip_id, to_trip_id)
+);
+create index join_requests_to on join_requests (to_trip_id) where status = 'pending';
+```
+- `references trip_requests`: a **foreign key**; a request can only point at trips that exist.
+- `status text` + `check (...)`: a small state machine without a Postgres enum (same style as `messages.kind`). Text + check is easier to change later than an enum.
+- `unique (from_trip_id, to_trip_id)`: the database refuses a second request from the same trip to the same trip (→ 409 `ALREADY_ASKED`).
+- The partial index makes "requests waiting for this trip" fast, and stays small.
+- `group_members.status = 'requested'` from V1 stays unused: requests live here instead (41.1, row 1).
+
+### 41.3 `trips/TripService.java`: a public door for the groups module
+- `public class TripService` (was package-private): the groups module needs it. Only the methods marked **public** are usable from outside; everything else stays inside `trips`.
+- `public record TripSummary(id, userId, terminalId, exitAt, destArea, seats, bags, status)`: what groups may know about a trip. Not the exact destination.
+- `activeTrip(userId)`: your searching or grouped trip, ignoring stale ones (same filter as `current()`).
+- `summaries(ids)`: many trips in **one** query (`findAllById`, no N+1).
+- `markGrouped(ids)` / `markSearching(ids)`: the trip state machine's two moves for groups:
+  ```sql
+  update trip_requests set status = 'grouped' where id in (:ids) and status = 'searching'
+  ```
+  They return **how many rows changed**; the caller compares with what it expected (40.4).
+- `MatchView` gains `tripId`: the **opaque handle** used by "Ask to share" (39.3). `MatchesTest` now expects 7 fields.
+- `users/UserService.upiId(id)`: public, used only to show the booker's UPI ID to members.
+
+### 41.4 `groups/GroupService.java`: plain SQL with `JdbcClient`
+- **Why not JPA here?** Almost every step is a conditional `UPDATE` whose row count matters. Spring's **`JdbcClient`** runs SQL directly with a fluent API:
+  ```java
+  db.sql("update ... where id = ? and status = 'pending'").param(requestId).update()   // → rows changed
+  db.sql("select ...").param(x).query(Pending.class).optional()                        // → Optional<Pending>
+  ```
+  - `.query(SomeRecord.class)` maps columns to a record by name: `from_trip_id` → `fromTripId`.
+  - `?` = positional parameter; `:name` + `.param("name", v)` = named, handy when a value appears twice.
+- `returning id` / `returning trip_id`: Postgres hands back a value from the row it just inserted or updated, so there's no second query.
+
+**`ask(userId, toTripId)`**
+1. `searchingTrip(userId)`: you need a trip that's still `searching` (else 409 `NO_SEARCHING_TRIP`).
+2. Their trip must exist, not be yours, be at the same terminal, and be `searching` **or** in a group that's still `open` (else 404).
+3. `insert ... returning id`; `DuplicateKeyException` (the unique constraint) → 409 `ALREADY_ASKED`.
+
+**`requests(userId)`**: two lists:
+- `sent`: your requests that are `pending` or `declined`, with the target's first name.
+- `received`: pending requests **to your trip, or to any accepted member of your open group**:
+  ```sql
+  where r.status = 'pending' and (r.to_trip_id = :trip or r.to_trip_id in (
+      select m2.trip_id from group_members m
+      join groups g on g.id = m.group_id and g.status = 'open'
+      join group_members m2 on m2.group_id = m.group_id and m2.status = 'accepted'
+      where m.trip_id = :trip and m.status = 'accepted'))
+  ```
+  The subquery reads: "the trips of everyone in the open group that my trip belongs to". Names and trips are then loaded in one query each.
+
+**`accept(userId, requestId)`**: `@Transactional`, so it's all or nothing:
+1. `pendingRequest(id)`: still pending? Else 404.
+2. `answerableGroup(userId, to)`: the **who-answers rule**. If the person asked is in a group, the caller must be an accepted member; if they're alone, the caller must **be** them. Anyone else gets the same 404 as a missing request.
+3. **Alone → the group is born:**
+   - `trips.markGrouped([from, to]) != 2` → 409. Both trips in **one** statement: if Keshav and Asha asked each other and both press Accept, the two rows are locked in the same order → no deadlock (40.6).
+   - `insert into groups (...) returning id` with `booker_id = from.userId()`: **the asker is the maker**. Then Asha's member row.
+4. **The last-seat statement** (40.4): adds the newcomer's seats and bags only if the group is `open` and they fit; `meet_at = greatest(meet_at, :exitAt)` keeps the meeting time at the latest exit. 0 rows → 409 `GROUP_FULL`.
+5. Request → `accepted` (0 rows: someone else answered first → 409).
+6. Joining an existing group: the newcomer's trip `searching → grouped` (0 rows: they just joined elsewhere → 409).
+7. `addMember`: `insert ... on conflict (group_id, user_id) do update ...` is an **upsert**: insert, or update if the row exists (someone who left and is accepted again).
+8. Withdraw both people's other pending requests.
+- Any `throw` in steps 3–8 **rolls back everything before it**. Proven by `tooBigForOneCarIsRefusedAndNothingChanges`: the group insert and both trip updates vanish.
+
+**`decline`**: same who-answers check, then `pending → declined`.
+
+**`lock(userId, groupId)`**: one statement does the whole permission check: `... where id = ? and status = 'open' and booker_id = ?`. Not the maker, or not open → 0 rows → 409 `CANNOT_LOCK`. Then waiting requests to the members are declined.
+
+**`leave(userId, groupId, reason)`**: `@Transactional`:
+1. `select status, booker_id ... for update`: **pessimistic lock** on the group row (40.5). We read, then make several decisions; nobody can accept, lock or leave this group until we commit.
+2. Locked and no reason → 400 `REASON_REQUIRED` (checked before any write).
+3. Member row `accepted → left` (`returning trip_id`); free their seats and bags; trip `grouped → searching`.
+4. Remaining members, oldest first (`order by created_at, user_id`):
+   - fewer than 2 → group `cancelled` (seats reset to 0), the last person `left` and back to `searching`;
+   - else, if the leaver was the booker → `booker_id` = the longest-standing member, `status = 'open'` (re-opens a locked group).
+5. Was locked → system message "Name left: reason"; if the leaver wasn't the booker → `insert into reports (...)`.
+- `shortcut:` the groups module writes `messages` (owned by chat) and `reports` (owned by feedback) directly, because those modules don't exist yet.
+
+**`current(userId)`**: your group: status, `youAreBooker`, the booker's UPI ID, members (first name, area, seats, bags, booker?, you?) and the 5 newest updates.
+
+### 41.5 `groups/GroupController.java`
+| Endpoint | Answer |
+|---|---|
+| `POST /api/v1/requests` `{toTripId}` | 201 `{id}` |
+| `GET /api/v1/requests` | `{sent, received}` |
+| `POST /api/v1/requests/{id}/accept` · `/decline` | 204 |
+| `GET /api/v1/groups/current` | 200 or 204 |
+| `POST /api/v1/groups/{id}/lock` | 204 |
+| `POST /api/v1/groups/{id}/leave` `{reason?}` | 204 |
+- `@RequestBody(required = false)`: leave may have no body at all (open group).
+- `@Size(max = 300)` on the reason: validated before the service runs.
+
+### 41.6 Tests: `GroupsTest` (9 tests, Terminal 2, fresh users each time)
+| Test | Proves |
+|---|---|
+| `askThenAcceptFormsAGroupWithTheAskerAsMaker` | the group is born on accept; asker = booker; members see the booker's UPI; trips `grouped`; the asker's other request withdrawn |
+| `whileAloneOnlyThePersonAskedCanAnswer` | a stranger and the asker himself get 404 |
+| `anyMemberCanAnswerForTheGroup` | Neha asks Asha, **Keshav** accepts → 3 members |
+| `tooBigForOneCarIsRefusedAndNothingChanges` | 3 + 3 seats → 409, and the **rollback** leaves no group and both trips `searching` |
+| `onlyTheMakerLocksAndLockingDeclinesWaitingRequests` | Asha can't lock, Keshav can; Neha's request declined; locked group takes no new requests |
+| `leavingALockedGroupNeedsAReasonAndReportsTheBooker` | 400 without reason; with reason: update shown, report filed, group stays locked |
+| `whenTheMakerLeavesTheLongestStandingMemberTakesOverAndTheGroupReopens` | Asha becomes booker, group `open`, no report |
+| `aGroupOfTwoIsCancelledWhenOneLeaves` | the last member goes back to searching |
+| `lastSeatRace` | **10 threads, 1 free seat → exactly 1 success**, 9 × `GROUP_FULL`, `seats_taken = 4` |
+- **The race test was proven to fail:** with the naive read-check-write code swapped in (plus a 50 ms pause to widen the gap), it went red: **10 successes instead of 1**. The real code was then restored and passed again.
+- `CopyOnWriteArrayList`: a list that's safe to add to from many threads (for the failure codes).
+- The threads call `groups.accept(...)` directly (not over HTTP): each call still goes through Spring's proxy, so each gets its own transaction.
+
+### 41.7 Web
+- `lib/api.ts`: types `SentRequest`, `ReceivedRequest`, `Requests`, `GroupMember`, `Group`; calls `askToShare`, `getRequests`, `answerRequest(id, "accept" | "decline")`, `getCurrentGroup`, `lockGroup`, `leaveGroup`.
+- `lib/format.ts`: `plural(2, "bag")` → "2 bags", shared by both cards (its own file avoids a **circular import** between `current-trip.tsx` and `group-card.tsx`).
+- `app/current-trip.tsx`:
+  - Loads the trip **and** requests together with `Promise.all([...])`: both requests run at the same time.
+  - `version` state + `reload()`: every action bumps the number; the effect depends on it, and `key={version}` on child cards **remounts** them, so everything refetches. Simple and always consistent.
+  - Searching → matches with **Ask to share** (or "· asked"); grouped → `GroupCard`; plus "Want to share with you" (Accept/Decline) and "Your requests".
+  - "Cancel trip" only while searching (a grouped trip must leave the group first).
+- `app/group-card.tsx`: members with "(booker)" and "You", "Pay your share to the booker's UPI ID", updates, **Lock** (booker, open group only), the reason box once locked, **Leave**. The reason is checked in the browser for a quick message, and again by the API.
+- `const g = group;` after the `if (!group) return null`: TypeScript forgets the "not null" narrowing inside nested functions; copying into a `const` keeps it.
+
+### 41.8 Verified in a real browser (two users, one tab, one after the other)
+- **Keshav** plans T3 → Sector 25A, out 11:36.
+- **Asha** plans T3 → Sector 29, out 11:46 → sees Keshav with **Ask to share** → clicks → "· asked" and "Your requests: केशव · waiting for an answer".
+- **Keshav** sees "Want to share with you: Asha … [Accept] [Decline]" → Accept → "Your cab group: **Asha (booker)**, You · Pay your share to the booker's UPI ID: asha.rao@okaxis". No Lock button for him, no Cancel trip.
+- **Asha** sees "You (booker)" + **Lock** → locks → "locked, the booker is booking the cab".
+- **Keshav** clicks Leave with an empty reason → "Tell your group why you're leaving." → with "Booker not answering" → back to searching, Asha in his matches again.
+- Database: group `cancelled` (2 → 1), report केशव → Asha "Booker not answering", message "केशव left: Booker not answering", both trips `searching`.
+- **Found and fixed during the test:** the reason box had no accessible name for screen readers (label now linked with `htmlFor`/`id`), and a cancelled group kept `seats_taken = 1` (now reset to 0).
+
+---
+
+## 42. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -2513,7 +2777,7 @@ git fetch --prune
 
 ---
 
-## 40. Glossary
+## 43. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -2636,10 +2900,35 @@ git fetch --prune
 | Two-stage search | Cheap prefilter in the database, then exact ranking in code |
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
 | Self-join | A table joined with itself under two names (`me` and `t`) |
+| State machine | A fixed set of states plus the allowed transitions between them |
+| Transition | One allowed move between states, e.g. `open → locked` |
+| Join request | "I'd like to share with you": pending until accepted or declined |
+| Opaque id | A random identifier that reveals nothing about the person (a UUID) |
+| Concurrency | Several pieces of work running at the same time on shared data |
+| Thread | One line of execution inside a program; a server runs many at once |
+| Check-then-act (TOCTOU) | Bug where the fact you checked is stale by the time you act on it |
+| Lost update | Two writers start from the same old value; one overwrites the other |
+| ACID | Atomic, Consistent, Isolated, Durable: what a transaction guarantees |
+| READ COMMITTED | Postgres's default isolation level: you only see committed data |
+| Row lock | Postgres's hold on a row being changed; other writers wait |
+| Pessimistic locking | Lock the row when reading it (`select ... for update`) |
+| Optimistic locking | Detect conflicts with a `version` column and retry |
+| Deadlock | Two transactions each waiting for a lock the other holds |
+| Proxy (Spring) | Wrapper object Spring puts around a bean to add transactions etc. |
+| Self-invocation | A method calling another in the same class, bypassing the proxy |
+| ExecutorService | A pool of threads that run submitted tasks |
+| CountDownLatch | A gate that makes threads wait until it's opened |
+| AtomicInteger | A counter that's safe to change from many threads |
+| Testcontainers | Library that starts throwaway databases in Docker for tests |
+| JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
+| RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
+| Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
+| Foreign key | A column that must point at an existing row in another table |
+| Circular import | Two files importing each other; avoided by moving shared code to a third file |
 
 ---
 
-## 41. Interview questions to practise
+## 44. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -2688,3 +2977,14 @@ git fetch --prune
 45. What is the N+1 query problem, how do you detect it, and how do you fix it across module boundaries?
 46. Which fields may a match show about another traveller, and how could even a distance number leak a secret?
 47. Our tests share the dev database. What problem did that cause for the matching test, and what are the proper fixes?
+48. What is a state machine, and how can the database itself refuse invalid transitions?
+49. Explain the "last seat" race. Why does checking seats in Java and then saving fail under load?
+50. What does ACID stand for? Why doesn't "isolated" alone prevent a lost update under READ COMMITTED?
+51. Why does `update ... set seats_taken = seats_taken + 1 where seats_taken + 1 <= capacity` stay correct with concurrent requests?
+52. Compare pessimistic locking, optimistic locking and a conditional UPDATE. When would you choose each?
+53. What is a deadlock, how does Postgres handle it, and how do you avoid one?
+54. When does `@Transactional` roll back, and why does calling a `@Transactional` method from the same class not start a transaction?
+55. How do you write a test that reliably exposes a race condition, and how do you know the test itself works?
+56. Why does accepting a request run in one transaction, and what did the "3 + 3 seats" test prove about rollback?
+57. Why did we use plain SQL (`JdbcClient`) for groups instead of JPA entities?
+58. Two people who asked each other both press Accept at the same time. What could go wrong, and how does one `UPDATE` over both trips avoid it?

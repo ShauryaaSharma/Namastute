@@ -4,6 +4,7 @@ import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,8 +15,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+// Public because the groups module uses the public methods at the bottom; everything else stays package-private
 @Service
-class TripService {
+public class TripService {
 
     static final Duration EXIT_GRACE = Duration.ofMinutes(5);      // "I'm outside right now" is fine
     static final Duration MAX_AHEAD = Duration.ofHours(24);
@@ -31,7 +33,13 @@ class TripService {
                     boolean womenOnly, String status, double soloKm) {}
 
     // What another traveller may see about a match: never phone, exact destination or UPI ID (design 4.4)
-    record MatchView(String firstName, String destArea, long minutesAfterYou, int seats, int bags, double detourKm) {}
+    // tripId is an opaque handle for "ask to share": a random id that reveals nothing about the person
+    record MatchView(UUID tripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags,
+                     double detourKm) {}
+
+    // What the groups module may know about a trip
+    public record TripSummary(UUID id, UUID userId, String terminalId, Instant exitAt, String destArea,
+                              int seats, int bags, String status) {}
 
     private final TripRepository trips;
     private final TerminalRepository terminals;
@@ -103,6 +111,7 @@ class TripService {
         List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, trips.matchCandidates(tripId));
         Map<UUID, String> names = users.firstNames(ranked.stream().map(r -> r.trip().getUserId()).toList());
         return ranked.stream().map(r -> new MatchView(
+                r.trip().getId(),
                 names.get(r.trip().getUserId()),
                 r.trip().getDestArea(),
                 Duration.between(mine.getExitAt(), r.trip().getExitAt()).toMinutes(),
@@ -110,6 +119,35 @@ class TripService {
                 r.trip().getBags(),
                 Math.round(r.detourKm() * 2) / 2.0   // nearest 0.5 km: exact numbers could help locate their destination
         )).toList();
+    }
+
+    // ---- Public API for the groups module ----
+
+    // Your searching or grouped trip, ignoring stale ones (same rule as current())
+    public Optional<TripSummary> activeTrip(UUID userId) {
+        return trips.findFirstByUserIdAndStatusIn(userId, ACTIVE)
+                .filter(t -> t.getExitAt().isAfter(Instant.now().minus(EXPIRES_AFTER)))
+                .map(TripService::summary);
+    }
+
+    // Several trips in one query (no N+1)
+    public List<TripSummary> summaries(Collection<UUID> ids) {
+        return trips.findAllById(ids).stream().map(TripService::summary).toList();
+    }
+
+    // searching → grouped, only for trips still searching; returns how many moved
+    public int markGrouped(Collection<UUID> ids) {
+        return trips.markGrouped(ids);
+    }
+
+    // grouped → searching (left a group before the ride)
+    public int markSearching(Collection<UUID> ids) {
+        return trips.markSearching(ids);
+    }
+
+    private static TripSummary summary(TripRequest t) {
+        return new TripSummary(t.getId(), t.getUserId(), t.getTerminalId(), t.getExitAt(), t.getDestArea(),
+                t.getSeats(), t.getBags(), t.getStatus().name());
     }
 
     List<Terminal> terminals() {

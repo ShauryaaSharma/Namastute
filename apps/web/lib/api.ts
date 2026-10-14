@@ -137,6 +137,7 @@ export async function logout(): Promise<void> {
 
 // Another traveller you could share a cab with. Only what they may see: no phone, exact destination or UPI ID.
 export type Match = {
+  tripId: string; // opaque handle, used only to ask this traveller to share
   firstName: string;
   destArea: string;
   minutesAfterYou: number; // negative = they're out before you
@@ -148,4 +149,54 @@ export type Match = {
 // Best first, at most 5; only for your own active trip
 export function getMatches(tripId: string): Promise<Match[]> {
   return request<Match[]>(`/api/v1/trips/${tripId}/matches`);
+}
+
+// ---- Sharing a cab: requests and groups ----
+
+export type SentRequest = { id: string; toTripId: string; firstName: string; status: "pending" | "declined" };
+export type ReceivedRequest = {
+  id: string;
+  firstName: string;
+  destArea: string;
+  minutesAfterYou: number;
+  seats: number;
+  bags: number;
+};
+export type Requests = { sent: SentRequest[]; received: ReceivedRequest[] };
+
+export type GroupMember = { firstName: string; destArea: string; seats: number; bags: number; booker: boolean; you: boolean };
+export type Group = {
+  id: string;
+  status: "open" | "locked";
+  youAreBooker: boolean;
+  bookerUpiId: string | null;
+  members: GroupMember[];
+  updates: string[]; // newest first, e.g. "Asha left: booker not answering"
+};
+
+export async function askToShare(toTripId: string): Promise<void> {
+  await request<{ id: string }>("/api/v1/requests", { method: "POST", body: JSON.stringify({ toTripId }) });
+}
+
+// Requests you sent, and requests you can answer (to you, or to anyone in your open group)
+export function getRequests(): Promise<Requests> {
+  return request<Requests>("/api/v1/requests");
+}
+
+export async function answerRequest(id: string, answer: "accept" | "decline"): Promise<void> {
+  await request<void>(`/api/v1/requests/${id}/${answer}`, { method: "POST" });
+}
+
+// null when you're not in a group (the API answers 204)
+export async function getCurrentGroup(): Promise<Group | null> {
+  return (await request<Group | undefined>("/api/v1/groups/current")) ?? null;
+}
+
+export async function lockGroup(id: string): Promise<void> {
+  await request<void>(`/api/v1/groups/${id}/lock`, { method: "POST" });
+}
+
+// A reason is required only when the group is locked
+export async function leaveGroup(id: string, reason?: string): Promise<void> {
+  await request<void>(`/api/v1/groups/${id}/leave`, { method: "POST", body: JSON.stringify({ reason }) });
 }
