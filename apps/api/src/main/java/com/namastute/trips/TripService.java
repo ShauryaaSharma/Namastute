@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Point;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 // Public because the groups module uses the public methods at the bottom; everything else stays package-private
@@ -157,6 +158,22 @@ public class TripService {
     // grouped → searching (left a group before the ride)
     public int markSearching(Collection<UUID> ids) {
         return trips.markSearching(ids);
+    }
+
+    // grouped → done (the ride happened) / grouped → expired (the group never got going)
+    public int markDone(Collection<UUID> ids) {
+        return trips.markDone(ids);
+    }
+
+    public int markExpired(Collection<UUID> ids) {
+        return trips.markExpired(ids);
+    }
+
+    // Background sweep (Learning Notes 48): every minute, expire everyone's stale searching trips.
+    // Idempotent: a second run, or a second server, finds nothing left to change.
+    @Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
+    void expireStaleTrips() {
+        trips.expireAllStale();
     }
 
     private static TripSummary summary(TripRequest t) {

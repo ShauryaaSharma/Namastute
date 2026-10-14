@@ -171,13 +171,59 @@ public class GroupService {
                 .params(groupId, userId).update() == 0) {
             throw conflict("CANNOT_LOCK", "Only the person who started an open group can lock it");
         }
-        // Nobody else can join now, so waiting requests get a clear "no"
+        declineWaitingRequests(groupId);
+        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " locked the group and is booking the cab"));
+    }
+
+    // ---- Background jobs (Learning Notes 48), run every minute by GroupJobs ----
+    // Each is a conditional UPDATE ... RETURNING id: only groups this run actually changed are followed up and
+    // announced, so a second run or a second server does nothing twice (idempotent). now() = the database's clock.
+
+    // open, and the meeting was over 30 minutes ago (missed, e.g. while the server was down) → expired
+    @Transactional
+    void expireUnformed() {
+        List<UUID> ids = db.sql("update groups set status = 'expired' where status = 'open' and meet_at < now() - interval '30 minutes' returning id")
+                .query(UUID.class).list();
+        if (!ids.isEmpty()) {
+            trips.markExpired(memberTrips(ids));
+            ids.forEach(id -> events.publishEvent(new GroupChanged(id, null)));
+        }
+    }
+
+    // open, and meeting within 5 minutes → locked, so nobody joins at the last second
+    @Transactional
+    void autoLock() {
+        List<UUID> ids = db.sql("update groups set status = 'locked' where status = 'open' and meet_at <= now() + interval '5 minutes' returning id")
+                .query(UUID.class).list();
+        for (UUID id : ids) {
+            declineWaitingRequests(id);
+            events.publishEvent(new GroupChanged(id, "Locked automatically: meeting in 5 minutes"));
+        }
+    }
+
+    // locked, and the meeting was over 4 hours ago → done (design 3.2: "or meet_at + 4 h")
+    @Transactional
+    void finish() {
+        List<UUID> ids = db.sql("update groups set status = 'done' where status = 'locked' and meet_at < now() - interval '4 hours' returning id")
+                .query(UUID.class).list();
+        if (!ids.isEmpty()) {
+            trips.markDone(memberTrips(ids));
+            ids.forEach(id -> events.publishEvent(new GroupChanged(id, null)));
+        }
+    }
+
+    private List<UUID> memberTrips(List<UUID> groupIds) {
+        return db.sql("select trip_id from group_members where group_id in (:ids) and status = 'accepted'")
+                .param("ids", groupIds).query(UUID.class).list();
+    }
+
+    // A locked group takes nobody new, so waiting requests get a clear "no"
+    private void declineWaitingRequests(UUID groupId) {
         db.sql("""
                 update join_requests set status = 'declined'
                 where status = 'pending'
                   and to_trip_id in (select trip_id from group_members where group_id = ? and status = 'accepted')""")
                 .param(groupId).update();
-        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " locked the group and is booking the cab"));
     }
 
     @Transactional
