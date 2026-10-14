@@ -2,6 +2,7 @@ package com.namastute.trips;
 
 import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,9 +33,10 @@ public class TripService {
     record CreateTrip(String terminalId, String flightNo, Instant exitAt, double destLat, double destLng,
                       String destArea, int seats, int bags, boolean womenOnly) {}
 
-    record TripView(UUID id, String terminalId, String terminalName, String flightNo, Instant exitAt,
-                    String destArea, double destLat, double destLng, int seats, int bags,
-                    boolean womenOnly, String status, double soloKm) {}
+    record TripView(UUID id, String terminalId, String terminalName, @Schema(nullable = true) String flightNo, Instant exitAt,
+                    String destArea, double destLat, double destLng, int seats, int bags, boolean womenOnly,
+                    @Schema(allowableValues = {"searching", "grouped", "cancelled", "expired", "done"}) String status,
+                    double soloKm) {}
 
     // What others may see about a match: never phone, exact destination or UPI ID (design 4.4).
     // A match is a lone traveller (one rider) or an open group (2–3 riders). Trip ids are opaque handles:

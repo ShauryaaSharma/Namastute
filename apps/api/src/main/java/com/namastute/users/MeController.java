@@ -1,5 +1,6 @@
 package com.namastute.users;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -24,9 +25,9 @@ class MeController {
     record UpdateMe(
             @Size(min = 2, max = 60, message = "must be 2 to 60 characters")
             @Pattern(regexp = NAME, message = "may only contain letters, spaces, dots, apostrophes and hyphens")
-            String name,
+            @Schema(nullable = true) String name,
             @Pattern(regexp = UPI_ID_OR_EMPTY, message = "must look like yourname@bank")
-            String upiId) {}
+            @Schema(nullable = true) String upiId) {}
 
     private final UserService users;
 

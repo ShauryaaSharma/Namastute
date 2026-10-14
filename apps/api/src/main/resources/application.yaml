@@ -16,3 +16,10 @@ namastute:
     hmac-secret: ${OTP_HMAC_SECRET:dev-only-not-a-real-secret}
   jwt:
     secret: ${JWT_SECRET:dev-only-jwt-secret-must-be-at-least-32-bytes}
+
+springdoc:
+  api-docs:
+    enabled: false                 # /v3/api-docs off by default; only OpenApiExportTest turns it on (Learning Notes 52.6)
+  api-docs.version: openapi_3_0   # 3.0 format: its "nullable: true" is what @Schema(nullable = true) produces
+  writer-with-order-by-keys: true  # sorted keys: the same API always gives the same file (needed for the drift check)
+  writer-with-default-pretty-printer: true

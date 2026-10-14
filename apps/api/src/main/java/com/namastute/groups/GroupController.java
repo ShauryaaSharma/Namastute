@@ -1,5 +1,6 @@
 package com.namastute.groups;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -24,7 +25,7 @@ class GroupController {
 
     record AskRequest(@NotNull UUID toTripId) {}
 
-    record LeaveRequest(@Size(max = 300) String reason) {}
+    record LeaveRequest(@Size(max = 300) @Schema(nullable = true) String reason) {}
 
     record Created(UUID id) {}
 

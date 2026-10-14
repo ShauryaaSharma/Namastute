@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (fare split: concepts + code walkthrough, pool-starvation fix).
+Last updated: 2026-10-14 (OpenAPI types: concepts + code walkthrough).
 
 ---
 
@@ -59,9 +59,11 @@ Last updated: 2026-10-14 (fare split: concepts + code walkthrough, pool-starvati
 49. [Code walkthrough: expiry jobs](#49-code-walkthrough-expiry-jobs)
 50. [Money: fare split and UPI links](#50-money-fare-split-and-upi-links)
 51. [Code walkthrough: fare split (and a pool-starvation bug)](#51-code-walkthrough-fare-split-and-a-pool-starvation-bug)
-52. [Command cheat sheet](#52-command-cheat-sheet)
-53. [Glossary](#53-glossary)
-54. [Interview questions to practise](#54-interview-questions-to-practise)
+52. [API contracts: OpenAPI and generated types](#52-api-contracts-openapi-and-generated-types)
+53. [Code walkthrough: OpenAPI and generated types](#53-code-walkthrough-openapi-and-generated-types)
+54. [Command cheat sheet](#54-command-cheat-sheet)
+55. [Glossary](#55-glossary)
+56. [Interview questions to practise](#56-interview-questions-to-practise)
 
 ---
 
@@ -3281,7 +3283,109 @@ record FareRequest(@NotNull @DecimalMin("50") @DecimalMax("10000") @Digits(integ
 
 ---
 
-## 52. Command cheat sheet
+## 52. API contracts: OpenAPI and generated types
+
+### 52.1 The problem: two copies of the same truth
+- Every response shape exists twice: a Java record (`MatchView`) and a hand-typed TypeScript type (`Match` in `lib/api.ts`).
+- **API contract** = the agreement between both sides about what each request and response looks like.
+- **Drift** = the two copies stop matching. TypeScript trusts whatever we typed, so a forgotten update compiles fine and breaks **at runtime** (it nearly happened when `firstName` became `riders[]`, and when `GroupView.updates` was removed).
+- Goal: a **single source of truth**: write the shape once (Java) and **generate** the other copy.
+
+### 52.2 OpenAPI
+- **OpenAPI** (formerly **Swagger**): a standard JSON/YAML document describing an HTTP API: paths, methods, parameters, request bodies, responses, and **schemas** (data shapes).
+- `"$ref": "#/components/schemas/MatchView"` points to a schema defined once, like reusing a record.
+- Read by documentation pages (Swagger UI), client generators, testing tools and API gateways.
+
+### 52.3 Code-first vs contract-first
+| Approach | How | Good for |
+|---|---|---|
+| Contract-first | Write the OpenAPI file first; generate server and client from it | Big teams, public APIs |
+| Code-first | Write the controllers; a library produces the OpenAPI file | Small teams with existing code (us) |
+- **springdoc-openapi** (code-first for Spring) inspects every `@RestController`, the records they return, and Bean Validation annotations (`@Min(1) @Max(3)` → `"minimum": 1, "maximum": 3`), and serves the document at `/v3/api-docs`.
+
+### 52.4 Code generation
+- **Code generation** = a program writes source code from a description. **openapi-typescript** turns the OpenAPI JSON into TypeScript types: `components["schemas"]["MatchView"]`.
+- **Types only**, not a whole generated client: we keep our own `request()` helper (token refresh, errors).
+- Mapping: `UUID` → `string` (format uuid); `Instant` / `OffsetDateTime` → `string` (date-time); `BigDecimal` / `double` / `int` → `number`; `List<X>` → `X[]`.
+- OpenAPI only describes HTTP request/response. Our chat (STOMP) would need **AsyncAPI**, its sibling for messaging; for two message shapes it isn't worth it, so chat types stay hand-written.
+
+### 52.5 Generated files and drift checks
+- Commit the generated files: they're reviewable ("this PR changed the Match shape") and the web builds without Java.
+- **Drift check:** CI regenerates and fails if the result differs from what's committed (`git diff --exit-code`).
+- Where the spec comes from: a test (which already starts the app with Postgres and Redis) fetches `/v3/api-docs` and writes the file. No extra machinery.
+
+### 52.6 Security
+- The spec lists every endpoint. Not secret, but production doesn't need to serve a map of the API, so `/v3/api-docs` is **off by default** and turned on only in the export test.
+
+### 52.7 Decisions (2026-10-14)
+| Decision | Choice |
+|---|---|
+| Producing the spec | A test writes `apps/web/openapi.json` (committed); the web generates `lib/api-types.ts` from it (committed) |
+| Drift checks | API job: fail if `openapi.json` changed; web job: fail if `api-types.ts` doesn't match |
+| Using the types | Hand-written HTTP types in `lib/api.ts` become aliases of generated ones; chat types stay hand-written |
+| Swagger UI | Skipped for now |
+
+---
+
+## 53. Code walkthrough: OpenAPI and generated types
+
+### 53.1 The pipeline
+```
+Java records + controllers ──(springdoc, in OpenApiExportTest)──▶ apps/web/openapi.json ──(openapi-typescript)──▶ apps/web/lib/api-types.ts ──▶ lib/api.ts aliases
+```
+Both generated files are committed, and CI checks that both are up to date.
+
+### 53.2 API side
+- `pom.xml`: `springdoc-openapi-starter-webmvc-api` **3.1.1** (built on Spring Boot 4.1.0; published 6 Sep 2026, well over two weeks old). It isn't in Spring Boot's BOM, so its version lives in a `<springdoc.version>` property. The "api" starter has no Swagger UI (decision 52.7).
+- `application.yaml`:
+  ```yaml
+  springdoc:
+    api-docs:
+      enabled: false                 # off by default (52.6)
+    api-docs.version: openapi_3_0    # 3.0 format: see 53.3
+    writer-with-order-by-keys: true  # sorted keys: same API → same file (the drift check needs this)
+    writer-with-default-pretty-printer: true
+  ```
+- **`OpenApiExportTest`**: `@SpringBootTest(properties = "springdoc.api-docs.enabled=true")` turns the endpoint on for this test only. It does `GET /v3/api-docs` with `jwt()` (every endpoint except login needs a token, the docs included), then `Files.writeString(Path.of("../web/openapi.json"), ...)`. Maven runs tests from `apps/api`, so `../web` is the web app. `\r\n` is turned into `\n` so Windows and Linux write identical bytes.
+- **Deterministic output, checked:** two runs gave identical file fingerprints (SHA-256).
+
+### 53.3 Teaching Java what it can't say on its own
+- Java records don't say which fields can be `null`, and springdoc first wrote every field as optional and non-nullable. Experiments:
+  - **JSpecify `@Nullable`** (Spring 7's standard annotation): **ignored** by springdoc, in both 3.1 and 3.0 formats.
+  - **swagger `@Schema(nullable = true)`** in **OpenAPI 3.0** format → `"nullable": true` ✓. That's why the spec is 3.0, not 3.1.
+- So the few genuinely nullable fields carry `@Schema(nullable = true)`: `Profile.name/upiId`, `UpdateMe.name/upiId`, `TripView.flightNo`, `CreateTripRequest.flightNo`, `TerminalView.pickupNote`, `GroupView.bookerUpiId/fareTotal`, `MemberView.share`, `LeaveRequest.reason`, `MessageView.firstName/clientId`.
+- Status-like strings list their values, so TypeScript gets a **union**: `@Schema(allowableValues = {"open", "locked", "met"}) String status` → `status: "open" | "locked" | "met"` (also for `TripView.status`, `SentView.status`, `MessageView.kind`).
+- **Every other field is required:** the generator runs with `--properties-required-by-default`.
+
+### 53.4 Web side
+- `openapi-typescript` **7.13.0**, a dev dependency pinned exactly (published Feb 2026).
+- `package.json` script: `"api:types": "openapi-typescript openapi.json -o lib/api-types.ts --properties-required-by-default"`.
+- `lib/api-types.ts` (991 generated lines): `components["schemas"]["GroupView"]` is
+  ```ts
+  { bookerUpiId: string | null; fareTotal: number | null; id: string; members: MemberView[]; status: "open" | "locked" | "met"; youAreBooker: boolean }
+  ```
+- `lib/api.ts`: `type Schemas = components["schemas"];` and every hand-written type became an alias: `export type Match = Schemas["MatchView"];`, `export type Group = Schemas["GroupView"];`, and so on. `ChatMessage = Schemas["MessageView"]`: the live STOMP copy is the same Java record as the HTTP history, so one type covers both.
+- **The rest of the web didn't change**, and `tsc` passed: proof the old hand-written types matched the real API.
+- `updateMe(changes: { name?: string; upiId?: string })` stays hand-shaped: PATCH means "send only what changes".
+
+### 53.5 The drift check, proven
+- Experiment: rename `MatchView.detourKm` → `detourKilometres` in Java, run the export test, `pnpm api:types`, then `tsc`:
+  ```
+  app/current-trip.tsx(125,18): error TS2339: Property 'detourKm' does not exist on type '{ ... detourKilometres: number ... }'
+  ```
+  Before this slice, that mistake would have compiled and broken only in a user's browser. (Restored afterwards; `tsc` green again.)
+- **CI** (`.github/workflows/ci.yml`):
+  - `api` job, after `./mvnw -B verify`: `git diff --exit-code -- ../web/openapi.json` fails with "openapi.json is out of date" if a Java change wasn't followed by committing the new spec.
+  - `web` job, after `pnpm install`: `pnpm api:types && git diff --exit-code -- lib/api-types.ts` fails if the types weren't regenerated.
+- **Your routine when a Java record changes:** run the API tests (they rewrite `openapi.json`) → `pnpm api:types` in `apps/web` → fix any TypeScript errors → commit all of it.
+
+### 53.6 Small things found along the way
+- An earlier PowerShell `Set-Content -Encoding utf8` had saved `package.json` with a **BOM** (byte-order mark: an invisible `EF BB BF` at the start of the file). Python refused to parse it; it's removed. In PowerShell 5.1, `utf8` means "with BOM".
+- OpenAPI doesn't cover STOMP; that would need AsyncAPI (52.4). Chat's message type is still generated, because the HTTP history returns the same record.
+
+---
+
+## 54. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3306,6 +3410,12 @@ docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d na
 Get-NetTCPConnection -LocalPort 6379 -State Listen      # who listens on the Redis port
 & "C:\Program Files\Redis\redis-cli.exe" -h 127.0.0.1 KEYS "rate:otp:*"   # the Windows Redis the API uses today
 docker compose -f infra/docker-compose.yml exec redis redis-cli KEYS "*"      # the project's Docker Redis
+```
+
+### When a Java record changes (API types)
+```bash
+cd apps/api && ./mvnw test          # rewrites apps/web/openapi.json
+cd ../web && pnpm api:types         # regenerates lib/api-types.ts; then fix TypeScript errors and commit both files
 ```
 
 ### Query plans (inside `psql`)
@@ -3351,7 +3461,7 @@ git fetch --prune
 
 ---
 
-## 53. Glossary
+## 55. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -3542,10 +3652,20 @@ git fetch --prune
 | Connection pool (HikariCP) | A fixed set of reusable database connections (10 by default) |
 | Pool starvation | Every connection is taken and threads wait forever for one more |
 | TransactionSynchronization | Spring hook to run code at a transaction moment, e.g. afterCommit |
+| API contract | The agreed shape of every request and response between two sides |
+| Drift | Two copies of the same truth slowly stop matching |
+| OpenAPI (Swagger) | Standard document describing an HTTP API's paths and data shapes |
+| Code-first / contract-first | Generate the spec from code / write the spec first and generate code |
+| Code generation | A program writing source code from a description |
+| Drift check | CI regenerates a file and fails if it differs from the committed one |
+| AsyncAPI | OpenAPI's sibling standard for message-based APIs (WebSocket, queues) |
+| springdoc | Library that generates an OpenAPI document from Spring controllers |
+| Deterministic | Same input always gives byte-identical output |
+| BOM | Byte-order mark: invisible bytes at a file's start that some tools reject |
 
 ---
 
-## 54. Interview questions to practise
+## 56. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -3634,3 +3754,8 @@ git fetch --prune
 85. Two members tap "I'm here" at the same instant and the group never becomes met. Why, and how does `select ... for update` fix it?
 86. How can an after-commit listener with REQUIRES_NEW starve a connection pool? How did we fix it?
 87. Why is the fare entered with one conditional UPDATE (`... and booker_id = ? and fare_total is null`) rather than checks in Java?
+88. What is API drift between a backend and a frontend, and why doesn't TypeScript catch it on its own?
+89. Code-first vs contract-first OpenAPI: when would you choose each?
+90. Should generated files be committed? How does a CI drift check keep them honest?
+91. springdoc ignored @Nullable. How did we still get `string | null` in TypeScript, and why the 3.0 format?
+92. Why must a generated file be deterministic for a CI drift check to work?

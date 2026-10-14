@@ -1,5 +1,6 @@
 package com.namastute.trips;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -26,11 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class TripController {
 
-    record TerminalView(String id, String name, double lat, double lng, String pickupNote) {}
+    record TerminalView(String id, String name, double lat, double lng, @Schema(nullable = true) String pickupNote) {}
 
     record CreateTripRequest(
             @NotBlank String terminalId,
-            @Pattern(regexp = "^$|^[A-Za-z0-9]{2} ?\\d{1,4}$", message = "must look like AI 865") String flightNo,
+            @Pattern(regexp = "^$|^[A-Za-z0-9]{2} ?\\d{1,4}$", message = "must look like AI 865") @Schema(nullable = true) String flightNo,
             @NotNull Instant exitAt,
             @NotNull @DecimalMin("-90") @DecimalMax("90") Double destLat,
             @NotNull @DecimalMin("-180") @DecimalMax("180") Double destLng,

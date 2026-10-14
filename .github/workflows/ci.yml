@@ -42,6 +42,8 @@ jobs:
           java-version: '21'
           cache: maven                # reuse downloaded jars between runs (much faster)
       - run: ./mvnw -B verify         # compile + all tests; -B = batch mode, cleaner logs
+      # Drift check (Learning Notes 52.5): OpenApiExportTest just rewrote the API contract; fail if it differs from the commit
+      - run: git diff --exit-code -- ../web/openapi.json || (echo "::error::apps/web/openapi.json is out of date. Run the API tests and commit it." && exit 1)
 
   web:                                # job 2: the Next.js frontend (runs in parallel)
     runs-on: ubuntu-latest
@@ -59,5 +61,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile   # install exactly what the lockfile says
+      # Drift check: the TypeScript types must match the committed API contract
+      - run: pnpm api:types && git diff --exit-code -- lib/api-types.ts || (echo "::error::lib/api-types.ts is out of date. Run pnpm api:types and commit it." && exit 1)
       - run: pnpm lint
       - run: pnpm build
