@@ -1,0 +1,84 @@
+# Production stack: one server, one domain (Learning Notes 54). From the repo root:
+#   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d --build
+# Only Caddy has public ports. ${X:?message} = refuse to start if X isn't set (fail fast).
+name: namastute-prod
+services:
+  postgres:
+    image: postgis/postgis:16-3.5          # amd64 only: the server must be Intel/AMD (54.3)
+    environment:
+      POSTGRES_DB: namastute
+      POSTGRES_USER: namastute
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in infra/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U namastute -d namastute"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 512m
+
+  redis:
+    image: redis:7.4-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 128m
+
+  api:
+    build: ../apps/api
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in infra/.env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in infra/.env}
+      OTP_HMAC_SECRET: ${OTP_HMAC_SECRET:?set OTP_HMAC_SECRET in infra/.env}
+      WEB_ORIGIN: https://${DOMAIN:?set DOMAIN in infra/.env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    mem_limit: 768m
+
+  web:
+    build:
+      context: ../apps/web
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in infra/.env}
+    restart: unless-stopped
+    mem_limit: 256m
+
+  caddy:
+    image: caddy:2.11.4-alpine
+    ports:
+      - "80:80"                            # HTTP: certificate challenges, then redirects to HTTPS
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in infra/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data                   # certificates: keep them, or Let's Encrypt rate-limits re-issuing
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+    mem_limit: 64m
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -51,7 +51,7 @@ class AuthController {
 
     @PostMapping("/otp")
     ResponseEntity<Void> requestOtp(@Valid @RequestBody OtpRequest req, HttpServletRequest http) {
-        // shortcut: getRemoteAddr() is the direct caller; behind a proxy (Caddy, Phase 2) read the forwarded IP instead
+        // The real client IP: behind Caddy, prod reads it from X-Forwarded-For (server.forward-headers-strategy, Learning Notes 54.5)
         otp.requestOtp(req.phone(), http.getRemoteAddr());
         return ResponseEntity.noContent().build();   // 204: done, nothing to send back
     }

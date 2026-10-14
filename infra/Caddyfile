@@ -1,0 +1,16 @@
+# One domain for everything (Learning Notes 54.6). Caddy gets the HTTPS certificate by itself:
+# Let's Encrypt for a real domain, its own local certificate for "localhost".
+{$DOMAIN} {
+	encode zstd gzip
+
+	# The API: REST under /api, chat WebSocket at /ws. /actuator is deliberately NOT exposed.
+	@api path /api/* /ws
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	# Everything else: the Next.js web app
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -94,14 +94,16 @@
 <details><summary><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">51. Code walkthrough: fare split (and a pool-starvation bug)</a></summary><a class="sub" href="#511-groupsfaresplitjava-the-pure-function">51.1 groups/FareSplit.java: the pure function</a><a class="sub" href="#512-v5__here_atsql-and-tripsummarysolokm">51.2 V5__here_at.sql and TripSummary.soloKm</a><a class="sub" href="#513-groupservice-the-new-steps">51.3 GroupService: the new steps</a><a class="sub" href="#514-groupcontroller">51.4 GroupController</a><a class="sub" href="#515-the-pool-starvation-bug-found-by-a-new-test">51.5 The pool-starvation bug (found by a new test)</a><a class="sub" href="#516-web">51.6 Web</a><a class="sub" href="#517-verified-in-a-real-browser-two-tabs">51.7 Verified in a real browser (two tabs)</a></details>
 <details><summary><a href="#52-api-contracts-openapi-and-generated-types">52. API contracts: OpenAPI and generated types</a></summary><a class="sub" href="#521-the-problem-two-copies-of-the-same-truth">52.1 The problem: two copies of the same truth</a><a class="sub" href="#522-openapi">52.2 OpenAPI</a><a class="sub" href="#523-code-first-vs-contract-first">52.3 Code-first vs contract-first</a><a class="sub" href="#524-code-generation">52.4 Code generation</a><a class="sub" href="#525-generated-files-and-drift-checks">52.5 Generated files and drift checks</a><a class="sub" href="#526-security">52.6 Security</a><a class="sub" href="#527-decisions-2026-10-14">52.7 Decisions (2026-10-14)</a></details>
 <details><summary><a href="#53-code-walkthrough-openapi-and-generated-types">53. Code walkthrough: OpenAPI and generated types</a></summary><a class="sub" href="#531-the-pipeline">53.1 The pipeline</a><a class="sub" href="#532-api-side">53.2 API side</a><a class="sub" href="#533-teaching-java-what-it-cant-say-on-its-own">53.3 Teaching Java what it can&#x27;t say on its own</a><a class="sub" href="#534-web-side">53.4 Web side</a><a class="sub" href="#535-the-drift-check-proven">53.5 The drift check, proven</a><a class="sub" href="#536-small-things-found-along-the-way">53.6 Small things found along the way</a></details>
-<details><summary><a href="#54-command-cheat-sheet">54. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#55-glossary">55. Glossary</a>
-<a class="topic" href="#56-interview-questions-to-practise">56. Interview questions to practise</a>
+<details><summary><a href="#54-production-containers-config-https">54. Production: containers, config, HTTPS</a></summary><a class="sub" href="#541-dev-vs-production">54.1 Dev vs production</a><a class="sub" href="#542-configuration-the-twelve-factor-rule">54.2 Configuration: the Twelve-Factor rule</a><a class="sub" href="#543-container-images">54.3 Container images</a><a class="sub" href="#544-caddy-reverse-proxy-and-https">54.4 Caddy: reverse proxy and HTTPS</a><a class="sub" href="#545-the-real-client-ip-behind-a-proxy">54.5 The real client IP behind a proxy</a><a class="sub" href="#546-one-origin">54.6 One origin</a><a class="sub" href="#547-keeping-it-alive-and-safe">54.7 Keeping it alive and safe</a><a class="sub" href="#548-decisions-2026-10-14">54.8 Decisions (2026-10-14)</a></details>
+<details><summary><a href="#55-code-walkthrough-the-production-build">55. Code walkthrough: the production build</a></summary><a class="sub" href="#551-what-exists-now">55.1 What exists now</a><a class="sub" href="#552-appsapidockerfile">55.2 apps/api/Dockerfile</a><a class="sub" href="#553-appswebdockerfile-and-nextconfigts">55.3 apps/web/Dockerfile and next.config.ts</a><a class="sub" href="#554-application-prodyaml">55.4 application-prod.yaml</a><a class="sub" href="#555-infradocker-composeprodyml">55.5 infra/docker-compose.prod.yml</a><a class="sub" href="#556-infracaddyfile">55.6 infra/Caddyfile</a><a class="sub" href="#557-forwardediptest">55.7 ForwardedIpTest</a><a class="sub" href="#558-verified-the-production-stack-on-the-laptop">55.8 Verified: the production stack on the laptop</a><a class="sub" href="#559-whats-left-before-real-users">55.9 What&#x27;s left before real users</a></details>
+<details><summary><a href="#56-command-cheat-sheet">56. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#57-glossary">57. Glossary</a>
+<a class="topic" href="#58-interview-questions-to-practise">58. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (OpenAPI types: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-14 (production build: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -158,9 +160,11 @@
 <li><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">Code walkthrough: fare split (and a pool-starvation bug)</a></li>
 <li><a href="#52-api-contracts-openapi-and-generated-types">API contracts: OpenAPI and generated types</a></li>
 <li><a href="#53-code-walkthrough-openapi-and-generated-types">Code walkthrough: OpenAPI and generated types</a></li>
-<li><a href="#54-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#55-glossary">Glossary</a></li>
-<li><a href="#56-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#54-production-containers-config-https">Production: containers, config, HTTPS</a></li>
+<li><a href="#55-code-walkthrough-the-production-build">Code walkthrough: the production build</a></li>
+<li><a href="#56-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#57-glossary">Glossary</a></li>
+<li><a href="#58-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -778,6 +782,7 @@ then <code>git add --renormalize .</code> to re-apply to existing files.</li>
 <h3 id="161-where-spring-boot-runs-one-ec2-instance">16.1 Where Spring Boot runs: one EC2 instance</h3>
 <ul>
 <li>Next.js on <strong>Vercel</strong> (free); Spring Boot + Postgres + Redis on <strong>one EC2 instance</strong> with Docker Compose; <strong>Caddy</strong> in front for HTTPS (automatic Let&#39;s Encrypt certificates).</li>
+<li><strong>⚠️ Changed in 54.6:</strong> the web app now runs on the same EC2 server too, under one domain.</li>
 <li>Why: WebSockets need an always-on server (free platforms that sleep drop connections); load balancers/RDS/Elastic Beanstalk add $15–30/month each; one instance ≈ $18/month ≈ 5 months of credits.</li>
 <li>Details to remember:<ul>
 <li><strong>t4g = ARM (Graviton):</strong> build <code>linux/arm64</code> images in CI, or use t3 (Intel). The <code>postgis/postgis</code> image has historically been Intel-only.</li>
@@ -4518,7 +4523,287 @@ Before this slice, that mistake would have compiled and broken only in a user&#3
 <li>OpenAPI doesn&#39;t cover STOMP; that would need AsyncAPI (52.4). Chat&#39;s message type is still generated, because the HTTP history returns the same record.</li>
 </ul>
 <hr>
-<h2 id="54-command-cheat-sheet">54. Command cheat sheet</h2>
+<h2 id="54-production-containers-config-https">54. Production: containers, config, HTTPS</h2>
+<h3 id="541-dev-vs-production">54.1 Dev vs production</h3>
+<table>
+<thead>
+<tr>
+<th>Today (dev)</th>
+<th>Fine on a laptop</th>
+<th>Dangerous in production</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>LogSmsSender</code> prints OTP codes</td>
+<td>only you see the log</td>
+<td>anyone with log access could log in as anyone</td>
+</tr>
+<tr>
+<td><code>JWT_SECRET</code> falls back to a dev value</td>
+<td>convenient</td>
+<td>it&#39;s on GitHub: anyone could <strong>forge login tokens</strong></td>
+</tr>
+<tr>
+<td>DB password <code>namastute</code></td>
+<td>local</td>
+<td>guessable</td>
+</tr>
+<tr>
+<td>Postgres/Redis ports open</td>
+<td>your tools connect</td>
+<td>open to the internet = attacked within hours</td>
+</tr>
+<tr>
+<td><code>http://</code></td>
+<td>fine</td>
+<td>logins readable on airport Wi-Fi</td>
+</tr>
+</tbody></table>
+<h3 id="542-configuration-the-twelve-factor-rule">54.2 Configuration: the Twelve-Factor rule</h3>
+<ul>
+<li><strong>The Twelve-Factor App</strong> (rules for server software), factor III: <strong>config in the environment</strong>. One image runs everywhere; only <strong>environment variables</strong> differ.</li>
+<li><strong>Spring profiles:</strong> <code>SPRING_PROFILES_ACTIVE=prod</code> loads <code>application-prod.yaml</code> on top of the defaults. <code>@Profile(&quot;!prod&quot;)</code> beans don&#39;t exist in prod.</li>
+<li><strong>Fail fast:</strong> in prod, secrets have <strong>no defaults</strong>, so a missing one stops the app at startup. A crash you see in 2 seconds beats a breach you find in 2 months.</li>
+<li><strong>Secrets never in git:</strong> on the server they live in an <code>.env</code> file only its owner can read (<code>chmod 600</code>). Generate with <code>openssl rand -base64 32</code>.</li>
+</ul>
+<h3 id="543-container-images">54.3 Container images</h3>
+<ul>
+<li><strong>Layers and caching:</strong> each Dockerfile step is a layer; unchanged layers are reused. Copy <code>pom.xml</code> / <code>package.json</code> and install dependencies <strong>before</strong> copying source code, so a code change doesn&#39;t re-download everything.</li>
+<li><strong>Multi-stage build:</strong> stage 1 has the full toolkit (JDK + Maven, or Node + pnpm) and builds; stage 2 is a slim runtime that only gets the result. Smaller image, no compiler or source on the server: a smaller <strong>attack surface</strong> (fewer things an attacker could use).</li>
+<li><strong>Non-root:</strong> the app runs as an ordinary user inside the container.</li>
+<li><strong>JVM memory:</strong> <code>-XX:MaxRAMPercentage=50</code> = &quot;use at most half of the container&#39;s memory limit&quot;.</li>
+<li><strong>Architecture:</strong> images are built per CPU type. <code>postgis/postgis:16-3.5</code> exists only for <strong>amd64</strong> (Intel/AMD), so the server must be Intel/AMD (e.g. t3), not ARM (t4g).</li>
+</ul>
+<h3 id="544-caddy-reverse-proxy-and-https">54.4 Caddy: reverse proxy and HTTPS</h3>
+<ul>
+<li><strong>Reverse proxy:</strong> a server in front of the app; only it faces the internet (ports 80/443) and forwards requests inside.</li>
+<li><strong>TLS</strong> = the encryption in HTTPS. Caddy <strong>terminates TLS</strong> (decrypts), then talks plain HTTP to the apps on Docker&#39;s private network.</li>
+<li><strong>Let&#39;s Encrypt</strong> gives free certificates; Caddy proves domain ownership on port 80 (the <strong>ACME</strong> protocol, HTTP-01 challenge), so the domain must point at the server first. For <code>localhost</code>, Caddy uses its own local certificate authority instead.</li>
+<li>WebSockets pass straight through. Postgres and Redis get <strong>no public ports</strong>.</li>
+</ul>
+<h3 id="545-the-real-client-ip-behind-a-proxy">54.5 The real client IP behind a proxy</h3>
+<ul>
+<li>Behind Caddy every request seems to come from Caddy, so the per-IP OTP limit would lump all users together.</li>
+<li>Caddy adds <strong><code>X-Forwarded-For</code></strong> with the real IP; Spring reads it with <code>server.forward-headers-strategy: native</code>.</li>
+<li>Anyone can send that header, so it&#39;s trusted <strong>only from private-network addresses</strong> (our Caddy container). Caddy itself also replaces any <code>X-Forwarded-For</code> sent by an untrusted client.</li>
+</ul>
+<h3 id="546-one-origin">54.6 One origin</h3>
+<ul>
+<li><strong>Decision (2026-10-14, replaces the &quot;web on Vercel&quot; plan of 16.1):</strong> web <strong>and</strong> API on the same EC2 server, under <strong>one domain</strong>. Caddy routes <code>/api/*</code> and <code>/ws</code> to Spring and everything else to Next.js.</li>
+<li>Why: Vercel&#39;s free plan is (as far as we know) personal and non-commercial, and Pro costs more than the server; all users are in Delhi, near the Mumbai region, so a global CDN adds little; <strong>one origin</strong> means no CORS, no cross-site WebSocket origin, no &quot;same-site&quot; cookie rule to satisfy; one place to deploy and back up. Cost: Next.js uses about 150–300 MB of the server&#39;s memory.</li>
+<li><strong>Next.js gotcha:</strong> <code>NEXT_PUBLIC_…</code> variables are copied into the JavaScript <strong>at build time</strong>: changing one means rebuilding the web image.</li>
+</ul>
+<h3 id="547-keeping-it-alive-and-safe">54.7 Keeping it alive and safe</h3>
+<ul>
+<li><code>restart: unless-stopped</code>; health checks on <code>/actuator/health</code>; <code>depends_on: condition: service_healthy</code>.</li>
+<li>Flyway runs migrations at startup.</li>
+<li><strong>Backups:</strong> data lives in a Docker volume; a nightly <code>pg_dump</code> from the server&#39;s cron (design §3.7), later copied to S3.</li>
+<li>No OTP codes in production logs: <code>LogSmsSender</code> doesn&#39;t exist there.</li>
+</ul>
+<h3 id="548-decisions-2026-10-14">54.8 Decisions (2026-10-14)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hosting</td>
+<td>Everything on one EC2 server, one domain (54.6)</td>
+</tr>
+<tr>
+<td>Local test</td>
+<td>Same production compose on the laptop at <code>https://localhost</code>, with a <code>fake-sms</code> profile that allows the log sender only for this test</td>
+</tr>
+<tr>
+<td>Real client IP</td>
+<td><code>server.forward-headers-strategy: native</code> in prod, trusting private-network proxies only</td>
+</tr>
+<tr>
+<td>CPU type</td>
+<td>Intel/AMD (<code>linux/amd64</code>), because the PostGIS image is amd64-only</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="55-code-walkthrough-the-production-build">55. Code walkthrough: the production build</h2>
+<h3 id="551-what-exists-now">55.1 What exists now</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>apps/api/Dockerfile</code></td>
+<td>API image: build the jar with the JDK, ship it on a slim JRE, non-root</td>
+</tr>
+<tr>
+<td><code>apps/web/Dockerfile</code></td>
+<td>Web image: build with pnpm, ship Next.js&#39;s standalone <code>server.js</code>, non-root</td>
+</tr>
+<tr>
+<td><code>apps/*/.dockerignore</code></td>
+<td>Keep <code>target/</code>, <code>node_modules/</code>, <code>.next/</code>, <code>.env*.local</code> out of the build</td>
+</tr>
+<tr>
+<td><code>apps/api/src/main/resources/application-prod.yaml</code></td>
+<td>Production settings; secrets with no defaults</td>
+</tr>
+<tr>
+<td><code>infra/docker-compose.prod.yml</code></td>
+<td>The whole server: Postgres, Redis, API, web, Caddy</td>
+</tr>
+<tr>
+<td><code>infra/Caddyfile</code></td>
+<td>HTTPS and routing for one domain</td>
+</tr>
+<tr>
+<td><code>infra/.env.example</code> + <code>infra/.gitignore</code></td>
+<td>Template for the server&#39;s secrets; the real <code>.env</code> is never committed</td>
+</tr>
+<tr>
+<td><code>infra/README.md</code></td>
+<td>Runbook: first-time setup, everyday commands, backups, restore</td>
+</tr>
+</tbody></table>
+<h3 id="552-appsapidockerfile">55.2 <code>apps/api/Dockerfile</code></h3>
+<pre><code class="language-dockerfile">FROM eclipse-temurin:21-jdk-alpine AS build
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
+RUN chmod +x mvnw &amp;&amp; ./mvnw -B -q dependency:go-offline
+COPY src src
+RUN ./mvnw -B -q package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S app &amp;&amp; adduser -S app -G app
+COPY --from=build /src/target/*.jar app.jar
+USER app
+ENV JAVA_TOOL_OPTIONS=&quot;-XX:MaxRAMPercentage=50&quot;
+ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
+</code></pre>
+<ul>
+<li><code>AS build</code> names stage 1; <code>COPY --from=build</code> takes only the jar into stage 2 (54.3).</li>
+<li><strong>Layer order:</strong> <code>pom.xml</code> + <code>dependency:go-offline</code> before <code>COPY src</code>, so code changes reuse the downloaded-libraries layer.</li>
+<li><code>chmod +x mvnw</code>: files copied from Windows may lose the &quot;executable&quot; flag.</li>
+<li><code>-DskipTests</code>: the tests need Postgres and Redis and already run in CI; the image build only packages.</li>
+<li><code>addgroup</code> / <code>adduser -S</code>: a <strong>system user</strong> with no password and no login shell; <code>USER app</code> makes everything after it run as that user.</li>
+<li><code>JAVA_TOOL_OPTIONS</code>: an environment variable every Java program reads at startup.</li>
+<li><code>-alpine</code> images: built on Alpine Linux, a very small distribution, so the image is smaller.</li>
+</ul>
+<h3 id="553-appswebdockerfile-and-nextconfigts">55.3 <code>apps/web/Dockerfile</code> and <code>next.config.ts</code></h3>
+<ul>
+<li><code>output: &quot;standalone&quot;</code> in <code>next.config.ts</code>: <code>next build</code> also produces <code>.next/standalone/server.js</code> plus only the files it needs (Next.js traces imports).</li>
+<li>Stage 1: <code>corepack enable</code> provides the exact pnpm from <code>package.json</code> (<code>&quot;packageManager&quot;: &quot;pnpm@11.1.2&quot;</code>); lockfile first, <code>pnpm install --frozen-lockfile</code>, then the source and <code>pnpm build</code>.</li>
+<li><code>ARG NEXT_PUBLIC_API_URL</code> → <code>ENV</code>: the API address is <strong>baked in at build time</strong> (54.6), so compose passes it as a build argument.</li>
+<li>Stage 2: copies <code>standalone/</code>, plus <code>.next/static</code> and <code>public/</code>, which <code>server.js</code> doesn&#39;t include by itself (the installed Next.js docs say so). <code>USER node</code> (the Node image&#39;s built-in non-root user); <code>HOSTNAME=0.0.0.0</code> so it listens on the container&#39;s network, not only inside itself.</li>
+</ul>
+<h3 id="554-application-prodyaml">55.4 <code>application-prod.yaml</code></h3>
+<ul>
+<li><code>password: ${DB_PASSWORD}</code>, <code>secret: ${JWT_SECRET}</code>, <code>hmac-secret: ${OTP_HMAC_SECRET}</code>, <code>web-origin: ${WEB_ORIGIN}</code>: <strong>no <code>:default</code></strong>, so a missing variable stops the app at startup (fail fast, 54.2).</li>
+<li><code>url: jdbc:postgresql://postgres:5432/namastute</code> and <code>redis.host: redis</code>: inside Docker&#39;s network, containers reach each other <strong>by service name</strong>.</li>
+<li><code>server.forward-headers-strategy: native</code>: Tomcat&#39;s <code>RemoteIpValve</code> replaces the &quot;remote address&quot; with <code>X-Forwarded-For</code>, but only when the request comes from a private-network address (54.5). <code>AuthController</code> still just calls <code>getRemoteAddr()</code>; no Java change was needed.</li>
+<li><code>LogSmsSender</code>: <code>@Profile(&quot;!prod | fake-sms&quot;)</code>: a profile <strong>expression</strong>, &quot;not prod, OR fake-sms is on&quot;. The real server runs <code>prod</code> alone, so no log sender exists there, and with no <code>SmsSender</code> at all the app refuses to start until a real one is written.</li>
+</ul>
+<h3 id="555-infradocker-composeprodyml">55.5 <code>infra/docker-compose.prod.yml</code></h3>
+<ul>
+<li><code>name: namastute-prod</code>: a separate project from dev, so their volumes never mix.</li>
+<li><code>${DB_PASSWORD:?set DB_PASSWORD in infra/.env}</code>: Compose&#39;s own fail-fast: refuse to start with that message if unset.</li>
+<li><strong>No <code>ports:</code></strong> on postgres, redis, api, web: only Caddy publishes 80 and 443.</li>
+<li><code>depends_on: condition: service_healthy</code>: the API waits for a healthy Postgres and Redis; Caddy waits for a healthy API.</li>
+<li>API health check: <code>wget -qO- http://localhost:8080/actuator/health</code> (Alpine includes <code>wget</code>); <code>start_period: 30s</code> gives Java time to start before failures count.</li>
+<li><code>restart: unless-stopped</code>: back up after crashes and reboots.</li>
+<li><code>mem_limit</code>: Postgres 512 MB, Redis 128 MB, API 768 MB (Java takes half), web 256 MB, Caddy 64 MB ≈ 1.7 GB, inside the 2 GB server.</li>
+<li><code>caddy_data</code> volume: keeps certificates across restarts (Let&#39;s Encrypt limits how often you can re-issue).</li>
+</ul>
+<h3 id="556-infracaddyfile">55.6 <code>infra/Caddyfile</code></h3>
+<pre><code>{$DOMAIN} {
+	encode zstd gzip
+	@api path /api/* /ws
+	handle @api {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+</code></pre>
+<ul>
+<li><code>{$DOMAIN}</code>: from the environment. A real domain → Let&#39;s Encrypt; <code>localhost</code> → Caddy&#39;s own local certificate.</li>
+<li><code>@api</code> is a <strong>named matcher</strong> (a reusable condition): paths <code>/api/*</code> and <code>/ws</code>.</li>
+<li><code>handle</code> blocks are tried in order: API paths to Spring, everything else to Next.js. <code>/actuator</code> matches neither API path, so it&#39;s <strong>not reachable</strong> from the internet (it falls to Next.js, which shows its 404).</li>
+<li><code>encode zstd gzip</code>: compress responses.</li>
+<li>HTTP → HTTPS redirects happen automatically.</li>
+</ul>
+<h3 id="557-forwardediptest">55.7 <code>ForwardedIpTest</code></h3>
+<ul>
+<li>Starts the real server (<code>RANDOM_PORT</code>), because MockMvc skips Tomcat, where forwarded headers are handled.</li>
+<li>Sends <code>POST /api/v1/auth/otp</code> with <code>X-Forwarded-For: 203.0.113.x</code> (a range reserved for documentation) and checks Redis has <code>rate:otp:ip:203.0.113.x</code>: counted against the client, not the proxy.</li>
+<li><strong>Proven to fail:</strong> with <code>forward-headers-strategy=none</code> the same test went red.</li>
+</ul>
+<h3 id="558-verified-the-production-stack-on-the-laptop">55.8 Verified: the production stack on the laptop</h3>
+<p><code>infra/.env</code> with <code>DOMAIN=localhost</code>, random secrets and <code>SPRING_PROFILES_ACTIVE=prod,fake-sms</code>; <code>docker compose ... up -d --build</code>. Both images built (API 445 MB, web 297 MB); all five containers healthy; <strong>only Caddy publishes ports</strong> (80, 443).</p>
+<table>
+<thead>
+<tr>
+<th>Check (from outside, through Caddy)</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>http://localhost/</code></td>
+<td>308 → <code>https://localhost/</code></td>
+</tr>
+<tr>
+<td><code>https://localhost/</code>, <code>/login</code></td>
+<td>200, Next.js pages</td>
+</tr>
+<tr>
+<td><code>/api/v1/terminals</code> without a token</td>
+<td>401 from Spring: routing works</td>
+</tr>
+<tr>
+<td><code>/actuator/health</code>, <code>/v3/api-docs</code></td>
+<td>404: not reachable from outside</td>
+</tr>
+<tr>
+<td>OTP request → code in the API log (fake-sms) → verify</td>
+<td>204 → 200; cookie <code>Secure; HttpOnly; SameSite=Lax; Path=/api/v1/auth</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/terminals</code> with the token</td>
+<td>200, DEL-T1/T2/T3: Flyway created and seeded the fresh database</td>
+</tr>
+<tr>
+<td>Redis rate-limit key</td>
+<td><code>rate:otp:ip:172.25.0.1</code> = the caller, <strong>not</strong> Caddy (172.25.0.6): real client IP works</td>
+</tr>
+<tr>
+<td>WebSocket handshake to <code>/ws</code></td>
+<td>101 from <code>https://localhost</code>, <strong>403</strong> from <code>https://evil.example</code></td>
+</tr>
+<tr>
+<td>API with <code>prod</code> but no <code>JWT_SECRET</code></td>
+<td>refuses to start: <code>Could not resolve placeholder &#39;JWT_SECRET&#39;</code></td>
+</tr>
+<tr>
+<td>API with pure <code>prod</code> (no fake-sms)</td>
+<td>refuses to start: <code>required a bean of type &#39;SmsSender&#39;</code></td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Not tested:</strong> the app in a browser at <code>https://localhost</code>. Browsers reject Caddy&#39;s <em>local</em> certificate unless its certificate authority is added to Windows&#39; trusted list, a system security change we skipped. On the real server, Let&#39;s Encrypt gives a certificate every browser trusts.</li>
+<li>Image versions were pinned after checking they exist and are a few weeks old: <code>eclipse-temurin:21-jdk/jre-alpine</code>, <code>node:24-alpine</code>, <code>caddy:2.11.4-alpine</code> (newer 2.11.6/2.11.7 were only days old).</li>
+</ul>
+<h3 id="559-whats-left-before-real-users">55.9 What&#39;s left before real users</h3>
+<ul>
+<li>An <code>SmsSender</code> for the chosen provider (MSG91 or Firebase): <strong>team decision</strong>.</li>
+<li>A domain, an EC2 t3.small in Mumbai with an Elastic IP, then <code>infra/README.md</code> from step 1.</li>
+<li>Off-server backup copies (S3), privacy policy and terms.</li>
+</ul>
+<hr>
+<h2 id="56-command-cheat-sheet">56. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -4543,6 +4828,12 @@ docker compose -f infra/docker-compose.yml exec redis redis-cli KEYS &quot;*&quo
 <h3 id="when-a-java-record-changes-api-types">When a Java record changes (API types)</h3>
 <pre><code class="language-bash">cd apps/api &amp;&amp; ./mvnw test          # rewrites apps/web/openapi.json
 cd ../web &amp;&amp; pnpm api:types         # regenerates lib/api-types.ts; then fix TypeScript errors and commit both files
+</code></pre>
+<h3 id="production-stack-from-namastute-details-in-infrareadmemd">Production stack (from <code>Namastute</code>; details in <code>infra/README.md</code>)</h3>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d --build   # build and start everything
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env ps             # healthy?
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env logs -f api    # follow API logs
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env down           # stop (keeps data)
 </code></pre>
 <h3 id="query-plans-inside-psql">Query plans (inside <code>psql</code>)</h3>
 <pre><code class="language-sql">explain &lt;query&gt;;                 -- the plan Postgres would use (doesn&#39;t run it)
@@ -4576,7 +4867,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="55-glossary">55. Glossary</h2>
+<h2 id="57-glossary">57. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -5372,9 +5663,61 @@ git fetch --prune
 <td>BOM</td>
 <td>Byte-order mark: invisible bytes at a file&#39;s start that some tools reject</td>
 </tr>
+<tr>
+<td>Twelve-Factor App</td>
+<td>Rules for server software; factor III: config lives in the environment</td>
+</tr>
+<tr>
+<td>Spring profile</td>
+<td>A named set of settings switched on with SPRING_PROFILES_ACTIVE</td>
+</tr>
+<tr>
+<td>Fail fast</td>
+<td>Stop at startup when something essential is missing, instead of running wrongly</td>
+</tr>
+<tr>
+<td>Multi-stage build</td>
+<td>A Dockerfile that builds in a big image and ships only the result in a small one</td>
+</tr>
+<tr>
+<td>Attack surface</td>
+<td>Everything an attacker could try to use; smaller is safer</td>
+</tr>
+<tr>
+<td>Reverse proxy</td>
+<td>A server in front of your apps that receives requests and forwards them</td>
+</tr>
+<tr>
+<td>TLS termination</td>
+<td>Decrypting HTTPS at the proxy, then forwarding plain HTTP privately</td>
+</tr>
+<tr>
+<td>Let&#39;s Encrypt / ACME</td>
+<td>Free certificate authority / the protocol for proving you own a domain</td>
+</tr>
+<tr>
+<td>X-Forwarded-For</td>
+<td>Header a proxy adds with the real client&#39;s IP address</td>
+</tr>
+<tr>
+<td>Standalone output</td>
+<td>Next.js build mode producing a small self-contained server.js</td>
+</tr>
+<tr>
+<td>Profile expression</td>
+<td>Spring condition like &quot;!prod | fake-sms&quot; (not prod, or fake-sms)</td>
+</tr>
+<tr>
+<td>Named matcher (Caddy)</td>
+<td>A reusable request condition, e.g. @api path /api/* /ws</td>
+</tr>
+<tr>
+<td>Runbook</td>
+<td>Step-by-step instructions for operating a system</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="56-interview-questions-to-practise">56. Interview questions to practise</h2>
+<h2 id="58-interview-questions-to-practise">58. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -5468,6 +5811,13 @@ git fetch --prune
 <li>Should generated files be committed? How does a CI drift check keep them honest?</li>
 <li>springdoc ignored @Nullable. How did we still get <code>string | null</code> in TypeScript, and why the 3.0 format?</li>
 <li>Why must a generated file be deterministic for a CI drift check to work?</li>
+<li>What does &quot;config in the environment&quot; mean, and why should production secrets have no defaults?</li>
+<li>Why use a multi-stage Docker build? What does running as non-root protect against?</li>
+<li>What does a reverse proxy like Caddy do, and how does it get a free HTTPS certificate?</li>
+<li>Behind a proxy every request seems to come from one IP. How do you get the real client IP safely?</li>
+<li>Why are NEXT_PUBLIC_ variables a deployment gotcha?</li>
+<li>How did we prove the production API refuses to start without a secret or a real SMS sender?</li>
+<li>Why can&#39;t MockMvc test forwarded-header handling, and what did we use instead?</li>
 </ol>
 
 
