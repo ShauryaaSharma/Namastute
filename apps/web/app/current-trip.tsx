@@ -2,20 +2,40 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { cancelTrip, getCurrentTrip, getMatches, type Match, type Trip } from "@/lib/api";
+import {
+  answerRequest,
+  askToShare,
+  cancelTrip,
+  getCurrentTrip,
+  getMatches,
+  getRequests,
+  type Match,
+  type ReceivedRequest,
+  type Requests,
+  type SentRequest,
+  type Trip,
+} from "@/lib/api";
+import { plural } from "@/lib/format";
 import { formatIst } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
+import GroupCard from "./group-card";
 
 // Your active trip, or a link to plan one. undefined = still loading, null = no active trip.
 export default function CurrentTrip() {
   const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
+  const [requests, setRequests] = useState<Requests>({ sent: [], received: [] });
+  const [version, setVersion] = useState(0); // bumped after every action, so the whole card reloads
+  const reload = () => setVersion((v) => v + 1);
   const { busy, error, run } = useAction();
 
   useEffect(() => {
-    getCurrentTrip()
-      .then(setTrip)
+    Promise.all([getCurrentTrip(), getRequests()])
+      .then(([t, r]) => {
+        setTrip(t);
+        setRequests(r);
+      })
       .catch(() => setTrip(null));
-  }, []);
+  }, [version]);
 
   if (trip === undefined) return null;
 
@@ -35,17 +55,25 @@ export default function CurrentTrip() {
       </p>
       <p>Outside at {formatIst(trip.exitAt)}</p>
       <p>
-        {trip.seats} seat{trip.seats > 1 ? "s" : ""}, {trip.bags} bag{trip.bags === 1 ? "" : "s"}
+        {plural(trip.seats, "seat")}, {plural(trip.bags, "bag")}
         {trip.flightNo ? `, flight ${trip.flightNo}` : ""} · about {trip.soloKm} km
       </p>
-      <Matches tripId={trip.id} />
-      <button
-        onClick={() => run(async () => { await cancelTrip(trip.id); setTrip(null); })}
-        disabled={busy}
-        className="mt-2 underline disabled:opacity-50"
-      >
-        {busy ? "Cancelling…" : "Cancel trip"}
-      </button>
+      {trip.status === "grouped" ? (
+        <GroupCard key={version} onChange={reload} />
+      ) : (
+        <Matches key={version} tripId={trip.id} asked={requests.sent.map((s) => s.toTripId)} onChange={reload} />
+      )}
+      <Received requests={requests.received} onChange={reload} />
+      <Sent requests={requests.sent} />
+      {trip.status === "searching" && (
+        <button
+          onClick={() => run(async () => { await cancelTrip(trip.id); setTrip(null); })}
+          disabled={busy}
+          className="mt-2 underline disabled:opacity-50"
+        >
+          {busy ? "Cancelling…" : "Cancel trip"}
+        </button>
+      )}
       <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
     </section>
   );
@@ -53,9 +81,10 @@ export default function CurrentTrip() {
 
 // People you could share a cab with, best first.
 // shortcut: loaded once when the page opens; reload for new matches. Push notifications come later (design 3.3 step 3).
-function Matches({ tripId }: { tripId: string }) {
+function Matches({ tripId, asked, onChange }: { tripId: string; asked: string[]; onChange: () => void }) {
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const { busy, error, run } = useAction();
 
   useEffect(() => {
     getMatches(tripId)
@@ -73,11 +102,68 @@ function Matches({ tripId }: { tripId: string }) {
     <div className="mt-2">
       <h3 className="font-semibold">People heading your way</h3>
       <ul className="mt-1 list-disc pl-5">
-        {matches.map((m, i) => (
-          // no ids on purpose (privacy), and the list never reorders while shown, so the index is a fine key
-          <li key={i}>
+        {matches.map((m) => (
+          <li key={m.tripId}>
             {m.firstName} · out {timing(m.minutesAfterYou)} · {m.destArea} ·{" "}
             {m.detourKm === 0 ? "no detour" : `${m.detourKm} km detour`}
+            {asked.includes(m.tripId) ? (
+              <span className="ml-2 text-sm">· asked</span>
+            ) : (
+              <button
+                onClick={() => run(async () => { await askToShare(m.tripId); onChange(); })}
+                disabled={busy}
+                aria-label={`Ask ${m.firstName} to share a cab`}
+                className="ml-2 underline disabled:opacity-50"
+              >
+                Ask to share
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+    </div>
+  );
+}
+
+// Requests you can answer: to you, or (once you're in a group) to anyone in it
+function Received({ requests, onChange }: { requests: ReceivedRequest[]; onChange: () => void }) {
+  const { busy, error, run } = useAction();
+  if (requests.length === 0) return null;
+
+  const answer = (id: string, a: "accept" | "decline") => run(async () => { await answerRequest(id, a); onChange(); });
+  return (
+    <div className="mt-3">
+      <h3 className="font-semibold">Want to share with you</h3>
+      <ul className="mt-1 list-disc pl-5">
+        {requests.map((r) => (
+          <li key={r.id}>
+            {r.firstName} · out {timing(r.minutesAfterYou)} · {r.destArea} · {plural(r.seats, "seat")}, {plural(r.bags, "bag")}
+            <button onClick={() => answer(r.id, "accept")} disabled={busy} aria-label={`Accept ${r.firstName}`}
+                    className="ml-2 underline disabled:opacity-50">
+              Accept
+            </button>
+            <button onClick={() => answer(r.id, "decline")} disabled={busy} aria-label={`Decline ${r.firstName}`}
+                    className="ml-2 underline disabled:opacity-50">
+              Decline
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+    </div>
+  );
+}
+
+function Sent({ requests }: { requests: SentRequest[] }) {
+  if (requests.length === 0) return null;
+  return (
+    <div className="mt-3">
+      <h3 className="font-semibold">Your requests</h3>
+      <ul className="mt-1 list-disc pl-5">
+        {requests.map((s) => (
+          <li key={s.id}>
+            {s.firstName} · {s.status === "pending" ? "waiting for an answer" : "declined"}
           </li>
         ))}
       </ul>

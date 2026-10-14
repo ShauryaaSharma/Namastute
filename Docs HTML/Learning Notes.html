@@ -79,14 +79,17 @@
 <details><summary><a href="#36-matching-two-stage-search-and-spatial-indexes">36. Matching: two-stage search and spatial indexes</a></summary><a class="sub" href="#361-the-problem">36.1 The problem</a><a class="sub" href="#362-two-stage-search">36.2 Two-stage search</a><a class="sub" href="#363-indexes-recap-b-tree-composite-partial">36.3 Indexes recap: B-tree, composite, partial</a><a class="sub" href="#364-why-a-b-tree-cant-do-near-this-point-and-what-gist-does">36.4 Why a B-tree can&#x27;t do &quot;near this point&quot;, and what GiST does</a><a class="sub" href="#365-st_dwithin-not-st_distance--x">36.5 ST_DWithin, not ST_Distance &lt; x</a><a class="sub" href="#366-reading-query-plans-explain">36.6 Reading query plans: EXPLAIN</a></details>
 <details><summary><a href="#37-matching-detours-pure-functions-privacy-n1">37. Matching: detours, pure functions, privacy, N+1</a></summary><a class="sub" href="#371-the-detour-model">37.1 The detour model</a><a class="sub" href="#372-worked-example-from-t3-my-destination-dlf-phase-3-my-solo-97-km">37.2 Worked example (from T3, my destination DLF Phase 3, my solo 9.7 km)</a><a class="sub" href="#373-pure-functions">37.3 Pure functions</a><a class="sub" href="#374-privacy-in-matching">37.4 Privacy in matching</a><a class="sub" href="#375-the-n1-query-problem">37.5 The N+1 query problem</a><a class="sub" href="#376-the-whole-request">37.6 The whole request</a></details>
 <details><summary><a href="#38-code-walkthrough-matching">38. Code walkthrough: matching</a></summary><a class="sub" href="#381-tripsmatchrankerjava-stage-2-the-pure-function">38.1 trips/MatchRanker.java: stage 2, the pure function</a><a class="sub" href="#382-tripstriprepositoryjava-stage-1-the-sql-prefilter">38.2 trips/TripRepository.java: stage 1, the SQL prefilter</a><a class="sub" href="#383-usersuserservicejava-names-in-one-query">38.3 users/UserService.java: names in one query</a><a class="sub" href="#384-tripstripservicejava-putting-the-stages-together">38.4 trips/TripService.java: putting the stages together</a><a class="sub" href="#385-tripstripcontrollerjava">38.5 trips/TripController.java</a><a class="sub" href="#386-tests">38.6 Tests</a><a class="sub" href="#387-web-libapits-and-appcurrent-triptsx">38.7 Web: lib/api.ts and app/current-trip.tsx</a><a class="sub" href="#388-verified-in-a-real-browser-two-users-one-tab-one-after-the-other">38.8 Verified in a real browser (two users, one tab, one after the other)</a><a class="sub" href="#389-explain-on-the-real-query-43-rows-in-the-dev-database">38.9 EXPLAIN on the real query (43 rows in the dev database)</a></details>
-<details><summary><a href="#39-command-cheat-sheet">39. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#40-glossary">40. Glossary</a>
-<a class="topic" href="#41-interview-questions-to-practise">41. Interview questions to practise</a>
+<details><summary><a href="#39-groups-state-machines-and-consent">39. Groups: state machines and consent</a></summary><a class="sub" href="#391-state-machines">39.1 State machines</a><a class="sub" href="#392-consent-suggestions-not-auto-assignment">39.2 Consent: suggestions, not auto-assignment</a><a class="sub" href="#393-what-a-member-may-see">39.3 What a member may see</a></details>
+<details><summary><a href="#40-concurrency-the-last-seat-race">40. Concurrency: the last-seat race</a></summary><a class="sub" href="#401-the-problem">40.1 The problem</a><a class="sub" href="#402-naive-way-check-then-act">40.2 Naive way: check, then act</a><a class="sub" href="#403-transactions-recap-acid">40.3 Transactions recap (ACID)</a><a class="sub" href="#404-the-fix-one-conditional-update-design-34">40.4 The fix: one conditional UPDATE (design §3.4)</a><a class="sub" href="#405-alternatives-interview-favourites">40.5 Alternatives (interview favourites)</a><a class="sub" href="#406-deadlocks">40.6 Deadlocks</a><a class="sub" href="#407-testing-a-race">40.7 Testing a race</a></details>
+<details><summary><a href="#41-code-walkthrough-groups-slice-2a">41. Code walkthrough: groups (slice 2a)</a></summary><a class="sub" href="#411-the-rules-we-chose-team-decisions-2026-10-14">41.1 The rules we chose (team decisions, 2026-10-14)</a><a class="sub" href="#412-v4__join_requestssql">41.2 V4__join_requests.sql</a><a class="sub" href="#413-tripstripservicejava-a-public-door-for-the-groups-module">41.3 trips/TripService.java: a public door for the groups module</a><a class="sub" href="#414-groupsgroupservicejava-plain-sql-with-jdbcclient">41.4 groups/GroupService.java: plain SQL with JdbcClient</a><a class="sub" href="#415-groupsgroupcontrollerjava">41.5 groups/GroupController.java</a><a class="sub" href="#416-tests-groupstest-9-tests-terminal-2-fresh-users-each-time">41.6 Tests: GroupsTest (9 tests, Terminal 2, fresh users each time)</a><a class="sub" href="#417-web">41.7 Web</a><a class="sub" href="#418-verified-in-a-real-browser-two-users-one-tab-one-after-the-other">41.8 Verified in a real browser (two users, one tab, one after the other)</a></details>
+<details><summary><a href="#42-command-cheat-sheet">42. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#43-glossary">43. Glossary</a>
+<a class="topic" href="#44-interview-questions-to-practise">44. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (matching: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-14 (groups slice 2a: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -128,9 +131,12 @@
 <li><a href="#36-matching-two-stage-search-and-spatial-indexes">Matching: two-stage search and spatial indexes</a></li>
 <li><a href="#37-matching-detours-pure-functions-privacy-n1">Matching: detours, pure functions, privacy, N+1</a></li>
 <li><a href="#38-code-walkthrough-matching">Code walkthrough: matching</a></li>
-<li><a href="#39-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#40-glossary">Glossary</a></li>
-<li><a href="#41-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#39-groups-state-machines-and-consent">Groups: state machines and consent</a></li>
+<li><a href="#40-concurrency-the-last-seat-race">Concurrency: the last-seat race</a></li>
+<li><a href="#41-code-walkthrough-groups-slice-2a">Code walkthrough: groups (slice 2a)</a></li>
+<li><a href="#42-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#43-glossary">Glossary</a></li>
+<li><a href="#44-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -3156,7 +3162,438 @@ List&lt;TripService.MatchView&gt; matches(@AuthenticationPrincipal Jwt jwt, @Pat
 </li>
 </ul>
 <hr>
-<h2 id="39-command-cheat-sheet">39. Command cheat sheet</h2>
+<h2 id="39-groups-state-machines-and-consent">39. Groups: state machines and consent</h2>
+<h3 id="391-state-machines">39.1 State machines</h3>
+<ul>
+<li>A <strong>state machine</strong> = a fixed list of <strong>states</strong> a thing can be in, plus the allowed <strong>transitions</strong> (arrows) between them. Anything not drawn is forbidden.</li>
+<li><strong>Naive way:</strong> a <code>status</code> column that any code can set to anything. Sooner or later a bug moves a <code>cancelled</code> group back to <code>open</code>, or a <code>done</code> trip to <code>searching</code>, and nobody notices.</li>
+<li>Our three machines (design §3.2):<ul>
+<li><strong>Trip:</strong> <code>searching → grouped</code> (accepted into a group) · <code>grouped → searching</code> (left before the group is locked) · <code>searching → cancelled / expired</code> · <code>grouped → done</code>.</li>
+<li><strong>Group:</strong> <code>open → locked</code> (someone is booking the cab: no more joins) · <code>open → cancelled</code> (last member leaves) · <code>locked → met → done</code> (later slices).</li>
+<li><strong>Member:</strong> <code>requested → accepted / declined</code> · <code>accepted → left / removed</code>.</li>
+</ul>
+</li>
+<li><strong>How the database enforces it:</strong> every transition is <strong>one conditional <code>UPDATE</code></strong> that names the state it starts from:<pre><code class="language-sql">update groups set status = &#39;locked&#39; where id = :id and status = &#39;open&#39;;
+</code></pre>
+If the group isn&#39;t <code>open</code> any more, <strong>0 rows</strong> change. The code checks the count and answers with an error, so an invalid transition can never sneak through. It&#39;s the same pattern as <code>cancel</code> in 35.5 (<code>... and status = &#39;searching&#39;</code>).</li>
+<li>⚠️ <strong>Two meanings of &quot;lock&quot;:</strong> a <strong>group lock</strong> (status <code>locked</code>: &quot;I&#39;m booking the cab, no more joins&quot;) is a product feature. A <strong>database lock</strong> (40.4) is how Postgres stops two transactions changing the same row at once. Same word, unrelated things.</li>
+</ul>
+<h3 id="392-consent-suggestions-not-auto-assignment">39.2 Consent: suggestions, not auto-assignment</h3>
+<ul>
+<li>Matching (slice 1) only <strong>suggests</strong>. Nobody ends up in a cab with a stranger without <strong>both sides agreeing</strong> (design §3.3, &quot;suggestions + consent&quot;): safety first; auto-assignment needs trust data we don&#39;t have yet.</li>
+<li><strong>Join request</strong> = &quot;I&#39;d like to share with you&quot;. It stays <strong>pending</strong> until the other side answers <strong>accept</strong> or <strong>decline</strong>.</li>
+<li><strong>Who answers (team decision, 2026-10-14): any accepted member</strong> of the group, not only its creator. Faster at the airport, and a group never gets stuck because one person stopped looking at their phone.</li>
+<li>The newcomer consented by asking; one existing member consents by accepting. Every join needs both.</li>
+<li>All the group rules we chose (who locks, leaving, reasons, reports) are in the table in 41.1.</li>
+</ul>
+<h3 id="393-what-a-member-may-see">39.3 What a member may see</h3>
+<ul>
+<li>Before joining: first name, area, timing, seats, bags (37.4).</li>
+<li><strong>After</strong> being accepted into a group: the other members&#39; first names, areas, seats and bags, and the booker&#39;s <strong>UPI ID</strong> (design: &quot;shown only to group members&quot;; it&#39;s needed to pay your share). Still never phone numbers or exact destinations.</li>
+<li>To ask someone, the app needs a <strong>handle</strong> for their trip: its random UUID. An <strong>opaque id</strong> like this isn&#39;t personal data. It tells you nothing about the person, and every endpoint that takes it checks who&#39;s asking.</li>
+</ul>
+<hr>
+<h2 id="40-concurrency-the-last-seat-race">40. Concurrency: the last-seat race</h2>
+<h3 id="401-the-problem">40.1 The problem</h3>
+<ul>
+<li>A group: capacity 4, <strong>3 seats taken</strong>. Two pending requests: Chirag (1 seat) and Divya (1 seat).</li>
+<li>Asha accepts Chirag at the <strong>same moment</strong> Bilal accepts Divya. Both are allowed to (any member, 39.2). Only <strong>one</strong> of them may succeed.</li>
+<li><strong>Concurrency:</strong> two pieces of work running <strong>at the same time</strong> and touching the same data. Every web server does this: each request runs on its own <strong>thread</strong> (a separate line of execution inside the same program).</li>
+</ul>
+<h3 id="402-naive-way-check-then-act">40.2 Naive way: check, then act</h3>
+<pre><code class="language-java">Group g = groups.findById(id);                 // 1. read: seatsTaken = 3
+if (g.seatsTaken() + 1 &gt; g.capacity()) throw ...;   // 2. check: 3 + 1 ≤ 4, fine
+g.setSeatsTaken(g.seatsTaken() + 1);           // 3. act: write 4
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>Asha&#39;s request</th>
+<th>Bilal&#39;s request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>reads 3</td>
+<td></td>
+</tr>
+<tr>
+<td>t2</td>
+<td></td>
+<td>reads 3</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>3 + 1 ≤ 4 ✓</td>
+<td></td>
+</tr>
+<tr>
+<td>t4</td>
+<td></td>
+<td>3 + 1 ≤ 4 ✓</td>
+</tr>
+<tr>
+<td>t5</td>
+<td>writes 4, Chirag accepted</td>
+<td></td>
+</tr>
+<tr>
+<td>t6</td>
+<td></td>
+<td>writes 4, Divya accepted</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Five people</strong> in a 4-seat car, and the database says 4. Bilal&#39;s write silently overwrote Asha&#39;s: a <strong>lost update</strong>.</li>
+<li>This bug class is called <strong>check-then-act</strong> (or <strong>TOCTOU</strong>, time-of-check to time-of-use): the fact you checked was already stale when you acted on it. It passes every normal test and appears only under real traffic (the same idea as the &quot;one active trip&quot; race in 34.4, and the double refresh in 29.4).</li>
+</ul>
+<h3 id="403-transactions-recap-acid">40.3 Transactions recap (ACID)</h3>
+<ul>
+<li>A <strong>transaction</strong> groups statements so they <strong>all happen or none do</strong> (31.3). The four guarantees, <strong>ACID</strong>:<ul>
+<li><strong>Atomic:</strong> all or nothing.</li>
+<li><strong>Consistent:</strong> constraints (<code>check</code>, <code>unique</code>, foreign keys) hold after every commit.</li>
+<li><strong>Isolated:</strong> concurrent transactions don&#39;t see each other&#39;s half-finished work.</li>
+<li><strong>Durable:</strong> once committed, it survives a crash.</li>
+</ul>
+</li>
+<li>Accepting someone is <strong>three changes</strong> that must succeed together: the request becomes <code>accepted</code>, the group gets the seats, the newcomer&#39;s trip becomes <code>grouped</code>. If any one fails → <strong>roll back</strong> all three.</li>
+<li><strong><code>@Transactional</code> in Spring:</strong><ul>
+<li>Rolls back automatically when the method throws an <strong>unchecked</strong> exception (<code>RuntimeException</code>, e.g. our <code>ApiException</code>); checked exceptions don&#39;t roll back by default.</li>
+<li>Works through a <strong>proxy</strong>: Spring wraps the bean and starts/commits the transaction around each call <strong>from outside</strong>. A method calling another <code>@Transactional</code> method <strong>in the same class</strong> skips the proxy (<strong>self-invocation</strong>) and gets no transaction of its own.</li>
+<li>Remember 24.4: there we deliberately <em>didn&#39;t</em> use <code>@Transactional</code>, because the &quot;revoke all sessions&quot; had to survive the exception. Here we <em>want</em> the rollback.</li>
+</ul>
+</li>
+<li><strong>But &quot;isolated&quot; doesn&#39;t fix 40.2 on its own.</strong> Postgres&#39;s default isolation level, <strong>READ COMMITTED</strong>, lets two transactions read the same &quot;3&quot; at the same time. Isolation hides <em>uncommitted</em> changes; it doesn&#39;t stop two transactions making decisions from the same old value.</li>
+</ul>
+<h3 id="404-the-fix-one-conditional-update-design-34">40.4 The fix: one conditional <code>UPDATE</code> (design §3.4)</h3>
+<pre><code class="language-sql">update groups
+set seats_taken = seats_taken + :seats, bags_taken = bags_taken + :bags
+where id = :group and status = &#39;open&#39;
+  and seats_taken + :seats &lt;= capacity;
+</code></pre>
+<ul>
+<li>The <strong>check and the change are one statement</strong>, so there&#39;s no gap between them.</li>
+<li><strong>Row lock:</strong> when an <code>UPDATE</code> changes a row, Postgres <strong>locks that row</strong> until the transaction ends. A second <code>UPDATE</code> on the same row <strong>waits</strong>.</li>
+<li>When it&#39;s allowed to continue, Postgres <strong>re-checks the <code>WHERE</code> against the new, committed row</strong> (READ COMMITTED behaviour for updates). Bilal&#39;s update now sees <code>seats_taken = 4</code>, <code>4 + 1 ≤ 4</code> is false → <strong>0 rows</strong> → &quot;the group just filled up&quot; (409).<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>Asha</th>
+<th>Bilal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td><code>UPDATE</code> matches, locks row, 3 → 4</td>
+<td></td>
+</tr>
+<tr>
+<td>t2</td>
+<td></td>
+<td><code>UPDATE</code> waits for the lock</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>commit</td>
+<td></td>
+</tr>
+<tr>
+<td>t4</td>
+<td></td>
+<td>re-checks: 4 + 1 ≤ 4? No → 0 rows → 409 <code>GROUP_FULL</code>, roll back</td>
+</tr>
+</tbody></table>
+</li>
+<li><strong>Last line of defence:</strong> the table&#39;s <code>check (seats_taken &lt;= capacity)</code> refuses any write that would overfill a group, even from buggy code.</li>
+<li>The same trick protects the newcomer: <code>update trip_requests set status = &#39;grouped&#39; where id = :trip and status = &#39;searching&#39;</code>. If two groups accept the same person at once, only one update finds the trip still <code>searching</code>.</li>
+</ul>
+<h3 id="405-alternatives-interview-favourites">40.5 Alternatives (interview favourites)</h3>
+<ul>
+<li><strong>Pessimistic locking:</strong> <code>select ... for update</code> locks the row <strong>while you read it</strong>; others wait until you commit. Then check and update in Java. Correct, but the lock is held across more code, and it&#39;s easy to forget the <code>for update</code> on one path.</li>
+<li><strong>Optimistic locking:</strong> add a <code>version</code> column (JPA <code>@Version</code>). Every update says <code>where version = :old</code> and bumps it. If someone else changed the row first, 0 rows → <code>OptimisticLockException</code> → <strong>retry</strong> the whole operation. Great when conflicts are rare and the logic is complex.</li>
+<li><strong>Why the conditional <code>UPDATE</code> wins here:</strong> the whole check-and-change fits in <strong>one statement</strong>: no explicit locks, no retries, no version column.</li>
+</ul>
+<h3 id="406-deadlocks">40.6 Deadlocks</h3>
+<ul>
+<li><strong>Deadlock:</strong> transaction 1 holds row A and waits for row B; transaction 2 holds B and waits for A. Neither can ever continue.</li>
+<li>Postgres <strong>detects</strong> it (after about 1 second) and kills one of them with an error; the other proceeds.</li>
+<li><strong>Prevention:</strong> always lock rows in the <strong>same order</strong> in every code path. For accept: the group row first, then member rows, then trips.</li>
+</ul>
+<h3 id="407-testing-a-race">40.7 Testing a race</h3>
+<ul>
+<li>Normal tests run one request at a time, so they <strong>never</strong> catch races. Design §3.4 asks for this test: <strong>10 threads accept at once into a group with 1 free seat; exactly 1 must succeed.</strong></li>
+<li>Tools from Java&#39;s standard library (<code>java.util.concurrent</code>):<ul>
+<li><strong><code>ExecutorService</code>:</strong> a pool of threads that run tasks you submit.</li>
+<li><strong><code>CountDownLatch</code>:</strong> a gate. Every thread waits on <code>latch.await()</code>; one <code>countDown()</code> opens it, so all 10 start at the same instant (more overlap = more chance to expose a bug).</li>
+<li><strong><code>AtomicInteger</code>:</strong> a counter that&#39;s safe to increase from many threads at once (a plain <code>int++</code> from 10 threads can lose increments: the same lost-update problem, in Java memory).</li>
+</ul>
+</li>
+<li>It must run against <strong>real Postgres</strong>, because the protection lives in the database. We use the dev database, like the other integration tests; many projects use <strong>Testcontainers</strong> (a throwaway database in Docker per test run).</li>
+<li><strong>Prove the test can fail:</strong> temporarily replace the conditional <code>UPDATE</code> with the naive check-then-act and confirm the test goes red. A race test that has never failed proves nothing.</li>
+</ul>
+<hr>
+<h2 id="41-code-walkthrough-groups-slice-2a">41. Code walkthrough: groups (slice 2a)</h2>
+<h3 id="411-the-rules-we-chose-team-decisions-2026-10-14">41.1 The rules we chose (team decisions, 2026-10-14)</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What a request links</td>
+<td><strong>Your trip → their trip.</strong> The group is created only when someone says yes, so asking never hides you from other people&#39;s matches</td>
+</tr>
+<tr>
+<td>Who answers</td>
+<td>Person asked is alone → <strong>only them</strong>. Person asked is in a group → <strong>any accepted member</strong></td>
+</tr>
+<tr>
+<td>Group maker</td>
+<td>The <strong>first asker</strong>. The maker is the <strong>booker</strong> (<code>groups.booker_id</code>) and the only one who can <strong>lock</strong></td>
+</tr>
+<tr>
+<td>Leaving an open group</td>
+<td>Allowed, no reason needed. You go back to <code>searching</code></td>
+</tr>
+<tr>
+<td>Leaving a locked group</td>
+<td>Allowed, but a <strong>reason is required</strong>. The group sees it as an update; if a member (not the booker) leaves, it is also filed as a <strong>report on the booker</strong></td>
+</tr>
+<tr>
+<td>Maker leaves</td>
+<td>The <strong>longest-standing</strong> member becomes maker/booker, and a locked group <strong>re-opens</strong></td>
+</tr>
+<tr>
+<td>Fewer than 2 left</td>
+<td>Group <strong>cancelled</strong>, the last person goes back to <code>searching</code></td>
+</tr>
+<tr>
+<td>Several requests</td>
+<td>Allowed. When one is accepted, your other pending requests are <strong>withdrawn</strong> in the same transaction</td>
+</tr>
+<tr>
+<td>Ask again after &quot;no&quot;</td>
+<td>Not with the same trip (<code>unique (from_trip_id, to_trip_id)</code>)</td>
+</tr>
+<tr>
+<td>Locking</td>
+<td>Waiting requests to the group get <strong>declined</strong></td>
+</tr>
+</tbody></table>
+<ul>
+<li>Slice <strong>2b</strong> (next): open groups appear in matches, with a 3–4 drop route in the ranker.</li>
+</ul>
+<h3 id="412-v4__join_requestssql">41.2 <code>V4__join_requests.sql</code></h3>
+<pre><code class="language-sql">create table join_requests (
+  id           uuid primary key default gen_random_uuid(),
+  from_trip_id uuid not null references trip_requests,
+  to_trip_id   uuid not null references trip_requests,
+  status       text not null default &#39;pending&#39; check (status in (&#39;pending&#39;,&#39;accepted&#39;,&#39;declined&#39;,&#39;withdrawn&#39;)),
+  created_at   timestamptz not null default now(),
+  unique (from_trip_id, to_trip_id)
+);
+create index join_requests_to on join_requests (to_trip_id) where status = &#39;pending&#39;;
+</code></pre>
+<ul>
+<li><code>references trip_requests</code>: a <strong>foreign key</strong>; a request can only point at trips that exist.</li>
+<li><code>status text</code> + <code>check (...)</code>: a small state machine without a Postgres enum (same style as <code>messages.kind</code>). Text + check is easier to change later than an enum.</li>
+<li><code>unique (from_trip_id, to_trip_id)</code>: the database refuses a second request from the same trip to the same trip (→ 409 <code>ALREADY_ASKED</code>).</li>
+<li>The partial index makes &quot;requests waiting for this trip&quot; fast, and stays small.</li>
+<li><code>group_members.status = &#39;requested&#39;</code> from V1 stays unused: requests live here instead (41.1, row 1).</li>
+</ul>
+<h3 id="413-tripstripservicejava-a-public-door-for-the-groups-module">41.3 <code>trips/TripService.java</code>: a public door for the groups module</h3>
+<ul>
+<li><code>public class TripService</code> (was package-private): the groups module needs it. Only the methods marked <strong>public</strong> are usable from outside; everything else stays inside <code>trips</code>.</li>
+<li><code>public record TripSummary(id, userId, terminalId, exitAt, destArea, seats, bags, status)</code>: what groups may know about a trip. Not the exact destination.</li>
+<li><code>activeTrip(userId)</code>: your searching or grouped trip, ignoring stale ones (same filter as <code>current()</code>).</li>
+<li><code>summaries(ids)</code>: many trips in <strong>one</strong> query (<code>findAllById</code>, no N+1).</li>
+<li><code>markGrouped(ids)</code> / <code>markSearching(ids)</code>: the trip state machine&#39;s two moves for groups:<pre><code class="language-sql">update trip_requests set status = &#39;grouped&#39; where id in (:ids) and status = &#39;searching&#39;
+</code></pre>
+They return <strong>how many rows changed</strong>; the caller compares with what it expected (40.4).</li>
+<li><code>MatchView</code> gains <code>tripId</code>: the <strong>opaque handle</strong> used by &quot;Ask to share&quot; (39.3). <code>MatchesTest</code> now expects 7 fields.</li>
+<li><code>users/UserService.upiId(id)</code>: public, used only to show the booker&#39;s UPI ID to members.</li>
+</ul>
+<h3 id="414-groupsgroupservicejava-plain-sql-with-jdbcclient">41.4 <code>groups/GroupService.java</code>: plain SQL with <code>JdbcClient</code></h3>
+<ul>
+<li><strong>Why not JPA here?</strong> Almost every step is a conditional <code>UPDATE</code> whose row count matters. Spring&#39;s <strong><code>JdbcClient</code></strong> runs SQL directly with a fluent API:<pre><code class="language-java">db.sql(&quot;update ... where id = ? and status = &#39;pending&#39;&quot;).param(requestId).update()   // → rows changed
+db.sql(&quot;select ...&quot;).param(x).query(Pending.class).optional()                        // → Optional&lt;Pending&gt;
+</code></pre>
+<ul>
+<li><code>.query(SomeRecord.class)</code> maps columns to a record by name: <code>from_trip_id</code> → <code>fromTripId</code>.</li>
+<li><code>?</code> = positional parameter; <code>:name</code> + <code>.param(&quot;name&quot;, v)</code> = named, handy when a value appears twice.</li>
+</ul>
+</li>
+<li><code>returning id</code> / <code>returning trip_id</code>: Postgres hands back a value from the row it just inserted or updated, so there&#39;s no second query.</li>
+</ul>
+<p><strong><code>ask(userId, toTripId)</code></strong></p>
+<ol>
+<li><code>searchingTrip(userId)</code>: you need a trip that&#39;s still <code>searching</code> (else 409 <code>NO_SEARCHING_TRIP</code>).</li>
+<li>Their trip must exist, not be yours, be at the same terminal, and be <code>searching</code> <strong>or</strong> in a group that&#39;s still <code>open</code> (else 404).</li>
+<li><code>insert ... returning id</code>; <code>DuplicateKeyException</code> (the unique constraint) → 409 <code>ALREADY_ASKED</code>.</li>
+</ol>
+<p><strong><code>requests(userId)</code></strong>: two lists:</p>
+<ul>
+<li><code>sent</code>: your requests that are <code>pending</code> or <code>declined</code>, with the target&#39;s first name.</li>
+<li><code>received</code>: pending requests <strong>to your trip, or to any accepted member of your open group</strong>:<pre><code class="language-sql">where r.status = &#39;pending&#39; and (r.to_trip_id = :trip or r.to_trip_id in (
+    select m2.trip_id from group_members m
+    join groups g on g.id = m.group_id and g.status = &#39;open&#39;
+    join group_members m2 on m2.group_id = m.group_id and m2.status = &#39;accepted&#39;
+    where m.trip_id = :trip and m.status = &#39;accepted&#39;))
+</code></pre>
+The subquery reads: &quot;the trips of everyone in the open group that my trip belongs to&quot;. Names and trips are then loaded in one query each.</li>
+</ul>
+<p><strong><code>accept(userId, requestId)</code></strong>: <code>@Transactional</code>, so it&#39;s all or nothing:</p>
+<ol>
+<li><code>pendingRequest(id)</code>: still pending? Else 404.</li>
+<li><code>answerableGroup(userId, to)</code>: the <strong>who-answers rule</strong>. If the person asked is in a group, the caller must be an accepted member; if they&#39;re alone, the caller must <strong>be</strong> them. Anyone else gets the same 404 as a missing request.</li>
+<li><strong>Alone → the group is born:</strong><ul>
+<li><code>trips.markGrouped([from, to]) != 2</code> → 409. Both trips in <strong>one</strong> statement: if Keshav and Asha asked each other and both press Accept, the two rows are locked in the same order → no deadlock (40.6).</li>
+<li><code>insert into groups (...) returning id</code> with <code>booker_id = from.userId()</code>: <strong>the asker is the maker</strong>. Then Asha&#39;s member row.</li>
+</ul>
+</li>
+<li><strong>The last-seat statement</strong> (40.4): adds the newcomer&#39;s seats and bags only if the group is <code>open</code> and they fit; <code>meet_at = greatest(meet_at, :exitAt)</code> keeps the meeting time at the latest exit. 0 rows → 409 <code>GROUP_FULL</code>.</li>
+<li>Request → <code>accepted</code> (0 rows: someone else answered first → 409).</li>
+<li>Joining an existing group: the newcomer&#39;s trip <code>searching → grouped</code> (0 rows: they just joined elsewhere → 409).</li>
+<li><code>addMember</code>: <code>insert ... on conflict (group_id, user_id) do update ...</code> is an <strong>upsert</strong>: insert, or update if the row exists (someone who left and is accepted again).</li>
+<li>Withdraw both people&#39;s other pending requests.</li>
+</ol>
+<ul>
+<li>Any <code>throw</code> in steps 3–8 <strong>rolls back everything before it</strong>. Proven by <code>tooBigForOneCarIsRefusedAndNothingChanges</code>: the group insert and both trip updates vanish.</li>
+</ul>
+<p><strong><code>decline</code></strong>: same who-answers check, then <code>pending → declined</code>.</p>
+<p><strong><code>lock(userId, groupId)</code></strong>: one statement does the whole permission check: <code>... where id = ? and status = &#39;open&#39; and booker_id = ?</code>. Not the maker, or not open → 0 rows → 409 <code>CANNOT_LOCK</code>. Then waiting requests to the members are declined.</p>
+<p><strong><code>leave(userId, groupId, reason)</code></strong>: <code>@Transactional</code>:</p>
+<ol>
+<li><code>select status, booker_id ... for update</code>: <strong>pessimistic lock</strong> on the group row (40.5). We read, then make several decisions; nobody can accept, lock or leave this group until we commit.</li>
+<li>Locked and no reason → 400 <code>REASON_REQUIRED</code> (checked before any write).</li>
+<li>Member row <code>accepted → left</code> (<code>returning trip_id</code>); free their seats and bags; trip <code>grouped → searching</code>.</li>
+<li>Remaining members, oldest first (<code>order by created_at, user_id</code>):<ul>
+<li>fewer than 2 → group <code>cancelled</code> (seats reset to 0), the last person <code>left</code> and back to <code>searching</code>;</li>
+<li>else, if the leaver was the booker → <code>booker_id</code> = the longest-standing member, <code>status = &#39;open&#39;</code> (re-opens a locked group).</li>
+</ul>
+</li>
+<li>Was locked → system message &quot;Name left: reason&quot;; if the leaver wasn&#39;t the booker → <code>insert into reports (...)</code>.</li>
+</ol>
+<ul>
+<li><code>shortcut:</code> the groups module writes <code>messages</code> (owned by chat) and <code>reports</code> (owned by feedback) directly, because those modules don&#39;t exist yet.</li>
+</ul>
+<p><strong><code>current(userId)</code></strong>: your group: status, <code>youAreBooker</code>, the booker&#39;s UPI ID, members (first name, area, seats, bags, booker?, you?) and the 5 newest updates.</p>
+<h3 id="415-groupsgroupcontrollerjava">41.5 <code>groups/GroupController.java</code></h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST /api/v1/requests</code> <code>{toTripId}</code></td>
+<td>201 <code>{id}</code></td>
+</tr>
+<tr>
+<td><code>GET /api/v1/requests</code></td>
+<td><code>{sent, received}</code></td>
+</tr>
+<tr>
+<td><code>POST /api/v1/requests/{id}/accept</code> · <code>/decline</code></td>
+<td>204</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/groups/current</code></td>
+<td>200 or 204</td>
+</tr>
+<tr>
+<td><code>POST /api/v1/groups/{id}/lock</code></td>
+<td>204</td>
+</tr>
+<tr>
+<td><code>POST /api/v1/groups/{id}/leave</code> <code>{reason?}</code></td>
+<td>204</td>
+</tr>
+</tbody></table>
+<ul>
+<li><code>@RequestBody(required = false)</code>: leave may have no body at all (open group).</li>
+<li><code>@Size(max = 300)</code> on the reason: validated before the service runs.</li>
+</ul>
+<h3 id="416-tests-groupstest-9-tests-terminal-2-fresh-users-each-time">41.6 Tests: <code>GroupsTest</code> (9 tests, Terminal 2, fresh users each time)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>askThenAcceptFormsAGroupWithTheAskerAsMaker</code></td>
+<td>the group is born on accept; asker = booker; members see the booker&#39;s UPI; trips <code>grouped</code>; the asker&#39;s other request withdrawn</td>
+</tr>
+<tr>
+<td><code>whileAloneOnlyThePersonAskedCanAnswer</code></td>
+<td>a stranger and the asker himself get 404</td>
+</tr>
+<tr>
+<td><code>anyMemberCanAnswerForTheGroup</code></td>
+<td>Neha asks Asha, <strong>Keshav</strong> accepts → 3 members</td>
+</tr>
+<tr>
+<td><code>tooBigForOneCarIsRefusedAndNothingChanges</code></td>
+<td>3 + 3 seats → 409, and the <strong>rollback</strong> leaves no group and both trips <code>searching</code></td>
+</tr>
+<tr>
+<td><code>onlyTheMakerLocksAndLockingDeclinesWaitingRequests</code></td>
+<td>Asha can&#39;t lock, Keshav can; Neha&#39;s request declined; locked group takes no new requests</td>
+</tr>
+<tr>
+<td><code>leavingALockedGroupNeedsAReasonAndReportsTheBooker</code></td>
+<td>400 without reason; with reason: update shown, report filed, group stays locked</td>
+</tr>
+<tr>
+<td><code>whenTheMakerLeavesTheLongestStandingMemberTakesOverAndTheGroupReopens</code></td>
+<td>Asha becomes booker, group <code>open</code>, no report</td>
+</tr>
+<tr>
+<td><code>aGroupOfTwoIsCancelledWhenOneLeaves</code></td>
+<td>the last member goes back to searching</td>
+</tr>
+<tr>
+<td><code>lastSeatRace</code></td>
+<td><strong>10 threads, 1 free seat → exactly 1 success</strong>, 9 × <code>GROUP_FULL</code>, <code>seats_taken = 4</code></td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>The race test was proven to fail:</strong> with the naive read-check-write code swapped in (plus a 50 ms pause to widen the gap), it went red: <strong>10 successes instead of 1</strong>. The real code was then restored and passed again.</li>
+<li><code>CopyOnWriteArrayList</code>: a list that&#39;s safe to add to from many threads (for the failure codes).</li>
+<li>The threads call <code>groups.accept(...)</code> directly (not over HTTP): each call still goes through Spring&#39;s proxy, so each gets its own transaction.</li>
+</ul>
+<h3 id="417-web">41.7 Web</h3>
+<ul>
+<li><code>lib/api.ts</code>: types <code>SentRequest</code>, <code>ReceivedRequest</code>, <code>Requests</code>, <code>GroupMember</code>, <code>Group</code>; calls <code>askToShare</code>, <code>getRequests</code>, <code>answerRequest(id, &quot;accept&quot; | &quot;decline&quot;)</code>, <code>getCurrentGroup</code>, <code>lockGroup</code>, <code>leaveGroup</code>.</li>
+<li><code>lib/format.ts</code>: <code>plural(2, &quot;bag&quot;)</code> → &quot;2 bags&quot;, shared by both cards (its own file avoids a <strong>circular import</strong> between <code>current-trip.tsx</code> and <code>group-card.tsx</code>).</li>
+<li><code>app/current-trip.tsx</code>:<ul>
+<li>Loads the trip <strong>and</strong> requests together with <code>Promise.all([...])</code>: both requests run at the same time.</li>
+<li><code>version</code> state + <code>reload()</code>: every action bumps the number; the effect depends on it, and <code>key={version}</code> on child cards <strong>remounts</strong> them, so everything refetches. Simple and always consistent.</li>
+<li>Searching → matches with <strong>Ask to share</strong> (or &quot;· asked&quot;); grouped → <code>GroupCard</code>; plus &quot;Want to share with you&quot; (Accept/Decline) and &quot;Your requests&quot;.</li>
+<li>&quot;Cancel trip&quot; only while searching (a grouped trip must leave the group first).</li>
+</ul>
+</li>
+<li><code>app/group-card.tsx</code>: members with &quot;(booker)&quot; and &quot;You&quot;, &quot;Pay your share to the booker&#39;s UPI ID&quot;, updates, <strong>Lock</strong> (booker, open group only), the reason box once locked, <strong>Leave</strong>. The reason is checked in the browser for a quick message, and again by the API.</li>
+<li><code>const g = group;</code> after the <code>if (!group) return null</code>: TypeScript forgets the &quot;not null&quot; narrowing inside nested functions; copying into a <code>const</code> keeps it.</li>
+</ul>
+<h3 id="418-verified-in-a-real-browser-two-users-one-tab-one-after-the-other">41.8 Verified in a real browser (two users, one tab, one after the other)</h3>
+<ul>
+<li><strong>Keshav</strong> plans T3 → Sector 25A, out 11:36.</li>
+<li><strong>Asha</strong> plans T3 → Sector 29, out 11:46 → sees Keshav with <strong>Ask to share</strong> → clicks → &quot;· asked&quot; and &quot;Your requests: केशव · waiting for an answer&quot;.</li>
+<li><strong>Keshav</strong> sees &quot;Want to share with you: Asha … [Accept] [Decline]&quot; → Accept → &quot;Your cab group: <strong>Asha (booker)</strong>, You · Pay your share to the booker&#39;s UPI ID: asha.rao@okaxis&quot;. No Lock button for him, no Cancel trip.</li>
+<li><strong>Asha</strong> sees &quot;You (booker)&quot; + <strong>Lock</strong> → locks → &quot;locked, the booker is booking the cab&quot;.</li>
+<li><strong>Keshav</strong> clicks Leave with an empty reason → &quot;Tell your group why you&#39;re leaving.&quot; → with &quot;Booker not answering&quot; → back to searching, Asha in his matches again.</li>
+<li>Database: group <code>cancelled</code> (2 → 1), report केशव → Asha &quot;Booker not answering&quot;, message &quot;केशव left: Booker not answering&quot;, both trips <code>searching</code>.</li>
+<li><strong>Found and fixed during the test:</strong> the reason box had no accessible name for screen readers (label now linked with <code>htmlFor</code>/<code>id</code>), and a cancelled group kept <code>seats_taken = 1</code> (now reset to 0).</li>
+</ul>
+<hr>
+<h2 id="42-command-cheat-sheet">42. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -3202,7 +3639,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="40-glossary">40. Glossary</h2>
+<h2 id="43-glossary">43. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -3686,9 +4123,109 @@ git fetch --prune
 <td>Self-join</td>
 <td>A table joined with itself under two names (<code>me</code> and <code>t</code>)</td>
 </tr>
+<tr>
+<td>State machine</td>
+<td>A fixed set of states plus the allowed transitions between them</td>
+</tr>
+<tr>
+<td>Transition</td>
+<td>One allowed move between states, e.g. <code>open → locked</code></td>
+</tr>
+<tr>
+<td>Join request</td>
+<td>&quot;I&#39;d like to share with you&quot;: pending until accepted or declined</td>
+</tr>
+<tr>
+<td>Opaque id</td>
+<td>A random identifier that reveals nothing about the person (a UUID)</td>
+</tr>
+<tr>
+<td>Concurrency</td>
+<td>Several pieces of work running at the same time on shared data</td>
+</tr>
+<tr>
+<td>Thread</td>
+<td>One line of execution inside a program; a server runs many at once</td>
+</tr>
+<tr>
+<td>Check-then-act (TOCTOU)</td>
+<td>Bug where the fact you checked is stale by the time you act on it</td>
+</tr>
+<tr>
+<td>Lost update</td>
+<td>Two writers start from the same old value; one overwrites the other</td>
+</tr>
+<tr>
+<td>ACID</td>
+<td>Atomic, Consistent, Isolated, Durable: what a transaction guarantees</td>
+</tr>
+<tr>
+<td>READ COMMITTED</td>
+<td>Postgres&#39;s default isolation level: you only see committed data</td>
+</tr>
+<tr>
+<td>Row lock</td>
+<td>Postgres&#39;s hold on a row being changed; other writers wait</td>
+</tr>
+<tr>
+<td>Pessimistic locking</td>
+<td>Lock the row when reading it (<code>select ... for update</code>)</td>
+</tr>
+<tr>
+<td>Optimistic locking</td>
+<td>Detect conflicts with a <code>version</code> column and retry</td>
+</tr>
+<tr>
+<td>Deadlock</td>
+<td>Two transactions each waiting for a lock the other holds</td>
+</tr>
+<tr>
+<td>Proxy (Spring)</td>
+<td>Wrapper object Spring puts around a bean to add transactions etc.</td>
+</tr>
+<tr>
+<td>Self-invocation</td>
+<td>A method calling another in the same class, bypassing the proxy</td>
+</tr>
+<tr>
+<td>ExecutorService</td>
+<td>A pool of threads that run submitted tasks</td>
+</tr>
+<tr>
+<td>CountDownLatch</td>
+<td>A gate that makes threads wait until it&#39;s opened</td>
+</tr>
+<tr>
+<td>AtomicInteger</td>
+<td>A counter that&#39;s safe to change from many threads</td>
+</tr>
+<tr>
+<td>Testcontainers</td>
+<td>Library that starts throwaway databases in Docker for tests</td>
+</tr>
+<tr>
+<td>JdbcClient</td>
+<td>Spring&#39;s fluent helper for running plain SQL (<code>db.sql(...).param(...).update()</code>)</td>
+</tr>
+<tr>
+<td>RETURNING</td>
+<td>Postgres clause that hands back values from the rows just inserted/updated</td>
+</tr>
+<tr>
+<td>Upsert</td>
+<td>Insert, or update if the row already exists (<code>on conflict ... do update</code>)</td>
+</tr>
+<tr>
+<td>Foreign key</td>
+<td>A column that must point at an existing row in another table</td>
+</tr>
+<tr>
+<td>Circular import</td>
+<td>Two files importing each other; avoided by moving shared code to a third file</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="41-interview-questions-to-practise">41. Interview questions to practise</h2>
+<h2 id="44-interview-questions-to-practise">44. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -3737,6 +4274,17 @@ git fetch --prune
 <li>What is the N+1 query problem, how do you detect it, and how do you fix it across module boundaries?</li>
 <li>Which fields may a match show about another traveller, and how could even a distance number leak a secret?</li>
 <li>Our tests share the dev database. What problem did that cause for the matching test, and what are the proper fixes?</li>
+<li>What is a state machine, and how can the database itself refuse invalid transitions?</li>
+<li>Explain the &quot;last seat&quot; race. Why does checking seats in Java and then saving fail under load?</li>
+<li>What does ACID stand for? Why doesn&#39;t &quot;isolated&quot; alone prevent a lost update under READ COMMITTED?</li>
+<li>Why does <code>update ... set seats_taken = seats_taken + 1 where seats_taken + 1 &lt;= capacity</code> stay correct with concurrent requests?</li>
+<li>Compare pessimistic locking, optimistic locking and a conditional UPDATE. When would you choose each?</li>
+<li>What is a deadlock, how does Postgres handle it, and how do you avoid one?</li>
+<li>When does <code>@Transactional</code> roll back, and why does calling a <code>@Transactional</code> method from the same class not start a transaction?</li>
+<li>How do you write a test that reliably exposes a race condition, and how do you know the test itself works?</li>
+<li>Why does accepting a request run in one transaction, and what did the &quot;3 + 3 seats&quot; test prove about rollback?</li>
+<li>Why did we use plain SQL (<code>JdbcClient</code>) for groups instead of JPA entities?</li>
+<li>Two people who asked each other both press Accept at the same time. What could go wrong, and how does one <code>UPDATE</code> over both trips avoid it?</li>
 </ol>
 
 
