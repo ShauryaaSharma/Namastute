@@ -1,0 +1,21 @@
+# Production settings (SPRING_PROFILES_ACTIVE=prod), applied on top of application.yaml (Learning Notes 54).
+# Secrets have NO default here: if one is missing, the app refuses to start (fail fast).
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/namastute   # the postgres container on Docker's private network
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: redis
+
+namastute:
+  web-origin: ${WEB_ORIGIN}         # https://<domain>: web and API share one origin (54.6)
+  otp:
+    hmac-secret: ${OTP_HMAC_SECRET}
+  jwt:
+    secret: ${JWT_SECRET}
+
+server:
+  # Behind Caddy: read the real client IP from X-Forwarded-For, trusted only from private-network
+  # addresses (our Caddy container), so the per-IP OTP limit still works (54.5)
+  forward-headers-strategy: native

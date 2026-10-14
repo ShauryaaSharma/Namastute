@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 // shortcut: dev-only sender that writes the SMS to the log; replace with MSG91/Firebase before real users
 @Component
-@Profile("!prod")   // never exists in production, so prod fails to start until a real sender is written
+@Profile("!prod | fake-sms")   // not in production (prod fails to start until a real sender exists); fake-sms = local prod test only
 class LogSmsSender implements SmsSender {
     private static final Logger log = LoggerFactory.getLogger(LogSmsSender.class);
 

@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (OpenAPI types: concepts + code walkthrough).
+Last updated: 2026-10-14 (production build: concepts + code walkthrough).
 
 ---
 
@@ -61,9 +61,11 @@ Last updated: 2026-10-14 (OpenAPI types: concepts + code walkthrough).
 51. [Code walkthrough: fare split (and a pool-starvation bug)](#51-code-walkthrough-fare-split-and-a-pool-starvation-bug)
 52. [API contracts: OpenAPI and generated types](#52-api-contracts-openapi-and-generated-types)
 53. [Code walkthrough: OpenAPI and generated types](#53-code-walkthrough-openapi-and-generated-types)
-54. [Command cheat sheet](#54-command-cheat-sheet)
-55. [Glossary](#55-glossary)
-56. [Interview questions to practise](#56-interview-questions-to-practise)
+54. [Production: containers, config, HTTPS](#54-production-containers-config-https)
+55. [Code walkthrough: the production build](#55-code-walkthrough-the-production-build)
+56. [Command cheat sheet](#56-command-cheat-sheet)
+57. [Glossary](#57-glossary)
+58. [Interview questions to practise](#58-interview-questions-to-practise)
 
 ---
 
@@ -526,6 +528,7 @@ PR required (also for admins), 0 approvals until the second dev joins (then 1), 
 
 ### 16.1 Where Spring Boot runs: one EC2 instance
 - Next.js on **Vercel** (free); Spring Boot + Postgres + Redis on **one EC2 instance** with Docker Compose; **Caddy** in front for HTTPS (automatic Let's Encrypt certificates).
+- **⚠️ Changed in 54.6:** the web app now runs on the same EC2 server too, under one domain.
 - Why: WebSockets need an always-on server (free platforms that sleep drop connections); load balancers/RDS/Elastic Beanstalk add $15–30/month each; one instance ≈ $18/month ≈ 5 months of credits.
 - Details to remember:
   - **t4g = ARM (Graviton):** build `linux/arm64` images in CI, or use t3 (Intel). The `postgis/postgis` image has historically been Intel-only.
@@ -3385,7 +3388,173 @@ Both generated files are committed, and CI checks that both are up to date.
 
 ---
 
-## 54. Command cheat sheet
+## 54. Production: containers, config, HTTPS
+
+### 54.1 Dev vs production
+| Today (dev) | Fine on a laptop | Dangerous in production |
+|---|---|---|
+| `LogSmsSender` prints OTP codes | only you see the log | anyone with log access could log in as anyone |
+| `JWT_SECRET` falls back to a dev value | convenient | it's on GitHub: anyone could **forge login tokens** |
+| DB password `namastute` | local | guessable |
+| Postgres/Redis ports open | your tools connect | open to the internet = attacked within hours |
+| `http://` | fine | logins readable on airport Wi-Fi |
+
+### 54.2 Configuration: the Twelve-Factor rule
+- **The Twelve-Factor App** (rules for server software), factor III: **config in the environment**. One image runs everywhere; only **environment variables** differ.
+- **Spring profiles:** `SPRING_PROFILES_ACTIVE=prod` loads `application-prod.yaml` on top of the defaults. `@Profile("!prod")` beans don't exist in prod.
+- **Fail fast:** in prod, secrets have **no defaults**, so a missing one stops the app at startup. A crash you see in 2 seconds beats a breach you find in 2 months.
+- **Secrets never in git:** on the server they live in an `.env` file only its owner can read (`chmod 600`). Generate with `openssl rand -base64 32`.
+
+### 54.3 Container images
+- **Layers and caching:** each Dockerfile step is a layer; unchanged layers are reused. Copy `pom.xml` / `package.json` and install dependencies **before** copying source code, so a code change doesn't re-download everything.
+- **Multi-stage build:** stage 1 has the full toolkit (JDK + Maven, or Node + pnpm) and builds; stage 2 is a slim runtime that only gets the result. Smaller image, no compiler or source on the server: a smaller **attack surface** (fewer things an attacker could use).
+- **Non-root:** the app runs as an ordinary user inside the container.
+- **JVM memory:** `-XX:MaxRAMPercentage=50` = "use at most half of the container's memory limit".
+- **Architecture:** images are built per CPU type. `postgis/postgis:16-3.5` exists only for **amd64** (Intel/AMD), so the server must be Intel/AMD (e.g. t3), not ARM (t4g).
+
+### 54.4 Caddy: reverse proxy and HTTPS
+- **Reverse proxy:** a server in front of the app; only it faces the internet (ports 80/443) and forwards requests inside.
+- **TLS** = the encryption in HTTPS. Caddy **terminates TLS** (decrypts), then talks plain HTTP to the apps on Docker's private network.
+- **Let's Encrypt** gives free certificates; Caddy proves domain ownership on port 80 (the **ACME** protocol, HTTP-01 challenge), so the domain must point at the server first. For `localhost`, Caddy uses its own local certificate authority instead.
+- WebSockets pass straight through. Postgres and Redis get **no public ports**.
+
+### 54.5 The real client IP behind a proxy
+- Behind Caddy every request seems to come from Caddy, so the per-IP OTP limit would lump all users together.
+- Caddy adds **`X-Forwarded-For`** with the real IP; Spring reads it with `server.forward-headers-strategy: native`.
+- Anyone can send that header, so it's trusted **only from private-network addresses** (our Caddy container). Caddy itself also replaces any `X-Forwarded-For` sent by an untrusted client.
+
+### 54.6 One origin
+- **Decision (2026-10-14, replaces the "web on Vercel" plan of 16.1):** web **and** API on the same EC2 server, under **one domain**. Caddy routes `/api/*` and `/ws` to Spring and everything else to Next.js.
+- Why: Vercel's free plan is (as far as we know) personal and non-commercial, and Pro costs more than the server; all users are in Delhi, near the Mumbai region, so a global CDN adds little; **one origin** means no CORS, no cross-site WebSocket origin, no "same-site" cookie rule to satisfy; one place to deploy and back up. Cost: Next.js uses about 150–300 MB of the server's memory.
+- **Next.js gotcha:** `NEXT_PUBLIC_…` variables are copied into the JavaScript **at build time**: changing one means rebuilding the web image.
+
+### 54.7 Keeping it alive and safe
+- `restart: unless-stopped`; health checks on `/actuator/health`; `depends_on: condition: service_healthy`.
+- Flyway runs migrations at startup.
+- **Backups:** data lives in a Docker volume; a nightly `pg_dump` from the server's cron (design §3.7), later copied to S3.
+- No OTP codes in production logs: `LogSmsSender` doesn't exist there.
+
+### 54.8 Decisions (2026-10-14)
+| Decision | Choice |
+|---|---|
+| Hosting | Everything on one EC2 server, one domain (54.6) |
+| Local test | Same production compose on the laptop at `https://localhost`, with a `fake-sms` profile that allows the log sender only for this test |
+| Real client IP | `server.forward-headers-strategy: native` in prod, trusting private-network proxies only |
+| CPU type | Intel/AMD (`linux/amd64`), because the PostGIS image is amd64-only |
+
+---
+
+## 55. Code walkthrough: the production build
+
+### 55.1 What exists now
+| File | Job |
+|---|---|
+| `apps/api/Dockerfile` | API image: build the jar with the JDK, ship it on a slim JRE, non-root |
+| `apps/web/Dockerfile` | Web image: build with pnpm, ship Next.js's standalone `server.js`, non-root |
+| `apps/*/.dockerignore` | Keep `target/`, `node_modules/`, `.next/`, `.env*.local` out of the build |
+| `apps/api/src/main/resources/application-prod.yaml` | Production settings; secrets with no defaults |
+| `infra/docker-compose.prod.yml` | The whole server: Postgres, Redis, API, web, Caddy |
+| `infra/Caddyfile` | HTTPS and routing for one domain |
+| `infra/.env.example` + `infra/.gitignore` | Template for the server's secrets; the real `.env` is never committed |
+| `infra/README.md` | Runbook: first-time setup, everyday commands, backups, restore |
+
+### 55.2 `apps/api/Dockerfile`
+```dockerfile
+FROM eclipse-temurin:21-jdk-alpine AS build
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
+RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
+COPY src src
+RUN ./mvnw -B -q package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /src/target/*.jar app.jar
+USER app
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50"
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+- `AS build` names stage 1; `COPY --from=build` takes only the jar into stage 2 (54.3).
+- **Layer order:** `pom.xml` + `dependency:go-offline` before `COPY src`, so code changes reuse the downloaded-libraries layer.
+- `chmod +x mvnw`: files copied from Windows may lose the "executable" flag.
+- `-DskipTests`: the tests need Postgres and Redis and already run in CI; the image build only packages.
+- `addgroup` / `adduser -S`: a **system user** with no password and no login shell; `USER app` makes everything after it run as that user.
+- `JAVA_TOOL_OPTIONS`: an environment variable every Java program reads at startup.
+- `-alpine` images: built on Alpine Linux, a very small distribution, so the image is smaller.
+
+### 55.3 `apps/web/Dockerfile` and `next.config.ts`
+- `output: "standalone"` in `next.config.ts`: `next build` also produces `.next/standalone/server.js` plus only the files it needs (Next.js traces imports).
+- Stage 1: `corepack enable` provides the exact pnpm from `package.json` (`"packageManager": "pnpm@11.1.2"`); lockfile first, `pnpm install --frozen-lockfile`, then the source and `pnpm build`.
+- `ARG NEXT_PUBLIC_API_URL` → `ENV`: the API address is **baked in at build time** (54.6), so compose passes it as a build argument.
+- Stage 2: copies `standalone/`, plus `.next/static` and `public/`, which `server.js` doesn't include by itself (the installed Next.js docs say so). `USER node` (the Node image's built-in non-root user); `HOSTNAME=0.0.0.0` so it listens on the container's network, not only inside itself.
+
+### 55.4 `application-prod.yaml`
+- `password: ${DB_PASSWORD}`, `secret: ${JWT_SECRET}`, `hmac-secret: ${OTP_HMAC_SECRET}`, `web-origin: ${WEB_ORIGIN}`: **no `:default`**, so a missing variable stops the app at startup (fail fast, 54.2).
+- `url: jdbc:postgresql://postgres:5432/namastute` and `redis.host: redis`: inside Docker's network, containers reach each other **by service name**.
+- `server.forward-headers-strategy: native`: Tomcat's `RemoteIpValve` replaces the "remote address" with `X-Forwarded-For`, but only when the request comes from a private-network address (54.5). `AuthController` still just calls `getRemoteAddr()`; no Java change was needed.
+- `LogSmsSender`: `@Profile("!prod | fake-sms")`: a profile **expression**, "not prod, OR fake-sms is on". The real server runs `prod` alone, so no log sender exists there, and with no `SmsSender` at all the app refuses to start until a real one is written.
+
+### 55.5 `infra/docker-compose.prod.yml`
+- `name: namastute-prod`: a separate project from dev, so their volumes never mix.
+- `${DB_PASSWORD:?set DB_PASSWORD in infra/.env}`: Compose's own fail-fast: refuse to start with that message if unset.
+- **No `ports:`** on postgres, redis, api, web: only Caddy publishes 80 and 443.
+- `depends_on: condition: service_healthy`: the API waits for a healthy Postgres and Redis; Caddy waits for a healthy API.
+- API health check: `wget -qO- http://localhost:8080/actuator/health` (Alpine includes `wget`); `start_period: 30s` gives Java time to start before failures count.
+- `restart: unless-stopped`: back up after crashes and reboots.
+- `mem_limit`: Postgres 512 MB, Redis 128 MB, API 768 MB (Java takes half), web 256 MB, Caddy 64 MB ≈ 1.7 GB, inside the 2 GB server.
+- `caddy_data` volume: keeps certificates across restarts (Let's Encrypt limits how often you can re-issue).
+
+### 55.6 `infra/Caddyfile`
+```
+{$DOMAIN} {
+	encode zstd gzip
+	@api path /api/* /ws
+	handle @api {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+```
+- `{$DOMAIN}`: from the environment. A real domain → Let's Encrypt; `localhost` → Caddy's own local certificate.
+- `@api` is a **named matcher** (a reusable condition): paths `/api/*` and `/ws`.
+- `handle` blocks are tried in order: API paths to Spring, everything else to Next.js. `/actuator` matches neither API path, so it's **not reachable** from the internet (it falls to Next.js, which shows its 404).
+- `encode zstd gzip`: compress responses.
+- HTTP → HTTPS redirects happen automatically.
+
+### 55.7 `ForwardedIpTest`
+- Starts the real server (`RANDOM_PORT`), because MockMvc skips Tomcat, where forwarded headers are handled.
+- Sends `POST /api/v1/auth/otp` with `X-Forwarded-For: 203.0.113.x` (a range reserved for documentation) and checks Redis has `rate:otp:ip:203.0.113.x`: counted against the client, not the proxy.
+- **Proven to fail:** with `forward-headers-strategy=none` the same test went red.
+
+### 55.8 Verified: the production stack on the laptop
+`infra/.env` with `DOMAIN=localhost`, random secrets and `SPRING_PROFILES_ACTIVE=prod,fake-sms`; `docker compose ... up -d --build`. Both images built (API 445 MB, web 297 MB); all five containers healthy; **only Caddy publishes ports** (80, 443).
+
+| Check (from outside, through Caddy) | Result |
+|---|---|
+| `http://localhost/` | 308 → `https://localhost/` |
+| `https://localhost/`, `/login` | 200, Next.js pages |
+| `/api/v1/terminals` without a token | 401 from Spring: routing works |
+| `/actuator/health`, `/v3/api-docs` | 404: not reachable from outside |
+| OTP request → code in the API log (fake-sms) → verify | 204 → 200; cookie `Secure; HttpOnly; SameSite=Lax; Path=/api/v1/auth` |
+| `/api/v1/terminals` with the token | 200, DEL-T1/T2/T3: Flyway created and seeded the fresh database |
+| Redis rate-limit key | `rate:otp:ip:172.25.0.1` = the caller, **not** Caddy (172.25.0.6): real client IP works |
+| WebSocket handshake to `/ws` | 101 from `https://localhost`, **403** from `https://evil.example` |
+| API with `prod` but no `JWT_SECRET` | refuses to start: `Could not resolve placeholder 'JWT_SECRET'` |
+| API with pure `prod` (no fake-sms) | refuses to start: `required a bean of type 'SmsSender'` |
+
+- **Not tested:** the app in a browser at `https://localhost`. Browsers reject Caddy's *local* certificate unless its certificate authority is added to Windows' trusted list, a system security change we skipped. On the real server, Let's Encrypt gives a certificate every browser trusts.
+- Image versions were pinned after checking they exist and are a few weeks old: `eclipse-temurin:21-jdk/jre-alpine`, `node:24-alpine`, `caddy:2.11.4-alpine` (newer 2.11.6/2.11.7 were only days old).
+
+### 55.9 What's left before real users
+- An `SmsSender` for the chosen provider (MSG91 or Firebase): **team decision**.
+- A domain, an EC2 t3.small in Mumbai with an Elastic IP, then `infra/README.md` from step 1.
+- Off-server backup copies (S3), privacy policy and terms.
+
+---
+
+## 56. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3416,6 +3585,14 @@ docker compose -f infra/docker-compose.yml exec redis redis-cli KEYS "*"      # 
 ```bash
 cd apps/api && ./mvnw test          # rewrites apps/web/openapi.json
 cd ../web && pnpm api:types         # regenerates lib/api-types.ts; then fix TypeScript errors and commit both files
+```
+
+### Production stack (from `Namastute`; details in `infra/README.md`)
+```bash
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d --build   # build and start everything
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env ps             # healthy?
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env logs -f api    # follow API logs
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env down           # stop (keeps data)
 ```
 
 ### Query plans (inside `psql`)
@@ -3461,7 +3638,7 @@ git fetch --prune
 
 ---
 
-## 55. Glossary
+## 57. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -3662,10 +3839,23 @@ git fetch --prune
 | springdoc | Library that generates an OpenAPI document from Spring controllers |
 | Deterministic | Same input always gives byte-identical output |
 | BOM | Byte-order mark: invisible bytes at a file's start that some tools reject |
+| Twelve-Factor App | Rules for server software; factor III: config lives in the environment |
+| Spring profile | A named set of settings switched on with SPRING_PROFILES_ACTIVE |
+| Fail fast | Stop at startup when something essential is missing, instead of running wrongly |
+| Multi-stage build | A Dockerfile that builds in a big image and ships only the result in a small one |
+| Attack surface | Everything an attacker could try to use; smaller is safer |
+| Reverse proxy | A server in front of your apps that receives requests and forwards them |
+| TLS termination | Decrypting HTTPS at the proxy, then forwarding plain HTTP privately |
+| Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
+| X-Forwarded-For | Header a proxy adds with the real client's IP address |
+| Standalone output | Next.js build mode producing a small self-contained server.js |
+| Profile expression | Spring condition like "!prod \| fake-sms" (not prod, or fake-sms) |
+| Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
+| Runbook | Step-by-step instructions for operating a system |
 
 ---
 
-## 56. Interview questions to practise
+## 58. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -3759,3 +3949,10 @@ git fetch --prune
 90. Should generated files be committed? How does a CI drift check keep them honest?
 91. springdoc ignored @Nullable. How did we still get `string | null` in TypeScript, and why the 3.0 format?
 92. Why must a generated file be deterministic for a CI drift check to work?
+93. What does "config in the environment" mean, and why should production secrets have no defaults?
+94. Why use a multi-stage Docker build? What does running as non-root protect against?
+95. What does a reverse proxy like Caddy do, and how does it get a free HTTPS certificate?
+96. Behind a proxy every request seems to come from one IP. How do you get the real client IP safely?
+97. Why are NEXT_PUBLIC_ variables a deployment gotcha?
+98. How did we prove the production API refuses to start without a secret or a real SMS sender?
+99. Why can't MockMvc test forwarded-header handling, and what did we use instead?
