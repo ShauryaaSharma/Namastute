@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { getCurrentGroup, leaveGroup, lockGroup, type Group } from "@/lib/api";
 import { plural } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
+import GroupChat from "./group-chat";
 
-// Your cab group: who's in it, the booker's UPI ID (members only), lock and leave
-export default function GroupCard({ onChange }: { onChange: () => void }) {
+// Your cab group: who's in it, the booker's UPI ID (members only), lock, leave and the live chat.
+// Not re-created on every refresh (version is a prop, not a key), so the chat connection stays open.
+export default function GroupCard({ version, onChange }: { version: number; onChange: () => void }) {
   const [group, setGroup] = useState<Group | null>(null);
   const [reason, setReason] = useState("");
   const { busy, error, setError, run } = useAction();
@@ -15,7 +17,7 @@ export default function GroupCard({ onChange }: { onChange: () => void }) {
     getCurrentGroup()
       .then(setGroup)
       .catch(() => setGroup(null));
-  }, []);
+  }, [version]);
 
   if (!group) return null;
   const g = group;
@@ -46,13 +48,6 @@ export default function GroupCard({ onChange }: { onChange: () => void }) {
           {g.bookerUpiId ? `Pay your share to the booker's UPI ID: ${g.bookerUpiId}` : "The booker hasn't added a UPI ID yet."}
         </p>
       )}
-      {g.updates.length > 0 && (
-        <ul className="mt-1 text-sm" aria-label="Group updates">
-          {g.updates.map((u, i) => (
-            <li key={i}>{u}</li>
-          ))}
-        </ul>
-      )}
       {g.youAreBooker && !locked && (
         <button
           onClick={() => run(async () => { await lockGroup(g.id); onChange(); })}
@@ -78,6 +73,7 @@ export default function GroupCard({ onChange }: { onChange: () => void }) {
         Leave group
       </button>
       <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <GroupChat key={g.id} groupId={g.id} onUpdated={onChange} />
     </div>
   );
 }

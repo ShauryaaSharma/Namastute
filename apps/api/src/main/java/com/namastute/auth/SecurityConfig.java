@@ -48,6 +48,8 @@ class SecurityConfig {
                                 "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/error").permitAll()   // Spring's error page, used when a request fails
+                        // The WebSocket handshake can't carry our token; it's checked in the STOMP CONNECT frame instead (chat.StompAuth)
+                        .requestMatchers("/ws").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))
                 .build();

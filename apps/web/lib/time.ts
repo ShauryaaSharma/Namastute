@@ -20,3 +20,8 @@ export function formatIst(iso: string): string {
     new Date(iso),
   );
 }
+
+// "2026-10-14T06:37:00Z" → "12:07 pm" (India time)
+export function formatIstTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short" }).format(new Date(iso));
+}

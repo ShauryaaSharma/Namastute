@@ -85,14 +85,17 @@
 <details><summary><a href="#42-groups-in-matches-routes-with-several-drops">42. Groups in matches: routes with several drops</a></summary><a class="sub" href="#421-the-problem">42.1 The problem</a><a class="sub" href="#422-one-idea-for-both-a-traveller-is-a-group-of-one">42.2 One idea for both: a traveller is a &quot;group of one&quot;</a><a class="sub" href="#423-ordering-the-drops-greedy-and-the-travelling-salesman-problem">42.3 Ordering the drops: greedy, and the travelling salesman problem</a><a class="sub" href="#424-fairness-for-every-rider">42.4 Fairness for every rider</a><a class="sub" href="#425-refactoring-with-a-safety-net">42.5 Refactoring with a safety net</a><a class="sub" href="#426-privacy-for-group-matches">42.6 Privacy for group matches</a></details>
 <details><summary><a href="#43-module-dependencies-cycles-and-dependency-inversion">43. Module dependencies: cycles and dependency inversion</a></summary><a class="sub" href="#431-the-problem-a-cycle">43.1 The problem: a cycle</a><a class="sub" href="#432-naive-fixes-and-why-they-hurt">43.2 Naive fixes and why they hurt</a><a class="sub" href="#433-dependency-inversion">43.3 Dependency inversion</a></details>
 <details><summary><a href="#44-code-walkthrough-groups-in-matches-slice-2b">44. Code walkthrough: groups in matches (slice 2b)</a></summary><a class="sub" href="#441-tripsmatchrankerjava-from-pairs-to-n-riders">44.1 trips/MatchRanker.java: from pairs to N riders</a><a class="sub" href="#442-the-safety-net-held">44.2 The safety net held</a><a class="sub" href="#443-tripsopengroupsjava-the-port">44.3 trips/OpenGroups.java: the port</a><a class="sub" href="#444-groupsopengroupsqueryjava-the-adapter">44.4 groups/OpenGroupsQuery.java: the adapter</a><a class="sub" href="#445-tripstripservicejava">44.5 trips/TripService.java</a><a class="sub" href="#446-tests-matchestest">44.6 Tests: MatchesTest</a><a class="sub" href="#447-web-appcurrent-triptsx">44.7 Web: app/current-trip.tsx</a><a class="sub" href="#448-verified-in-a-real-browser-three-users">44.8 Verified in a real browser (three users)</a></details>
-<details><summary><a href="#45-command-cheat-sheet">45. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#46-glossary">46. Glossary</a>
-<a class="topic" href="#47-interview-questions-to-practise">47. Interview questions to practise</a>
+<details><summary><a href="#45-real-time-websocket-and-stomp">45. Real-time: WebSocket and STOMP</a></summary><a class="sub" href="#451-why-plain-http-isnt-enough">45.1 Why plain HTTP isn&#x27;t enough</a><a class="sub" href="#452-websocket">45.2 WebSocket</a><a class="sub" href="#453-stomp-addresses-on-top-of-the-pipe">45.3 STOMP: addresses on top of the pipe</a></details>
+<details><summary><a href="#46-chat-security-saving-and-history">46. Chat: security, saving and history</a></summary><a class="sub" href="#461-authentication-the-token-goes-in-the-connect-frame">46.1 Authentication: the token goes in the CONNECT frame</a><a class="sub" href="#462-authorization-never-trust-a-client-chosen-destination">46.2 Authorization: never trust a client-chosen destination</a><a class="sub" href="#463-save-first-then-broadcast">46.3 Save first, then broadcast</a><a class="sub" href="#464-history-cursor-pagination">46.4 History: cursor pagination</a><a class="sub" href="#465-scope-of-slice-3-team-decisions-2026-10-14">46.5 Scope of slice 3 (team decisions, 2026-10-14)</a></details>
+<details><summary><a href="#47-code-walkthrough-group-chat-slice-3">47. Code walkthrough: group chat (slice 3)</a></summary><a class="sub" href="#471-the-shape">47.1 The shape</a><a class="sub" href="#472-events-between-modules-groupsgroupchangedjava">47.2 Events between modules: groups/GroupChanged.java</a><a class="sub" href="#473-chatchatservicejava">47.3 chat/ChatService.java</a><a class="sub" href="#474-chatstompauthjava-the-checkpoint-461462">47.4 chat/StompAuth.java: the checkpoint (46.1–46.2)</a><a class="sub" href="#475-chatwebsocketconfigjava-and-authsecurityconfigjava">47.5 chat/WebSocketConfig.java and auth/SecurityConfig.java</a><a class="sub" href="#476-chatchatcontrollerjava-one-controller-two-doors">47.6 chat/ChatController.java: one controller, two doors</a><a class="sub" href="#477-tests-chattest-6-tests-real-websocket-on-a-random-port">47.7 Tests: ChatTest (6 tests, real WebSocket on a random port)</a><a class="sub" href="#478-web">47.8 Web</a><a class="sub" href="#479-verified-in-a-real-browser-two-tabs-at-once">47.9 Verified in a real browser (two tabs at once)</a><a class="sub" href="#4710-found-while-testing-two-redis-servers-on-one-laptop">47.10 Found while testing: two Redis servers on one laptop</a></details>
+<details><summary><a href="#48-command-cheat-sheet">48. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#49-glossary">49. Glossary</a>
+<a class="topic" href="#50-interview-questions-to-practise">50. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (groups in matches: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-14 (group chat: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -140,9 +143,12 @@
 <li><a href="#42-groups-in-matches-routes-with-several-drops">Groups in matches: routes with several drops</a></li>
 <li><a href="#43-module-dependencies-cycles-and-dependency-inversion">Module dependencies: cycles and dependency inversion</a></li>
 <li><a href="#44-code-walkthrough-groups-in-matches-slice-2b">Code walkthrough: groups in matches (slice 2b)</a></li>
-<li><a href="#45-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#46-glossary">Glossary</a></li>
-<li><a href="#47-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#45-real-time-websocket-and-stomp">Real-time: WebSocket and STOMP</a></li>
+<li><a href="#46-chat-security-saving-and-history">Chat: security, saving and history</a></li>
+<li><a href="#47-code-walkthrough-group-chat-slice-3">Code walkthrough: group chat (slice 3)</a></li>
+<li><a href="#48-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#49-glossary">Glossary</a></li>
+<li><a href="#50-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -3817,7 +3823,225 @@ record MatchView(UUID tripId, List&lt;Rider&gt; riders, long minutesAfterYou, in
 <li>Noticed: Neha&#39;s &quot;Your requests&quot; says &quot;Asha&quot; because the handle is Asha&#39;s trip, though the whole group answers. A wording polish for later.</li>
 </ul>
 <hr>
-<h2 id="45-command-cheat-sheet">45. Command cheat sheet</h2>
+<h2 id="45-real-time-websocket-and-stomp">45. Real-time: WebSocket and STOMP</h2>
+<h3 id="451-why-plain-http-isnt-enough">45.1 Why plain HTTP isn&#39;t enough</h3>
+<ul>
+<li>HTTP is <strong>request/response</strong>: the browser asks, the server answers. The server <strong>can&#39;t speak first</strong>.</li>
+<li><strong>Naive way: polling.</strong> The browser asks &quot;anything new?&quot; every 2 seconds. 4 people × 30 requests/minute = 120 requests a minute, almost all answered &quot;nothing&quot;, draining batteries and data. And a message can still wait up to 2 s (<strong>latency</strong> = the delay between something happening and you seeing it).</li>
+<li>What chat needs: <strong>server push</strong>, where the server sends the moment a message exists.</li>
+</ul>
+<h3 id="452-websocket">45.2 WebSocket</h3>
+<ul>
+<li>One long-lived, <strong>two-way (full-duplex)</strong> connection: either side can send at any time.</li>
+<li><strong>Handshake:</strong> a normal HTTP request with <code>Upgrade: websocket</code> → the server answers <strong><code>101 Switching Protocols</code></strong> → from then on, the same connection carries small <strong>frames</strong> both ways.</li>
+<li><code>ws://</code> = plain, <code>wss://</code> = encrypted (like http/https). Production uses <code>wss://</code>.</li>
+<li><strong>Connections drop</strong> (airport Wi-Fi, phones switching networks): the client must <strong>reconnect</strong> and catch up on what it missed.</li>
+</ul>
+<h3 id="453-stomp-addresses-on-top-of-the-pipe">45.3 STOMP: addresses on top of the pipe</h3>
+<ul>
+<li>A WebSocket is just a pipe of bytes. <strong>STOMP</strong> (Simple Text Oriented Messaging Protocol) adds text <strong>frames</strong> with <strong>destinations</strong>:<ul>
+<li><code>CONNECT</code> (who I am) · <code>SUBSCRIBE /topic/groups.42.chat</code> (send me everything posted here) · <code>SEND /app/groups/42/chat</code> (here&#39;s a message) · <code>MESSAGE</code> (what subscribers receive).</li>
+</ul>
+</li>
+<li><strong>Publish/subscribe (pub/sub):</strong> senders publish to a topic; everyone subscribed gets a copy. Senders don&#39;t know who&#39;s listening.</li>
+<li><strong>In Spring:</strong> <code>/app/...</code> frames go to our <code>@MessageMapping</code> method → it saves the message and publishes to <code>/topic/...</code> → the <strong>message broker</strong> delivers it to every subscriber.</li>
+<li><code>shortcut:</code> Spring&#39;s <strong>simple broker</strong> keeps subscriptions in memory, so it works with <strong>one</strong> server only. With two servers: a <strong>broker relay</strong> (RabbitMQ) or Redis pub/sub (design §3.6).</li>
+</ul>
+<hr>
+<h2 id="46-chat-security-saving-and-history">46. Chat: security, saving and history</h2>
+<h3 id="461-authentication-the-token-goes-in-the-connect-frame">46.1 Authentication: the token goes in the CONNECT frame</h3>
+<ul>
+<li>The browser&#39;s WebSocket API <strong>can&#39;t add custom headers</strong> like <code>Authorization</code>. Cookies would be sent, but our access token lives in memory (24.6).</li>
+<li>So the JWT travels <strong>inside the STOMP <code>CONNECT</code> frame</strong>. A Spring <strong><code>ChannelInterceptor</code></strong> (a checkpoint every incoming frame passes) validates it with our existing JWT decoder and attaches the user to the connection.</li>
+</ul>
+<h3 id="462-authorization-never-trust-a-client-chosen-destination">46.2 Authorization: never trust a client-chosen destination</h3>
+<ul>
+<li>Logging in isn&#39;t enough: without a check, any user could <code>SUBSCRIBE /topic/groups.&lt;someone-else&gt;.chat</code> and read strangers&#39; messages.</li>
+<li>On every <strong><code>SUBSCRIBE</code></strong> and <strong><code>SEND</code></strong>, the interceptor asks: &quot;is this user an accepted member of this group, and is the group open or locked?&quot; If not → the frame is refused.</li>
+<li><strong>CSWSH</strong> (cross-site WebSocket hijacking): an evil site opens a WebSocket to <em>our</em> server riding on the victim&#39;s cookies. We&#39;re not exposed (the token isn&#39;t a cookie), and we still only allow our web origin.</li>
+<li><strong>XSS:</strong> messages are a stranger&#39;s text. React <strong>escapes</strong> text by default (<code>&lt;script&gt;</code> shows as characters); never <code>dangerouslySetInnerHTML</code>. The database caps a message at 1000 characters.</li>
+</ul>
+<h3 id="463-save-first-then-broadcast">46.3 Save first, then broadcast</h3>
+<ul>
+<li>Insert the row first (the database gives it an <code>id</code>), <strong>then</strong> publish. If broadcasting fails, the message is still safe and shows up in history.</li>
+<li><strong>Optimistic UI:</strong> your message appears instantly (greyed out) before the server confirms. It carries a random <strong><code>clientId</code></strong>; when the server&#39;s copy arrives with the same <code>clientId</code>, it replaces the grey one instead of appearing twice (<strong>deduplication</strong>).</li>
+<li>System messages (&quot;Asha left: …&quot;) are rows with <code>kind = &#39;system&#39;</code>, so they show in the chat for free.</li>
+</ul>
+<h3 id="464-history-cursor-pagination">46.4 History: cursor pagination</h3>
+<ul>
+<li><strong>Naive way: <code>OFFSET</code></strong> (&quot;skip 50, give me 50&quot;): it <strong>shifts</strong> when new messages arrive (page 2 repeats messages you&#39;ve seen), and it&#39;s <strong>slow</strong> for big offsets (the database still walks past every skipped row).</li>
+<li><strong>Cursor (keyset) pagination:</strong> &quot;50 messages <strong>older than id 1234</strong>&quot;: <code>where group_id = ? and id &lt; 1234 order by id desc limit 50</code>. Stable (new messages don&#39;t move old ones) and fast (jumps straight there via the index <code>messages_by_group (group_id, id)</code>).</li>
+<li>After a reconnect, the same idea the other way: &quot;everything <strong>newer than</strong> the last id I have&quot;.</li>
+</ul>
+<h3 id="465-scope-of-slice-3-team-decisions-2026-10-14">46.5 Scope of slice 3 (team decisions, 2026-10-14)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Who can chat</td>
+<td>Accepted members while the group is open or locked; leaving removes access immediately</td>
+</tr>
+<tr>
+<td>Live group updates</td>
+<td>Yes: a small &quot;group changed&quot; event (<code>/topic/groups.{id}.updated</code>) so everyone&#39;s card refreshes on its own</td>
+</tr>
+<tr>
+<td>Not in this slice</td>
+<td>Live location sharing (needs its own privacy lesson) and push notifications</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="47-code-walkthrough-group-chat-slice-3">47. Code walkthrough: group chat (slice 3)</h2>
+<h3 id="471-the-shape">47.1 The shape</h3>
+<ul>
+<li>New <strong><code>chat</code></strong> module (design §2.2 says chat owns <code>messages</code>): <code>ChatService</code>, <code>ChatController</code>, <code>StompAuth</code>, <code>WebSocketConfig</code>.</li>
+<li>Dependencies: <code>chat → groups</code> (membership check + the <code>GroupChanged</code> event) and <code>chat → users</code> (first names). <code>groups</code> knows nothing about <code>chat</code>: <strong>no cycle</strong>.</li>
+<li><code>pom.xml</code>: <code>spring-boot-starter-websocket</code> (+ <code>-websocket-test</code>). Names checked against Boot 4.1.1&#39;s own dependency list first.</li>
+</ul>
+<h3 id="472-events-between-modules-groupsgroupchangedjava">47.2 Events between modules: <code>groups/GroupChanged.java</code></h3>
+<pre><code class="language-java">public record GroupChanged(UUID groupId, String systemMessage) {}
+</code></pre>
+<ul>
+<li><code>GroupService</code> now calls <code>events.publishEvent(new GroupChanged(...))</code> after ask (to a group), accept (&quot;Asha joined&quot;), decline, lock (&quot;Asha locked the group and is booking the cab&quot;) and leave (&quot;Asha left&quot; / &quot;Asha left: reason&quot;).</li>
+<li><strong>Why an event?</strong> groups must tell chat &quot;post this system message&quot;, but chat already depends on groups (membership). A direct call would be a <strong>cycle</strong> (43.1). With an event, groups just announces; whoever cares listens. That&#39;s a second way (besides dependency inversion, 43.3) to keep module arrows one-way.</li>
+<li>Groups no longer inserts into <code>messages</code> itself, so last slice&#39;s <code>shortcut:</code> for messages is gone (the <code>reports</code> one stays).</li>
+<li><code>GroupView.updates</code> was removed: the chat now shows those system messages.</li>
+<li><code>public boolean isActiveMember(groupId, userId)</code>: the one public method chat uses. &quot;Accepted member of an open or locked group.&quot; It replaced a private <code>isMember</code>, so there&#39;s one rule, not two.</li>
+</ul>
+<h3 id="473-chatchatservicejava">47.3 <code>chat/ChatService.java</code></h3>
+<ul>
+<li><code>MessageView(id, kind, firstName, body, createdAt, clientId, you)</code>.<ul>
+<li><code>firstName</code> is null for system messages.</li>
+<li><code>clientId</code> is only echoed on the <strong>live</strong> copy (for deduplication); it isn&#39;t stored.</li>
+<li><code>you</code> is filled in for <strong>history</strong> (the server knows who&#39;s asking). For live messages everyone receives the same copy, so the sender&#39;s browser recognises its own <code>clientId</code> instead.</li>
+</ul>
+</li>
+<li><strong><code>history(userId, groupId, before, after)</code></strong>, cursor pagination (46.4):<ul>
+<li><code>after</code> set: <code>where id &gt; :after order by id limit 200</code>, catching up after a reconnect (<code>shortcut:</code> 200 is plenty for four people).</li>
+<li>otherwise: <code>where id &lt; :before order by id desc limit 50</code>, then reversed so the page reads oldest → newest. No <code>before</code> = <code>Long.MAX_VALUE</code> = &quot;the latest 50&quot;.</li>
+</ul>
+</li>
+<li><strong><code>post(...)</code></strong>: membership check → trim and check 1–1000 characters → <code>insert ... returning id, user_id, kind, body, created_at</code> → <code>broker.convertAndSend(&quot;/topic/groups.&lt;id&gt;.chat&quot;, view)</code>. <strong>Save first, then broadcast</strong> (46.3).<ul>
+<li><code>SimpMessagingTemplate</code> = Spring&#39;s &quot;publish this to a broker destination&quot; helper.</li>
+</ul>
+</li>
+<li><strong><code>onGroupChanged(GroupChanged)</code></strong>:<pre><code class="language-java">@TransactionalEventListener(fallbackExecution = true)
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+</code></pre>
+<ul>
+<li><code>@TransactionalEventListener</code>: runs <strong>after the groups transaction commits</strong>, so nobody hears about a change that then rolled back. <code>fallbackExecution = true</code>: also run when there was no transaction (decline, ask).</li>
+<li><strong>The trap avoided:</strong> code that runs &quot;after commit&quot; still sits inside the finished transaction; database writes there are <strong>never committed</strong>. <code>REQUIRES_NEW</code> starts a fresh transaction for the system-message insert (Spring&#39;s docs warn about exactly this).</li>
+<li>Then it publishes <code>{&quot;groupId&quot;: ...}</code> to <code>/topic/groups.&lt;id&gt;.updated</code>: just &quot;something changed, refetch&quot;, no details, so nothing private can leak.</li>
+<li><code>shortcut:</code> if the app crashes between the commit and the listener, the system message is lost; Spring Modulith&#39;s event publication registry (an <strong>outbox</strong>: events saved in the same transaction and retried) would fix that.</li>
+</ul>
+</li>
+<li><code>record Updated(UUID groupId)</code>: <code>convertAndSend(dest, Map.of(...))</code> was <strong>ambiguous</strong> (there&#39;s an overload taking headers as a Map), and a small record is clearer anyway.</li>
+</ul>
+<h3 id="474-chatstompauthjava-the-checkpoint-461462">47.4 <code>chat/StompAuth.java</code>: the checkpoint (46.1–46.2)</h3>
+<ul>
+<li>Implements <code>ChannelInterceptor.preSend</code>, which runs for <strong>every</strong> frame the browser sends. Throwing refuses the frame: Spring sends an <code>ERROR</code> frame and closes the connection (the <code>ERROR ... Failed to send message</code> log line is this, as expected).</li>
+<li><code>CONNECT</code>: reads the <code>Authorization: Bearer ...</code> STOMP header → <code>jwts.decode(...)</code> (the <strong>same</strong> decoder as HTTP: signature, expiry, issuer) → <code>stomp.setUser(new JwtAuthenticationToken(jwt))</code>. Spring remembers this user for every later frame on the connection.</li>
+<li><code>SUBSCRIBE</code>: the destination must match <code>/topic/groups.&lt;uuid&gt;.(chat|updated)</code> <strong>and</strong> the user must be an active member → else refused. &quot;Never trust a client-chosen destination.&quot;</li>
+<li><code>SEND</code>: only to <code>/app/...</code>. Without this, a client could send <strong>straight onto</strong> <code>/topic/groups.&lt;id&gt;.chat</code> and the broker would deliver a fake message that skipped saving and the membership check.</li>
+<li><code>Pattern.compile(&quot;/topic/groups\\.([0-9a-f-]{36})\\.(chat|updated)&quot;)</code>: a regular expression; <code>\\.</code> is a literal dot, <code>([0-9a-f-]{36})</code> captures the UUID (<code>topic.group(1)</code>).</li>
+</ul>
+<h3 id="475-chatwebsocketconfigjava-and-authsecurityconfigjava">47.5 <code>chat/WebSocketConfig.java</code> and <code>auth/SecurityConfig.java</code></h3>
+<ul>
+<li><code>@EnableWebSocketMessageBroker</code>: turns on STOMP over WebSocket.</li>
+<li><code>addEndpoint(&quot;/ws&quot;).setAllowedOrigins(webOrigin)</code>: the handshake URL; only our web app&#39;s origin may open a socket.</li>
+<li><code>enableSimpleBroker(&quot;/topic&quot;)</code> (<code>shortcut:</code> one instance only, 45.3) + <code>setApplicationDestinationPrefixes(&quot;/app&quot;)</code>.</li>
+<li><code>configureClientInboundChannel(...)</code>: plugs <code>StompAuth</code> in.</li>
+<li><code>SecurityConfig</code>: <code>/ws</code> is <code>permitAll()</code> at the HTTP level, because the handshake can&#39;t carry our token; the real check happens in <code>CONNECT</code>.</li>
+</ul>
+<h3 id="476-chatchatcontrollerjava-one-controller-two-doors">47.6 <code>chat/ChatController.java</code>: one controller, two doors</h3>
+<ul>
+<li><code>GET /api/v1/groups/{id}/messages?before=</code> / <code>?after=</code>: history over HTTP.</li>
+<li><code>@MessageMapping(&quot;/groups/{groupId}/chat&quot;)</code>: handles <code>SEND /app/groups/&lt;id&gt;/chat</code> with <code>{&quot;body&quot;, &quot;clientId&quot;}</code>. <code>@DestinationVariable</code> reads <code>{groupId}</code> from the destination; <code>Principal user</code> is the user set at CONNECT.</li>
+<li><code>shortcut:</code> a refused STOMP message (not a member, empty text) is only logged; the browser checks the length itself.</li>
+</ul>
+<h3 id="477-tests-chattest-6-tests-real-websocket-on-a-random-port">47.7 Tests: <code>ChatTest</code> (6 tests, real WebSocket on a random port)</h3>
+<ul>
+<li><code>@SpringBootTest(webEnvironment = RANDOM_PORT)</code>: starts the real server; <code>@LocalServerPort</code> gives its port.</li>
+<li><code>WebSocketStompClient</code> + <code>StandardWebSocketClient</code> + <code>JacksonJsonMessageConverter</code>: a Java STOMP client. Real tokens are signed with the app&#39;s <code>JwtEncoder</code>, same issuer as <code>AccessTokens</code>.</li>
+<li><code>subscribe(...)</code> waits until <code>SimpUserRegistry</code> shows the subscription, so a message can&#39;t slip past before we&#39;re listening (no flaky <code>sleep</code>).<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>membersGetMessagesLiveAndHistoryOldestFirst</code></td>
+<td>live delivery (trimmed body, first name, clientId echoed); history oldest-first with the &quot;joined&quot; system message; <code>you</code> right for each person</td>
+</tr>
+<tr>
+<td><code>outsidersCanNeitherListenNorRead</code></td>
+<td>a logged-in stranger&#39;s SUBSCRIBE gets nothing; history → 404</td>
+</tr>
+<tr>
+<td><code>connectingWithoutATokenIsRefused</code></td>
+<td>CONNECT without a token never succeeds</td>
+</tr>
+<tr>
+<td><code>sendingStraightOntoATopicIsRefused</code></td>
+<td>a fake message sent to <code>/topic/...</code> never arrives</td>
+</tr>
+<tr>
+<td><code>groupChangesAreAnnouncedAndLeavingEndsAccess</code></td>
+<td>a new request reaches members on <code>.updated</code>; after leaving, history → 404</td>
+</tr>
+<tr>
+<td><code>historyPagesWithACursor</code></td>
+<td>55 messages: latest 50, <code>before</code> → the 6 older, <code>after</code> → the 49 newer</td>
+</tr>
+</tbody></table>
+</li>
+<li><strong>Proven to fail:</strong> with the SUBSCRIBE and SEND checks switched off, the two security tests went <strong>red</strong> (the stranger read &quot;secret plan&quot;; the fake message arrived). Restored, green again.</li>
+</ul>
+<h3 id="478-web">47.8 Web</h3>
+<ul>
+<li><code>@stomp/stompjs</code> <strong>7.3.0</strong>, pinned exactly. 7.4.0 was published only 3 days earlier; brand-new releases are a supply-chain risk, so we took the version that&#39;s been out since January.</li>
+<li><code>lib/api.ts</code>:<ul>
+<li><code>freshAccessToken()</code>: decodes the JWT&#39;s <code>exp</code> (the payload is base64url JSON, readable by anyone, 24.2) and refreshes if under a minute is left. The socket can&#39;t &quot;refresh and retry&quot; like <code>request()</code> does.</li>
+<li><code>connectGroup(groupId, {message, updated, connected, disconnected})</code>: a STOMP <code>Client</code> with <code>brokerURL</code> = API URL with <code>http</code> → <code>ws</code>; <code>reconnectDelay: 3000</code>; <code>beforeConnect</code> puts a fresh token in the CONNECT headers <strong>before every (re)connect</strong>; <code>onConnect</code> subscribes to <code>.chat</code> and <code>.updated</code>.</li>
+<li><code>sendChat(...)</code>: <code>publish</code> to <code>/app/groups/&lt;id&gt;/chat</code> with <code>content-type: application/json</code>.</li>
+<li><code>getMessages(groupId, {before} | {after})</code>.</li>
+</ul>
+</li>
+<li><code>app/group-chat.tsx</code>:<ul>
+<li><code>merge(lines, incoming, mine)</code>: drops duplicates by <code>id</code>, replaces my grey pending line when the server&#39;s copy carries the same <code>clientId</code>, keeps confirmed lines in id order with pending ones last.</li>
+<li>On every <strong>connect</strong>: subscribe first, <strong>then</strong> fetch (first time: latest page; after a reconnect: <code>after = newestId</code>), so nothing falls in the gap; duplicates are merged away.</li>
+<li><strong>Send:</strong> <code>crypto.randomUUID()</code> → remember it in <code>mine</code> → show a grey &quot;sending…&quot; line → publish.</li>
+<li>&quot;Show older messages&quot; when the first page was full (50).</li>
+<li>Text is rendered as React text, so it&#39;s <strong>escaped</strong> (no <code>dangerouslySetInnerHTML</code>). The <code>&lt;label&gt;</code> is visually hidden (<code>sr-only</code>) but linked with <code>htmlFor</code>.</li>
+<li><code>latestOnUpdated</code> ref: the newest callback without reconnecting (same trick as <code>latestOnPick</code> in 35.12).</li>
+</ul>
+</li>
+<li><code>app/group-card.tsx</code>: <code>version</code> is now a <strong>prop</strong>, not a <code>key</code>, so the card refetches on changes but isn&#39;t re-created, and the chat connection stays open. <code>&lt;GroupChat key={g.id} ...&gt;</code> reconnects only if the group itself changes.</li>
+<li><code>lib/time.ts</code>: <code>formatIstTime(iso)</code> → &quot;12:07 pm&quot;.</li>
+</ul>
+<h3 id="479-verified-in-a-real-browser-two-tabs-at-once">47.9 Verified in a real browser (two tabs at once)</h3>
+<ul>
+<li>Setup through the API (real OTP logins): Keshav and Asha&#39;s trips, Asha asks, Keshav accepts.</li>
+<li>Tab 1 <strong>Keshav</strong>, tab 2 <strong>Asha</strong> (each tab keeps its own in-memory access token; fine for a test under 15 minutes).</li>
+<li>Both cards: &quot;Group chat&quot; with &quot;Asha joined&quot;; no &quot;reconnecting…&quot;.</li>
+<li>Asha sends &quot;Landed! At pillar 12&quot; → her tab shows it <strong>once</strong> (pending replaced) → Keshav&#39;s tab shows &quot;Asha: Landed! At pillar 12&quot; <strong>without reload</strong>.</li>
+<li>Keshav sends <code>Coming &lt;b&gt;now&lt;/b&gt; &lt;img src=x onerror=alert(1)&gt;</code> → Asha sees it as plain text; 0 <code>&lt;img&gt;</code>, 0 <code>&lt;b&gt;</code> elements: <strong>XSS-safe</strong>.</li>
+<li>Asha locks → Keshav&#39;s card turns &quot;locked&quot; on its own, the reason box appears, and the chat shows &quot;Asha locked the group and is booking the cab&quot;.</li>
+<li>Not tested in the browser: a real network drop and reconnect (the catch-up query is covered by <code>historyPagesWithACursor</code>).</li>
+</ul>
+<h3 id="4710-found-while-testing-two-redis-servers-on-one-laptop">47.10 Found while testing: two Redis servers on one laptop</h3>
+<ul>
+<li>The OTP limits wouldn&#39;t clear. The reason: <strong>three</strong> things listen on port 6379 here: a <strong>Windows &quot;Redis&quot; service</strong> (5.0.14, <code>C:\Program Files\Redis</code>, starts automatically, bound to <code>127.0.0.1</code>), plus Docker&#39;s Redis (7.4, reachable on <code>::1</code>).</li>
+<li>The API connects to <code>localhost</code> → <code>127.0.0.1</code> → the <strong>Windows</strong> Redis, not the project&#39;s Docker one. It works (same protocol), but it isn&#39;t the setup the project documents, and that Redis also holds another project&#39;s keys.</li>
+<li>Lesson: when &quot;it should be cleared but isn&#39;t&quot;, check <strong>which server</strong> you&#39;re actually talking to (<code>Get-NetTCPConnection -LocalPort 6379</code> lists the listeners).</li>
+</ul>
+<hr>
+<h2 id="48-command-cheat-sheet">48. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -3833,6 +4057,11 @@ git switch -c &lt;type/next-feature&gt;
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
 docker compose -f infra/docker-compose.yml down       # stop (keeps data)
 docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d namastute   # SQL prompt
+</code></pre>
+<h3 id="which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</h3>
+<pre><code class="language-powershell">Get-NetTCPConnection -LocalPort 6379 -State Listen      # who listens on the Redis port
+&amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; -h 127.0.0.1 KEYS &quot;rate:otp:*&quot;   # the Windows Redis the API uses today
+docker compose -f infra/docker-compose.yml exec redis redis-cli KEYS &quot;*&quot;      # the project&#39;s Docker Redis
 </code></pre>
 <h3 id="query-plans-inside-psql">Query plans (inside <code>psql</code>)</h3>
 <pre><code class="language-sql">explain &lt;query&gt;;                 -- the plan Postgres would use (doesn&#39;t run it)
@@ -3866,7 +4095,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="46-glossary">46. Glossary</h2>
+<h2 id="49-glossary">49. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -4494,9 +4723,81 @@ git fetch --prune
 <td>git stash</td>
 <td>Puts uncommitted changes on a temporary shelf (<code>git stash pop</code> brings them back)</td>
 </tr>
+<tr>
+<td>Polling</td>
+<td>Asking the server &quot;anything new?&quot; again and again</td>
+</tr>
+<tr>
+<td>Latency</td>
+<td>The delay between something happening and you seeing it</td>
+</tr>
+<tr>
+<td>Server push</td>
+<td>The server sending data without being asked</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td>A long-lived two-way connection between browser and server</td>
+</tr>
+<tr>
+<td>Full-duplex</td>
+<td>Both sides can send at the same time</td>
+</tr>
+<tr>
+<td>STOMP</td>
+<td>Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE)</td>
+</tr>
+<tr>
+<td>Pub/sub</td>
+<td>Publish to a topic; every subscriber gets a copy</td>
+</tr>
+<tr>
+<td>Message broker</td>
+<td>The part that delivers published messages to subscribers</td>
+</tr>
+<tr>
+<td>ChannelInterceptor</td>
+<td>Spring checkpoint that every incoming STOMP frame passes through</td>
+</tr>
+<tr>
+<td>CSWSH</td>
+<td>Cross-site WebSocket hijacking: another site opening a socket with your cookies</td>
+</tr>
+<tr>
+<td>Optimistic UI</td>
+<td>Showing your action as done before the server confirms it</td>
+</tr>
+<tr>
+<td>Deduplication</td>
+<td>Recognising the same item arriving twice and keeping one</td>
+</tr>
+<tr>
+<td>Cursor pagination</td>
+<td>&quot;Items older than id X&quot;: stable and index-friendly, unlike OFFSET</td>
+</tr>
+<tr>
+<td>Application event</td>
+<td>A message one module publishes inside the app; listeners react without the publisher knowing them</td>
+</tr>
+<tr>
+<td>@TransactionalEventListener</td>
+<td>Runs a listener at a transaction phase, by default after commit</td>
+</tr>
+<tr>
+<td>REQUIRES_NEW</td>
+<td>Start a brand-new transaction, separate from any current one</td>
+</tr>
+<tr>
+<td>Outbox</td>
+<td>Saving events in the same transaction as the change, then delivering them reliably</td>
+</tr>
+<tr>
+<td>Supply-chain risk</td>
+<td>Danger of a malicious or broken release of a library you depend on</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="47-interview-questions-to-practise">47. Interview questions to practise</h2>
+<h2 id="50-interview-questions-to-practise">50. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -4563,6 +4864,16 @@ git fetch --prune
 <li>Why is reading another module&#39;s tables with SQL &quot;the same cycle, just hidden&quot;?</li>
 <li>Why can a lambda use <code>from</code> but not <code>at</code> in the greedy loop?</li>
 <li>How did the old ranker tests prove the N-rider refactor kept pair behaviour the same?</li>
+<li>Why is polling a poor fit for chat? What does a WebSocket handshake look like?</li>
+<li>What does STOMP add on top of a WebSocket, and what is pub/sub?</li>
+<li>How do you authenticate a WebSocket when the browser can&#39;t send an Authorization header?</li>
+<li>Why must the server check membership on every SUBSCRIBE, not just at CONNECT?</li>
+<li>Why save a message before broadcasting it? How does a clientId prevent duplicates with optimistic UI?</li>
+<li>Why is cursor pagination better than OFFSET for chat history?</li>
+<li>Why does Spring&#39;s simple broker stop working with two server instances, and what replaces it?</li>
+<li>Why use an application event (GroupChanged) instead of groups calling chat directly?</li>
+<li>What goes wrong if a @TransactionalEventListener writes to the database without REQUIRES_NEW?</li>
+<li>Why must the server refuse STOMP SEND frames aimed straight at /topic/...?</li>
 </ol>
 
 

@@ -59,7 +59,7 @@ export default function CurrentTrip() {
         {trip.flightNo ? `, flight ${trip.flightNo}` : ""} · about {trip.soloKm} km
       </p>
       {trip.status === "grouped" ? (
-        <GroupCard key={version} onChange={reload} />
+        <GroupCard version={version} onChange={reload} />
       ) : (
         <Matches
           key={version}

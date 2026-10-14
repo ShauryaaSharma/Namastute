@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -20,8 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 // Join requests and the group state machine (design 3.2, 3.4). Plain SQL: almost every step is one conditional UPDATE
 // whose WHERE names the state it starts from, so an invalid move changes 0 rows and we answer with an error.
+// Public only for isActiveMember (used by the chat module); everything else stays package-private
 @Service
-class GroupService {
+public class GroupService {
 
     static final int CAR_BAGS = 4;   // a sedan (design 3.3); seats are limited by groups.capacity
 
@@ -29,8 +31,7 @@ class GroupService {
     record SentView(UUID id, UUID toTripId, String firstName, String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you) {}
-    record GroupView(UUID id, String status, boolean youAreBooker, String bookerUpiId, List<MemberView> members,
-                     List<String> updates) {}
+    record GroupView(UUID id, String status, boolean youAreBooker, String bookerUpiId, List<MemberView> members) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}
     record Pending(UUID id, UUID fromTripId, UUID toTripId) {}
@@ -40,11 +41,13 @@ class GroupService {
     private final JdbcClient db;
     private final TripService trips;
     private final UserService users;
+    private final ApplicationEventPublisher events;
 
-    GroupService(JdbcClient db, TripService trips, UserService users) {
+    GroupService(JdbcClient db, TripService trips, UserService users, ApplicationEventPublisher events) {
         this.db = db;
         this.trips = trips;
         this.users = users;
+        this.events = events;
     }
 
     // "Ask to share": from your searching trip to theirs (alone, or in a group that's still open)
@@ -56,8 +59,10 @@ class GroupService {
                 .findFirst()
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "That traveller isn't available any more"));
         try {
-            return db.sql("insert into join_requests (from_trip_id, to_trip_id) values (?, ?) returning id")
+            UUID id = db.sql("insert into join_requests (from_trip_id, to_trip_id) values (?, ?) returning id")
                     .params(mine.id(), theirs.id()).query(UUID.class).single();
+            groupOf(theirs.id()).ifPresent(g -> events.publishEvent(new GroupChanged(g.groupId(), null)));   // members see it live
+            return id;
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "ALREADY_ASKED", "You've already asked this traveller");
         }
@@ -149,12 +154,14 @@ class GroupService {
         // Nobody can be in two groups: both people's other requests are withdrawn
         db.sql("update join_requests set status = 'withdrawn' where status = 'pending' and from_trip_id in (?, ?)")
                 .params(from.id(), to.id()).update();
+        events.publishEvent(new GroupChanged(groupId, firstName(from.userId()) + " joined"));
     }
 
     void decline(UUID userId, UUID requestId) {
         Pending r = pendingRequest(requestId);
-        answerableGroup(userId, byId(List.of(r.toTripId())).get(r.toTripId()));
+        Optional<Membership> group = answerableGroup(userId, byId(List.of(r.toTripId())).get(r.toTripId()));
         db.sql("update join_requests set status = 'declined' where id = ? and status = 'pending'").param(requestId).update();
+        group.ifPresent(g -> events.publishEvent(new GroupChanged(g.groupId(), null)));
     }
 
     // Only the maker (= booker) locks: "I'm booking the cab now, no more people"
@@ -170,6 +177,7 @@ class GroupService {
                 where status = 'pending'
                   and to_trip_id in (select trip_id from group_members where group_id = ? and status = 'accepted')""")
                 .param(groupId).update();
+        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " locked the group and is booking the cab"));
     }
 
     @Transactional
@@ -204,20 +212,16 @@ class GroupService {
             db.sql("update groups set booker_id = ?, status = 'open' where id = ?").params(left.get(0).userId(), groupId).update();
         }
 
-        if (wasLocked) {
-            String why = reason.strip();
-            // shortcut: writes the chat module's messages and feedback module's reports tables directly;
-            // go through those modules once they exist (slice 3 and later)
-            db.sql("insert into messages (group_id, kind, body) values (?, 'system', ?)")
-                    .params(groupId, users.firstNames(List.of(userId)).get(userId) + " left: " + why).update();
-            if (!userId.equals(g.bookerId())) {
-                db.sql("insert into reports (reporter_id, reported_id, group_id, reason) values (?, ?, ?, ?)")
-                        .params(userId, g.bookerId(), groupId, why).update();
-            }
+        if (wasLocked && !userId.equals(g.bookerId())) {
+            // shortcut: writes the feedback module's reports table directly; go through that module once it exists
+            db.sql("insert into reports (reporter_id, reported_id, group_id, reason) values (?, ?, ?, ?)")
+                    .params(userId, g.bookerId(), groupId, reason.strip()).update();
         }
+        // The chat module turns this into a system message ("Asha left: …") once the transaction commits
+        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " left" + (wasLocked ? ": " + reason.strip() : "")));
     }
 
-    // Your open or locked group: members, the booker's UPI ID (members only, design 4.4) and recent updates
+    // Your open or locked group: members and the booker's UPI ID (members only, design 4.4)
     Optional<GroupView> current(UUID userId) {
         Optional<Membership> membership = trips.activeTrip(userId).flatMap(t -> groupOf(t.id()));
         if (membership.isEmpty()) {
@@ -234,10 +238,15 @@ class GroupService {
             return new MemberView(names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
                     m.userId().equals(g.bookerId()), m.userId().equals(userId));
         }).toList();
-        List<String> updates = db.sql("select body from messages where group_id = ? and kind = 'system' order by id desc limit 5")
-                .param(groupId).query(String.class).list();
-        return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
-                views, updates));
+        return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()), views));
+    }
+
+    // For the chat module: may this user read and write this group's chat? (accepted member of an open or locked group)
+    public boolean isActiveMember(UUID groupId, UUID userId) {
+        return db.sql("""
+                        select count(*) from group_members m join groups g on g.id = m.group_id
+                        where m.group_id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('open', 'locked')""")
+                .params(groupId, userId).query(Integer.class).single() > 0;
     }
 
     record Membership(UUID groupId, String status) {}
@@ -254,16 +263,11 @@ class GroupService {
     // if they're in a group, any accepted member. Anyone else gets the same 404 as a missing request.
     private Optional<Membership> answerableGroup(UUID userId, TripSummary to) {
         Optional<Membership> group = groupOf(to.id());
-        boolean allowed = group.map(g -> isMember(g.groupId(), userId)).orElse(to.userId().equals(userId));
+        boolean allowed = group.map(g -> isActiveMember(g.groupId(), userId)).orElse(to.userId().equals(userId));
         if (!allowed) {
             throw requestNotFound();
         }
         return group;
-    }
-
-    private boolean isMember(UUID groupId, UUID userId) {
-        return db.sql("select count(*) from group_members where group_id = ? and user_id = ? and status = 'accepted'")
-                .params(groupId, userId).query(Integer.class).single() > 0;
     }
 
     private Pending pendingRequest(UUID requestId) {
@@ -278,6 +282,10 @@ class GroupService {
                         insert into group_members (group_id, user_id, trip_id, status) values (?, ?, ?, 'accepted')
                         on conflict (group_id, user_id) do update set status = 'accepted', trip_id = excluded.trip_id, created_at = now()""")
                 .params(groupId, trip.userId(), trip.id()).update();
+    }
+
+    private String firstName(UUID userId) {
+        return users.firstNames(List.of(userId)).get(userId);
     }
 
     private TripSummary searchingTrip(UUID userId) {
