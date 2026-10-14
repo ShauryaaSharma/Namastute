@@ -1,12 +1,14 @@
 package com.namastute.trips;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.OptionalDouble;
 import org.locationtech.jts.geom.Point;
 
-// Stage 2 of matching (stage 1 is the SQL in TripRepository.matchCandidates).
+// Stage 2 of matching (stage 1: TripRepository.matchCandidates for travellers, OpenGroups for groups).
 // A pure function: no Spring, no database, no clock. The same inputs always give the same answer.
 final class MatchRanker {
 
@@ -17,31 +19,53 @@ final class MatchRanker {
     static final double ALLOWANCE = 0.25;
     static final double KM_PER_MINUTE = 0.2;      // 1 km of detour is as bad as 5 minutes of waiting
 
-    record Ranked(TripRequest trip, double detourKm, double score) {}
+    // riders = the people already sharing: one for a lone traveller, 2–3 for an open group
+    record Ranked(List<TripRequest> riders, double detourKm, double score) {}
 
     private MatchRanker() {}
 
-    // Best candidates for sharing one cab with `mine`, lowest score first. Two riders per cab for now.
-    static List<Ranked> rank(Point pickup, TripRequest mine, List<TripRequest> candidates) {
-        double mySolo = roadKm(pickup, mine.getDest());
+    // Best candidates for `mine` to join, lowest score first
+    static List<Ranked> rank(Point pickup, TripRequest mine, List<List<TripRequest>> candidates) {
         List<Ranked> ok = new ArrayList<>();
-        for (TripRequest other : candidates) {
-            if (mine.getSeats() + other.getSeats() > CAR_SEATS || mine.getBags() + other.getBags() > CAR_BAGS) {
+        for (List<TripRequest> riders : candidates) {
+            List<TripRequest> everyone = new ArrayList<>(riders);
+            everyone.add(mine);
+            if (everyone.stream().mapToInt(TripRequest::getSeats).sum() > CAR_SEATS
+                    || everyone.stream().mapToInt(TripRequest::getBags).sum() > CAR_BAGS) {
                 continue;   // doesn't fit in the car
             }
-            double theirSolo = roadKm(pickup, other.getDest());
-            double longest = Math.max(mySolo, theirSolo);
-            // Greedy route: drop the nearer person first. They ride exactly their solo trip;
-            // the farther one rides the whole route, so the detour is all theirs.
-            double route = Math.min(mySolo, theirSolo) + roadKm(mine.getDest(), other.getDest());
-            double detour = route - longest;
-            if (detour > Math.max(MIN_ALLOWANCE_KM, ALLOWANCE * longest)) {
-                continue;   // too far out of the way for the last rider
+            OptionalDouble detour = fairDetour(pickup, everyone);
+            if (detour.isEmpty()) {
+                continue;   // someone would ride too far out of their way
             }
-            long minutes = Math.abs(Duration.between(mine.getExitAt(), other.getExitAt()).toMinutes());
-            ok.add(new Ranked(other, detour, detour + KM_PER_MINUTE * minutes));
+            // A group meets when its last member is out (its meet time); a traveller's time is their own exit
+            Instant theirTime = riders.stream().map(TripRequest::getExitAt).max(Comparator.naturalOrder()).orElseThrow();
+            long minutes = Math.abs(Duration.between(mine.getExitAt(), theirTime).toMinutes());
+            ok.add(new Ranked(riders, detour.getAsDouble(), detour.getAsDouble() + KM_PER_MINUTE * minutes));
         }
         return ok.stream().sorted(Comparator.comparingDouble(Ranked::score)).limit(TOP).toList();
+    }
+
+    // Greedy route: from the pickup, always drive to the nearest remaining drop (Learning Notes 42.3).
+    // Returns the detour (route − longest solo trip), or empty if any rider would ride more than their allowance.
+    private static OptionalDouble fairDetour(Point pickup, List<TripRequest> everyone) {
+        List<TripRequest> left = new ArrayList<>(everyone);
+        Point at = pickup;
+        double routeKm = 0;
+        double longestSolo = 0;
+        while (!left.isEmpty()) {
+            Point from = at;
+            TripRequest next = left.stream().min(Comparator.comparingDouble(t -> roadKm(from, t.getDest()))).orElseThrow();
+            routeKm += roadKm(at, next.getDest());   // this rider gets out after routeKm
+            double solo = roadKm(pickup, next.getDest());
+            if (routeKm - solo > Math.max(MIN_ALLOWANCE_KM, ALLOWANCE * solo)) {
+                return OptionalDouble.empty();
+            }
+            longestSolo = Math.max(longestSolo, solo);
+            at = next.getDest();
+            left.remove(next);
+        }
+        return OptionalDouble.of(routeKm - longestSolo);
     }
 
     private static double roadKm(Point a, Point b) {

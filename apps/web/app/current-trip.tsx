@@ -61,7 +61,13 @@ export default function CurrentTrip() {
       {trip.status === "grouped" ? (
         <GroupCard key={version} onChange={reload} />
       ) : (
-        <Matches key={version} tripId={trip.id} asked={requests.sent.map((s) => s.toTripId)} onChange={reload} />
+        <Matches
+          key={version}
+          tripId={trip.id}
+          asked={requests.sent.map((s) => s.toTripId)}
+          askedYou={requests.received.map((r) => r.fromTripId)}
+          onChange={reload}
+        />
       )}
       <Received requests={requests.received} onChange={reload} />
       <Sent requests={requests.sent} />
@@ -79,9 +85,12 @@ export default function CurrentTrip() {
   );
 }
 
-// People you could share a cab with, best first.
+const CAR_SEATS = 4; // a sedan, same as the API's MatchRanker.CAR_SEATS
+
+// Travellers and open groups you could share a cab with, best first.
 // shortcut: loaded once when the page opens; reload for new matches. Push notifications come later (design 3.3 step 3).
-function Matches({ tripId, asked, onChange }: { tripId: string; asked: string[]; onChange: () => void }) {
+function Matches(props: { tripId: string; asked: string[]; askedYou: string[]; onChange: () => void }) {
+  const { tripId, asked, askedYou, onChange } = props;
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [failed, setFailed] = useState(false);
   const { busy, error, run } = useAction();
@@ -102,24 +111,35 @@ function Matches({ tripId, asked, onChange }: { tripId: string; asked: string[];
     <div className="mt-2">
       <h3 className="font-semibold">People heading your way</h3>
       <ul className="mt-1 list-disc pl-5">
-        {matches.map((m) => (
-          <li key={m.tripId}>
-            {m.firstName} · out {timing(m.minutesAfterYou)} · {m.destArea} ·{" "}
-            {m.detourKm === 0 ? "no detour" : `${m.detourKm} km detour`}
-            {asked.includes(m.tripId) ? (
-              <span className="ml-2 text-sm">· asked</span>
-            ) : (
-              <button
-                onClick={() => run(async () => { await askToShare(m.tripId); onChange(); })}
-                disabled={busy}
-                aria-label={`Ask ${m.firstName} to share a cab`}
-                className="ml-2 underline disabled:opacity-50"
-              >
-                Ask to share
-              </button>
-            )}
-          </li>
-        ))}
+        {matches.map((m) => {
+          const names = m.riders.map((r) => r.firstName).join(" + ");
+          const group = m.riders.length > 1;
+          const ids = m.riders.map((r) => r.tripId);
+          return (
+            <li key={m.tripId}>
+              {group
+                ? `${m.riders.map((r) => `${r.firstName} (${r.destArea})`).join(" + ")} · group of ${m.riders.length} · ` +
+                  `${plural(CAR_SEATS - m.seats, "seat")} free · meeting ${timing(m.minutesAfterYou)}`
+                : `${names} · out ${timing(m.minutesAfterYou)} · ${m.riders[0].destArea}`}
+              {" · "}
+              {m.detourKm === 0 ? "no detour" : `${m.detourKm} km detour`}
+              {ids.some((id) => asked.includes(id)) ? (
+                <span className="ml-2 text-sm">· asked</span>
+              ) : ids.some((id) => askedYou.includes(id)) ? (
+                <span className="ml-2 text-sm">· asked you (answer below)</span>
+              ) : (
+                <button
+                  onClick={() => run(async () => { await askToShare(m.tripId); onChange(); })}
+                  disabled={busy}
+                  aria-label={`Ask ${names} to share a cab`}
+                  className="ml-2 underline disabled:opacity-50"
+                >
+                  Ask to share
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
     </div>

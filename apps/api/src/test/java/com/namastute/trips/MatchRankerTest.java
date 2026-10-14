@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 
@@ -21,7 +22,7 @@ class MatchRankerTest {
         TripRequest me = trip(28.4936, 77.0930, 0);           // DLF Phase 3, 9.7 km solo
         TripRequest asha = trip(28.4683, 77.0628, 10);        // Sector 29, 14.0 km solo, past my stop
 
-        List<MatchRanker.Ranked> ranked = MatchRanker.rank(T3, me, List.of(asha));
+        List<MatchRanker.Ranked> ranked = MatchRanker.rank(T3, me, alone(asha));
 
         assertThat(ranked).hasSize(1);
         assertThat(ranked.get(0).detourKm()).as("route 15.4 − longest solo 14.0").isCloseTo(1.4, within(0.1));
@@ -33,7 +34,7 @@ class MatchRankerTest {
         TripRequest me = trip(28.4936, 77.0930, 0);
         TripRequest twin = trip(28.4936, 77.0930, -15);
 
-        MatchRanker.Ranked match = MatchRanker.rank(T3, me, List.of(twin)).get(0);
+        MatchRanker.Ranked match = MatchRanker.rank(T3, me, alone(twin)).get(0);
 
         assertThat(match.detourKm()).isCloseTo(0, within(1e-9));
         assertThat(match.score()).as("only the 15 minutes count").isCloseTo(3.0, within(1e-9));
@@ -44,7 +45,7 @@ class MatchRankerTest {
         TripRequest me = trip(28.4936, 77.0930, 0);           // DLF Phase 3 (south)
         TripRequest ravi = trip(28.5523, 77.0583, 0);         // Dwarka Sector 21 (west): I'd ride 4.5 km extra, limit 3
 
-        assertThat(MatchRanker.rank(T3, me, List.of(ravi))).isEmpty();
+        assertThat(MatchRanker.rank(T3, me, alone(ravi))).isEmpty();
     }
 
     // Short trips: 25 % would allow only ~1.4 km, but the 3 km floor applies
@@ -52,8 +53,8 @@ class MatchRankerTest {
     void shortTripsGetAtLeast3KmAllowance() {
         TripRequest me = at(3, 0);
 
-        assertThat(MatchRanker.rank(T3, me, List.of(at(3, 2.5)))).as("detour ≈ 2.2 km").hasSize(1);
-        assertThat(MatchRanker.rank(T3, me, List.of(at(3, 6)))).as("detour ≈ 3.2 km").isEmpty();
+        assertThat(MatchRanker.rank(T3, me, alone(at(3, 2.5)))).as("detour ≈ 2.2 km").hasSize(1);
+        assertThat(MatchRanker.rank(T3, me, alone(at(3, 6)))).as("detour ≈ 3.2 km").isEmpty();
     }
 
     // Long trips: 25 % of ~43 km ≈ 10.9 km, far more than the 3 km floor
@@ -61,17 +62,17 @@ class MatchRankerTest {
     void longTripsGet25PercentAllowance() {
         TripRequest me = at(30, 0);
 
-        assertThat(MatchRanker.rank(T3, me, List.of(at(30, 8)))).as("detour ≈ 9.7 km").hasSize(1);
-        assertThat(MatchRanker.rank(T3, me, List.of(at(30, 12)))).as("detour ≈ 13.6 km, limit ≈ 11.3").isEmpty();
+        assertThat(MatchRanker.rank(T3, me, alone(at(30, 8)))).as("detour ≈ 9.7 km").hasSize(1);
+        assertThat(MatchRanker.rank(T3, me, alone(at(30, 12)))).as("detour ≈ 13.6 km, limit ≈ 11.3").isEmpty();
     }
 
     @Test
     void everyoneMustFitInOneCar() {
         TripRequest me = trip(28.4936, 77.0930, 0, 2, 2);
 
-        assertThat(MatchRanker.rank(T3, me, List.of(trip(28.4936, 77.0930, 0, 2, 2)))).as("4 seats, 4 bags").hasSize(1);
-        assertThat(MatchRanker.rank(T3, me, List.of(trip(28.4936, 77.0930, 0, 3, 0)))).as("5 seats").isEmpty();
-        assertThat(MatchRanker.rank(T3, me, List.of(trip(28.4936, 77.0930, 0, 1, 3)))).as("5 bags").isEmpty();
+        assertThat(MatchRanker.rank(T3, me, alone(trip(28.4936, 77.0930, 0, 2, 2)))).as("4 seats, 4 bags").hasSize(1);
+        assertThat(MatchRanker.rank(T3, me, alone(trip(28.4936, 77.0930, 0, 3, 0)))).as("5 seats").isEmpty();
+        assertThat(MatchRanker.rank(T3, me, alone(trip(28.4936, 77.0930, 0, 1, 3)))).as("5 bags").isEmpty();
     }
 
     @Test
@@ -82,16 +83,62 @@ class MatchRankerTest {
         List<TripRequest> sameSpot = List.of(5, -20, 1, 18, 7).stream().map(m -> trip(28.4936, 77.0930, m)).toList();
 
         List<MatchRanker.Ranked> ranked = MatchRanker.rank(T3, me,
-                List.of(neha, sameSpot.get(0), asha, sameSpot.get(1), sameSpot.get(2), sameSpot.get(3), sameSpot.get(4)));
+                alone(neha, sameSpot.get(0), asha, sameSpot.get(1), sameSpot.get(2), sameSpot.get(3), sameSpot.get(4)));
 
         // scores: 1 min → 0.2, 5 → 1.0, 7 → 1.4, asha 3.4, 18 → 3.6, 20 → 4.0, neha 5.3
-        assertThat(ranked).extracting(MatchRanker.Ranked::trip)
+        assertThat(ranked).extracting(r -> r.riders().get(0))
                 .containsExactly(sameSpot.get(2), sameSpot.get(0), sameSpot.get(4), asha, sameSpot.get(3));
     }
 
     @Test
     void noCandidatesNoMatches() {
-        assertThat(MatchRanker.rank(T3, trip(28.4936, 77.0930, 0), List.of())).isEmpty();
+        assertThat(MatchRanker.rank(T3, trip(28.4936, 77.0930, 0), alone())).isEmpty();
+    }
+
+    // ---- Groups (slice 2b): a candidate can be 2–3 riders already sharing ----
+
+    @Test
+    void joiningAGroupHeadingTheSameWay() {
+        TripRequest me = trip(28.4936, 77.0930, 0);                       // DLF Phase 3
+        List<TripRequest> group = List.of(trip(28.4950, 77.0895, 0),     // Cyber City
+                                          trip(28.4683, 77.0628, 0));    // Sector 29
+
+        List<MatchRanker.Ranked> ranked = MatchRanker.rank(T3, me, List.of(group));
+
+        assertThat(ranked).hasSize(1);
+        assertThat(ranked.get(0).detourKm()).as("route − longest solo (Sector 29)").isCloseTo(1.7, within(0.1));
+    }
+
+    @Test
+    void aNewcomerMayNotPushAMemberOverTheirLimit() {
+        List<TripRequest> group = List.of(at(3, 0), at(6, 0));           // one straight road: no detour at all
+        TripRequest me = at(1, 2.5);                                       // nearest, so I'm dropped first: 0 km extra for me...
+
+        assertThat(MatchRanker.rank(T3, me, List.of(group)))
+                .as("...but the first member would ride 4.1 km extra (limit 3)").isEmpty();
+    }
+
+    @Test
+    void theWholeCarMustFitMe() {
+        List<TripRequest> group = List.of(trip(28.4936, 77.0930, 0, 1, 1), trip(28.4936, 77.0930, 0, 2, 1));
+
+        assertThat(MatchRanker.rank(T3, trip(28.4936, 77.0930, 0, 1, 1), List.of(group))).as("4 seats").hasSize(1);
+        assertThat(MatchRanker.rank(T3, trip(28.4936, 77.0930, 0, 2, 1), List.of(group))).as("5 seats").isEmpty();
+        assertThat(MatchRanker.rank(T3, trip(28.4936, 77.0930, 0, 1, 3), List.of(group))).as("5 bags").isEmpty();
+    }
+
+    @Test
+    void aGroupsTimeIsItsLastMembersExit() {
+        List<TripRequest> group = List.of(trip(28.4936, 77.0930, 0), trip(28.4936, 77.0930, 20));
+
+        MatchRanker.Ranked match = MatchRanker.rank(T3, trip(28.4936, 77.0930, 0), List.of(group)).get(0);
+
+        assertThat(match.score()).as("same spot: only the 20 minutes until the group meets count").isCloseTo(4.0, within(1e-9));
+    }
+
+    // Each traveller as a "group of one" (Learning Notes 42.2)
+    private static List<List<TripRequest>> alone(TripRequest... travellers) {
+        return Stream.of(travellers).map(List::of).toList();
     }
 
     private static TripRequest trip(double lat, double lng, int minutesAfter) {
