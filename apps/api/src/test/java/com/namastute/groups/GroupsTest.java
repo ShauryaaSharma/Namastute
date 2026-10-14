@@ -135,8 +135,10 @@ class GroupsTest {
 
         mvc.perform(get("/api/v1/groups/current").with(as(keshav)))
                 .andExpect(jsonPath("$.status").value("locked"))
-                .andExpect(jsonPath("$.members.length()").value(2))
-                .andExpect(jsonPath("$.updates[0]").value("Asha left: Booker not answering"));
+                .andExpect(jsonPath("$.members.length()").value(2));
+        // The chat module turned the GroupChanged event into a system message after the commit
+        assertThat(jdbc.queryForObject("select body from messages where group_id = ?::uuid and kind = 'system' order by id desc limit 1",
+                String.class, group)).isEqualTo("Asha left: Booker not answering");
         mvc.perform(get("/api/v1/trips/current").with(as(asha))).andExpect(jsonPath("$.status").value("searching"));
         assertThat(jdbc.queryForObject("select count(*) from reports where reporter_id = ? and reported_id = ?",
                 Integer.class, asha, keshav)).isEqualTo(1);

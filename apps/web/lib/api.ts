@@ -1,5 +1,7 @@
-// The only place the web app talks to the Namastute API.
+// The only place the web app talks to the Namastute API (HTTP, and the chat WebSocket at the bottom).
 // Holds the access token in memory, sends the refresh cookie, and refreshes once on a 401.
+import { Client } from "@stomp/stompjs";
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -174,7 +176,6 @@ export type Group = {
   youAreBooker: boolean;
   bookerUpiId: string | null;
   members: GroupMember[];
-  updates: string[]; // newest first, e.g. "Asha left: booker not answering"
 };
 
 export async function askToShare(toTripId: string): Promise<void> {
@@ -202,4 +203,60 @@ export async function lockGroup(id: string): Promise<void> {
 // A reason is required only when the group is locked
 export async function leaveGroup(id: string, reason?: string): Promise<void> {
   await request<void>(`/api/v1/groups/${id}/leave`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
+// A token that's still valid for at least a minute (for the WebSocket, which can't refresh-and-retry like request())
+export async function freshAccessToken(): Promise<string | null> {
+  const exp = accessToken ? JSON.parse(atob(accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).exp : 0;
+  if (exp * 1000 - Date.now() < 60_000) await refreshSession();
+  return accessToken;
+}
+
+// ---- Group chat (Learning Notes 45–46) ----
+
+export type ChatMessage = {
+  id: number;
+  kind: "text" | "system";
+  firstName: string | null; // null for system messages ("Asha left: …")
+  body: string;
+  createdAt: string;
+  clientId: string | null; // only on the live copy of a message, so its sender can recognise it
+  you: boolean;
+};
+
+// Oldest first. before = the page older than that id; after = everything newer (catching up after a reconnect).
+export function getMessages(groupId: string, cursor: { before?: number; after?: number } = {}): Promise<ChatMessage[]> {
+  const q = cursor.after ? `?after=${cursor.after}` : cursor.before ? `?before=${cursor.before}` : "";
+  return request<ChatMessage[]>(`/api/v1/groups/${groupId}/messages${q}`);
+}
+
+// One live STOMP connection for a group: its chat and its "group changed" events. Call deactivate() to close it.
+export function connectGroup(
+  groupId: string,
+  on: { message: (m: ChatMessage) => void; updated: () => void; connected: () => void; disconnected: () => void },
+): Client {
+  const client = new Client({
+    brokerURL: `${API_URL.replace(/^http/, "ws")}/ws`, // http → ws, https → wss
+    reconnectDelay: 3000, // connections drop at airports: try again every 3 s
+    // Runs before every (re)connect: the token may have expired while we were offline
+    beforeConnect: async () => {
+      client.connectHeaders = { Authorization: `Bearer ${await freshAccessToken()}` };
+    },
+    onConnect: () => {
+      client.subscribe(`/topic/groups.${groupId}.chat`, (frame) => on.message(JSON.parse(frame.body)));
+      client.subscribe(`/topic/groups.${groupId}.updated`, () => on.updated());
+      on.connected();
+    },
+    onWebSocketClose: () => on.disconnected(),
+  });
+  client.activate();
+  return client;
+}
+
+export function sendChat(client: Client, groupId: string, body: string, clientId: string): void {
+  client.publish({
+    destination: `/app/groups/${groupId}/chat`,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ body, clientId }),
+  });
 }
