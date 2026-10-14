@@ -25,7 +25,7 @@ class GroupService {
 
     static final int CAR_BAGS = 4;   // a sedan (design 3.3); seats are limited by groups.capacity
 
-    record RequestView(UUID id, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
+    record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
     record SentView(UUID id, UUID toTripId, String firstName, String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you) {}
@@ -95,7 +95,7 @@ class GroupService {
         Map<UUID, String> askerNames = users.firstNames(askers.values().stream().map(TripSummary::userId).toList());
         List<RequestView> received = pending.stream().map(p -> {
             TripSummary t = askers.get(p.fromTripId());
-            return new RequestView(p.id(), askerNames.get(t.userId()), t.destArea(),
+            return new RequestView(p.id(), p.fromTripId(), askerNames.get(t.userId()), t.destArea(),
                     Duration.between(mine.get().exitAt(), t.exitAt()).toMinutes(), t.seats(), t.bags());
         }).toList();
         return new Requests(sent, received);

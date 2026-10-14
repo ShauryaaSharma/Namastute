@@ -1,5 +1,6 @@
 package com.namastute.trips;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,8 +34,9 @@ class MatchesTest {
 
     @BeforeEach
     void clearTerminal1() {
-        // These tests use T1 only; trips left by earlier runs would show up as extra matches
-        jdbc.update("update trip_requests set status = 'cancelled' where terminal_id = 'DEL-T1' and status = 'searching'");
+        // These tests use T1 only; trips and groups left by earlier runs would show up as extra matches
+        jdbc.update("update trip_requests set status = 'cancelled' where terminal_id = 'DEL-T1' and status in ('searching', 'grouped')");
+        jdbc.update("update groups set status = 'cancelled' where terminal_id = 'DEL-T1' and status = 'open'");
     }
 
     @Test
@@ -54,16 +56,38 @@ class MatchesTest {
         mvc.perform(get("/api/v1/trips/" + myTrip + "/matches").with(as(me)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].firstName").value("Asha"))
-                .andExpect(jsonPath("$[0].destArea").value("Sector 29, Gurugram"))
+                .andExpect(jsonPath("$[0].riders.length()").value(1))   // a lone traveller
+                .andExpect(jsonPath("$[0].riders[0].firstName").value("Asha"))
+                .andExpect(jsonPath("$[0].riders[0].destArea").value("Sector 29, Gurugram"))
+                .andExpect(jsonPath("$[0].riders[0].length()").value(3))   // tripId, firstName, destArea
                 .andExpect(jsonPath("$[0].minutesAfterYou").value(10))
                 .andExpect(jsonPath("$[0].detourKm").value(0.5))   // 0.498 km from T1, shown to the nearest 0.5
                 .andExpect(jsonPath("$[0].seats").value(1))
                 .andExpect(jsonPath("$[0].bags").value(1))
                 .andExpect(jsonPath("$[0].tripId").isString())   // opaque handle for "ask to share"
-                .andExpect(jsonPath("$[0].length()").value(7))   // nothing else: no phone, exact destination, UPI ID or user id
+                .andExpect(jsonPath("$[0].length()").value(6))   // nothing else: no phone, exact destination, UPI ID or user id
                 .andExpect(jsonPath("$[0].phone").doesNotExist())
                 .andExpect(jsonPath("$[0].destLat").doesNotExist());
+    }
+
+    @Test
+    void showsAnOpenGroupHeadingMyWay() throws Exception {
+        UUID asha = user("Asha Rao"), neha = user("Neha Gupta"), me = user("Keshav Dixit");
+        createTrip(asha, "DEL-T1", 0, 28.4683, 77.0628, "Sector 29, Gurugram");
+        String nehaTrip = createTrip(neha, "DEL-T1", 5, 28.4950, 77.0895, "Cyber City, Gurugram");
+        mvc.perform(post("/api/v1/requests").with(as(asha)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"toTripId\":\"" + nehaTrip + "\"}")).andExpect(status().isCreated());
+        String request = JsonPath.read(mvc.perform(get("/api/v1/requests").with(as(neha)))
+                .andReturn().getResponse().getContentAsString(), "$.received[0].id");
+        mvc.perform(post("/api/v1/requests/" + request + "/accept").with(as(neha))).andExpect(status().isNoContent());
+        String myTrip = createTrip(me, "DEL-T1", 0, 28.4936, 77.0930, "DLF Phase 3, Gurugram");
+
+        mvc.perform(get("/api/v1/trips/" + myTrip + "/matches").with(as(me)))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].riders.length()").value(2))
+                .andExpect(jsonPath("$[0].riders[*].firstName", containsInAnyOrder("Asha", "Neha")))
+                .andExpect(jsonPath("$[0].seats").value(2))
+                .andExpect(jsonPath("$[0].minutesAfterYou").value(5));   // the group meets when Neha is out
     }
 
     @Test

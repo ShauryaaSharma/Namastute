@@ -135,13 +135,15 @@ export async function logout(): Promise<void> {
   }
 }
 
-// Another traveller you could share a cab with. Only what they may see: no phone, exact destination or UPI ID.
+// Someone already sharing in a match. Only what they may see: no phone, exact destination or UPI ID.
+export type Rider = { tripId: string; firstName: string; destArea: string };
+
+// A lone traveller (1 rider) or an open group (2–3 riders) you could share a cab with
 export type Match = {
-  tripId: string; // opaque handle, used only to ask this traveller to share
-  firstName: string;
-  destArea: string;
-  minutesAfterYou: number; // negative = they're out before you
-  seats: number;
+  tripId: string; // opaque handle "ask to share" sends; for a group, any member can answer
+  riders: Rider[];
+  minutesAfterYou: number; // vs their exit, or the group's meet time; negative = before you
+  seats: number; // seats the riders already take
   bags: number;
   detourKm: number; // rounded to 0.5 km
 };
@@ -156,6 +158,7 @@ export function getMatches(tripId: string): Promise<Match[]> {
 export type SentRequest = { id: string; toTripId: string; firstName: string; status: "pending" | "declined" };
 export type ReceivedRequest = {
   id: string;
+  fromTripId: string; // the asker's trip handle
   firstName: string;
   destArea: string;
   minutesAfterYou: number;

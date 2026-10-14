@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (groups slice 2a: concepts + code walkthrough).
+Last updated: 2026-10-14 (groups in matches: concepts + code walkthrough).
 
 ---
 
@@ -49,9 +49,12 @@ Last updated: 2026-10-14 (groups slice 2a: concepts + code walkthrough).
 39. [Groups: state machines and consent](#39-groups-state-machines-and-consent)
 40. [Concurrency: the last-seat race](#40-concurrency-the-last-seat-race)
 41. [Code walkthrough: groups (slice 2a)](#41-code-walkthrough-groups-slice-2a)
-42. [Command cheat sheet](#42-command-cheat-sheet)
-43. [Glossary](#43-glossary)
-44. [Interview questions to practise](#44-interview-questions-to-practise)
+42. [Groups in matches: routes with several drops](#42-groups-in-matches-routes-with-several-drops)
+43. [Module dependencies: cycles and dependency inversion](#43-module-dependencies-cycles-and-dependency-inversion)
+44. [Code walkthrough: groups in matches (slice 2b)](#44-code-walkthrough-groups-in-matches-slice-2b)
+45. [Command cheat sheet](#45-command-cheat-sheet)
+46. [Glossary](#46-glossary)
+47. [Interview questions to practise](#47-interview-questions-to-practise)
 
 ---
 
@@ -2715,7 +2718,192 @@ create index join_requests_to on join_requests (to_trip_id) where status = 'pend
 
 ---
 
-## 42. Command cheat sheet
+## 42. Groups in matches: routes with several drops
+
+### 42.1 The problem
+- After slice 2a, people **in** a group vanish from matches (their trips are `grouped`). A third or fourth person can't find them, so cabs rarely fill up.
+- Slice 2b: matches show **open groups with free seats** next to lone travellers, ranked together.
+
+### 42.2 One idea for both: a traveller is a "group of one"
+- Naive way: two rankers, one for travellers, one for groups. Twice the code, twice the tests, and the two can quietly disagree.
+- Better: a **candidate** is a list of riders already sharing (1 for a traveller, 2–3 for a group). The ranker always asks the same question: "if I join these riders, is the route fair, and how good is it?"
+- This is **generalising** a function: the pair case becomes a special case of the N case.
+
+### 42.3 Ordering the drops: greedy, and the travelling salesman problem
+- With several drops, the order matters. The **travelling salesman problem (TSP)**: find the shortest route visiting every stop. The number of possible orders grows as **n!** (n factorial): 3 drops = 6 orders, 4 = 24, 10 = 3,628,800, 20 ≈ 2.4 × 10¹⁸. No known method finds the best order quickly for large n.
+- A **heuristic** is a quick rule that gives a good, not guaranteed best, answer. Ours (design §3.3) is **greedy nearest-neighbour**: from where the cab is now, always drive to the **nearest** remaining drop.
+- When greedy goes wrong (all on one straight road, km from the airport): drops at 2 east, 3 west, 7 east.
+  - Greedy: 2 east (2) → 3 west (5) → 7 east (10) = **17 km**.
+  - Best: 3 west (3) → 2 east (5) → 7 east (5) = **13 km**.
+  - Greedy zig-zagged because "nearest now" isn't "best overall".
+- Why greedy is fine for us:
+  - At most 4 drops, and the **fairness rule** rejects zig-zag groups anyway: those are exactly the routes where someone rides far beyond their solo trip.
+  - "Nearest first" is predictable and easy to explain to riders.
+  - With 4 drops, trying all 24 orders (**brute force**) would also be cheap. If greedy ever proves unfair in practice, swapping it is a change inside one pure function.
+
+### 42.4 Fairness for every rider
+- Walk the greedy route and add up each rider's **ride km** (pickup → their drop, along the route).
+- **Every** rider, old members and newcomer alike, must ride at most **max(3 km, 25 % of their solo km)** beyond their solo km. Members already agreed to their current ride; a newcomer may not push any of them over the limit.
+- **Detour** = route km − the **longest solo** km: how much further the cab drives than going straight to the farthest person. For two riders this is exactly the number from slice 1 (37.1), so existing pair results don't change.
+- **Capacity:** existing seats + mine ≤ 4 and existing bags + mine ≤ 4.
+- **Time:** a group's time is its **meet time** (`meet_at`, the latest exit of its members). Score = detour + 0.2 × |my exit − meet time| (traveller: their exit).
+
+### 42.5 Refactoring with a safety net
+- **Refactoring** = changing how code is written without changing what it does.
+- The 8 existing `MatchRankerTest` tests describe the pair behaviour. After generalising the ranker they must pass **unchanged**: if one breaks, the refactor changed behaviour (a **regression**). New tests then cover groups of 2–3.
+
+### 42.6 Privacy for group matches
+- A group match shows each member's **first name and area**, the group size, free seats, the meet time difference and the detour. Never phones, exact destinations, UPI IDs or user ids.
+- "Ask to share" a group uses the opaque handle of **one member's trip**; the slice-2a rule already routes it to the whole group (any member answers).
+
+---
+
+## 43. Module dependencies: cycles and dependency inversion
+
+### 43.1 The problem: a cycle
+- Matching lives in `trips`. To list groups, it needs data the `groups` module owns. But `groups` already depends on `trips` (it moves trips to `grouped`).
+- `trips → groups` **and** `groups → trips` = a **dependency cycle**. Spring Modulith's `ModularityTest` fails on cycles, and for good reason:
+  - Neither module can be understood, tested or changed on its own; they've become one big module in disguise.
+  - A cycle is the first step back to a "big ball of mud".
+
+### 43.2 Naive fixes and why they hurt
+- **Merge the modules:** the cycle disappears, and so do the boundaries.
+- **Let `trips` read the `groups` tables with SQL:** `ModularityTest` can't see SQL, so it passes, but it's the same cycle, just hidden. Change a groups column and matching breaks with no warning.
+
+### 43.3 Dependency inversion
+- **Dependency Inversion Principle** (the "D" in **SOLID**): high-level code should depend on an **abstraction** (an interface) that **it** defines, not on the concrete code that provides the data.
+- In practice:
+  1. `trips` declares an **interface** saying what it needs: "give me the open groups near this trip".
+  2. `groups` **implements** that interface.
+  3. Spring finds the implementation and **injects** it into `TripService` (constructor injection, as everywhere).
+- Arrows now: `groups → trips` (it implements a trips interface). `trips` only knows its own interface. **No cycle.**
+- **Ports and adapters** (hexagonal architecture) names the same idea: the interface is a **port** (a socket `trips` defines), the implementation an **adapter** (the plug `groups` provides).
+- Sketch:
+  ```java
+  // in trips: what matching needs, in its own words
+  public interface OpenGroups {
+      List<OpenGroup> near(UUID userId, String terminalId, Instant exitAt, int seats, int bags);
+      record OpenGroup(UUID handleTripId, Instant meetAt, List<UUID> memberTripIds) {}
+  }
+
+  // in groups: the implementation, using groups' own tables
+  @Component
+  class OpenGroupsQuery implements OpenGroups { ... }
+  ```
+- Bonus: in a unit test, `OpenGroups` can be replaced with a tiny fake that returns fixed groups, with no database at all.
+
+---
+
+## 44. Code walkthrough: groups in matches (slice 2b)
+
+### 44.1 `trips/MatchRanker.java`: from pairs to N riders
+```java
+record Ranked(List<TripRequest> riders, double detourKm, double score) {}
+
+static List<Ranked> rank(Point pickup, TripRequest mine, List<List<TripRequest>> candidates)
+```
+- A candidate is now a **list of riders** already sharing: `List.of(asha)` for a lone traveller, `List.of(asha, keshav)` for a group (42.2).
+- For each candidate: `everyone` = their riders + me.
+  - **Capacity:** `everyone.stream().mapToInt(TripRequest::getSeats).sum() > CAR_SEATS` → skip (same for bags).
+  - **Fairness + detour:** `fairDetour(pickup, everyone)` (below). Empty → skip.
+  - **Their time:** the latest exit among the riders = the group's meet time (a traveller: their own exit). `max(Comparator.naturalOrder())` picks the latest `Instant`.
+  - Score = detour + 0.2 × |minutes| (unchanged).
+
+```java
+private static OptionalDouble fairDetour(Point pickup, List<TripRequest> everyone) {
+    List<TripRequest> left = new ArrayList<>(everyone);
+    Point at = pickup;
+    double routeKm = 0;
+    double longestSolo = 0;
+    while (!left.isEmpty()) {
+        Point from = at;
+        TripRequest next = left.stream().min(Comparator.comparingDouble(t -> roadKm(from, t.getDest()))).orElseThrow();
+        routeKm += roadKm(at, next.getDest());
+        double solo = roadKm(pickup, next.getDest());
+        if (routeKm - solo > Math.max(MIN_ALLOWANCE_KM, ALLOWANCE * solo)) {
+            return OptionalDouble.empty();
+        }
+        longestSolo = Math.max(longestSolo, solo);
+        at = next.getDest();
+        left.remove(next);
+    }
+    return OptionalDouble.of(routeKm - longestSolo);
+}
+```
+- **The greedy loop** (42.3): `left` = riders still in the cab; `at` = where the cab is. Each turn: pick the **nearest** remaining drop, drive there (`routeKm +=`), that rider gets out.
+- `Point from = at;`: a lambda may only use variables that never change ("effectively final"); `at` changes every turn, so the lambda gets a fresh copy.
+- **Fairness for every rider** (42.4): `routeKm − solo` is how much further this rider rode than going straight. One rider over the limit → the whole candidate is rejected.
+- **`OptionalDouble`**: Java's box for "a number, or nothing", clearer than returning a `Double` that might be `null`.
+- With two riders this computes exactly what the pair code did: the first rider rides their solo (extra 0), the second rides the whole route.
+
+### 44.2 The safety net held
+- The 8 old `MatchRankerTest` tests got one mechanical change: travellers are wrapped by a helper `alone(asha)` = `List.of(List.of(asha))`. **Every expected number stayed the same, and all 8 passed**: the refactor changed no behaviour (42.5).
+- 4 new tests:
+  | Test | Proves |
+  |---|---|
+  | `joiningAGroupHeadingTheSameWay` | me (DLF Phase 3) + group (Cyber City, Sector 29): accepted, detour ≈ 1.7 km |
+  | `aNewcomerMayNotPushAMemberOverTheirLimit` | group on one straight road (detour 0); I'm nearest so I ride 0 km extra, but the first member would ride 4.05 km extra (limit 3) → rejected |
+  | `theWholeCarMustFitMe` | 1 + 2 + 1 seats fine; 1 + 2 + 2 seats or 5 bags rejected |
+  | `aGroupsTimeIsItsLastMembersExit` | members out at 0 and +20 min, me at 0 → score 4.0 (only the 20 minutes) |
+- Expected numbers were computed **separately in Python** before writing the tests, so the tests don't just repeat the code's own arithmetic.
+
+### 44.3 `trips/OpenGroups.java`: the port
+```java
+public interface OpenGroups {
+    List<List<UUID>> near(UUID userId, String terminalId, Instant exitAt);
+}
+```
+- Lives in `trips`, written in trips' words: "open groups near this trip, as lists of member trip ids" (43.3).
+- `trips` never imports anything from `groups`. `ModularityTest` still passes: **no cycle**.
+
+### 44.4 `groups/OpenGroupsQuery.java`: the adapter
+- `@Component class OpenGroupsQuery implements OpenGroups`: Spring sees the only implementation of the interface and injects it wherever `OpenGroups` is asked for.
+- SQL: open groups at the terminal, `meet_at` within ±30 min, joined with their accepted members, **no blocks** between me and any member (`not exists`), ordered by group then oldest member first.
+- `Collectors.groupingBy(Row::groupId, LinkedHashMap::new, Collectors.mapping(Row::tripId, toList()))`: turns rows `(group, trip)` into one list of trips per group. `LinkedHashMap` keeps the row order (a plain `HashMap` would shuffle it).
+- No 15 km prefilter for groups: there are only a handful of open groups per terminal per hour, and the ranker's fairness rule rejects the ones going the wrong way.
+
+### 44.5 `trips/TripService.java`
+```java
+List<List<TripRequest>> candidates = new ArrayList<>();
+trips.matchCandidates(tripId).forEach(t -> candidates.add(List.of(t)));            // travellers, as groups of one
+List<List<UUID>> groups = openGroups.near(userId, mine.getTerminalId(), mine.getExitAt());
+Map<UUID, TripRequest> members = trips.findAllById(groups.stream().flatMap(List::stream).toList()).stream()
+        .collect(Collectors.toMap(TripRequest::getId, Function.identity()));       // ALL members, one query
+groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
+```
+- `flatMap(List::stream)`: flattens a list of lists into one stream of ids, so all group members load in **one** query (no N+1).
+- Names for every rider of every ranked match: one `users.firstNames(...)` call.
+- New response shape:
+  ```java
+  record Rider(UUID tripId, String firstName, String destArea) {}
+  record MatchView(UUID tripId, List<Rider> riders, long minutesAfterYou, int seats, int bags, double detourKm) {}
+  ```
+  `tripId` = the first rider's trip (the handle "Ask to share" sends; any member can answer). `seats`/`bags` = what the riders already take. `minutesAfterYou` = vs the group's meet time.
+- The constructor now also takes `OpenGroups openGroups`: dependency inversion in action (43.3).
+- `groups/GroupService.RequestView` gains `fromTripId`, so the web can tell "this person already asked you".
+
+### 44.6 Tests: `MatchesTest`
+- Updated for the new shape: `$[0].riders[0].firstName`; 6 top-level fields, 3 per rider.
+- `showsAnOpenGroupHeadingMyWay`: Asha asks Neha over HTTP, Neha accepts; I plan DLF Phase 3 → one match with **2 riders**, seats 2, "meeting 5 min after you" (Neha is out last).
+- `clearTerminal1` now also cancels leftover T1 trips in `grouped` and open T1 groups from earlier runs.
+
+### 44.7 Web: `app/current-trip.tsx`
+- `Match` = `{tripId, riders[], minutesAfterYou, seats, bags, detourKm}`; `Rider` = `{tripId, firstName, destArea}`.
+- Group line: `Asha (Sector 29, Gurgaon) + केशव (Sector 25A, Gurgaon) · group of 2 · 2 seats free · meeting 5 min after you · 1.5 km detour`. Each area sits next to its person (a joined list of areas would be ambiguous, since every area itself contains a comma).
+- `CAR_SEATS = 4` on the web, to show "seats free". It's the same number the API uses; if the car size ever changes, both places change.
+- Buttons per match: `· asked` (you asked any rider) / `· asked you (answer below)` (any rider asked you) / **Ask to share**.
+
+### 44.8 Verified in a real browser (three users)
+- Setup through the API with real OTP logins (a small Python script: `/auth/otp`, read the code from the log, `/auth/verify`, `/trips`, `/requests`): Keshav → Sector 25A at 12:07, Asha → Sector 29 at 12:17, Asha asks Keshav.
+- Browser, **Keshav**: Asha's match shows "· asked you (answer below)" instead of a button → Accept → group of 2, Asha booker.
+- Browser, **Neha** (+919000000006, new user → profile "Neha Gupta") → Cyber City at 12:12 → matches show **"Asha (Sector 29, Gurgaon) + केशव (Sector 25A, Gurgaon) · group of 2 · 2 seats free · meeting 5 min after you · 1.5 km detour"** → Ask to share → "· asked", "Your requests: Asha · waiting for an answer".
+- Browser, **Keshav** (who was **not** the one asked): "Want to share with you: Neha" → Accept → **group of 3**.
+- Database: one open group, `seats_taken = 3`, 3 accepted members, all three trips `grouped`.
+- Noticed: Neha's "Your requests" says "Asha" because the handle is Asha's trip, though the whole group answers. A wording polish for later.
+
+---
+
+## 45. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -2725,6 +2913,7 @@ git branch -D <merged-branch>
 git fetch --prune
 git switch -c <type/next-feature>
 ```
+- If `git switch main` refuses because of uncommitted changes: `git stash` first, run the routine, then `git stash pop` on the new branch.
 
 ### Database (from `Namastute`)
 ```bash
@@ -2777,7 +2966,7 @@ git fetch --prune
 
 ---
 
-## 43. Glossary
+## 46. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -2925,10 +3114,21 @@ git fetch --prune
 | Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
 | Foreign key | A column that must point at an existing row in another table |
 | Circular import | Two files importing each other; avoided by moving shared code to a third file |
+| Travelling salesman problem | Finding the shortest route through all stops; orders grow as n! |
+| Heuristic | A quick rule giving a good (not guaranteed best) answer |
+| Brute force | Trying every possibility (e.g. all 24 orders of 4 drops) |
+| Refactoring | Changing how code is written without changing what it does |
+| Regression | Something that used to work breaking after a change |
+| Dependency cycle | Module A depends on B and B on A; neither stands alone |
+| Dependency Inversion | Depend on an interface you own; others implement it (the D in SOLID) |
+| Port / adapter | The interface a module defines / the code that plugs into it |
+| OptionalDouble | Java's box for "a number, or nothing" |
+| Effectively final | A variable that never changes after it's set; only these can be used inside a lambda |
+| git stash | Puts uncommitted changes on a temporary shelf (`git stash pop` brings them back) |
 
 ---
 
-## 44. Interview questions to practise
+## 47. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -2988,3 +3188,10 @@ git fetch --prune
 56. Why does accepting a request run in one transaction, and what did the "3 + 3 seats" test prove about rollback?
 57. Why did we use plain SQL (`JdbcClient`) for groups instead of JPA entities?
 58. Two people who asked each other both press Accept at the same time. What could go wrong, and how does one `UPDATE` over both trips avoid it?
+59. What is the travelling salesman problem, and why is a greedy nearest-first route acceptable for our cabs?
+60. Show an example where greedy nearest-first gives a worse route than the best order.
+61. How do existing tests protect a refactor from introducing a regression?
+62. What is a dependency cycle between modules, why is it harmful, and how does dependency inversion break it?
+63. Why is reading another module's tables with SQL "the same cycle, just hidden"?
+64. Why can a lambda use `from` but not `at` in the greedy loop?
+65. How did the old ranker tests prove the N-rider refactor kept pair behaviour the same?

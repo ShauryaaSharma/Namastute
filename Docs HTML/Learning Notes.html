@@ -82,14 +82,17 @@
 <details><summary><a href="#39-groups-state-machines-and-consent">39. Groups: state machines and consent</a></summary><a class="sub" href="#391-state-machines">39.1 State machines</a><a class="sub" href="#392-consent-suggestions-not-auto-assignment">39.2 Consent: suggestions, not auto-assignment</a><a class="sub" href="#393-what-a-member-may-see">39.3 What a member may see</a></details>
 <details><summary><a href="#40-concurrency-the-last-seat-race">40. Concurrency: the last-seat race</a></summary><a class="sub" href="#401-the-problem">40.1 The problem</a><a class="sub" href="#402-naive-way-check-then-act">40.2 Naive way: check, then act</a><a class="sub" href="#403-transactions-recap-acid">40.3 Transactions recap (ACID)</a><a class="sub" href="#404-the-fix-one-conditional-update-design-34">40.4 The fix: one conditional UPDATE (design §3.4)</a><a class="sub" href="#405-alternatives-interview-favourites">40.5 Alternatives (interview favourites)</a><a class="sub" href="#406-deadlocks">40.6 Deadlocks</a><a class="sub" href="#407-testing-a-race">40.7 Testing a race</a></details>
 <details><summary><a href="#41-code-walkthrough-groups-slice-2a">41. Code walkthrough: groups (slice 2a)</a></summary><a class="sub" href="#411-the-rules-we-chose-team-decisions-2026-10-14">41.1 The rules we chose (team decisions, 2026-10-14)</a><a class="sub" href="#412-v4__join_requestssql">41.2 V4__join_requests.sql</a><a class="sub" href="#413-tripstripservicejava-a-public-door-for-the-groups-module">41.3 trips/TripService.java: a public door for the groups module</a><a class="sub" href="#414-groupsgroupservicejava-plain-sql-with-jdbcclient">41.4 groups/GroupService.java: plain SQL with JdbcClient</a><a class="sub" href="#415-groupsgroupcontrollerjava">41.5 groups/GroupController.java</a><a class="sub" href="#416-tests-groupstest-9-tests-terminal-2-fresh-users-each-time">41.6 Tests: GroupsTest (9 tests, Terminal 2, fresh users each time)</a><a class="sub" href="#417-web">41.7 Web</a><a class="sub" href="#418-verified-in-a-real-browser-two-users-one-tab-one-after-the-other">41.8 Verified in a real browser (two users, one tab, one after the other)</a></details>
-<details><summary><a href="#42-command-cheat-sheet">42. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#43-glossary">43. Glossary</a>
-<a class="topic" href="#44-interview-questions-to-practise">44. Interview questions to practise</a>
+<details><summary><a href="#42-groups-in-matches-routes-with-several-drops">42. Groups in matches: routes with several drops</a></summary><a class="sub" href="#421-the-problem">42.1 The problem</a><a class="sub" href="#422-one-idea-for-both-a-traveller-is-a-group-of-one">42.2 One idea for both: a traveller is a &quot;group of one&quot;</a><a class="sub" href="#423-ordering-the-drops-greedy-and-the-travelling-salesman-problem">42.3 Ordering the drops: greedy, and the travelling salesman problem</a><a class="sub" href="#424-fairness-for-every-rider">42.4 Fairness for every rider</a><a class="sub" href="#425-refactoring-with-a-safety-net">42.5 Refactoring with a safety net</a><a class="sub" href="#426-privacy-for-group-matches">42.6 Privacy for group matches</a></details>
+<details><summary><a href="#43-module-dependencies-cycles-and-dependency-inversion">43. Module dependencies: cycles and dependency inversion</a></summary><a class="sub" href="#431-the-problem-a-cycle">43.1 The problem: a cycle</a><a class="sub" href="#432-naive-fixes-and-why-they-hurt">43.2 Naive fixes and why they hurt</a><a class="sub" href="#433-dependency-inversion">43.3 Dependency inversion</a></details>
+<details><summary><a href="#44-code-walkthrough-groups-in-matches-slice-2b">44. Code walkthrough: groups in matches (slice 2b)</a></summary><a class="sub" href="#441-tripsmatchrankerjava-from-pairs-to-n-riders">44.1 trips/MatchRanker.java: from pairs to N riders</a><a class="sub" href="#442-the-safety-net-held">44.2 The safety net held</a><a class="sub" href="#443-tripsopengroupsjava-the-port">44.3 trips/OpenGroups.java: the port</a><a class="sub" href="#444-groupsopengroupsqueryjava-the-adapter">44.4 groups/OpenGroupsQuery.java: the adapter</a><a class="sub" href="#445-tripstripservicejava">44.5 trips/TripService.java</a><a class="sub" href="#446-tests-matchestest">44.6 Tests: MatchesTest</a><a class="sub" href="#447-web-appcurrent-triptsx">44.7 Web: app/current-trip.tsx</a><a class="sub" href="#448-verified-in-a-real-browser-three-users">44.8 Verified in a real browser (three users)</a></details>
+<details><summary><a href="#45-command-cheat-sheet">45. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#46-glossary">46. Glossary</a>
+<a class="topic" href="#47-interview-questions-to-practise">47. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (groups slice 2a: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-14 (groups in matches: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -134,9 +137,12 @@
 <li><a href="#39-groups-state-machines-and-consent">Groups: state machines and consent</a></li>
 <li><a href="#40-concurrency-the-last-seat-race">Concurrency: the last-seat race</a></li>
 <li><a href="#41-code-walkthrough-groups-slice-2a">Code walkthrough: groups (slice 2a)</a></li>
-<li><a href="#42-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#43-glossary">Glossary</a></li>
-<li><a href="#44-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#42-groups-in-matches-routes-with-several-drops">Groups in matches: routes with several drops</a></li>
+<li><a href="#43-module-dependencies-cycles-and-dependency-inversion">Module dependencies: cycles and dependency inversion</a></li>
+<li><a href="#44-code-walkthrough-groups-in-matches-slice-2b">Code walkthrough: groups in matches (slice 2b)</a></li>
+<li><a href="#45-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#46-glossary">Glossary</a></li>
+<li><a href="#47-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -3593,7 +3599,225 @@ The subquery reads: &quot;the trips of everyone in the open group that my trip b
 <li><strong>Found and fixed during the test:</strong> the reason box had no accessible name for screen readers (label now linked with <code>htmlFor</code>/<code>id</code>), and a cancelled group kept <code>seats_taken = 1</code> (now reset to 0).</li>
 </ul>
 <hr>
-<h2 id="42-command-cheat-sheet">42. Command cheat sheet</h2>
+<h2 id="42-groups-in-matches-routes-with-several-drops">42. Groups in matches: routes with several drops</h2>
+<h3 id="421-the-problem">42.1 The problem</h3>
+<ul>
+<li>After slice 2a, people <strong>in</strong> a group vanish from matches (their trips are <code>grouped</code>). A third or fourth person can&#39;t find them, so cabs rarely fill up.</li>
+<li>Slice 2b: matches show <strong>open groups with free seats</strong> next to lone travellers, ranked together.</li>
+</ul>
+<h3 id="422-one-idea-for-both-a-traveller-is-a-group-of-one">42.2 One idea for both: a traveller is a &quot;group of one&quot;</h3>
+<ul>
+<li>Naive way: two rankers, one for travellers, one for groups. Twice the code, twice the tests, and the two can quietly disagree.</li>
+<li>Better: a <strong>candidate</strong> is a list of riders already sharing (1 for a traveller, 2–3 for a group). The ranker always asks the same question: &quot;if I join these riders, is the route fair, and how good is it?&quot;</li>
+<li>This is <strong>generalising</strong> a function: the pair case becomes a special case of the N case.</li>
+</ul>
+<h3 id="423-ordering-the-drops-greedy-and-the-travelling-salesman-problem">42.3 Ordering the drops: greedy, and the travelling salesman problem</h3>
+<ul>
+<li>With several drops, the order matters. The <strong>travelling salesman problem (TSP)</strong>: find the shortest route visiting every stop. The number of possible orders grows as <strong>n!</strong> (n factorial): 3 drops = 6 orders, 4 = 24, 10 = 3,628,800, 20 ≈ 2.4 × 10¹⁸. No known method finds the best order quickly for large n.</li>
+<li>A <strong>heuristic</strong> is a quick rule that gives a good, not guaranteed best, answer. Ours (design §3.3) is <strong>greedy nearest-neighbour</strong>: from where the cab is now, always drive to the <strong>nearest</strong> remaining drop.</li>
+<li>When greedy goes wrong (all on one straight road, km from the airport): drops at 2 east, 3 west, 7 east.<ul>
+<li>Greedy: 2 east (2) → 3 west (5) → 7 east (10) = <strong>17 km</strong>.</li>
+<li>Best: 3 west (3) → 2 east (5) → 7 east (5) = <strong>13 km</strong>.</li>
+<li>Greedy zig-zagged because &quot;nearest now&quot; isn&#39;t &quot;best overall&quot;.</li>
+</ul>
+</li>
+<li>Why greedy is fine for us:<ul>
+<li>At most 4 drops, and the <strong>fairness rule</strong> rejects zig-zag groups anyway: those are exactly the routes where someone rides far beyond their solo trip.</li>
+<li>&quot;Nearest first&quot; is predictable and easy to explain to riders.</li>
+<li>With 4 drops, trying all 24 orders (<strong>brute force</strong>) would also be cheap. If greedy ever proves unfair in practice, swapping it is a change inside one pure function.</li>
+</ul>
+</li>
+</ul>
+<h3 id="424-fairness-for-every-rider">42.4 Fairness for every rider</h3>
+<ul>
+<li>Walk the greedy route and add up each rider&#39;s <strong>ride km</strong> (pickup → their drop, along the route).</li>
+<li><strong>Every</strong> rider, old members and newcomer alike, must ride at most <strong>max(3 km, 25 % of their solo km)</strong> beyond their solo km. Members already agreed to their current ride; a newcomer may not push any of them over the limit.</li>
+<li><strong>Detour</strong> = route km − the <strong>longest solo</strong> km: how much further the cab drives than going straight to the farthest person. For two riders this is exactly the number from slice 1 (37.1), so existing pair results don&#39;t change.</li>
+<li><strong>Capacity:</strong> existing seats + mine ≤ 4 and existing bags + mine ≤ 4.</li>
+<li><strong>Time:</strong> a group&#39;s time is its <strong>meet time</strong> (<code>meet_at</code>, the latest exit of its members). Score = detour + 0.2 × |my exit − meet time| (traveller: their exit).</li>
+</ul>
+<h3 id="425-refactoring-with-a-safety-net">42.5 Refactoring with a safety net</h3>
+<ul>
+<li><strong>Refactoring</strong> = changing how code is written without changing what it does.</li>
+<li>The 8 existing <code>MatchRankerTest</code> tests describe the pair behaviour. After generalising the ranker they must pass <strong>unchanged</strong>: if one breaks, the refactor changed behaviour (a <strong>regression</strong>). New tests then cover groups of 2–3.</li>
+</ul>
+<h3 id="426-privacy-for-group-matches">42.6 Privacy for group matches</h3>
+<ul>
+<li>A group match shows each member&#39;s <strong>first name and area</strong>, the group size, free seats, the meet time difference and the detour. Never phones, exact destinations, UPI IDs or user ids.</li>
+<li>&quot;Ask to share&quot; a group uses the opaque handle of <strong>one member&#39;s trip</strong>; the slice-2a rule already routes it to the whole group (any member answers).</li>
+</ul>
+<hr>
+<h2 id="43-module-dependencies-cycles-and-dependency-inversion">43. Module dependencies: cycles and dependency inversion</h2>
+<h3 id="431-the-problem-a-cycle">43.1 The problem: a cycle</h3>
+<ul>
+<li>Matching lives in <code>trips</code>. To list groups, it needs data the <code>groups</code> module owns. But <code>groups</code> already depends on <code>trips</code> (it moves trips to <code>grouped</code>).</li>
+<li><code>trips → groups</code> <strong>and</strong> <code>groups → trips</code> = a <strong>dependency cycle</strong>. Spring Modulith&#39;s <code>ModularityTest</code> fails on cycles, and for good reason:<ul>
+<li>Neither module can be understood, tested or changed on its own; they&#39;ve become one big module in disguise.</li>
+<li>A cycle is the first step back to a &quot;big ball of mud&quot;.</li>
+</ul>
+</li>
+</ul>
+<h3 id="432-naive-fixes-and-why-they-hurt">43.2 Naive fixes and why they hurt</h3>
+<ul>
+<li><strong>Merge the modules:</strong> the cycle disappears, and so do the boundaries.</li>
+<li><strong>Let <code>trips</code> read the <code>groups</code> tables with SQL:</strong> <code>ModularityTest</code> can&#39;t see SQL, so it passes, but it&#39;s the same cycle, just hidden. Change a groups column and matching breaks with no warning.</li>
+</ul>
+<h3 id="433-dependency-inversion">43.3 Dependency inversion</h3>
+<ul>
+<li><strong>Dependency Inversion Principle</strong> (the &quot;D&quot; in <strong>SOLID</strong>): high-level code should depend on an <strong>abstraction</strong> (an interface) that <strong>it</strong> defines, not on the concrete code that provides the data.</li>
+<li>In practice:<ol>
+<li><code>trips</code> declares an <strong>interface</strong> saying what it needs: &quot;give me the open groups near this trip&quot;.</li>
+<li><code>groups</code> <strong>implements</strong> that interface.</li>
+<li>Spring finds the implementation and <strong>injects</strong> it into <code>TripService</code> (constructor injection, as everywhere).</li>
+</ol>
+</li>
+<li>Arrows now: <code>groups → trips</code> (it implements a trips interface). <code>trips</code> only knows its own interface. <strong>No cycle.</strong></li>
+<li><strong>Ports and adapters</strong> (hexagonal architecture) names the same idea: the interface is a <strong>port</strong> (a socket <code>trips</code> defines), the implementation an <strong>adapter</strong> (the plug <code>groups</code> provides).</li>
+<li>Sketch:<pre><code class="language-java">// in trips: what matching needs, in its own words
+public interface OpenGroups {
+    List&lt;OpenGroup&gt; near(UUID userId, String terminalId, Instant exitAt, int seats, int bags);
+    record OpenGroup(UUID handleTripId, Instant meetAt, List&lt;UUID&gt; memberTripIds) {}
+}
+
+// in groups: the implementation, using groups&#39; own tables
+@Component
+class OpenGroupsQuery implements OpenGroups { ... }
+</code></pre>
+</li>
+<li>Bonus: in a unit test, <code>OpenGroups</code> can be replaced with a tiny fake that returns fixed groups, with no database at all.</li>
+</ul>
+<hr>
+<h2 id="44-code-walkthrough-groups-in-matches-slice-2b">44. Code walkthrough: groups in matches (slice 2b)</h2>
+<h3 id="441-tripsmatchrankerjava-from-pairs-to-n-riders">44.1 <code>trips/MatchRanker.java</code>: from pairs to N riders</h3>
+<pre><code class="language-java">record Ranked(List&lt;TripRequest&gt; riders, double detourKm, double score) {}
+
+static List&lt;Ranked&gt; rank(Point pickup, TripRequest mine, List&lt;List&lt;TripRequest&gt;&gt; candidates)
+</code></pre>
+<ul>
+<li>A candidate is now a <strong>list of riders</strong> already sharing: <code>List.of(asha)</code> for a lone traveller, <code>List.of(asha, keshav)</code> for a group (42.2).</li>
+<li>For each candidate: <code>everyone</code> = their riders + me.<ul>
+<li><strong>Capacity:</strong> <code>everyone.stream().mapToInt(TripRequest::getSeats).sum() &gt; CAR_SEATS</code> → skip (same for bags).</li>
+<li><strong>Fairness + detour:</strong> <code>fairDetour(pickup, everyone)</code> (below). Empty → skip.</li>
+<li><strong>Their time:</strong> the latest exit among the riders = the group&#39;s meet time (a traveller: their own exit). <code>max(Comparator.naturalOrder())</code> picks the latest <code>Instant</code>.</li>
+<li>Score = detour + 0.2 × |minutes| (unchanged).</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-java">private static OptionalDouble fairDetour(Point pickup, List&lt;TripRequest&gt; everyone) {
+    List&lt;TripRequest&gt; left = new ArrayList&lt;&gt;(everyone);
+    Point at = pickup;
+    double routeKm = 0;
+    double longestSolo = 0;
+    while (!left.isEmpty()) {
+        Point from = at;
+        TripRequest next = left.stream().min(Comparator.comparingDouble(t -&gt; roadKm(from, t.getDest()))).orElseThrow();
+        routeKm += roadKm(at, next.getDest());
+        double solo = roadKm(pickup, next.getDest());
+        if (routeKm - solo &gt; Math.max(MIN_ALLOWANCE_KM, ALLOWANCE * solo)) {
+            return OptionalDouble.empty();
+        }
+        longestSolo = Math.max(longestSolo, solo);
+        at = next.getDest();
+        left.remove(next);
+    }
+    return OptionalDouble.of(routeKm - longestSolo);
+}
+</code></pre>
+<ul>
+<li><strong>The greedy loop</strong> (42.3): <code>left</code> = riders still in the cab; <code>at</code> = where the cab is. Each turn: pick the <strong>nearest</strong> remaining drop, drive there (<code>routeKm +=</code>), that rider gets out.</li>
+<li><code>Point from = at;</code>: a lambda may only use variables that never change (&quot;effectively final&quot;); <code>at</code> changes every turn, so the lambda gets a fresh copy.</li>
+<li><strong>Fairness for every rider</strong> (42.4): <code>routeKm − solo</code> is how much further this rider rode than going straight. One rider over the limit → the whole candidate is rejected.</li>
+<li><strong><code>OptionalDouble</code></strong>: Java&#39;s box for &quot;a number, or nothing&quot;, clearer than returning a <code>Double</code> that might be <code>null</code>.</li>
+<li>With two riders this computes exactly what the pair code did: the first rider rides their solo (extra 0), the second rides the whole route.</li>
+</ul>
+<h3 id="442-the-safety-net-held">44.2 The safety net held</h3>
+<ul>
+<li>The 8 old <code>MatchRankerTest</code> tests got one mechanical change: travellers are wrapped by a helper <code>alone(asha)</code> = <code>List.of(List.of(asha))</code>. <strong>Every expected number stayed the same, and all 8 passed</strong>: the refactor changed no behaviour (42.5).</li>
+<li>4 new tests:<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>joiningAGroupHeadingTheSameWay</code></td>
+<td>me (DLF Phase 3) + group (Cyber City, Sector 29): accepted, detour ≈ 1.7 km</td>
+</tr>
+<tr>
+<td><code>aNewcomerMayNotPushAMemberOverTheirLimit</code></td>
+<td>group on one straight road (detour 0); I&#39;m nearest so I ride 0 km extra, but the first member would ride 4.05 km extra (limit 3) → rejected</td>
+</tr>
+<tr>
+<td><code>theWholeCarMustFitMe</code></td>
+<td>1 + 2 + 1 seats fine; 1 + 2 + 2 seats or 5 bags rejected</td>
+</tr>
+<tr>
+<td><code>aGroupsTimeIsItsLastMembersExit</code></td>
+<td>members out at 0 and +20 min, me at 0 → score 4.0 (only the 20 minutes)</td>
+</tr>
+</tbody></table>
+</li>
+<li>Expected numbers were computed <strong>separately in Python</strong> before writing the tests, so the tests don&#39;t just repeat the code&#39;s own arithmetic.</li>
+</ul>
+<h3 id="443-tripsopengroupsjava-the-port">44.3 <code>trips/OpenGroups.java</code>: the port</h3>
+<pre><code class="language-java">public interface OpenGroups {
+    List&lt;List&lt;UUID&gt;&gt; near(UUID userId, String terminalId, Instant exitAt);
+}
+</code></pre>
+<ul>
+<li>Lives in <code>trips</code>, written in trips&#39; words: &quot;open groups near this trip, as lists of member trip ids&quot; (43.3).</li>
+<li><code>trips</code> never imports anything from <code>groups</code>. <code>ModularityTest</code> still passes: <strong>no cycle</strong>.</li>
+</ul>
+<h3 id="444-groupsopengroupsqueryjava-the-adapter">44.4 <code>groups/OpenGroupsQuery.java</code>: the adapter</h3>
+<ul>
+<li><code>@Component class OpenGroupsQuery implements OpenGroups</code>: Spring sees the only implementation of the interface and injects it wherever <code>OpenGroups</code> is asked for.</li>
+<li>SQL: open groups at the terminal, <code>meet_at</code> within ±30 min, joined with their accepted members, <strong>no blocks</strong> between me and any member (<code>not exists</code>), ordered by group then oldest member first.</li>
+<li><code>Collectors.groupingBy(Row::groupId, LinkedHashMap::new, Collectors.mapping(Row::tripId, toList()))</code>: turns rows <code>(group, trip)</code> into one list of trips per group. <code>LinkedHashMap</code> keeps the row order (a plain <code>HashMap</code> would shuffle it).</li>
+<li>No 15 km prefilter for groups: there are only a handful of open groups per terminal per hour, and the ranker&#39;s fairness rule rejects the ones going the wrong way.</li>
+</ul>
+<h3 id="445-tripstripservicejava">44.5 <code>trips/TripService.java</code></h3>
+<pre><code class="language-java">List&lt;List&lt;TripRequest&gt;&gt; candidates = new ArrayList&lt;&gt;();
+trips.matchCandidates(tripId).forEach(t -&gt; candidates.add(List.of(t)));            // travellers, as groups of one
+List&lt;List&lt;UUID&gt;&gt; groups = openGroups.near(userId, mine.getTerminalId(), mine.getExitAt());
+Map&lt;UUID, TripRequest&gt; members = trips.findAllById(groups.stream().flatMap(List::stream).toList()).stream()
+        .collect(Collectors.toMap(TripRequest::getId, Function.identity()));       // ALL members, one query
+groups.forEach(g -&gt; candidates.add(g.stream().map(members::get).toList()));
+</code></pre>
+<ul>
+<li><code>flatMap(List::stream)</code>: flattens a list of lists into one stream of ids, so all group members load in <strong>one</strong> query (no N+1).</li>
+<li>Names for every rider of every ranked match: one <code>users.firstNames(...)</code> call.</li>
+<li>New response shape:<pre><code class="language-java">record Rider(UUID tripId, String firstName, String destArea) {}
+record MatchView(UUID tripId, List&lt;Rider&gt; riders, long minutesAfterYou, int seats, int bags, double detourKm) {}
+</code></pre>
+<code>tripId</code> = the first rider&#39;s trip (the handle &quot;Ask to share&quot; sends; any member can answer). <code>seats</code>/<code>bags</code> = what the riders already take. <code>minutesAfterYou</code> = vs the group&#39;s meet time.</li>
+<li>The constructor now also takes <code>OpenGroups openGroups</code>: dependency inversion in action (43.3).</li>
+<li><code>groups/GroupService.RequestView</code> gains <code>fromTripId</code>, so the web can tell &quot;this person already asked you&quot;.</li>
+</ul>
+<h3 id="446-tests-matchestest">44.6 Tests: <code>MatchesTest</code></h3>
+<ul>
+<li>Updated for the new shape: <code>$[0].riders[0].firstName</code>; 6 top-level fields, 3 per rider.</li>
+<li><code>showsAnOpenGroupHeadingMyWay</code>: Asha asks Neha over HTTP, Neha accepts; I plan DLF Phase 3 → one match with <strong>2 riders</strong>, seats 2, &quot;meeting 5 min after you&quot; (Neha is out last).</li>
+<li><code>clearTerminal1</code> now also cancels leftover T1 trips in <code>grouped</code> and open T1 groups from earlier runs.</li>
+</ul>
+<h3 id="447-web-appcurrent-triptsx">44.7 Web: <code>app/current-trip.tsx</code></h3>
+<ul>
+<li><code>Match</code> = <code>{tripId, riders[], minutesAfterYou, seats, bags, detourKm}</code>; <code>Rider</code> = <code>{tripId, firstName, destArea}</code>.</li>
+<li>Group line: <code>Asha (Sector 29, Gurgaon) + केशव (Sector 25A, Gurgaon) · group of 2 · 2 seats free · meeting 5 min after you · 1.5 km detour</code>. Each area sits next to its person (a joined list of areas would be ambiguous, since every area itself contains a comma).</li>
+<li><code>CAR_SEATS = 4</code> on the web, to show &quot;seats free&quot;. It&#39;s the same number the API uses; if the car size ever changes, both places change.</li>
+<li>Buttons per match: <code>· asked</code> (you asked any rider) / <code>· asked you (answer below)</code> (any rider asked you) / <strong>Ask to share</strong>.</li>
+</ul>
+<h3 id="448-verified-in-a-real-browser-three-users">44.8 Verified in a real browser (three users)</h3>
+<ul>
+<li>Setup through the API with real OTP logins (a small Python script: <code>/auth/otp</code>, read the code from the log, <code>/auth/verify</code>, <code>/trips</code>, <code>/requests</code>): Keshav → Sector 25A at 12:07, Asha → Sector 29 at 12:17, Asha asks Keshav.</li>
+<li>Browser, <strong>Keshav</strong>: Asha&#39;s match shows &quot;· asked you (answer below)&quot; instead of a button → Accept → group of 2, Asha booker.</li>
+<li>Browser, <strong>Neha</strong> (+919000000006, new user → profile &quot;Neha Gupta&quot;) → Cyber City at 12:12 → matches show <strong>&quot;Asha (Sector 29, Gurgaon) + केशव (Sector 25A, Gurgaon) · group of 2 · 2 seats free · meeting 5 min after you · 1.5 km detour&quot;</strong> → Ask to share → &quot;· asked&quot;, &quot;Your requests: Asha · waiting for an answer&quot;.</li>
+<li>Browser, <strong>Keshav</strong> (who was <strong>not</strong> the one asked): &quot;Want to share with you: Neha&quot; → Accept → <strong>group of 3</strong>.</li>
+<li>Database: one open group, <code>seats_taken = 3</code>, 3 accepted members, all three trips <code>grouped</code>.</li>
+<li>Noticed: Neha&#39;s &quot;Your requests&quot; says &quot;Asha&quot; because the handle is Asha&#39;s trip, though the whole group answers. A wording polish for later.</li>
+</ul>
+<hr>
+<h2 id="45-command-cheat-sheet">45. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -3601,6 +3825,9 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 git switch -c &lt;type/next-feature&gt;
 </code></pre>
+<ul>
+<li>If <code>git switch main</code> refuses because of uncommitted changes: <code>git stash</code> first, run the routine, then <code>git stash pop</code> on the new branch.</li>
+</ul>
 <h3 id="database-from-namastute">Database (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d      # start Postgres
 docker compose -f infra/docker-compose.yml ps         # status (wait for healthy)
@@ -3639,7 +3866,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="43-glossary">43. Glossary</h2>
+<h2 id="46-glossary">46. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -4223,9 +4450,53 @@ git fetch --prune
 <td>Circular import</td>
 <td>Two files importing each other; avoided by moving shared code to a third file</td>
 </tr>
+<tr>
+<td>Travelling salesman problem</td>
+<td>Finding the shortest route through all stops; orders grow as n!</td>
+</tr>
+<tr>
+<td>Heuristic</td>
+<td>A quick rule giving a good (not guaranteed best) answer</td>
+</tr>
+<tr>
+<td>Brute force</td>
+<td>Trying every possibility (e.g. all 24 orders of 4 drops)</td>
+</tr>
+<tr>
+<td>Refactoring</td>
+<td>Changing how code is written without changing what it does</td>
+</tr>
+<tr>
+<td>Regression</td>
+<td>Something that used to work breaking after a change</td>
+</tr>
+<tr>
+<td>Dependency cycle</td>
+<td>Module A depends on B and B on A; neither stands alone</td>
+</tr>
+<tr>
+<td>Dependency Inversion</td>
+<td>Depend on an interface you own; others implement it (the D in SOLID)</td>
+</tr>
+<tr>
+<td>Port / adapter</td>
+<td>The interface a module defines / the code that plugs into it</td>
+</tr>
+<tr>
+<td>OptionalDouble</td>
+<td>Java&#39;s box for &quot;a number, or nothing&quot;</td>
+</tr>
+<tr>
+<td>Effectively final</td>
+<td>A variable that never changes after it&#39;s set; only these can be used inside a lambda</td>
+</tr>
+<tr>
+<td>git stash</td>
+<td>Puts uncommitted changes on a temporary shelf (<code>git stash pop</code> brings them back)</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="44-interview-questions-to-practise">44. Interview questions to practise</h2>
+<h2 id="47-interview-questions-to-practise">47. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -4285,6 +4556,13 @@ git fetch --prune
 <li>Why does accepting a request run in one transaction, and what did the &quot;3 + 3 seats&quot; test prove about rollback?</li>
 <li>Why did we use plain SQL (<code>JdbcClient</code>) for groups instead of JPA entities?</li>
 <li>Two people who asked each other both press Accept at the same time. What could go wrong, and how does one <code>UPDATE</code> over both trips avoid it?</li>
+<li>What is the travelling salesman problem, and why is a greedy nearest-first route acceptable for our cabs?</li>
+<li>Show an example where greedy nearest-first gives a worse route than the best order.</li>
+<li>How do existing tests protect a refactor from introducing a regression?</li>
+<li>What is a dependency cycle between modules, why is it harmful, and how does dependency inversion break it?</li>
+<li>Why is reading another module&#39;s tables with SQL &quot;the same cycle, just hidden&quot;?</li>
+<li>Why can a lambda use <code>from</code> but not <code>at</code> in the greedy loop?</li>
+<li>How did the old ranker tests prove the N-rider refactor kept pair behaviour the same?</li>
 </ol>
 
 

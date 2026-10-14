@@ -4,12 +4,15 @@ import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Point;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -32,10 +35,11 @@ public class TripService {
                     String destArea, double destLat, double destLng, int seats, int bags,
                     boolean womenOnly, String status, double soloKm) {}
 
-    // What another traveller may see about a match: never phone, exact destination or UPI ID (design 4.4)
-    // tripId is an opaque handle for "ask to share": a random id that reveals nothing about the person
-    record MatchView(UUID tripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags,
-                     double detourKm) {}
+    // What others may see about a match: never phone, exact destination or UPI ID (design 4.4).
+    // A match is a lone traveller (one rider) or an open group (2–3 riders). Trip ids are opaque handles:
+    // tripId (the first rider's) is what "ask to share" sends; any group member can answer (Learning Notes 41.1).
+    record Rider(UUID tripId, String firstName, String destArea) {}
+    record MatchView(UUID tripId, List<Rider> riders, long minutesAfterYou, int seats, int bags, double detourKm) {}
 
     // What the groups module may know about a trip
     public record TripSummary(UUID id, UUID userId, String terminalId, Instant exitAt, String destArea,
@@ -44,11 +48,13 @@ public class TripService {
     private final TripRepository trips;
     private final TerminalRepository terminals;
     private final UserService users;
+    private final OpenGroups openGroups;
 
-    TripService(TripRepository trips, TerminalRepository terminals, UserService users) {
+    TripService(TripRepository trips, TerminalRepository terminals, UserService users, OpenGroups openGroups) {
         this.trips = trips;
         this.terminals = terminals;
         this.users = users;
+        this.openGroups = openGroups;
     }
 
     TripView create(UUID userId, CreateTrip req) {
@@ -108,15 +114,23 @@ public class TripService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "No active trip with that id"));
         Point pickup = terminals.findById(mine.getTerminalId()).orElseThrow().getPickup();
 
-        List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, trips.matchCandidates(tripId));
-        Map<UUID, String> names = users.firstNames(ranked.stream().map(r -> r.trip().getUserId()).toList());
+        // Candidates: lone travellers as "groups of one", plus open groups (members loaded in one query)
+        List<List<TripRequest>> candidates = new ArrayList<>();
+        trips.matchCandidates(tripId).forEach(t -> candidates.add(List.of(t)));
+        List<List<UUID>> groups = openGroups.near(userId, mine.getTerminalId(), mine.getExitAt());
+        Map<UUID, TripRequest> members = trips.findAllById(groups.stream().flatMap(List::stream).toList()).stream()
+                .collect(Collectors.toMap(TripRequest::getId, Function.identity()));
+        groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
+
+        List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, candidates);
+        Map<UUID, String> names = users.firstNames(
+                ranked.stream().flatMap(r -> r.riders().stream()).map(TripRequest::getUserId).toList());
         return ranked.stream().map(r -> new MatchView(
-                r.trip().getId(),
-                names.get(r.trip().getUserId()),
-                r.trip().getDestArea(),
-                Duration.between(mine.getExitAt(), r.trip().getExitAt()).toMinutes(),
-                r.trip().getSeats(),
-                r.trip().getBags(),
+                r.riders().get(0).getId(),
+                r.riders().stream().map(t -> new Rider(t.getId(), names.get(t.getUserId()), t.getDestArea())).toList(),
+                Duration.between(mine.getExitAt(), r.riders().stream().map(TripRequest::getExitAt).max(Instant::compareTo).orElseThrow()).toMinutes(),
+                r.riders().stream().mapToInt(TripRequest::getSeats).sum(),
+                r.riders().stream().mapToInt(TripRequest::getBags).sum(),
                 Math.round(r.detourKm() * 2) / 2.0   // nearest 0.5 km: exact numbers could help locate their destination
         )).toList();
     }
