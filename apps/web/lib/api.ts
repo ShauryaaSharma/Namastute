@@ -1,12 +1,17 @@
 // The only place the web app talks to the Namastute API (HTTP, and the chat WebSocket at the bottom).
 // Holds the access token in memory, sends the refresh cookie, and refreshes once on a 401.
 import { Client } from "@stomp/stompjs";
+import type { components } from "./api-types";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export type Profile = { id: string; phone: string; name: string | null; upiId: string | null };
-type TokenResponse = { accessToken: string; expiresIn: number };
+// Response and request shapes are generated from the API's OpenAPI document (Learning Notes 52).
+// Never edit api-types.ts by hand: change the Java record, run the API tests, then `pnpm api:types`.
+type Schemas = components["schemas"];
+
+export type Profile = Schemas["Profile"];
+type TokenResponse = Schemas["TokenResponse"];
 
 export class ApiError extends Error {
   constructor(
@@ -84,27 +89,9 @@ export function updateMe(changes: { name?: string; upiId?: string }): Promise<Pr
   return request<Profile>("/api/v1/me", { method: "PATCH", body: JSON.stringify(changes) });
 }
 
-export type Terminal = { id: string; name: string; lat: number; lng: number; pickupNote: string };
-
-export type NewTrip = {
-  terminalId: string;
-  flightNo: string;
-  exitAt: string; // ISO instant in UTC, see lib/time.ts
-  destLat: number;
-  destLng: number;
-  destArea: string;
-  seats: number;
-  bags: number;
-  womenOnly: boolean;
-};
-
-export type Trip = Omit<NewTrip, "flightNo"> & {
-  id: string;
-  terminalName: string;
-  flightNo: string | null;
-  status: "searching" | "grouped" | "cancelled" | "expired" | "done";
-  soloKm: number;
-};
+export type Terminal = Schemas["TerminalView"];
+export type NewTrip = Schemas["CreateTripRequest"]; // exitAt: ISO instant in UTC, see lib/time.ts
+export type Trip = Schemas["TripView"];
 
 export function getTerminals(): Promise<Terminal[]> {
   return request<Terminal[]>("/api/v1/terminals");
@@ -138,17 +125,10 @@ export async function logout(): Promise<void> {
 }
 
 // Someone already sharing in a match. Only what they may see: no phone, exact destination or UPI ID.
-export type Rider = { tripId: string; firstName: string; destArea: string };
+export type Rider = Schemas["Rider"];
 
 // A lone traveller (1 rider) or an open group (2–3 riders) you could share a cab with
-export type Match = {
-  tripId: string; // opaque handle "ask to share" sends; for a group, any member can answer
-  riders: Rider[];
-  minutesAfterYou: number; // vs their exit, or the group's meet time; negative = before you
-  seats: number; // seats the riders already take
-  bags: number;
-  detourKm: number; // rounded to 0.5 km
-};
+export type Match = Schemas["MatchView"];
 
 // Best first, at most 5; only for your own active trip
 export function getMatches(tripId: string): Promise<Match[]> {
@@ -157,38 +137,13 @@ export function getMatches(tripId: string): Promise<Match[]> {
 
 // ---- Sharing a cab: requests and groups ----
 
-export type SentRequest = { id: string; toTripId: string; firstName: string; status: "pending" | "declined" };
-export type ReceivedRequest = {
-  id: string;
-  fromTripId: string; // the asker's trip handle
-  firstName: string;
-  destArea: string;
-  minutesAfterYou: number;
-  seats: number;
-  bags: number;
-};
-export type Requests = { sent: SentRequest[]; received: ReceivedRequest[] };
+export type SentRequest = Schemas["SentView"];
+export type ReceivedRequest = Schemas["RequestView"];
+export type Requests = Schemas["Requests"];
 
-export type GroupMember = {
-  firstName: string;
-  destArea: string;
-  seats: number;
-  bags: number;
-  booker: boolean;
-  you: boolean;
-  here: boolean; // tapped "I'm here" at the pickup
-  share: number | null; // what they owe the booker (the booker's own: what they paid); null until the fare is in
-};
-export type Group = {
-  id: string;
-  status: "open" | "locked" | "met";
-  youAreBooker: boolean;
-  bookerUpiId: string | null;
-  fareTotal: number | null;
-  members: GroupMember[];
-};
-
-export type ShareView = { firstName: string; booker: boolean; share: number };
+export type GroupMember = Schemas["MemberView"];
+export type Group = Schemas["GroupView"];
+export type ShareView = Schemas["ShareView"];
 
 export async function askToShare(toTripId: string): Promise<void> {
   await request<{ id: string }>("/api/v1/requests", { method: "POST", body: JSON.stringify({ toTripId }) });
@@ -241,15 +196,8 @@ export async function freshAccessToken(): Promise<string | null> {
 
 // ---- Group chat (Learning Notes 45–46) ----
 
-export type ChatMessage = {
-  id: number;
-  kind: "text" | "system";
-  firstName: string | null; // null for system messages ("Asha left: …")
-  body: string;
-  createdAt: string;
-  clientId: string | null; // only on the live copy of a message, so its sender can recognise it
-  you: boolean;
-};
+// HTTP history and the live STOMP copy are the same Java record, so one generated type covers both
+export type ChatMessage = Schemas["MessageView"];
 
 // Oldest first. before = the page older than that id; after = everything newer (catching up after a reconnect).
 export function getMessages(groupId: string, cursor: { before?: number; after?: number } = {}): Promise<ChatMessage[]> {

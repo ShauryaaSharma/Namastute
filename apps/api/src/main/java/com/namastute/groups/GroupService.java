@@ -4,6 +4,7 @@ import com.namastute.shared.ApiException;
 import com.namastute.trips.TripService;
 import com.namastute.trips.TripService.TripSummary;
 import com.namastute.users.UserService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -31,13 +32,13 @@ public class GroupService {
     static final int CAR_BAGS = 4;   // a sedan (design 3.3); seats are limited by groups.capacity
 
     record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
-    record SentView(UUID id, UUID toTripId, String firstName, String status) {}
+    record SentView(UUID id, UUID toTripId, String firstName, @Schema(allowableValues = {"pending", "declined"}) String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     // share: what this member owes the booker (the booker's own share is what they paid themselves); null until the fare
     record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you, boolean here,
-                      BigDecimal share) {}
-    record GroupView(UUID id, String status, boolean youAreBooker, String bookerUpiId, BigDecimal fareTotal,
-                     List<MemberView> members) {}
+                      @Schema(nullable = true) BigDecimal share) {}
+    record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
+                     @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members) {}
     record ShareView(String firstName, boolean booker, BigDecimal share) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}

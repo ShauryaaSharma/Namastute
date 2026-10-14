@@ -4,6 +4,7 @@ import com.namastute.groups.GroupChanged;
 import com.namastute.groups.GroupService;
 import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,8 +29,8 @@ class ChatService {
 
     // firstName is null for system messages. clientId is only set on the live copy of your own message (deduplication).
     // you is only known for history; on live messages the sender's browser recognises its own clientId instead.
-    record MessageView(long id, String kind, String firstName, String body, OffsetDateTime createdAt, String clientId,
-                       boolean you) {}
+    record MessageView(long id, @Schema(allowableValues = {"text", "system"}) String kind, @Schema(nullable = true) String firstName,
+                       String body, OffsetDateTime createdAt, @Schema(nullable = true) String clientId, boolean you) {}
 
     record Row(long id, UUID userId, String kind, String body, OffsetDateTime createdAt) {}
 

@@ -92,14 +92,16 @@
 <details><summary><a href="#49-code-walkthrough-expiry-jobs">49. Code walkthrough: expiry jobs</a></summary><a class="sub" href="#491-apiapplicationjava">49.1 ApiApplication.java</a><a class="sub" href="#492-trips-triprepository--tripservice">49.2 Trips: TripRepository + TripService</a><a class="sub" href="#493-groups-three-jobs-in-groupservice">49.3 Groups: three jobs in GroupService</a><a class="sub" href="#494-groupjobsjava-why-a-separate-class">49.4 GroupJobs.java: why a separate class</a><a class="sub" href="#495-tests-time-travel-without-waiting-485">49.5 Tests (time travel without waiting, 48.5)</a><a class="sub" href="#496-verified-in-the-running-app">49.6 Verified in the running app</a><a class="sub" href="#497-the-redis-fix">49.7 The Redis fix</a></details>
 <details><summary><a href="#50-money-fare-split-and-upi-links">50. Money: fare split and UPI links</a></summary><a class="sub" href="#501-finishing-the-ride-met-and-the-fare">50.1 Finishing the ride: met and the fare</a><a class="sub" href="#502-never-double-for-money">50.2 Never double for money</a><a class="sub" href="#503-the-split-and-rounding">50.3 The split and rounding</a><a class="sub" href="#504-upi-deep-links">50.4 UPI deep links</a><a class="sub" href="#505-decisions-2026-10-14">50.5 Decisions (2026-10-14)</a></details>
 <details><summary><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">51. Code walkthrough: fare split (and a pool-starvation bug)</a></summary><a class="sub" href="#511-groupsfaresplitjava-the-pure-function">51.1 groups/FareSplit.java: the pure function</a><a class="sub" href="#512-v5__here_atsql-and-tripsummarysolokm">51.2 V5__here_at.sql and TripSummary.soloKm</a><a class="sub" href="#513-groupservice-the-new-steps">51.3 GroupService: the new steps</a><a class="sub" href="#514-groupcontroller">51.4 GroupController</a><a class="sub" href="#515-the-pool-starvation-bug-found-by-a-new-test">51.5 The pool-starvation bug (found by a new test)</a><a class="sub" href="#516-web">51.6 Web</a><a class="sub" href="#517-verified-in-a-real-browser-two-tabs">51.7 Verified in a real browser (two tabs)</a></details>
-<details><summary><a href="#52-command-cheat-sheet">52. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#53-glossary">53. Glossary</a>
-<a class="topic" href="#54-interview-questions-to-practise">54. Interview questions to practise</a>
+<details><summary><a href="#52-api-contracts-openapi-and-generated-types">52. API contracts: OpenAPI and generated types</a></summary><a class="sub" href="#521-the-problem-two-copies-of-the-same-truth">52.1 The problem: two copies of the same truth</a><a class="sub" href="#522-openapi">52.2 OpenAPI</a><a class="sub" href="#523-code-first-vs-contract-first">52.3 Code-first vs contract-first</a><a class="sub" href="#524-code-generation">52.4 Code generation</a><a class="sub" href="#525-generated-files-and-drift-checks">52.5 Generated files and drift checks</a><a class="sub" href="#526-security">52.6 Security</a><a class="sub" href="#527-decisions-2026-10-14">52.7 Decisions (2026-10-14)</a></details>
+<details><summary><a href="#53-code-walkthrough-openapi-and-generated-types">53. Code walkthrough: OpenAPI and generated types</a></summary><a class="sub" href="#531-the-pipeline">53.1 The pipeline</a><a class="sub" href="#532-api-side">53.2 API side</a><a class="sub" href="#533-teaching-java-what-it-cant-say-on-its-own">53.3 Teaching Java what it can&#x27;t say on its own</a><a class="sub" href="#534-web-side">53.4 Web side</a><a class="sub" href="#535-the-drift-check-proven">53.5 The drift check, proven</a><a class="sub" href="#536-small-things-found-along-the-way">53.6 Small things found along the way</a></details>
+<details><summary><a href="#54-command-cheat-sheet">54. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#55-glossary">55. Glossary</a>
+<a class="topic" href="#56-interview-questions-to-practise">56. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (fare split: concepts + code walkthrough, pool-starvation fix).</p>
+<p>Last updated: 2026-10-14 (OpenAPI types: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -154,9 +156,11 @@
 <li><a href="#49-code-walkthrough-expiry-jobs">Code walkthrough: expiry jobs</a></li>
 <li><a href="#50-money-fare-split-and-upi-links">Money: fare split and UPI links</a></li>
 <li><a href="#51-code-walkthrough-fare-split-and-a-pool-starvation-bug">Code walkthrough: fare split (and a pool-starvation bug)</a></li>
-<li><a href="#52-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#53-glossary">Glossary</a></li>
-<li><a href="#54-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#52-api-contracts-openapi-and-generated-types">API contracts: OpenAPI and generated types</a></li>
+<li><a href="#53-code-walkthrough-openapi-and-generated-types">Code walkthrough: OpenAPI and generated types</a></li>
+<li><a href="#54-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#55-glossary">Glossary</a></li>
+<li><a href="#56-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -4375,7 +4379,146 @@ void onGroupChanged(GroupChanged event) {
 <li>Not tested: actually tapping the UPI link (needs a phone with a UPI app) and the Copy button (clipboard permission in the test browser).</li>
 </ul>
 <hr>
-<h2 id="52-command-cheat-sheet">52. Command cheat sheet</h2>
+<h2 id="52-api-contracts-openapi-and-generated-types">52. API contracts: OpenAPI and generated types</h2>
+<h3 id="521-the-problem-two-copies-of-the-same-truth">52.1 The problem: two copies of the same truth</h3>
+<ul>
+<li>Every response shape exists twice: a Java record (<code>MatchView</code>) and a hand-typed TypeScript type (<code>Match</code> in <code>lib/api.ts</code>).</li>
+<li><strong>API contract</strong> = the agreement between both sides about what each request and response looks like.</li>
+<li><strong>Drift</strong> = the two copies stop matching. TypeScript trusts whatever we typed, so a forgotten update compiles fine and breaks <strong>at runtime</strong> (it nearly happened when <code>firstName</code> became <code>riders[]</code>, and when <code>GroupView.updates</code> was removed).</li>
+<li>Goal: a <strong>single source of truth</strong>: write the shape once (Java) and <strong>generate</strong> the other copy.</li>
+</ul>
+<h3 id="522-openapi">52.2 OpenAPI</h3>
+<ul>
+<li><strong>OpenAPI</strong> (formerly <strong>Swagger</strong>): a standard JSON/YAML document describing an HTTP API: paths, methods, parameters, request bodies, responses, and <strong>schemas</strong> (data shapes).</li>
+<li><code>&quot;$ref&quot;: &quot;#/components/schemas/MatchView&quot;</code> points to a schema defined once, like reusing a record.</li>
+<li>Read by documentation pages (Swagger UI), client generators, testing tools and API gateways.</li>
+</ul>
+<h3 id="523-code-first-vs-contract-first">52.3 Code-first vs contract-first</h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>How</th>
+<th>Good for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Contract-first</td>
+<td>Write the OpenAPI file first; generate server and client from it</td>
+<td>Big teams, public APIs</td>
+</tr>
+<tr>
+<td>Code-first</td>
+<td>Write the controllers; a library produces the OpenAPI file</td>
+<td>Small teams with existing code (us)</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>springdoc-openapi</strong> (code-first for Spring) inspects every <code>@RestController</code>, the records they return, and Bean Validation annotations (<code>@Min(1) @Max(3)</code> → <code>&quot;minimum&quot;: 1, &quot;maximum&quot;: 3</code>), and serves the document at <code>/v3/api-docs</code>.</li>
+</ul>
+<h3 id="524-code-generation">52.4 Code generation</h3>
+<ul>
+<li><strong>Code generation</strong> = a program writes source code from a description. <strong>openapi-typescript</strong> turns the OpenAPI JSON into TypeScript types: <code>components[&quot;schemas&quot;][&quot;MatchView&quot;]</code>.</li>
+<li><strong>Types only</strong>, not a whole generated client: we keep our own <code>request()</code> helper (token refresh, errors).</li>
+<li>Mapping: <code>UUID</code> → <code>string</code> (format uuid); <code>Instant</code> / <code>OffsetDateTime</code> → <code>string</code> (date-time); <code>BigDecimal</code> / <code>double</code> / <code>int</code> → <code>number</code>; <code>List&lt;X&gt;</code> → <code>X[]</code>.</li>
+<li>OpenAPI only describes HTTP request/response. Our chat (STOMP) would need <strong>AsyncAPI</strong>, its sibling for messaging; for two message shapes it isn&#39;t worth it, so chat types stay hand-written.</li>
+</ul>
+<h3 id="525-generated-files-and-drift-checks">52.5 Generated files and drift checks</h3>
+<ul>
+<li>Commit the generated files: they&#39;re reviewable (&quot;this PR changed the Match shape&quot;) and the web builds without Java.</li>
+<li><strong>Drift check:</strong> CI regenerates and fails if the result differs from what&#39;s committed (<code>git diff --exit-code</code>).</li>
+<li>Where the spec comes from: a test (which already starts the app with Postgres and Redis) fetches <code>/v3/api-docs</code> and writes the file. No extra machinery.</li>
+</ul>
+<h3 id="526-security">52.6 Security</h3>
+<ul>
+<li>The spec lists every endpoint. Not secret, but production doesn&#39;t need to serve a map of the API, so <code>/v3/api-docs</code> is <strong>off by default</strong> and turned on only in the export test.</li>
+</ul>
+<h3 id="527-decisions-2026-10-14">52.7 Decisions (2026-10-14)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Producing the spec</td>
+<td>A test writes <code>apps/web/openapi.json</code> (committed); the web generates <code>lib/api-types.ts</code> from it (committed)</td>
+</tr>
+<tr>
+<td>Drift checks</td>
+<td>API job: fail if <code>openapi.json</code> changed; web job: fail if <code>api-types.ts</code> doesn&#39;t match</td>
+</tr>
+<tr>
+<td>Using the types</td>
+<td>Hand-written HTTP types in <code>lib/api.ts</code> become aliases of generated ones; chat types stay hand-written</td>
+</tr>
+<tr>
+<td>Swagger UI</td>
+<td>Skipped for now</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="53-code-walkthrough-openapi-and-generated-types">53. Code walkthrough: OpenAPI and generated types</h2>
+<h3 id="531-the-pipeline">53.1 The pipeline</h3>
+<pre><code>Java records + controllers ──(springdoc, in OpenApiExportTest)──▶ apps/web/openapi.json ──(openapi-typescript)──▶ apps/web/lib/api-types.ts ──▶ lib/api.ts aliases
+</code></pre>
+<p>Both generated files are committed, and CI checks that both are up to date.</p>
+<h3 id="532-api-side">53.2 API side</h3>
+<ul>
+<li><code>pom.xml</code>: <code>springdoc-openapi-starter-webmvc-api</code> <strong>3.1.1</strong> (built on Spring Boot 4.1.0; published 6 Sep 2026, well over two weeks old). It isn&#39;t in Spring Boot&#39;s BOM, so its version lives in a <code>&lt;springdoc.version&gt;</code> property. The &quot;api&quot; starter has no Swagger UI (decision 52.7).</li>
+<li><code>application.yaml</code>:<pre><code class="language-yaml">springdoc:
+  api-docs:
+    enabled: false                 # off by default (52.6)
+  api-docs.version: openapi_3_0    # 3.0 format: see 53.3
+  writer-with-order-by-keys: true  # sorted keys: same API → same file (the drift check needs this)
+  writer-with-default-pretty-printer: true
+</code></pre>
+</li>
+<li><strong><code>OpenApiExportTest</code></strong>: <code>@SpringBootTest(properties = &quot;springdoc.api-docs.enabled=true&quot;)</code> turns the endpoint on for this test only. It does <code>GET /v3/api-docs</code> with <code>jwt()</code> (every endpoint except login needs a token, the docs included), then <code>Files.writeString(Path.of(&quot;../web/openapi.json&quot;), ...)</code>. Maven runs tests from <code>apps/api</code>, so <code>../web</code> is the web app. <code>\r\n</code> is turned into <code>\n</code> so Windows and Linux write identical bytes.</li>
+<li><strong>Deterministic output, checked:</strong> two runs gave identical file fingerprints (SHA-256).</li>
+</ul>
+<h3 id="533-teaching-java-what-it-cant-say-on-its-own">53.3 Teaching Java what it can&#39;t say on its own</h3>
+<ul>
+<li>Java records don&#39;t say which fields can be <code>null</code>, and springdoc first wrote every field as optional and non-nullable. Experiments:<ul>
+<li><strong>JSpecify <code>@Nullable</code></strong> (Spring 7&#39;s standard annotation): <strong>ignored</strong> by springdoc, in both 3.1 and 3.0 formats.</li>
+<li><strong>swagger <code>@Schema(nullable = true)</code></strong> in <strong>OpenAPI 3.0</strong> format → <code>&quot;nullable&quot;: true</code> ✓. That&#39;s why the spec is 3.0, not 3.1.</li>
+</ul>
+</li>
+<li>So the few genuinely nullable fields carry <code>@Schema(nullable = true)</code>: <code>Profile.name/upiId</code>, <code>UpdateMe.name/upiId</code>, <code>TripView.flightNo</code>, <code>CreateTripRequest.flightNo</code>, <code>TerminalView.pickupNote</code>, <code>GroupView.bookerUpiId/fareTotal</code>, <code>MemberView.share</code>, <code>LeaveRequest.reason</code>, <code>MessageView.firstName/clientId</code>.</li>
+<li>Status-like strings list their values, so TypeScript gets a <strong>union</strong>: <code>@Schema(allowableValues = {&quot;open&quot;, &quot;locked&quot;, &quot;met&quot;}) String status</code> → <code>status: &quot;open&quot; | &quot;locked&quot; | &quot;met&quot;</code> (also for <code>TripView.status</code>, <code>SentView.status</code>, <code>MessageView.kind</code>).</li>
+<li><strong>Every other field is required:</strong> the generator runs with <code>--properties-required-by-default</code>.</li>
+</ul>
+<h3 id="534-web-side">53.4 Web side</h3>
+<ul>
+<li><code>openapi-typescript</code> <strong>7.13.0</strong>, a dev dependency pinned exactly (published Feb 2026).</li>
+<li><code>package.json</code> script: <code>&quot;api:types&quot;: &quot;openapi-typescript openapi.json -o lib/api-types.ts --properties-required-by-default&quot;</code>.</li>
+<li><code>lib/api-types.ts</code> (991 generated lines): <code>components[&quot;schemas&quot;][&quot;GroupView&quot;]</code> is<pre><code class="language-ts">{ bookerUpiId: string | null; fareTotal: number | null; id: string; members: MemberView[]; status: &quot;open&quot; | &quot;locked&quot; | &quot;met&quot;; youAreBooker: boolean }
+</code></pre>
+</li>
+<li><code>lib/api.ts</code>: <code>type Schemas = components[&quot;schemas&quot;];</code> and every hand-written type became an alias: <code>export type Match = Schemas[&quot;MatchView&quot;];</code>, <code>export type Group = Schemas[&quot;GroupView&quot;];</code>, and so on. <code>ChatMessage = Schemas[&quot;MessageView&quot;]</code>: the live STOMP copy is the same Java record as the HTTP history, so one type covers both.</li>
+<li><strong>The rest of the web didn&#39;t change</strong>, and <code>tsc</code> passed: proof the old hand-written types matched the real API.</li>
+<li><code>updateMe(changes: { name?: string; upiId?: string })</code> stays hand-shaped: PATCH means &quot;send only what changes&quot;.</li>
+</ul>
+<h3 id="535-the-drift-check-proven">53.5 The drift check, proven</h3>
+<ul>
+<li>Experiment: rename <code>MatchView.detourKm</code> → <code>detourKilometres</code> in Java, run the export test, <code>pnpm api:types</code>, then <code>tsc</code>:<pre><code>app/current-trip.tsx(125,18): error TS2339: Property &#39;detourKm&#39; does not exist on type &#39;{ ... detourKilometres: number ... }&#39;
+</code></pre>
+Before this slice, that mistake would have compiled and broken only in a user&#39;s browser. (Restored afterwards; <code>tsc</code> green again.)</li>
+<li><strong>CI</strong> (<code>.github/workflows/ci.yml</code>):<ul>
+<li><code>api</code> job, after <code>./mvnw -B verify</code>: <code>git diff --exit-code -- ../web/openapi.json</code> fails with &quot;openapi.json is out of date&quot; if a Java change wasn&#39;t followed by committing the new spec.</li>
+<li><code>web</code> job, after <code>pnpm install</code>: <code>pnpm api:types &amp;&amp; git diff --exit-code -- lib/api-types.ts</code> fails if the types weren&#39;t regenerated.</li>
+</ul>
+</li>
+<li><strong>Your routine when a Java record changes:</strong> run the API tests (they rewrite <code>openapi.json</code>) → <code>pnpm api:types</code> in <code>apps/web</code> → fix any TypeScript errors → commit all of it.</li>
+</ul>
+<h3 id="536-small-things-found-along-the-way">53.6 Small things found along the way</h3>
+<ul>
+<li>An earlier PowerShell <code>Set-Content -Encoding utf8</code> had saved <code>package.json</code> with a <strong>BOM</strong> (byte-order mark: an invisible <code>EF BB BF</code> at the start of the file). Python refused to parse it; it&#39;s removed. In PowerShell 5.1, <code>utf8</code> means &quot;with BOM&quot;.</li>
+<li>OpenAPI doesn&#39;t cover STOMP; that would need AsyncAPI (52.4). Chat&#39;s message type is still generated, because the HTTP history returns the same record.</li>
+</ul>
+<hr>
+<h2 id="54-command-cheat-sheet">54. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -4396,6 +4539,10 @@ docker compose -f infra/docker-compose.yml exec postgres psql -U namastute -d na
 <pre><code class="language-powershell">Get-NetTCPConnection -LocalPort 6379 -State Listen      # who listens on the Redis port
 &amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; -h 127.0.0.1 KEYS &quot;rate:otp:*&quot;   # the Windows Redis the API uses today
 docker compose -f infra/docker-compose.yml exec redis redis-cli KEYS &quot;*&quot;      # the project&#39;s Docker Redis
+</code></pre>
+<h3 id="when-a-java-record-changes-api-types">When a Java record changes (API types)</h3>
+<pre><code class="language-bash">cd apps/api &amp;&amp; ./mvnw test          # rewrites apps/web/openapi.json
+cd ../web &amp;&amp; pnpm api:types         # regenerates lib/api-types.ts; then fix TypeScript errors and commit both files
 </code></pre>
 <h3 id="query-plans-inside-psql">Query plans (inside <code>psql</code>)</h3>
 <pre><code class="language-sql">explain &lt;query&gt;;                 -- the plan Postgres would use (doesn&#39;t run it)
@@ -4429,7 +4576,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="53-glossary">53. Glossary</h2>
+<h2 id="55-glossary">55. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -5185,9 +5332,49 @@ git fetch --prune
 <td>TransactionSynchronization</td>
 <td>Spring hook to run code at a transaction moment, e.g. afterCommit</td>
 </tr>
+<tr>
+<td>API contract</td>
+<td>The agreed shape of every request and response between two sides</td>
+</tr>
+<tr>
+<td>Drift</td>
+<td>Two copies of the same truth slowly stop matching</td>
+</tr>
+<tr>
+<td>OpenAPI (Swagger)</td>
+<td>Standard document describing an HTTP API&#39;s paths and data shapes</td>
+</tr>
+<tr>
+<td>Code-first / contract-first</td>
+<td>Generate the spec from code / write the spec first and generate code</td>
+</tr>
+<tr>
+<td>Code generation</td>
+<td>A program writing source code from a description</td>
+</tr>
+<tr>
+<td>Drift check</td>
+<td>CI regenerates a file and fails if it differs from the committed one</td>
+</tr>
+<tr>
+<td>AsyncAPI</td>
+<td>OpenAPI&#39;s sibling standard for message-based APIs (WebSocket, queues)</td>
+</tr>
+<tr>
+<td>springdoc</td>
+<td>Library that generates an OpenAPI document from Spring controllers</td>
+</tr>
+<tr>
+<td>Deterministic</td>
+<td>Same input always gives byte-identical output</td>
+</tr>
+<tr>
+<td>BOM</td>
+<td>Byte-order mark: invisible bytes at a file&#39;s start that some tools reject</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="54-interview-questions-to-practise">54. Interview questions to practise</h2>
+<h2 id="56-interview-questions-to-practise">56. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -5276,6 +5463,11 @@ git fetch --prune
 <li>Two members tap &quot;I&#39;m here&quot; at the same instant and the group never becomes met. Why, and how does <code>select ... for update</code> fix it?</li>
 <li>How can an after-commit listener with REQUIRES_NEW starve a connection pool? How did we fix it?</li>
 <li>Why is the fare entered with one conditional UPDATE (<code>... and booker_id = ? and fare_total is null</code>) rather than checks in Java?</li>
+<li>What is API drift between a backend and a frontend, and why doesn&#39;t TypeScript catch it on its own?</li>
+<li>Code-first vs contract-first OpenAPI: when would you choose each?</li>
+<li>Should generated files be committed? How does a CI drift check keep them honest?</li>
+<li>springdoc ignored @Nullable. How did we still get <code>string | null</code> in TypeScript, and why the 3.0 format?</li>
+<li>Why must a generated file be deterministic for a CI drift check to work?</li>
 </ol>
 
 

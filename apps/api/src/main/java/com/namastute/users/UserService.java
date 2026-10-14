@@ -1,5 +1,6 @@
 package com.namastute.users;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
@@ -69,5 +70,5 @@ public class UserService {
         return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId());
     }
 
-    record Profile(UUID id, String phone, String name, String upiId) {}
+    record Profile(UUID id, String phone, @Schema(nullable = true) String name, @Schema(nullable = true) String upiId) {}
 }
