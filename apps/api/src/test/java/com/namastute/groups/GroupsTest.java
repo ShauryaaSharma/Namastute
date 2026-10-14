@@ -1,6 +1,8 @@
 package com.namastute.groups;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -215,6 +217,95 @@ class GroupsTest {
                 Integer.class, group)).isEqualTo(3);
     }
 
+    // ---- Finishing the ride (Learning Notes 50) ----
+
+    @Test
+    void twoPeopleHereMeansTheGroupHasMet() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+        pair(keshav, asha);
+        String group = groupOf(keshav);
+
+        here(asha, group).andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("NOT_LOCKED"));
+        lock(keshav, group);
+        here(asha, group).andExpect(status().isNoContent());
+        here(asha, group).andExpect(status().isNoContent());   // tapping twice changes nothing
+        assertThat(groupStatus(group)).isEqualTo("locked");     // one person here isn't a meeting
+        here(keshav, group).andExpect(status().isNoContent());
+
+        assertThat(groupStatus(group)).isEqualTo("met");
+        mvc.perform(get("/api/v1/groups/current").with(as(keshav)))
+                .andExpect(jsonPath("$.members[*].here", everyItem(is(true))));
+        leave(asha, group, "changed my mind").andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("ALREADY_MET"));
+    }
+
+    // Two members tap "I'm here" at the same instant: without the row lock, each would count only itself
+    // and the group would stay locked. 10 groups at once to give the race every chance.
+    @Test
+    void simultaneousHereTapsStillMeetTheGroup() throws Exception {
+        List<String> groupIds = new ArrayList<>();
+        List<Runnable> taps = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+            pair(keshav, asha);
+            String group = groupOf(keshav);
+            lock(keshav, group);
+            groupIds.add(group);
+            taps.add(() -> groups.here(keshav, UUID.fromString(group)));
+            taps.add(() -> groups.here(asha, UUID.fromString(group)));
+        }
+        ExecutorService pool = Executors.newFixedThreadPool(taps.size());
+        CountDownLatch start = new CountDownLatch(1);
+        for (Runnable tap : taps) {
+            pool.submit(() -> {
+                start.await();
+                tap.run();
+                return null;
+            });
+        }
+        start.countDown();
+        pool.shutdown();
+        assertThat(pool.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
+
+        for (String group : groupIds) {
+            assertThat(groupStatus(group)).as("group " + group).isEqualTo("met");
+        }
+    }
+
+    @Test
+    void theBookerEntersTheFareOnceAfterMeetingUp() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+        pair(keshav, asha);   // Keshav asked first, so he's the booker
+        String group = groupOf(keshav);
+        lock(keshav, group);
+        here(asha, group);
+        here(keshav, group);
+
+        fare(keshav, group, "20", false).andExpect(status().isBadRequest());        // below ₹50
+        fare(keshav, group, "601.555", false).andExpect(status().isBadRequest());   // more than 2 decimals
+        fare(asha, group, "601", true).andExpect(status().isConflict())             // only the booker
+                .andExpect(jsonPath("$.error.code").value("CANNOT_ENTER_FARE"));
+
+        // Same destination for both, so equal weights: 601 / 2 = 300.5 → Asha 301 (HALF_UP), Keshav pays the rest
+        fare(keshav, group, "601", true).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.booker == false)].share").value(301))
+                .andExpect(jsonPath("$[?(@.booker == true)].share").value(300));
+        mvc.perform(get("/api/v1/groups/current").with(as(asha))).andExpect(jsonPath("$.fareTotal").doesNotExist());   // preview saved nothing
+
+        fare(keshav, group, "601", false).andExpect(status().isNoContent());
+        fare(keshav, group, "650", false).andExpect(status().isConflict());   // once only
+
+        mvc.perform(get("/api/v1/groups/current").with(as(asha)))
+                .andExpect(jsonPath("$.fareTotal").value(601))
+                .andExpect(jsonPath("$.members[?(@.you == true)].share").value(301.0))
+                .andExpect(jsonPath("$.bookerUpiId").hasJsonPath());
+
+        // The 4-hour sweep closes met groups too
+        jdbc.update("update groups set meet_at = now() - interval '5 hours' where id = ?::uuid", group);
+        jobs.sweep();
+        assertThat(groupStatus(group)).isEqualTo("done");
+    }
+
     // ---- Background jobs (Learning Notes 48): move the data into the past, then run the sweep directly ----
 
     @Test
@@ -346,6 +437,15 @@ class GroupsTest {
             request.contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"" + reason + "\"}");
         }
         return mvc.perform(request);
+    }
+
+    private ResultActions here(UUID user, String groupId) throws Exception {
+        return mvc.perform(post("/api/v1/groups/" + groupId + "/here").with(as(user)));
+    }
+
+    private ResultActions fare(UUID user, String groupId, String total, boolean preview) throws Exception {
+        return mvc.perform(post("/api/v1/groups/" + groupId + "/fare" + (preview ? "/preview" : "")).with(as(user))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"total\":" + total + "}"));
     }
 
     private static RequestPostProcessor as(UUID user) {

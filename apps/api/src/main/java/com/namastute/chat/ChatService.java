@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 // Group chat: save a message first, then broadcast it to everyone subscribed to the group's topic (Learning Notes 46.3)
 @Service
@@ -77,21 +77,33 @@ class ChatService {
         broker.convertAndSend(chatTopic(groupId), view(row, users.firstNames(List.of(userId)), echo, false));
     }
 
-    // Runs only after the groups module's transaction COMMITS, so nobody is told about a change that then rolled back.
-    // fallbackExecution: also run when the change had no transaction (e.g. a decline).
-    // shortcut: if the app crashes between the commit and this listener, the system message is lost;
-    // Spring Modulith's event publication registry (an "outbox") would retry it.
-    // REQUIRES_NEW: after a commit, the old transaction is finished; without a fresh one this insert would never be saved.
-    @TransactionalEventListener(fallbackExecution = true)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    // Runs INSIDE the groups module's transaction (when there is one), on the same database connection: the system
+    // message is saved together with the change, or not at all. Only the broadcast waits for the commit, so nobody is
+    // told about a change that then rolled back. (An earlier version saved the message after the commit in a new
+    // transaction: that needed a second connection per request and starved the pool under load. Learning Notes 51.)
+    @EventListener
     void onGroupChanged(GroupChanged event) {
-        if (event.systemMessage() != null) {
-            Row row = db.sql("insert into messages (group_id, kind, body) values (?, 'system', ?) returning id, user_id, kind, body, created_at")
-                    .params(event.groupId(), event.systemMessage()).query(Row.class).single();
-            broker.convertAndSend(chatTopic(event.groupId()), view(row, Map.of(), null, false));
+        MessageView message = event.systemMessage() == null ? null : view(
+                db.sql("insert into messages (group_id, kind, body) values (?, 'system', ?) returning id, user_id, kind, body, created_at")
+                        .params(event.groupId(), event.systemMessage()).query(Row.class).single(),
+                Map.of(), null, false);
+        Runnable broadcast = () -> {
+            if (message != null) {
+                broker.convertAndSend(chatTopic(event.groupId()), message);
+            }
+            // "Something changed, refetch": no details, so nothing private can leak through this topic
+            broker.convertAndSend("/topic/groups." + event.groupId() + ".updated", new Updated(event.groupId()));
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcast.run();
+                }
+            });
+        } else {
+            broadcast.run();   // no transaction (e.g. a decline): the insert above is already committed
         }
-        // "Something changed, refetch": no details, so nothing private can leak through this topic
-        broker.convertAndSend("/topic/groups." + event.groupId() + ".updated", new Updated(event.groupId()));
     }
 
     private void requireMember(UUID userId, UUID groupId) {

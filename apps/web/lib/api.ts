@@ -169,14 +169,26 @@ export type ReceivedRequest = {
 };
 export type Requests = { sent: SentRequest[]; received: ReceivedRequest[] };
 
-export type GroupMember = { firstName: string; destArea: string; seats: number; bags: number; booker: boolean; you: boolean };
+export type GroupMember = {
+  firstName: string;
+  destArea: string;
+  seats: number;
+  bags: number;
+  booker: boolean;
+  you: boolean;
+  here: boolean; // tapped "I'm here" at the pickup
+  share: number | null; // what they owe the booker (the booker's own: what they paid); null until the fare is in
+};
 export type Group = {
   id: string;
-  status: "open" | "locked";
+  status: "open" | "locked" | "met";
   youAreBooker: boolean;
   bookerUpiId: string | null;
+  fareTotal: number | null;
   members: GroupMember[];
 };
+
+export type ShareView = { firstName: string; booker: boolean; share: number };
 
 export async function askToShare(toTripId: string): Promise<void> {
   await request<{ id: string }>("/api/v1/requests", { method: "POST", body: JSON.stringify({ toTripId }) });
@@ -198,6 +210,21 @@ export async function getCurrentGroup(): Promise<Group | null> {
 
 export async function lockGroup(id: string): Promise<void> {
   await request<void>(`/api/v1/groups/${id}/lock`, { method: "POST" });
+}
+
+// "I'm here" at the pickup point; 2+ members here → the group has met
+export async function imHere(groupId: string): Promise<void> {
+  await request<void>(`/api/v1/groups/${groupId}/here`, { method: "POST" });
+}
+
+// Booker only: everyone's share for this fare, before confirming (nothing is saved)
+export function previewFare(groupId: string, total: number): Promise<ShareView[]> {
+  return request<ShareView[]>(`/api/v1/groups/${groupId}/fare/preview`, { method: "POST", body: JSON.stringify({ total }) });
+}
+
+// Booker only, once, after meeting up
+export async function enterFare(groupId: string, total: number): Promise<void> {
+  await request<void>(`/api/v1/groups/${groupId}/fare`, { method: "POST", body: JSON.stringify({ total }) });
 }
 
 // A reason is required only when the group is locked
