@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   answerRequest,
   askToShare,
+  blockTraveller,
   cancelTrip,
   getCurrentTrip,
   getMatches,
@@ -135,6 +136,22 @@ function Matches(props: { tripId: string; asked: string[]; askedYou: string[]; o
                   className="ml-2 underline disabled:opacity-50"
                 >
                   Ask to share
+                </button>
+              )}
+              {!group && (
+                // Silent block (Learning Notes 56.2): they disappear from your matches and you from theirs
+                <button
+                  onClick={() => {
+                    const name = m.riders[0].firstName;
+                    if (window.confirm(`Block ${name}? You won't see each other in matches again, and ${name} won't be told.`)) {
+                      run(async () => { await blockTraveller(m.tripId); onChange(); });
+                    }
+                  }}
+                  disabled={busy}
+                  aria-label={`Block ${names}`}
+                  className="ml-2 text-sm underline disabled:opacity-50"
+                >
+                  Block
                 </button>
               )}
             </li>

@@ -44,5 +44,15 @@ docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T po
 docker compose -f infra/docker-compose.prod.yml --env-file infra/.env start api
 ```
 
+## Reviewing reports (until there's an admin panel)
+Open reports, newest first (only admins should ever see these: they can contain personal details):
+```bash
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T postgres psql -U namastute -d namastute -c \
+  "select r.created_at, r.category, ur.phone as reporter, ud.phone as reported, r.group_id, r.reason
+   from reports r join users ur on ur.id = r.reporter_id join users ud on ud.id = r.reported_id
+   where r.status = 'open' order by r.created_at desc"
+```
+After acting on one: `update reports set status = 'actioned' where id = '...'` (or `'dismissed'`). Reports never punish anyone automatically. If someone is in danger, the app tells them to call 112.
+
 ## Local test of the production stack
 `infra/.env` with `DOMAIN=localhost` and `SPRING_PROFILES_ACTIVE=prod,fake-sms` (OTP codes then appear in `logs api`), then the same `up -d --build`. Caddy serves `https://localhost` with its own local certificate, so the browser warns once.

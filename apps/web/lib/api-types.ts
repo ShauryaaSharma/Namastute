@@ -68,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["blocks"];
+        put?: never;
+        post: operations["block"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/blocks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unblock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/groups/current": {
         parameters: {
             query?: never;
@@ -194,6 +226,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update"];
+        trace?: never;
+    };
+    "/api/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/requests": {
@@ -332,6 +380,15 @@ export interface components {
             /** Format: uuid */
             toTripId: string;
         };
+        BlockRequest: {
+            /** Format: uuid */
+            tripId: string;
+        };
+        BlockView: {
+            firstName: string;
+            /** Format: uuid */
+            id: string;
+        };
         CreateTripRequest: {
             /** Format: int32 */
             bags?: number;
@@ -391,6 +448,8 @@ export interface components {
             /** Format: int32 */
             seats: number;
             share: number | null;
+            /** Format: uuid */
+            tripId: string;
             you: boolean;
         };
         MessageView: {
@@ -414,6 +473,13 @@ export interface components {
             name: string | null;
             phone: string;
             upiId: string | null;
+        };
+        ReportRequest: {
+            /** @enum {string} */
+            category: "unsafe" | "harassment" | "no_show" | "fake_profile" | "other";
+            details?: string | null;
+            /** Format: uuid */
+            tripId: string;
         };
         RequestView: {
             /** Format: int32 */
@@ -592,6 +658,68 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["TokenResponse"];
                 };
+            };
+        };
+    };
+    blocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BlockView"][];
+                };
+            };
+        };
+    };
+    block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unblock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -795,6 +923,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["Profile"];
                 };
+            };
+        };
+    };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

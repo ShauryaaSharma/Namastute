@@ -182,6 +182,29 @@ export async function enterFare(groupId: string, total: number): Promise<void> {
   await request<void>(`/api/v1/groups/${groupId}/fare`, { method: "POST", body: JSON.stringify({ total }) });
 }
 
+// ---- Report and block (Learning Notes 56) ----
+
+export type BlockView = Schemas["BlockView"];
+export type ReportRequest = Schemas["ReportRequest"];
+
+// Silent: the other person is never told; you just stop seeing each other
+export async function blockTraveller(tripId: string): Promise<void> {
+  await request<void>("/api/v1/blocks", { method: "POST", body: JSON.stringify({ tripId }) });
+}
+
+export function getBlocks(): Promise<BlockView[]> {
+  return request<BlockView[]>("/api/v1/blocks");
+}
+
+export async function unblock(id: string): Promise<void> {
+  await request<void>(`/api/v1/blocks/${id}`, { method: "DELETE" });
+}
+
+// Only someone you've shared a group with; one report per person per ride
+export async function reportTraveller(report: ReportRequest): Promise<void> {
+  await request<void>("/api/v1/reports", { method: "POST", body: JSON.stringify(report) });
+}
+
 // A reason is required only when the group is locked
 export async function leaveGroup(id: string, reason?: string): Promise<void> {
   await request<void>(`/api/v1/groups/${id}/leave`, { method: "POST", body: JSON.stringify({ reason }) });

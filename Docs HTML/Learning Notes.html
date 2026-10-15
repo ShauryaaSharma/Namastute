@@ -96,14 +96,16 @@
 <details><summary><a href="#53-code-walkthrough-openapi-and-generated-types">53. Code walkthrough: OpenAPI and generated types</a></summary><a class="sub" href="#531-the-pipeline">53.1 The pipeline</a><a class="sub" href="#532-api-side">53.2 API side</a><a class="sub" href="#533-teaching-java-what-it-cant-say-on-its-own">53.3 Teaching Java what it can&#x27;t say on its own</a><a class="sub" href="#534-web-side">53.4 Web side</a><a class="sub" href="#535-the-drift-check-proven">53.5 The drift check, proven</a><a class="sub" href="#536-small-things-found-along-the-way">53.6 Small things found along the way</a></details>
 <details><summary><a href="#54-production-containers-config-https">54. Production: containers, config, HTTPS</a></summary><a class="sub" href="#541-dev-vs-production">54.1 Dev vs production</a><a class="sub" href="#542-configuration-the-twelve-factor-rule">54.2 Configuration: the Twelve-Factor rule</a><a class="sub" href="#543-container-images">54.3 Container images</a><a class="sub" href="#544-caddy-reverse-proxy-and-https">54.4 Caddy: reverse proxy and HTTPS</a><a class="sub" href="#545-the-real-client-ip-behind-a-proxy">54.5 The real client IP behind a proxy</a><a class="sub" href="#546-one-origin">54.6 One origin</a><a class="sub" href="#547-keeping-it-alive-and-safe">54.7 Keeping it alive and safe</a><a class="sub" href="#548-decisions-2026-10-14">54.8 Decisions (2026-10-14)</a></details>
 <details><summary><a href="#55-code-walkthrough-the-production-build">55. Code walkthrough: the production build</a></summary><a class="sub" href="#551-what-exists-now">55.1 What exists now</a><a class="sub" href="#552-appsapidockerfile">55.2 apps/api/Dockerfile</a><a class="sub" href="#553-appswebdockerfile-and-nextconfigts">55.3 apps/web/Dockerfile and next.config.ts</a><a class="sub" href="#554-application-prodyaml">55.4 application-prod.yaml</a><a class="sub" href="#555-infradocker-composeprodyml">55.5 infra/docker-compose.prod.yml</a><a class="sub" href="#556-infracaddyfile">55.6 infra/Caddyfile</a><a class="sub" href="#557-forwardediptest">55.7 ForwardedIpTest</a><a class="sub" href="#558-verified-the-production-stack-on-the-laptop">55.8 Verified: the production stack on the laptop</a><a class="sub" href="#559-whats-left-before-real-users">55.9 What&#x27;s left before real users</a></details>
-<details><summary><a href="#56-command-cheat-sheet">56. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#57-glossary">57. Glossary</a>
-<a class="topic" href="#58-interview-questions-to-practise">58. Interview questions to practise</a>
+<details><summary><a href="#56-safety-report-and-block">56. Safety: report and block</a></summary><a class="sub" href="#561-design-for-abuse">56.1 Design for abuse</a><a class="sub" href="#562-blocking">56.2 Blocking</a><a class="sub" href="#563-reporting">56.3 Reporting</a><a class="sub" href="#564-privacy-of-everyone-involved">56.4 Privacy of everyone involved</a><a class="sub" href="#565-modules">56.5 Modules</a><a class="sub" href="#566-decisions-2026-10-15">56.6 Decisions (2026-10-15)</a></details>
+<details><summary><a href="#57-code-walkthrough-report-and-block">57. Code walkthrough: report and block</a></summary><a class="sub" href="#571-v6__report_blocksql">57.1 V6__report_block.sql</a><a class="sub" href="#572-usersuserservice-blocks-the-users-module-owns-the-table">57.2 users/UserService: blocks (the users module owns the table)</a><a class="sub" href="#573-groupsgroupservice">57.3 groups/GroupService</a><a class="sub" href="#574-the-new-feedback-module">57.4 The new feedback module</a><a class="sub" href="#575-tests-feedbacktest-3">57.5 Tests: FeedbackTest (3)</a><a class="sub" href="#576-web">57.6 Web</a><a class="sub" href="#577-verified-in-a-real-browser-as-keshav-with-asha-and-neha-set-up-through-the-api">57.7 Verified in a real browser (as Keshav, with Asha and Neha set up through the API)</a></details>
+<details><summary><a href="#58-command-cheat-sheet">58. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#59-glossary">59. Glossary</a>
+<a class="topic" href="#60-interview-questions-to-practise">60. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-14 (production build: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-15 (report and block: concepts + code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -162,9 +164,11 @@
 <li><a href="#53-code-walkthrough-openapi-and-generated-types">Code walkthrough: OpenAPI and generated types</a></li>
 <li><a href="#54-production-containers-config-https">Production: containers, config, HTTPS</a></li>
 <li><a href="#55-code-walkthrough-the-production-build">Code walkthrough: the production build</a></li>
-<li><a href="#56-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#57-glossary">Glossary</a></li>
-<li><a href="#58-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#56-safety-report-and-block">Safety: report and block</a></li>
+<li><a href="#57-code-walkthrough-report-and-block">Code walkthrough: report and block</a></li>
+<li><a href="#58-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#59-glossary">Glossary</a></li>
+<li><a href="#60-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -4803,7 +4807,173 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li>Off-server backup copies (S3), privacy policy and terms.</li>
 </ul>
 <hr>
-<h2 id="56-command-cheat-sheet">56. Command cheat sheet</h2>
+<h2 id="56-safety-report-and-block">56. Safety: report and block</h2>
+<h3 id="561-design-for-abuse">56.1 Design for abuse</h3>
+<ul>
+<li>Safety features must also ask <strong>&quot;how would a bad person misuse this?&quot;</strong> Doing that systematically is <strong>threat modelling</strong>; the misuse cases are <strong>abuse cases</strong>.<table>
+<thead>
+<tr>
+<th>Abuse case</th>
+<th>Rule it forces</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reporting a stranger you never met, to get them banned</td>
+<td>Only <strong>report people you&#39;ve shared a group with</strong> (the group is the evidence)</td>
+</tr>
+<tr>
+<td>Filing 50 reports in anger</td>
+<td><strong>One report per person per group</strong>, enforced by a unique constraint</td>
+</tr>
+<tr>
+<td>A group ganging up with false reports (&quot;weaponised reporting&quot;)</td>
+<td>Reports <strong>never punish automatically</strong>; a human reviews them</td>
+</tr>
+<tr>
+<td>The blocked person noticing and confronting the blocker</td>
+<td><strong>Silent block</strong>: no notification, the same &quot;not available&quot; answer as any ended trip</td>
+</tr>
+<tr>
+<td>Probing ids to learn who exists</td>
+<td>Targets are <strong>opaque trip handles</strong> already shown to you, checked server-side</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="562-blocking">56.2 Blocking</h3>
+<ul>
+<li>Personal: needs no proof, affects only the two people, so you can block <strong>anyone you can see</strong> (in matches or in your group).</li>
+<li><strong>Two-way invisible:</strong> neither appears in the other&#39;s matches (already true in the matching SQL); asking to share is refused with the ordinary &quot;isn&#39;t available any more&quot;; pending requests between the two are withdrawn.</li>
+<li><strong>Silent:</strong> an error that says <em>why</em> would leak that a block exists (the information-leak idea).</li>
+<li>Doesn&#39;t remove anyone from a current group: if you feel unsafe, <strong>leave</strong> and <strong>report</strong>.</li>
+<li><strong>Unblock</strong> from a &quot;Blocked people&quot; list on your profile, because people block by mistake.</li>
+</ul>
+<h3 id="563-reporting">56.3 Reporting</h3>
+<ul>
+<li>A report records reporter, reported person, the <strong>group</strong> (proof you met), a <strong>category</strong> (unsafe behaviour, harassment, didn&#39;t show up, fake profile, other) and optional details (≤ 500 characters). Categories make reports sortable and countable.</li>
+<li><strong>Reviewed by a human.</strong> Until the admin panel exists, the runbook has the SQL an admin runs (<code>shortcut:</code>).</li>
+<li><strong>Emergencies aren&#39;t reports:</strong> the screen says <strong>&quot;In danger right now? Call 112&quot;</strong> (India&#39;s single emergency number).</li>
+</ul>
+<h3 id="564-privacy-of-everyone-involved">56.4 Privacy of everyone involved</h3>
+<ul>
+<li>The reported person never learns a report exists or who filed it (protects against retaliation).</li>
+<li>The reporter gets a calm &quot;Thanks, we&#39;ll review it&quot;, never what happened to the other person.</li>
+<li>Free text is risky to store (people paste phone numbers): capped, and only admins read it.</li>
+</ul>
+<h3 id="565-modules">56.5 Modules</h3>
+<ul>
+<li>Design §2.2: <strong>users</strong> owns <code>blocks</code>; a new <strong>feedback</strong> module owns <code>reports</code> and offers the report/block endpoints.</li>
+<li>feedback depends on trips (handle → person), groups (shared group, withdraw requests) and users (blocks). Groups must not call feedback (that would be a cycle, 43.1), so &quot;left a locked group with a reason&quot; becomes an <strong>event</strong> that feedback turns into a report. This removes the old <code>shortcut:</code> where groups wrote reports itself.</li>
+</ul>
+<h3 id="566-decisions-2026-10-15">56.6 Decisions (2026-10-15)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Who</td>
+<td>Report: only someone you&#39;ve shared a group with. Block: anyone you can see</td>
+</tr>
+<tr>
+<td>Blocking</td>
+<td>Silent, two-way invisible; refuses new requests and withdraws pending ones; doesn&#39;t remove anyone from a current group</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>Category + optional text (≤ 500), one per person per group, never automatic punishment, &quot;Call 112&quot; shown</td>
+</tr>
+<tr>
+<td>Undo</td>
+<td>&quot;Blocked people&quot; list with Unblock on the profile page</td>
+</tr>
+<tr>
+<td>Modules</td>
+<td>New <code>feedback</code> module; leave-with-reason report moves there via an event; blocks in <code>users</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="57-code-walkthrough-report-and-block">57. Code walkthrough: report and block</h2>
+<h3 id="571-v6__report_blocksql">57.1 <code>V6__report_block.sql</code></h3>
+<ul>
+<li><code>reports.category</code>: <code>not null default &#39;other&#39;</code> with a <code>check</code> listing the five categories. Old rows get <code>&#39;other&#39;</code>.</li>
+<li><code>constraint reports_once unique (reporter_id, reported_id, group_id)</code>: one report per person per group, enforced by the database.</li>
+<li><code>blocks.id uuid ... unique</code>: an <strong>opaque handle</strong> for &quot;unblock&quot;, so the other person&#39;s user id never reaches the browser. Plus <code>created_at</code> for the list&#39;s order.</li>
+<li>Before migrating, a query confirmed no existing duplicate reports (a new unique constraint fails on existing duplicates).</li>
+</ul>
+<h3 id="572-usersuserservice-blocks-the-users-module-owns-the-table">57.2 <code>users/UserService</code>: blocks (the users module owns the table)</h3>
+<ul>
+<li><code>block(blocker, blocked)</code>: <code>insert ... on conflict do nothing</code> (idempotent).</li>
+<li><code>blockedEitherWay(me, others)</code>: one query, both directions: <code>(blocker = me and blocked in others) or (blocked = me and blocker in others)</code>.</li>
+<li><code>blocks(blocker)</code>: <code>BlockView(id, firstName)</code>: a handle and a first name, never a user id.</li>
+<li><code>unblock(blocker, blockId)</code>: <code>delete ... where id = ? and blocker_id = ?</code>: the <code>blocker_id</code> condition means you can only remove <strong>your own</strong> blocks.</li>
+</ul>
+<h3 id="573-groupsgroupservice">57.3 <code>groups/GroupService</code></h3>
+<ul>
+<li><code>ask(...)</code>: one more <code>.filter(t -&gt; !users.blockedEitherWay(userId, peopleAround(t)))</code>. A blocked pair gets the <strong>same</strong> 404 &quot;That traveller isn&#39;t available any more&quot; as an ended trip: the <strong>silent block</strong>. <code>peopleAround(trip)</code> = the trip&#39;s owner plus everyone in their open group.</li>
+<li><code>withdrawRequestsBetween(a, b)</code>: pending requests between the two people&#39;s current trips → <code>withdrawn</code>. <code>shortcut:</code> a request from the blocked person to <em>another</em> member of the blocker&#39;s group stays visible (decline it).</li>
+<li><code>sharedGroup(reporter, reportedTripId)</code>: a self-join on <code>group_members</code> (&quot;them&quot; and &quot;me&quot; in the same group, accepted or since left). That&#39;s the evidence a report needs.</li>
+<li><code>MemberView.tripId</code>: group members now carry the opaque handle, so the card can say &quot;Report&quot;/&quot;Block&quot;; it also became the React <code>key</code>.</li>
+<li><code>leave(...)</code>: no longer writes <code>reports</code>; it publishes <code>MemberLeftLockedGroup(groupId, memberId, bookerId, reason)</code>.</li>
+</ul>
+<h3 id="574-the-new-feedback-module">57.4 The new <code>feedback</code> module</h3>
+<ul>
+<li><code>FeedbackService.block</code>: trip handle → owner (<code>ownerOf</code>, refusing your own trip) → <code>users.block</code> → <code>groups.withdrawRequestsBetween</code>.</li>
+<li><code>report</code>: owner → <code>groups.sharedGroup(...)</code> or 404 <code>NOT_IN_A_GROUP_TOGETHER</code> → insert; <code>DuplicateKeyException</code> → 409 <code>ALREADY_REPORTED</code>.</li>
+<li><code>@EventListener onMemberLeftLockedGroup(...)</code>: files the leave reason as a report on the booker, inside the groups transaction (same connection, 51.5), with <code>on conflict ... do nothing</code> in case the member had already reported the booker for that group. The old <code>shortcut:</code> in groups is gone.</li>
+<li><code>FeedbackController</code>: <code>POST /api/v1/blocks</code> (204), <code>GET /api/v1/blocks</code>, <code>DELETE /api/v1/blocks/{id}</code> (204 / 404), <code>POST /api/v1/reports</code> (204).<ul>
+<li><code>category</code>: <code>@Pattern(&quot;unsafe|harassment|no_show|fake_profile|other&quot;)</code> (a bad value gets our usual <code>VALIDATION_FAILED</code>) plus <code>@Schema(allowableValues)</code> so TypeScript gets a union. <code>details</code>: <code>@Size(max = 500)</code>, nullable, optional.</li>
+<li>Report answers 204: the reporter only needs &quot;thanks&quot;, and the web&#39;s <code>request()</code> expects JSON for any other success status.</li>
+</ul>
+</li>
+<li><strong>Dependencies:</strong> feedback → trips, groups, users. Nothing depends on feedback, so <code>ModularityTest</code> still passes.</li>
+</ul>
+<h3 id="575-tests-feedbacktest-3">57.5 Tests: <code>FeedbackTest</code> (3)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>blockingHidesBothWaysSilentlyAndCanBeUndone</code></td>
+<td>gone from <strong>both</strong> people&#39;s matches; the blocked person&#39;s ask gets the ordinary &quot;isn&#39;t available any more&quot;; their own blocks list stays empty (not told); the blocker&#39;s list has 2 fields (handle + first name); unblock makes them visible again; unblocking twice → 404</td>
+</tr>
+<tr>
+<td><code>blockingWithdrawsPendingRequests</code></td>
+<td>Ravi&#39;s pending request disappears for both</td>
+</tr>
+<tr>
+<td><code>reportsNeedASharedGroupAndHappenOncePerRide</code></td>
+<td>the handle comes from the group card; report → 204, again → 409, a stranger → 404; bad category / 501 characters → 400; the category is saved</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Proven to fail:</strong> without the block check in <code>ask</code>, the first test went red (the blocked person could still ask).</li>
+<li><code>GroupsTest</code>&#39;s &quot;leaving a locked group reports the booker&quot; still passes, now through the event.</li>
+</ul>
+<h3 id="576-web">57.6 Web</h3>
+<ul>
+<li><code>lib/api.ts</code>: <code>blockTraveller</code>, <code>getBlocks</code>, <code>unblock</code>, <code>reportTraveller</code>; types <code>BlockView</code>, <code>ReportRequest</code> come from the regenerated <code>api-types.ts</code> (<code>pnpm api:types</code>, 53.5). The generator made <code>details</code> optional because Java marks only <code>tripId</code> and <code>category</code> <code>@NotNull</code>.</li>
+<li><code>app/report-form.tsx</code>: <strong>&quot;In danger right now? Call 112&quot;</strong> first (a <code>tel:112</code> link opens the phone dialler), then a category <code>&lt;select&gt;</code>, optional details (<code>maxLength={500}</code>), and &quot;Thanks. We&#39;ll review your report. Asha won&#39;t be told who reported them.&quot;</li>
+<li><code>app/group-card.tsx</code>: <strong>Report</strong> and <strong>Block</strong> next to every member except you; block asks for confirmation with <code>window.confirm</code> (&quot;… won&#39;t be told. This doesn&#39;t remove anyone from this group: leave it if you feel unsafe.&quot;).</li>
+<li><code>app/current-trip.tsx</code>: <strong>Block</strong> on single-traveller matches (a block targets one person, so not on group matches); the match disappears after reloading.</li>
+<li><code>app/profile/page.tsx</code>: &quot;Blocked people&quot; with <strong>Unblock</strong> (only for existing profiles).</li>
+<li><code>infra/README.md</code>: the SQL an admin runs to review open reports and mark them <code>actioned</code> or <code>dismissed</code>.</li>
+</ul>
+<h3 id="577-verified-in-a-real-browser-as-keshav-with-asha-and-neha-set-up-through-the-api">57.7 Verified in a real browser (as Keshav, with Asha and Neha set up through the API)</h3>
+<ul>
+<li>Matches: Neha and Asha, each with <strong>Block</strong> → block Neha (confirmation: &quot;Block Neha? You won&#39;t see each other in matches again, and Neha won&#39;t be told.&quot;) → Neha gone.</li>
+<li>Accept Asha → group card: Asha · <strong>Report · Block</strong> → Report shows &quot;In danger right now? Call 112.&quot; (a <code>tel:112</code> link), the five categories, and details → Harassment + &quot;Test report: rude messages&quot; → &quot;Thanks… Asha won&#39;t be told who reported them.&quot; → database: <code>harassment</code>, status <code>open</code>.</li>
+<li>Block Asha → &quot;Asha is blocked. You can undo it from your profile.&quot;</li>
+<li>Profile → &quot;Blocked people: Asha, Neha&quot; → Unblock Neha → only Asha remains (database agrees).</li>
+<li>Testing note: <code>window.confirm</code> was replaced in the test page with a function that records the message and answers &quot;OK&quot;, because automated browsers can hang on native dialogs. The recorded messages are quoted above.</li>
+</ul>
+<hr>
+<h2 id="58-command-cheat-sheet">58. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -4867,7 +5037,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="57-glossary">57. Glossary</h2>
+<h2 id="59-glossary">59. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -5715,9 +5885,25 @@ git fetch --prune
 <td>Runbook</td>
 <td>Step-by-step instructions for operating a system</td>
 </tr>
+<tr>
+<td>Threat modelling</td>
+<td>Systematically asking how a feature could be misused</td>
+</tr>
+<tr>
+<td>Abuse case</td>
+<td>A specific way a bad actor could misuse a feature</td>
+</tr>
+<tr>
+<td>Silent block</td>
+<td>Blocking without telling the blocked person anything</td>
+</tr>
+<tr>
+<td>Weaponised reporting</td>
+<td>Using a report button to harass or get someone banned unfairly</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="58-interview-questions-to-practise">58. Interview questions to practise</h2>
+<h2 id="60-interview-questions-to-practise">60. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -5818,6 +6004,11 @@ git fetch --prune
 <li>Why are NEXT_PUBLIC_ variables a deployment gotcha?</li>
 <li>How did we prove the production API refuses to start without a secret or a real SMS sender?</li>
 <li>Why can&#39;t MockMvc test forwarded-header handling, and what did we use instead?</li>
+<li>What is threat modelling? Name three abuse cases for a &quot;report user&quot; button and the rule each forces.</li>
+<li>Why must blocking be silent, and how can an error message leak that someone blocked you?</li>
+<li>Why do reports go to a human instead of automatically banning someone?</li>
+<li>How does the code make sure you can only report someone you actually met?</li>
+<li>Why does unblocking use a separate opaque id instead of the blocked person&#39;s user id?</li>
 </ol>
 
 

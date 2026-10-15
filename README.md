@@ -15,9 +15,10 @@ Travellers landing at Delhi IGI around the same time, heading the same way, find
 - **Live group chat** over WebSocket, with system messages for group changes.
 - **Background jobs:** stale trips expire, groups lock themselves 5 minutes before meeting, and old groups close.
 - **Finishing the ride:** "I'm here" at the pickup, then the booker enters the real fare and everyone sees their share with a UPI pay link.
+- **Safety:** report someone you shared a cab with (reviewed by a person, with "Call 112" for emergencies), and silently block anyone so you never see each other again.
 
 ## Architecture
-A **modular monolith**: one Spring Boot app split into modules (`auth`, `users`, `trips`, `groups`, `chat`) whose boundaries are checked by a test (Spring Modulith). In production everything runs on one server under one domain:
+A **modular monolith**: one Spring Boot app split into modules (`auth`, `users`, `trips`, `groups`, `chat`, `feedback`) whose boundaries are checked by a test (Spring Modulith). In production everything runs on one server under one domain:
 
 ```mermaid
 flowchart LR
@@ -84,7 +85,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust and safety:** in progress. Fare split and the production build are done. Next: SMS provider, deployment, report and block, ratings, ID verification and women-only groups, push notifications, live location at pickup.
+- **Phase 2, trust and safety:** in progress. Fare split, the production build, and report and block are done. Next: SMS provider, deployment, ratings, ID verification and women-only groups, push notifications, live location at pickup.
 - **Phase 3:** flight-delay tracking, auto-matching, load testing and more.
 
 The full roadmap is in the design doc, section 7.

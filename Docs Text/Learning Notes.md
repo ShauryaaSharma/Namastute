@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-14 (production build: concepts + code walkthrough).
+Last updated: 2026-10-15 (report and block: concepts + code walkthrough).
 
 ---
 
@@ -63,9 +63,11 @@ Last updated: 2026-10-14 (production build: concepts + code walkthrough).
 53. [Code walkthrough: OpenAPI and generated types](#53-code-walkthrough-openapi-and-generated-types)
 54. [Production: containers, config, HTTPS](#54-production-containers-config-https)
 55. [Code walkthrough: the production build](#55-code-walkthrough-the-production-build)
-56. [Command cheat sheet](#56-command-cheat-sheet)
-57. [Glossary](#57-glossary)
-58. [Interview questions to practise](#58-interview-questions-to-practise)
+56. [Safety: report and block](#56-safety-report-and-block)
+57. [Code walkthrough: report and block](#57-code-walkthrough-report-and-block)
+58. [Command cheat sheet](#58-command-cheat-sheet)
+59. [Glossary](#59-glossary)
+60. [Interview questions to practise](#60-interview-questions-to-practise)
 
 ---
 
@@ -3554,7 +3556,107 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
-## 56. Command cheat sheet
+## 56. Safety: report and block
+
+### 56.1 Design for abuse
+- Safety features must also ask **"how would a bad person misuse this?"** Doing that systematically is **threat modelling**; the misuse cases are **abuse cases**.
+| Abuse case | Rule it forces |
+|---|---|
+| Reporting a stranger you never met, to get them banned | Only **report people you've shared a group with** (the group is the evidence) |
+| Filing 50 reports in anger | **One report per person per group**, enforced by a unique constraint |
+| A group ganging up with false reports ("weaponised reporting") | Reports **never punish automatically**; a human reviews them |
+| The blocked person noticing and confronting the blocker | **Silent block**: no notification, the same "not available" answer as any ended trip |
+| Probing ids to learn who exists | Targets are **opaque trip handles** already shown to you, checked server-side |
+
+### 56.2 Blocking
+- Personal: needs no proof, affects only the two people, so you can block **anyone you can see** (in matches or in your group).
+- **Two-way invisible:** neither appears in the other's matches (already true in the matching SQL); asking to share is refused with the ordinary "isn't available any more"; pending requests between the two are withdrawn.
+- **Silent:** an error that says *why* would leak that a block exists (the information-leak idea).
+- Doesn't remove anyone from a current group: if you feel unsafe, **leave** and **report**.
+- **Unblock** from a "Blocked people" list on your profile, because people block by mistake.
+
+### 56.3 Reporting
+- A report records reporter, reported person, the **group** (proof you met), a **category** (unsafe behaviour, harassment, didn't show up, fake profile, other) and optional details (≤ 500 characters). Categories make reports sortable and countable.
+- **Reviewed by a human.** Until the admin panel exists, the runbook has the SQL an admin runs (`shortcut:`).
+- **Emergencies aren't reports:** the screen says **"In danger right now? Call 112"** (India's single emergency number).
+
+### 56.4 Privacy of everyone involved
+- The reported person never learns a report exists or who filed it (protects against retaliation).
+- The reporter gets a calm "Thanks, we'll review it", never what happened to the other person.
+- Free text is risky to store (people paste phone numbers): capped, and only admins read it.
+
+### 56.5 Modules
+- Design §2.2: **users** owns `blocks`; a new **feedback** module owns `reports` and offers the report/block endpoints.
+- feedback depends on trips (handle → person), groups (shared group, withdraw requests) and users (blocks). Groups must not call feedback (that would be a cycle, 43.1), so "left a locked group with a reason" becomes an **event** that feedback turns into a report. This removes the old `shortcut:` where groups wrote reports itself.
+
+### 56.6 Decisions (2026-10-15)
+| Decision | Choice |
+|---|---|
+| Who | Report: only someone you've shared a group with. Block: anyone you can see |
+| Blocking | Silent, two-way invisible; refuses new requests and withdraws pending ones; doesn't remove anyone from a current group |
+| Reports | Category + optional text (≤ 500), one per person per group, never automatic punishment, "Call 112" shown |
+| Undo | "Blocked people" list with Unblock on the profile page |
+| Modules | New `feedback` module; leave-with-reason report moves there via an event; blocks in `users` |
+
+---
+
+## 57. Code walkthrough: report and block
+
+### 57.1 `V6__report_block.sql`
+- `reports.category`: `not null default 'other'` with a `check` listing the five categories. Old rows get `'other'`.
+- `constraint reports_once unique (reporter_id, reported_id, group_id)`: one report per person per group, enforced by the database.
+- `blocks.id uuid ... unique`: an **opaque handle** for "unblock", so the other person's user id never reaches the browser. Plus `created_at` for the list's order.
+- Before migrating, a query confirmed no existing duplicate reports (a new unique constraint fails on existing duplicates).
+
+### 57.2 `users/UserService`: blocks (the users module owns the table)
+- `block(blocker, blocked)`: `insert ... on conflict do nothing` (idempotent).
+- `blockedEitherWay(me, others)`: one query, both directions: `(blocker = me and blocked in others) or (blocked = me and blocker in others)`.
+- `blocks(blocker)`: `BlockView(id, firstName)`: a handle and a first name, never a user id.
+- `unblock(blocker, blockId)`: `delete ... where id = ? and blocker_id = ?`: the `blocker_id` condition means you can only remove **your own** blocks.
+
+### 57.3 `groups/GroupService`
+- `ask(...)`: one more `.filter(t -> !users.blockedEitherWay(userId, peopleAround(t)))`. A blocked pair gets the **same** 404 "That traveller isn't available any more" as an ended trip: the **silent block**. `peopleAround(trip)` = the trip's owner plus everyone in their open group.
+- `withdrawRequestsBetween(a, b)`: pending requests between the two people's current trips → `withdrawn`. `shortcut:` a request from the blocked person to *another* member of the blocker's group stays visible (decline it).
+- `sharedGroup(reporter, reportedTripId)`: a self-join on `group_members` ("them" and "me" in the same group, accepted or since left). That's the evidence a report needs.
+- `MemberView.tripId`: group members now carry the opaque handle, so the card can say "Report"/"Block"; it also became the React `key`.
+- `leave(...)`: no longer writes `reports`; it publishes `MemberLeftLockedGroup(groupId, memberId, bookerId, reason)`.
+
+### 57.4 The new `feedback` module
+- `FeedbackService.block`: trip handle → owner (`ownerOf`, refusing your own trip) → `users.block` → `groups.withdrawRequestsBetween`.
+- `report`: owner → `groups.sharedGroup(...)` or 404 `NOT_IN_A_GROUP_TOGETHER` → insert; `DuplicateKeyException` → 409 `ALREADY_REPORTED`.
+- `@EventListener onMemberLeftLockedGroup(...)`: files the leave reason as a report on the booker, inside the groups transaction (same connection, 51.5), with `on conflict ... do nothing` in case the member had already reported the booker for that group. The old `shortcut:` in groups is gone.
+- `FeedbackController`: `POST /api/v1/blocks` (204), `GET /api/v1/blocks`, `DELETE /api/v1/blocks/{id}` (204 / 404), `POST /api/v1/reports` (204).
+  - `category`: `@Pattern("unsafe|harassment|no_show|fake_profile|other")` (a bad value gets our usual `VALIDATION_FAILED`) plus `@Schema(allowableValues)` so TypeScript gets a union. `details`: `@Size(max = 500)`, nullable, optional.
+  - Report answers 204: the reporter only needs "thanks", and the web's `request()` expects JSON for any other success status.
+- **Dependencies:** feedback → trips, groups, users. Nothing depends on feedback, so `ModularityTest` still passes.
+
+### 57.5 Tests: `FeedbackTest` (3)
+| Test | Proves |
+|---|---|
+| `blockingHidesBothWaysSilentlyAndCanBeUndone` | gone from **both** people's matches; the blocked person's ask gets the ordinary "isn't available any more"; their own blocks list stays empty (not told); the blocker's list has 2 fields (handle + first name); unblock makes them visible again; unblocking twice → 404 |
+| `blockingWithdrawsPendingRequests` | Ravi's pending request disappears for both |
+| `reportsNeedASharedGroupAndHappenOncePerRide` | the handle comes from the group card; report → 204, again → 409, a stranger → 404; bad category / 501 characters → 400; the category is saved |
+- **Proven to fail:** without the block check in `ask`, the first test went red (the blocked person could still ask).
+- `GroupsTest`'s "leaving a locked group reports the booker" still passes, now through the event.
+
+### 57.6 Web
+- `lib/api.ts`: `blockTraveller`, `getBlocks`, `unblock`, `reportTraveller`; types `BlockView`, `ReportRequest` come from the regenerated `api-types.ts` (`pnpm api:types`, 53.5). The generator made `details` optional because Java marks only `tripId` and `category` `@NotNull`.
+- `app/report-form.tsx`: **"In danger right now? Call 112"** first (a `tel:112` link opens the phone dialler), then a category `<select>`, optional details (`maxLength={500}`), and "Thanks. We'll review your report. Asha won't be told who reported them."
+- `app/group-card.tsx`: **Report** and **Block** next to every member except you; block asks for confirmation with `window.confirm` ("… won't be told. This doesn't remove anyone from this group: leave it if you feel unsafe.").
+- `app/current-trip.tsx`: **Block** on single-traveller matches (a block targets one person, so not on group matches); the match disappears after reloading.
+- `app/profile/page.tsx`: "Blocked people" with **Unblock** (only for existing profiles).
+- `infra/README.md`: the SQL an admin runs to review open reports and mark them `actioned` or `dismissed`.
+
+### 57.7 Verified in a real browser (as Keshav, with Asha and Neha set up through the API)
+- Matches: Neha and Asha, each with **Block** → block Neha (confirmation: "Block Neha? You won't see each other in matches again, and Neha won't be told.") → Neha gone.
+- Accept Asha → group card: Asha · **Report · Block** → Report shows "In danger right now? Call 112." (a `tel:112` link), the five categories, and details → Harassment + "Test report: rude messages" → "Thanks… Asha won't be told who reported them." → database: `harassment`, status `open`.
+- Block Asha → "Asha is blocked. You can undo it from your profile."
+- Profile → "Blocked people: Asha, Neha" → Unblock Neha → only Asha remains (database agrees).
+- Testing note: `window.confirm` was replaced in the test page with a function that records the message and answers "OK", because automated browsers can hang on native dialogs. The recorded messages are quoted above.
+
+---
+
+## 58. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3638,7 +3740,7 @@ git fetch --prune
 
 ---
 
-## 57. Glossary
+## 59. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -3852,10 +3954,14 @@ git fetch --prune
 | Profile expression | Spring condition like "!prod \| fake-sms" (not prod, or fake-sms) |
 | Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
 | Runbook | Step-by-step instructions for operating a system |
+| Threat modelling | Systematically asking how a feature could be misused |
+| Abuse case | A specific way a bad actor could misuse a feature |
+| Silent block | Blocking without telling the blocked person anything |
+| Weaponised reporting | Using a report button to harass or get someone banned unfairly |
 
 ---
 
-## 58. Interview questions to practise
+## 60. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -3956,3 +4062,8 @@ git fetch --prune
 97. Why are NEXT_PUBLIC_ variables a deployment gotcha?
 98. How did we prove the production API refuses to start without a secret or a real SMS sender?
 99. Why can't MockMvc test forwarded-header handling, and what did we use instead?
+100. What is threat modelling? Name three abuse cases for a "report user" button and the rule each forces.
+101. Why must blocking be silent, and how can an error message leak that someone blocked you?
+102. Why do reports go to a human instead of automatically banning someone?
+103. How does the code make sure you can only report someone you actually met?
+104. Why does unblocking use a separate opaque id instead of the blocked person's user id?

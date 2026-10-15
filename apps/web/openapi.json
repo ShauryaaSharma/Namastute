@@ -103,6 +103,66 @@
         "tags" : [ "auth-controller" ]
       }
     },
+    "/api/v1/blocks" : {
+      "get" : {
+        "operationId" : "blocks",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/BlockView"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "feedback-controller" ]
+      },
+      "post" : {
+        "operationId" : "block",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BlockRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "feedback-controller" ]
+      }
+    },
+    "/api/v1/blocks/{id}" : {
+      "delete" : {
+        "operationId" : "unblock",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "feedback-controller" ]
+      }
+    },
     "/api/v1/groups/current" : {
       "get" : {
         "operationId" : "current_1",
@@ -350,6 +410,27 @@
         "tags" : [ "me-controller" ]
       }
     },
+    "/api/v1/reports" : {
+      "post" : {
+        "operationId" : "report",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "feedback-controller" ]
+      }
+    },
     "/api/v1/requests" : {
       "get" : {
         "operationId" : "requests",
@@ -564,6 +645,28 @@
         },
         "required" : [ "toTripId" ]
       },
+      "BlockRequest" : {
+        "type" : "object",
+        "properties" : {
+          "tripId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "tripId" ]
+      },
+      "BlockView" : {
+        "type" : "object",
+        "properties" : {
+          "firstName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
       "CreateTripRequest" : {
         "type" : "object",
         "properties" : {
@@ -740,6 +843,10 @@
             "type" : "number",
             "nullable" : true
           },
+          "tripId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
           "you" : {
             "type" : "boolean"
           }
@@ -806,6 +913,27 @@
             "nullable" : true
           }
         }
+      },
+      "ReportRequest" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "pattern" : "unsafe|harassment|no_show|fake_profile|other",
+            "type" : "string",
+            "enum" : [ "unsafe", "harassment", "no_show", "fake_profile", "other" ]
+          },
+          "details" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string",
+            "nullable" : true
+          },
+          "tripId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "category", "tripId" ]
       },
       "RequestView" : {
         "type" : "object",
