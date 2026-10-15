@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,9 @@ public class GroupService {
     record SentView(UUID id, UUID toTripId, String firstName, @Schema(allowableValues = {"pending", "declined"}) String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     // share: what this member owes the booker (the booker's own share is what they paid themselves); null until the fare
-    record MemberView(String firstName, String destArea, int seats, int bags, boolean booker, boolean you, boolean here,
-                      @Schema(nullable = true) BigDecimal share) {}
+    // tripId: an opaque handle for report/block (Learning Notes 56), never the user id
+    record MemberView(UUID tripId, String firstName, String destArea, int seats, int bags, boolean booker, boolean you,
+                      boolean here, @Schema(nullable = true) BigDecimal share) {}
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
                      @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members) {}
     record ShareView(String firstName, boolean booker, BigDecimal share) {}
@@ -65,6 +67,8 @@ public class GroupService {
         TripSummary theirs = trips.summaries(List.of(toTripId)).stream()
                 .filter(t -> !t.userId().equals(userId) && t.terminalId().equals(mine.terminalId()))
                 .filter(t -> t.status().equals("searching") || groupOf(t.id()).filter(g -> g.status().equals("open")).isPresent())
+                // Silent block: if either side blocked the other (or anyone in their group), it looks like an ended trip
+                .filter(t -> !users.blockedEitherWay(userId, peopleAround(t)))
                 .findFirst()
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "That traveller isn't available any more"));
         try {
@@ -290,6 +294,39 @@ public class GroupService {
         }
     }
 
+    // ---- For the feedback module (report and block, Learning Notes 56) ----
+
+    // The group the reporter shared with the owner of this trip (both accepted, or since left), most recent first
+    public Optional<UUID> sharedGroup(UUID reporter, UUID reportedTripId) {
+        return db.sql("""
+                        select them.group_id from group_members them
+                        join group_members me on me.group_id = them.group_id and me.user_id = ? and me.status in ('accepted', 'left')
+                        where them.trip_id = ? and them.status in ('accepted', 'left')
+                        order by them.created_at desc limit 1""")
+                .params(reporter, reportedTripId).query(UUID.class).optional();
+    }
+
+    // After a block: pending requests between the two people's current trips quietly disappear
+    // shortcut: a request from the blocked person to ANOTHER member of the blocker's group stays visible; decline it
+    public void withdrawRequestsBetween(UUID a, UUID b) {
+        Optional<UUID> tripA = trips.activeTrip(a).map(TripSummary::id);
+        Optional<UUID> tripB = trips.activeTrip(b).map(TripSummary::id);
+        if (tripA.isPresent() && tripB.isPresent()) {
+            db.sql("""
+                            update join_requests set status = 'withdrawn'
+                            where status = 'pending' and ((from_trip_id = :a and to_trip_id = :b) or (from_trip_id = :b and to_trip_id = :a))""")
+                    .param("a", tripA.get()).param("b", tripB.get()).update();
+        }
+    }
+
+    // The trip's owner plus everyone in their open group
+    private List<UUID> peopleAround(TripSummary trip) {
+        List<UUID> people = new ArrayList<>(List.of(trip.userId()));
+        groupOf(trip.id()).ifPresent(g -> people.addAll(
+                db.sql("select user_id from group_members where group_id = ? and status = 'accepted'").param(g.groupId()).query(UUID.class).list()));
+        return people;
+    }
+
     private List<UUID> memberTrips(List<UUID> groupIds) {
         return db.sql("select trip_id from group_members where group_id in (:ids) and status = 'accepted'")
                 .param("ids", groupIds).query(UUID.class).list();
@@ -340,9 +377,8 @@ public class GroupService {
         }
 
         if (wasLocked && !userId.equals(g.bookerId())) {
-            // shortcut: writes the feedback module's reports table directly; go through that module once it exists
-            db.sql("insert into reports (reporter_id, reported_id, group_id, reason) values (?, ?, ?, ?)")
-                    .params(userId, g.bookerId(), groupId, reason.strip()).update();
+            // The feedback module files this as a report on the booker (an event, so groups never depends on feedback)
+            events.publishEvent(new MemberLeftLockedGroup(groupId, userId, g.bookerId(), reason.strip()));
         }
         // The chat module turns this into a system message ("Asha left: …") once the transaction commits
         events.publishEvent(new GroupChanged(groupId, firstName(userId) + " left" + (wasLocked ? ": " + reason.strip() : "")));
@@ -364,7 +400,7 @@ public class GroupService {
         Map<UUID, String> names = users.firstNames(members.stream().map(MemberRow::userId).toList());
         List<MemberView> views = members.stream().map(m -> {
             TripSummary t = memberTrips.get(m.tripId());
-            return new MemberView(names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
+            return new MemberView(m.tripId(), names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
                     m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share());
         }).toList();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { restoreSession, updateMe, type Profile } from "@/lib/api";
+import { type BlockView, getBlocks, restoreSession, unblock, updateMe, type Profile } from "@/lib/api";
 import { useAction } from "@/lib/use-action";
 
 // Same rules as the API (MeController), checked here first for instant, friendly messages
@@ -97,6 +97,47 @@ export default function ProfilePage() {
       <p role="alert" aria-live="polite" className="mt-4 text-red-600">
         {error}
       </p>
+
+      {me.name && <BlockedPeople />}
     </main>
+  );
+}
+
+// People you blocked (Learning Notes 56.2): only you see this list; unblocking makes you visible to each other again
+function BlockedPeople() {
+  const [blocks, setBlocks] = useState<BlockView[] | null>(null);
+  const { busy, error, run } = useAction();
+
+  useEffect(() => {
+    getBlocks()
+      .then(setBlocks)
+      .catch(() => setBlocks([]));
+  }, []);
+
+  if (!blocks) return null;
+  return (
+    <section className="mt-8" aria-label="Blocked people">
+      <h2 className="font-semibold">Blocked people</h2>
+      {blocks.length === 0 ? (
+        <p className="text-sm">You haven&apos;t blocked anyone.</p>
+      ) : (
+        <ul className="mt-1">
+          {blocks.map((b) => (
+            <li key={b.id}>
+              {b.firstName}
+              <button
+                onClick={() => run(async () => { await unblock(b.id); setBlocks(blocks.filter((x) => x.id !== b.id)); })}
+                disabled={busy}
+                aria-label={`Unblock ${b.firstName}`}
+                className="ml-2 text-sm underline disabled:opacity-50"
+              >
+                Unblock
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+    </section>
   );
 }

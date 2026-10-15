@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentGroup, imHere, leaveGroup, lockGroup, type Group } from "@/lib/api";
+import { blockTraveller, getCurrentGroup, imHere, leaveGroup, lockGroup, type Group } from "@/lib/api";
 import { plural } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import FareSection from "./fare-section";
 import GroupChat from "./group-chat";
+import ReportForm from "./report-form";
 
 // Your cab group: who's in it, lock, "I'm here", leave, the fare (FareSection) and the live chat.
 // Not re-created on every refresh (version is a prop, not a key), so the chat connection stays open.
 export default function GroupCard({ version, onChange }: { version: number; onChange: () => void }) {
   const [group, setGroup] = useState<Group | null>(null);
   const [reason, setReason] = useState("");
+  const [reporting, setReporting] = useState<string | null>(null); // tripId of the member being reported
+  const [notice, setNotice] = useState("");
   const { busy, error, setError, run } = useAction();
 
   useEffect(() => {
@@ -25,6 +28,16 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
   const locked = g.status === "locked";
   const met = g.status === "met";
   const me = g.members.find((m) => m.you);
+
+  // Silent block (Learning Notes 56.2): they aren't told; it doesn't remove anyone from this group
+  function block(tripId: string, firstName: string) {
+    if (!window.confirm(`Block ${firstName}? You won't see each other in matches again, and ${firstName} won't be told. ` +
+        "This doesn't remove anyone from this group: leave it if you feel unsafe.")) return;
+    run(async () => {
+      await blockTraveller(tripId);
+      setNotice(`${firstName} is blocked. You can undo it from your profile.`);
+    });
+  }
 
   function leave() {
     if (locked && !reason.trim()) {
@@ -41,12 +54,23 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
         {locked ? " · locked, the booker is booking the cab" : met ? " · you've met up" : ""}
       </h3>
       <ul className="mt-1 list-disc pl-5">
-        {g.members.map((m, i) => (
-          // no ids on purpose (privacy); the list never reorders while shown, so the position is a fine key
-          <li key={i}>
+        {g.members.map((m) => (
+          <li key={m.tripId}>
             {m.you ? "You" : m.firstName}
             {m.booker ? " (booker)" : ""} · {m.destArea} · {plural(m.seats, "seat")}, {plural(m.bags, "bag")}
             {m.here ? " · here ✓" : ""}
+            {!m.you && (
+              <>
+                <button onClick={() => setReporting(m.tripId)} aria-label={`Report ${m.firstName}`} className="ml-2 text-sm underline">
+                  Report
+                </button>
+                <button onClick={() => block(m.tripId, m.firstName)} disabled={busy} aria-label={`Block ${m.firstName}`}
+                        className="ml-2 text-sm underline disabled:opacity-50">
+                  Block
+                </button>
+              </>
+            )}
+            {reporting === m.tripId && <ReportForm tripId={m.tripId} firstName={m.firstName} onClose={() => setReporting(null)} />}
           </li>
         ))}
       </ul>
@@ -91,6 +115,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
           Leave group
         </button>
       )}
+      <p role="status" aria-live="polite" className="text-sm">{notice}</p>
       <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
       <GroupChat key={g.id} groupId={g.id} onUpdated={onChange} />
     </div>
