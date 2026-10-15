@@ -16,6 +16,14 @@ namastute:
     hmac-secret: ${OTP_HMAC_SECRET:dev-only-not-a-real-secret}
   jwt:
     secret: ${JWT_SECRET:dev-only-jwt-secret-must-be-at-least-32-bytes}
+  push:
+    # Web Push (Learning Notes 58). The VAPID keys below are DEV-ONLY; production sets its own (no defaults there).
+    vapid-private-key: ${VAPID_PRIVATE_KEY:MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg3LeEV5FL2WlD3Icyg4k2MR4Ow2e_P3_E-orHr5ZxGZKhRANCAASbFZqI7_RnI3Pvv_sVA-kCzDcFbSv1zVNguAGTeR-RPfQSPPUc2m2wKvUPsJPYX20-R-KLxBOOfMBDWEkkdq9K}
+    vapid-public-key: ${VAPID_PUBLIC_KEY:BJsVmojv9Gcjc--_-xUD6QLMNwVtK_XNU2C4AZN5H5E99BI89RzabbAq9Q-wk9hfbT5H4ovEE458wENYSSR2r0o}
+    contact: ${PUSH_CONTACT:mailto:dev@localhost}   # push services may contact this address about problems
+    # SSRF defence (58.7): we only ever send to HTTPS endpoints on these push services (and their subdomains)
+    allowed-hosts: fcm.googleapis.com, push.services.mozilla.com, push.apple.com, notify.windows.com
+    require-https: true
 
 springdoc:
   api-docs:

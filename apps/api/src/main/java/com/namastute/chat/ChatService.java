@@ -2,9 +2,12 @@ package com.namastute.chat;
 
 import com.namastute.groups.GroupChanged;
 import com.namastute.groups.GroupService;
+import com.namastute.notifications.PushService;
+import com.namastute.notifications.PushService.Push;
 import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +19,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -40,12 +44,17 @@ class ChatService {
     private final GroupService groups;
     private final UserService users;
     private final SimpMessagingTemplate broker;
+    private final SimpUserRegistry connected;
+    private final PushService push;
 
-    ChatService(JdbcClient db, GroupService groups, UserService users, SimpMessagingTemplate broker) {
+    ChatService(JdbcClient db, GroupService groups, UserService users, SimpMessagingTemplate broker,
+                SimpUserRegistry connected, PushService push) {
         this.db = db;
         this.groups = groups;
         this.users = users;
         this.broker = broker;
+        this.connected = connected;
+        this.push = push;
     }
 
     // History, oldest first. Cursor pagination (Learning Notes 46.4): before = the page older than that id;
@@ -76,6 +85,11 @@ class ChatService {
                 .params(groupId, userId, text).query(Row.class).single();
         String echo = clientId != null && clientId.length() <= 64 ? clientId : null;
         broker.convertAndSend(chatTopic(groupId), view(row, users.firstNames(List.of(userId)), echo, false));
+        // Only members without a live connection get a push; never the message text (Learning Notes 58.5, 58.6)
+        // shortcut: "connected" = any open WebSocket, even a backgrounded tab the phone hasn't closed yet; track visibility if pushes go missing
+        push.send(groups.memberIds(groupId).stream()
+                        .filter(m -> !m.equals(userId) && connected.getUser(m.toString()) == null).toList(),
+                new Push("New message in your cab group", "Open Namastute to read it", Duration.ofMinutes(10)));
     }
 
     // Runs INSIDE the groups module's transaction (when there is one), on the same database connection: the system
