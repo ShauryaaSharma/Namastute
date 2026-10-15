@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-15 (report and block: concepts + code walkthrough).
+Last updated: 2026-10-15 (push notifications: concepts, and the code walkthrough with the fake push service test).
 
 ---
 
@@ -65,9 +65,11 @@ Last updated: 2026-10-15 (report and block: concepts + code walkthrough).
 55. [Code walkthrough: the production build](#55-code-walkthrough-the-production-build)
 56. [Safety: report and block](#56-safety-report-and-block)
 57. [Code walkthrough: report and block](#57-code-walkthrough-report-and-block)
-58. [Command cheat sheet](#58-command-cheat-sheet)
-59. [Glossary](#59-glossary)
-60. [Interview questions to practise](#60-interview-questions-to-practise)
+58. [Push notifications](#58-push-notifications)
+59. [Code walkthrough: push notifications](#59-code-walkthrough-push-notifications)
+60. [Command cheat sheet](#60-command-cheat-sheet)
+61. [Glossary](#61-glossary)
+62. [Interview questions to practise](#62-interview-questions-to-practise)
 
 ---
 
@@ -3656,7 +3658,163 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
-## 58. Command cheat sheet
+## 58. Push notifications
+
+### 58.1 The problem
+- Live updates ride on the WebSocket, which only exists while the page is open. At the airport the phone is in a pocket and the browser closed, so people miss requests and messages.
+- SMS costs money (and is needed for OTPs), email is slow, a native app needs app stores; **Web Push** is free and built into browsers.
+
+### 58.2 The four pieces
+1. **Service worker:** a JavaScript file the browser keeps **separately from the page** and can wake even with no tab open. The only code that can receive a push.
+2. **Push service:** run by the browser maker (Google for Chrome, Mozilla for Firefox, Apple for Safari, Microsoft for Edge). Our server never talks to the phone; it sends to the push service, which delivers.
+3. **Subscription:** after the user allows notifications, the browser creates `{endpoint, keys: {p256dh, auth}}`: a unique URL at the push service plus two keys. Stored in `push_subscriptions` (exists since V1).
+4. **VAPID keys** (Voluntary Application Server Identification): our server's own key pair. The browser subscribes with our **public** key, so the subscription only accepts pushes **signed** with our **private** key: nobody else can push to our users. Each push carries a small signed JWT.
+- Journey: permission → `pushManager.subscribe(our public key)` → POST to our API → (later) API encrypts + signs → POST to the endpoint → push service → browser wakes the service worker → `showNotification` → tap opens the app.
+
+### 58.3 End-to-end encryption
+- Messages are encrypted with the subscription's keys before leaving our server (RFC 8291: ECDH key agreement, HKDF, AES-GCM). The push service carries but can't read them.
+- **Never write your own crypto.** Library chosen after checking the options: `zerodep-web-push-java` 2.1.5 (Dec 2025), which uses Java's built-in crypto and has **no runtime dependencies**; the alternatives pulled in old BouncyCastle, extra HTTP clients, or the Kotlin runtime.
+
+### 58.4 Asking politely
+- Prompting on page load gets hidden or blocked by browsers, and users click "Block" by reflex, which is almost permanent.
+- **Soft ask:** our own button, at a sensible moment ("Get notified when someone wants to share"); the browser's prompt appears only after that tap.
+
+### 58.5 Lock-screen privacy
+- Notifications show on lock screens. Content stays minimal: a first name at most; never chat text, amounts or places.
+
+### 58.6 Reality checks
+- **Best-effort:** pushes can be late or lost; a nudge, never the source of truth.
+- **TTL:** how long the push service keeps a message for an offline phone (a "wants to share" push is useless after an hour).
+- **Dead subscriptions:** the push service answers **404/410 Gone** → delete the subscription.
+- **iPhone:** iOS 16.4+, and only for web apps **added to the Home Screen**, which needs a **web app manifest** (name, icons, colours) = an installable **PWA** (Progressive Web App).
+- **No double notifications:** chat pushes only go to members who aren't connected right now.
+- **Shared browsers:** on logout, the browser's subscription is removed, or the next person to use that browser would get the previous user's notifications.
+
+### 58.7 SSRF: never let users choose where your server sends requests
+- **SSRF** (Server-Side Request Forgery): the endpoint URL comes from the browser, i.e. from the user. An attacker could register `https://169.254.169.254/...` (the cloud's internal metadata address, which can hand out server credentials) or an internal service, and make **our server** send requests there.
+- Defence: only accept endpoints that are **HTTPS** on the **known push services' hosts** (an **allowlist**): `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.push.apple.com`, `*.notify.windows.com`.
+
+### 58.8 Decisions (2026-10-15)
+| Decision | Choice |
+|---|---|
+| Triggers | Someone asks to share with you or your group; you're accepted into a group; a new chat message while you're **not** in the app; the fare is entered |
+| Lock screen | First names only; never chat text, amounts or places |
+| Permission | Soft-ask button on the trip card, never on page load; a clear message if blocked |
+| Crypto | `zerodep-web-push-java` 2.1.5; nothing hand-written |
+| iPhone | Web app manifest + icons, and a hint to add Namastute to the Home Screen |
+
+---
+
+## 59. Code walkthrough: push notifications
+
+### 59.1 Settings: `application.yaml`, `application-prod.yaml`
+- `namastute.push.vapid-private-key` / `vapid-public-key`: one line each, **base64url**. The private key is PKCS#8 (a standard wrapper for private keys); the public key is the raw 65-byte point (`0x04` + X + Y), which is also what browsers want.
+- Development has **dev-only** default keys; production has **no defaults** (`${VAPID_PRIVATE_KEY}`), so a missing key stops the API at startup (54.3).
+- `contact`: who push services can contact about our pushes. Production uses `https://<domain>` (RFC 8292 allows a `mailto:` or `https:` address).
+- `allowed-hosts` + `require-https`: the SSRF allowlist (58.7). They're settings only so the test can point them at a fake push service on `http://localhost`.
+
+### 59.2 The new `notifications` module: `PushService`
+- **Owns `push_subscriptions`** (design 2.2; the table has existed since V1).
+- `subscribe(userId, endpoint, p256dh, auth)`:
+  1. `isAllowedEndpoint(...)` or **400 `BAD_PUSH_ENDPOINT`**. It parses with `java.net.URI` and requires all of these: scheme `https`, a host, **no user-info** (`https://fcm.googleapis.com@169.254.169.254/` is really a request to `169.254.169.254`), and a host equal to an allowed one or ending in `"." + allowed`. The dot matters: `evilpush.apple.com` must not pass as `push.apple.com`.
+  2. Key sizes or **400 `BAD_PUSH_KEYS`**: `p256dh` must decode to 65 bytes (a P-256 public key) and `auth` to 16.
+  3. `insert ... on conflict (endpoint) do update set user_id = excluded.user_id, keys = ...`: an **upsert**. One row per browser; if someone else logs in on the same browser, the row moves to them.
+- `unsubscribe(userId, endpoint)`: `delete ... where user_id = ? and endpoint = ?`. You can only remove your own.
+- `send(userIds, Push(title, body, ttl))`, the method other modules call:
+  1. It reads the subscriptions **now**, inside the caller's transaction on the same connection. Never do database work after commit in a new transaction (51.5).
+  2. It builds the JSON `{"title", "body"}` with Jackson (`tools.jackson.databind.ObjectMapper`, Jackson 3).
+  3. It sends **after commit** (`registerSynchronization(afterCommit)`, the same pattern as chat broadcasts). With no transaction, it sends straight away.
+- `deliver(...)`: the library does the hard parts. `StandardHttpClientRequestPreparer.getBuilder()`:
+  - `.pushSubscription(...)`: endpoint + keys
+  - `.vapidJWTExpiresAfter(12, HOURS)` and `.vapidJWTSubject(contact)`: the signed VAPID token
+  - `.pushMessage(bytes)`: encrypted with RFC 8291
+  - `.ttl(...)`, `.urgencyHigh()`
+  - `.build(vapid).toRequest()`: an ordinary `java.net.http.HttpRequest`
+- **`http.sendAsync(...)`**: the request goes out on the HTTP client's own threads, so a slow push service never holds up a request or a database connection. When the answer arrives:
+  - **404/410** → delete that subscription (58.6)
+  - another error → a warning in the log
+  - an exception → logged, never thrown (a push is best-effort)
+
+### 59.3 `PushController`
+- `GET /api/v1/push/public-key` → `{"publicKey": "..."}`: what the browser subscribes with.
+- `POST /api/v1/push/subscriptions` (204): the body is exactly what the browser's `subscription.toJSON()` produces: `{endpoint, keys: {p256dh, auth}}`. A nested record (`SubscriptionRequest.Keys`) with `@Valid` checks the inner fields too.
+- `DELETE /api/v1/push/subscriptions?endpoint=...` (204): used on logout.
+- `@Bean static VAPIDKeyPair vapidKeyPair(...)`: base64url → bytes → `PrivateKeySources.ofPKCS8Bytes` / `PublicKeySources.ofUncompressedBytes` → `VAPIDKeyPairs.of(...)`. It's `static` so Spring can create it without first creating the controller.
+
+### 59.4 The triggers (groups and chat call `PushService`)
+| Where | Who gets it | Title / body | TTL |
+|---|---|---|---|
+| `GroupService.ask` | the person asked, plus everyone in their open group (`peopleAround`, `distinct()`) | "Ravi wants to share a cab" / "Open Namastute to answer" | 1 hour |
+| `GroupService.accept` | the person who asked | "You're in a cab group" / "Asha said yes. Open Namastute to chat." | 1 hour |
+| `GroupService.enterFare` | every member except the booker | "Your share of the cab fare is ready" / "Open Namastute to see it and pay the booker" | 1 day |
+| `ChatService.post` | members who aren't connected, never the sender | "New message in your cab group" / "Open Namastute to read it" | 10 minutes |
+- **Lock-screen rule (58.5):** at most a first name. No message text, no amount, no place. `nameOf(userId)` falls back to "Someone", because the name is optional (V2).
+- `accept` and `enterFare` are `@Transactional`, so their pushes wait for the commit. `ask` and `post` have no transaction: their insert is already committed, so the push goes at once.
+- **"Not connected"**: `SimpUserRegistry.getUser(id) == null`. Spring keeps this registry of who has an open WebSocket; the name is the JWT subject, which is the user id (`StompAuth`). `shortcut:` a phone may keep a backgrounded tab's socket open for a while, and that person gets no push meanwhile. Track page visibility if pushes go missing.
+- New public `GroupService.memberIds(groupId)` for chat.
+- **Dependencies:** groups → notifications, chat → notifications; notifications depends only on shared. No cycle, so `ModularityTest` passes.
+
+### 59.5 Tests: `NotificationsTest` (6)
+The test plays **both** outside parties:
+- **A fake push service:** `com.sun.net.httpserver.HttpServer`, a tiny HTTP server built into the JDK, on a random localhost port. It records every request and answers 201, or **410** for paths under `/gone/`.
+- **A browser (`Browser` class):** its own P-256 key pair and 16-byte auth secret, and a `decrypt(...)` that follows RFC 8291 step by step:
+  1. Read the header: salt (16 bytes), record size, the sender's public key (65 bytes).
+  2. **ECDH** (Elliptic-Curve Diffie-Hellman): our private key + the sender's public key → a shared secret that only the two ends can compute.
+  3. **HKDF** (HMAC-based Key Derivation Function, built from `HmacSHA256`): mix the auth secret, the shared secret and both public keys into the content key and the nonce.
+  4. AES-128-GCM decrypt, then remove the padding (the `0x02` delimiter and the zeros after it).
+
+  If the library encrypted wrongly, GCM's authentication tag would reject it and the test would fail.
+
+| Test | Proves |
+|---|---|
+| `pushesArriveEncryptedSignedAndMinimal` | `Content-Encoding: aes128gcm`, `TTL: 3600`; `Authorization: vapid t=<JWT>, k=<our public key>`; the JWT's `aud` is the push service's origin; the decrypted JSON is **exactly** `{title: "Ravi wants to share a cab", body: "Open Namastute to answer"}`; accepting sends "You're in…" / "Asha said yes" |
+| `chatPushesOnlyReachMembersWhoAreNotConnected` | Keshav connected (real STOMP): **no** push; after he disconnects: a push saying "New message…" that **doesn't contain** the text |
+| `deadSubscriptionsAreDeleted` | the push service answers 410 → the row is gone |
+| `endpointsOutsideTheAllowlistAndBadKeysAreRefused` | `http://169.254.169.254/...` → 400 `BAD_PUSH_ENDPOINT`; a short `auth` → 400 `BAD_PUSH_KEYS`; nothing saved |
+| `theProductionAllowlistOnlyTakesHttpsPushServices` | the real list with HTTPS required: FCM/Mozilla/Apple pass; plain HTTP, `fcm.googleapis.com.evil.example`, `evilpush.apple.com`, a `user@` trick, the metadata IP and garbage fail |
+| `aSharedBrowserFollowsWhoeverLoggedInLastAndUnsubscribeRemovesIt` | the same endpoint moves from Asha to Ravi; Asha can't delete Ravi's; Ravi can |
+- **Proven to fail:** with the "is connected" filter removed, the chat test went red ("Keshav has the app open: … no push").
+- Other modules' pushes land in the same fake server, so `poll(browser)` only looks at that browser's endpoint path.
+- The full suite: **84 tests**, all green.
+
+### 59.6 Web
+- `public/sw.js`, the service worker:
+  - `push` → `showNotification(title, {body, icon, tag: title})`. The **tag** makes a second "New message" replace the first instead of stacking up.
+  - `notificationclick` → focus an open Namastute tab, or open `/`.
+  - No caching, so there's no offline mode to get wrong.
+- `app/manifest.ts`: Next serves it as `/manifest.webmanifest` and links it automatically: name, `display: "standalone"`, colours, icons (192, 512, and 512 "maskable").
+- `app/apple-icon.png`: Next's file convention adds `<link rel="apple-touch-icon">` for the iPhone Home Screen.
+  - The icons (a white "N" on black) were drawn with Python's standard library: PNG = signature + `IHDR` (size, colour type) + `IDAT` (zlib-compressed pixel rows) + `IEND`, each chunk with a CRC checksum.
+- `lib/api.ts`:
+  - `pushState()`: `unsupported` / `install` (iPhone Safari not added to the Home Screen) / `ask` / `denied` / `on`.
+  - `enablePush()`: `Notification.requestPermission()` → `syncPush()`.
+  - `syncPush()`:
+    1. Register `/sw.js` with `updateViaCache: "none"`, so a changed service worker is always fetched fresh.
+    2. Wait for `serviceWorker.ready`.
+    3. Fetch our public key.
+    4. Reuse the existing subscription, or `subscribe({userVisibleOnly: true, applicationServerKey})`. The base64url key is turned into bytes, which is what Safari needs.
+    5. POST it.
+
+    It runs on every load once allowed, so the subscription always belongs to whoever is logged in.
+  - `stopPush()`: called first in `logout()`, and its failures are swallowed so it can never block logging out.
+- `app/push-prompt.tsx` (on the trip card), the **soft ask**:
+  - a "Notify me" button: the browser's prompt appears only after a tap
+  - "Notifications are on."
+  - the "blocked" message pointing at site settings
+  - the iPhone "Share → Add to Home Screen" hint
+  - nothing at all for unsupported browsers
+
+  `pushState()` reads browser-only values that don't exist during server rendering, so it runs in `useEffect`. That's the one place the lint rule `react-hooks/set-state-in-effect` is switched off, with the reason written next to it.
+- **Production:** `docker-compose.prod.yml` requires `VAPID_PRIVATE_KEY`/`VAPID_PUBLIC_KEY` (`:?`) and sets `PUSH_CONTACT: https://${DOMAIN}`. The runbook has the OpenSSL commands. **Make the keys once and keep them:** new keys break every existing subscription. `shortcut:` there's no key rotation handling.
+
+### 59.7 Verified in a real browser, and what couldn't be
+- The built-in browser has service workers and `PushManager`, but its notification permission is fixed at **denied**, and it refuses to fetch any service-worker script (even a wrong file gives the same "unknown error", where Chrome would report a wrong type). So a real notification couldn't appear there.
+- What was checked: the trip card shows "Notifications are blocked for Namastute…"; there's no prompt on page load and no push requests while blocked; `/manifest.webmanifest` and `apple-touch-icon` are in the page; `sw.js` is served as JavaScript; logout still works.
+- The full path was checked by `NotificationsTest`: real VAPID signing and encryption, then decryption with the browser's algorithm. **Still untested:** delivery through Google's, Mozilla's or Apple's real push services. Try it on a phone after deploying, since push needs HTTPS (or localhost) and a real browser.
+
+---
+
+## 60. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3740,7 +3898,7 @@ git fetch --prune
 
 ---
 
-## 59. Glossary
+## 61. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -3958,10 +4116,24 @@ git fetch --prune
 | Abuse case | A specific way a bad actor could misuse a feature |
 | Silent block | Blocking without telling the blocked person anything |
 | Weaponised reporting | Using a report button to harass or get someone banned unfairly |
+| Service worker | Background JavaScript the browser can wake even when no tab is open |
+| Push service | The browser maker's server that delivers pushes to devices |
+| Push subscription | A browser's endpoint URL + keys for receiving pushes |
+| VAPID | Our server's key pair; pushes are signed with it so only we can push to our subscribers |
+| End-to-end encryption | Only sender and receiver can read it; carriers in between can't |
+| Soft ask | Your own "turn on notifications?" button before the browser's real prompt |
+| PWA / web app manifest | An installable web app / the file describing its name, icons and colours |
+| SSRF | Server-Side Request Forgery: tricking a server into requesting a URL of the attacker's choosing |
+| Allowlist | A list of the only values accepted; everything else is refused |
+| ECDH | Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other's public key to get the same shared secret |
+| HKDF | HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need |
+| Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
+| Notification tag | A label on a notification; a new one with the same tag replaces the old one |
+| SimpUserRegistry | Spring's live list of who has an open WebSocket connection |
 
 ---
 
-## 60. Interview questions to practise
+## 62. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4067,3 +4239,11 @@ git fetch --prune
 102. Why do reports go to a human instead of automatically banning someone?
 103. How does the code make sure you can only report someone you actually met?
 104. Why does unblocking use a separate opaque id instead of the blocked person's user id?
+105. Walk through how a Web Push message travels from your server to a phone. Who can read it on the way?
+106. What are VAPID keys for?
+107. Why ask for notification permission with your own button first?
+108. What is SSRF, and why does accepting push subscriptions create that risk? How do you prevent it?
+109. Why are pushes sent after the transaction commits, and asynchronously? What would go wrong otherwise?
+110. Why is checking that a host "ends with push.apple.com" not enough? What else does the endpoint check refuse?
+111. How did the tests prove the push is really encrypted correctly, without a real phone?
+112. Two people use the same browser one after the other. How do you stop the second one getting the first one's notifications?

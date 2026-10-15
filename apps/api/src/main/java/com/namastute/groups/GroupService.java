@@ -1,5 +1,7 @@
 package com.namastute.groups;
 
+import com.namastute.notifications.PushService;
+import com.namastute.notifications.PushService.Push;
 import com.namastute.shared.ApiException;
 import com.namastute.trips.TripService;
 import com.namastute.trips.TripService.TripSummary;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -26,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 // Join requests and the group state machine (design 3.2, 3.4). Plain SQL: almost every step is one conditional UPDATE
 // whose WHERE names the state it starts from, so an invalid move changes 0 rows and we answer with an error.
-// Public only for isActiveMember (used by the chat module); everything else stays package-private
+// Public only for what other modules call (isActiveMember, memberIds, ...); everything else stays package-private
 @Service
 public class GroupService {
 
@@ -53,12 +56,14 @@ public class GroupService {
     private final TripService trips;
     private final UserService users;
     private final ApplicationEventPublisher events;
+    private final PushService push;
 
-    GroupService(JdbcClient db, TripService trips, UserService users, ApplicationEventPublisher events) {
+    GroupService(JdbcClient db, TripService trips, UserService users, ApplicationEventPublisher events, PushService push) {
         this.db = db;
         this.trips = trips;
         this.users = users;
         this.events = events;
+        this.push = push;
     }
 
     // "Ask to share": from your searching trip to theirs (alone, or in a group that's still open)
@@ -75,6 +80,9 @@ public class GroupService {
             UUID id = db.sql("insert into join_requests (from_trip_id, to_trip_id) values (?, ?) returning id")
                     .params(mine.id(), theirs.id()).query(UUID.class).single();
             groupOf(theirs.id()).ifPresent(g -> events.publishEvent(new GroupChanged(g.groupId(), null)));   // members see it live
+            // Lock-screen text: a first name, nothing else (Learning Notes 58.5)
+            push.send(peopleAround(theirs).stream().distinct().toList(),
+                    new Push(nameOf(userId) + " wants to share a cab", "Open Namastute to answer", Duration.ofHours(1)));
             return id;
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "ALREADY_ASKED", "You've already asked this traveller");
@@ -168,6 +176,8 @@ public class GroupService {
         db.sql("update join_requests set status = 'withdrawn' where status = 'pending' and from_trip_id in (?, ?)")
                 .params(from.id(), to.id()).update();
         events.publishEvent(new GroupChanged(groupId, firstName(from.userId()) + " joined"));
+        push.send(List.of(from.userId()),
+                new Push("You're in a cab group", nameOf(userId) + " said yes. Open Namastute to chat.", Duration.ofHours(1)));
     }
 
     void decline(UUID userId, UUID requestId) {
@@ -237,9 +247,13 @@ public class GroupService {
                 .params(fare, groupId, userId).update() == 0) {
             throw cannotEnterFare();
         }
-        split(groupId, fare, userId).forEach((member, share) ->
+        Map<UUID, BigDecimal> shares = split(groupId, fare, userId);
+        shares.forEach((member, share) ->
                 db.sql("update group_members set share = ? where group_id = ? and user_id = ?").params(share, groupId, member).update());
         events.publishEvent(new GroupChanged(groupId, "Fare entered: ₹" + fare.toPlainString() + ". Check your share and pay the booker."));
+        // No amount on the lock screen
+        push.send(shares.keySet().stream().filter(m -> !m.equals(userId)).toList(),
+                new Push("Your share of the cab fare is ready", "Open Namastute to see it and pay the booker", Duration.ofDays(1)));
     }
 
     // Everyone still in the group, weighted by their solo km (design 3.8)
@@ -415,6 +429,11 @@ public class GroupService {
                 .params(groupId, userId).query(Integer.class).single() > 0;
     }
 
+    // For the chat module: who to notify about a new message
+    public List<UUID> memberIds(UUID groupId) {
+        return db.sql("select user_id from group_members where group_id = ? and status = 'accepted'").param(groupId).query(UUID.class).list();
+    }
+
     record Membership(UUID groupId, String status) {}
 
     // The open, locked or met group this trip is an accepted member of, if any
@@ -452,6 +471,10 @@ public class GroupService {
 
     private String firstName(UUID userId) {
         return users.firstNames(List.of(userId)).get(userId);
+    }
+
+    private String nameOf(UUID userId) {
+        return Objects.requireNonNullElse(firstName(userId), "Someone");   // the name is optional (V2)
     }
 
     private TripSummary searchingTrip(UUID userId) {

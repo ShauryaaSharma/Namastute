@@ -228,6 +228,38 @@ export interface paths {
         patch: operations["update"];
         trace?: never;
     };
+    "/api/v1/push/public-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicKey"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["subscribe"];
+        delete: operations["unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports": {
         parameters: {
             query?: never;
@@ -422,6 +454,10 @@ export interface components {
             status: "open" | "locked" | "met";
             youAreBooker: boolean;
         };
+        Keys: {
+            auth: string;
+            p256dh: string;
+        };
         LeaveRequest: {
             reason: string | null;
         };
@@ -474,6 +510,9 @@ export interface components {
             phone: string;
             upiId: string | null;
         };
+        PublicKey: {
+            publicKey: string;
+        };
         ReportRequest: {
             /** @enum {string} */
             category: "unsafe" | "harassment" | "no_show" | "fake_profile" | "other";
@@ -518,6 +557,10 @@ export interface components {
             booker: boolean;
             firstName: string;
             share: number;
+        };
+        SubscriptionRequest: {
+            endpoint: string;
+            keys: components["schemas"]["Keys"];
         };
         TerminalView: {
             id: string;
@@ -923,6 +966,68 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["Profile"];
                 };
+            };
+        };
+    };
+    publicKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicKey"];
+                };
+            };
+        };
+    };
+    subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unsubscribe: {
+        parameters: {
+            query: {
+                endpoint: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

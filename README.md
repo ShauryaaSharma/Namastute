@@ -16,9 +16,10 @@ Travellers landing at Delhi IGI around the same time, heading the same way, find
 - **Background jobs:** stale trips expire, groups lock themselves 5 minutes before meeting, and old groups close.
 - **Finishing the ride:** "I'm here" at the pickup, then the booker enters the real fare and everyone sees their share with a UPI pay link.
 - **Safety:** report someone you shared a cab with (reviewed by a person, with "Call 112" for emergencies), and silently block anyone so you never see each other again.
+- **Push notifications** (Web Push, works with the app closed): someone wants to share, you're in a group, a new chat message while you're away, the fare is in. The lock screen only ever shows a first name. Installable on the Home Screen (needed for iPhone).
 
 ## Architecture
-A **modular monolith**: one Spring Boot app split into modules (`auth`, `users`, `trips`, `groups`, `chat`, `feedback`) whose boundaries are checked by a test (Spring Modulith). In production everything runs on one server under one domain:
+A **modular monolith**: one Spring Boot app split into modules (`auth`, `users`, `trips`, `groups`, `chat`, `feedback`, `notifications`) whose boundaries are checked by a test (Spring Modulith). In production everything runs on one server under one domain:
 
 ```mermaid
 flowchart LR
@@ -27,12 +28,13 @@ flowchart LR
     C -->|everything else| W[Next.js web app]
     A --> P[(Postgres + PostGIS)]
     A --> R[(Redis)]
+    A -->|encrypted Web Push| N[Browser push services<br/>Google, Mozilla, Apple]
 ```
 
 ## Tech stack
 | Part | Technology |
 |---|---|
-| API | Java 21, Spring Boot 4.1, Spring Modulith, Spring Security (JWT), Spring WebSocket + STOMP, Flyway, springdoc-openapi |
+| API | Java 21, Spring Boot 4.1, Spring Modulith, Spring Security (JWT), Spring WebSocket + STOMP, Flyway, springdoc-openapi, Web Push (zerodep-web-push-java) |
 | Data | PostgreSQL 16 + PostGIS 3.5 (geography, spatial index), Redis 7.4 (OTP codes and rate limits) |
 | Web | Next.js 16, React 19, TypeScript, Tailwind CSS, Leaflet + OpenStreetMap, STOMP client; API types generated from OpenAPI |
 | Infra | Docker, Docker Compose, Caddy (automatic HTTPS), GitHub Actions CI |
@@ -85,7 +87,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust and safety:** in progress. Fare split, the production build, and report and block are done. Next: SMS provider, deployment, ratings, ID verification and women-only groups, push notifications, live location at pickup.
+- **Phase 2, trust and safety:** in progress. Fare split, the production build, report and block, and push notifications are done. Next: SMS provider, deployment, ratings, ID verification and women-only groups, live location at pickup.
 - **Phase 3:** flight-delay tracking, auto-matching, load testing and more.
 
 The full roadmap is in the design doc, section 7.

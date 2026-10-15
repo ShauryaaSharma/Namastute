@@ -410,6 +410,62 @@
         "tags" : [ "me-controller" ]
       }
     },
+    "/api/v1/push/public-key" : {
+      "get" : {
+        "operationId" : "publicKey",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicKey"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "push-controller" ]
+      }
+    },
+    "/api/v1/push/subscriptions" : {
+      "delete" : {
+        "operationId" : "unsubscribe",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "endpoint",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "push-controller" ]
+      },
+      "post" : {
+        "operationId" : "subscribe",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubscriptionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "push-controller" ]
+      }
+    },
     "/api/v1/reports" : {
       "post" : {
         "operationId" : "report",
@@ -636,24 +692,24 @@
   "components" : {
     "schemas" : {
       "AskRequest" : {
+        "required" : [ "toTripId" ],
         "type" : "object",
         "properties" : {
           "toTripId" : {
             "type" : "string",
             "format" : "uuid"
           }
-        },
-        "required" : [ "toTripId" ]
+        }
       },
       "BlockRequest" : {
+        "required" : [ "tripId" ],
         "type" : "object",
         "properties" : {
           "tripId" : {
             "type" : "string",
             "format" : "uuid"
           }
-        },
-        "required" : [ "tripId" ]
+        }
       },
       "BlockView" : {
         "type" : "object",
@@ -668,6 +724,7 @@
         }
       },
       "CreateTripRequest" : {
+        "required" : [ "destArea", "destLat", "destLng", "exitAt", "terminalId" ],
         "type" : "object",
         "properties" : {
           "bags" : {
@@ -719,8 +776,7 @@
           "womenOnly" : {
             "type" : "boolean"
           }
-        },
-        "required" : [ "destArea", "destLat", "destLng", "exitAt", "terminalId" ]
+        }
       },
       "Created" : {
         "type" : "object",
@@ -732,6 +788,7 @@
         }
       },
       "FareRequest" : {
+        "required" : [ "total" ],
         "type" : "object",
         "properties" : {
           "total" : {
@@ -741,8 +798,7 @@
             "exclusiveMinimum" : false,
             "type" : "number"
           }
-        },
-        "required" : [ "total" ]
+        }
       },
       "GroupView" : {
         "type" : "object",
@@ -771,6 +827,20 @@
           },
           "youAreBooker" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "Keys" : {
+        "required" : [ "auth", "p256dh" ],
+        "type" : "object",
+        "properties" : {
+          "auth" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "p256dh" : {
+            "minLength" : 1,
+            "type" : "string"
           }
         }
       },
@@ -884,6 +954,7 @@
         }
       },
       "OtpRequest" : {
+        "required" : [ "phone" ],
         "type" : "object",
         "properties" : {
           "phone" : {
@@ -891,8 +962,7 @@
             "pattern" : "^\\+91[6-9]\\d{9}$",
             "type" : "string"
           }
-        },
-        "required" : [ "phone" ]
+        }
       },
       "Profile" : {
         "type" : "object",
@@ -914,7 +984,16 @@
           }
         }
       },
+      "PublicKey" : {
+        "type" : "object",
+        "properties" : {
+          "publicKey" : {
+            "type" : "string"
+          }
+        }
+      },
       "ReportRequest" : {
+        "required" : [ "category", "tripId" ],
         "type" : "object",
         "properties" : {
           "category" : {
@@ -932,8 +1011,7 @@
             "type" : "string",
             "format" : "uuid"
           }
-        },
-        "required" : [ "category", "tripId" ]
+        }
       },
       "RequestView" : {
         "type" : "object",
@@ -1029,6 +1107,19 @@
           },
           "share" : {
             "type" : "number"
+          }
+        }
+      },
+      "SubscriptionRequest" : {
+        "required" : [ "endpoint", "keys" ],
+        "type" : "object",
+        "properties" : {
+          "endpoint" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "keys" : {
+            "$ref" : "#/components/schemas/Keys"
           }
         }
       },
@@ -1138,6 +1229,7 @@
         }
       },
       "VerifyRequest" : {
+        "required" : [ "code", "phone" ],
         "type" : "object",
         "properties" : {
           "code" : {
@@ -1150,8 +1242,7 @@
             "pattern" : "^\\+91[6-9]\\d{9}$",
             "type" : "string"
           }
-        },
-        "required" : [ "code", "phone" ]
+        }
       }
     }
   }

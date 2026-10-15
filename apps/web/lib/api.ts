@@ -118,6 +118,7 @@ export async function restoreSession(): Promise<Profile | null> {
 
 export async function logout(): Promise<void> {
   try {
+    await stopPush().catch(() => {}); // never let this block logging out
     await request<void>("/api/v1/auth/logout", { method: "POST" });
   } finally {
     accessToken = null;
@@ -257,4 +258,50 @@ export function sendChat(client: Client, groupId: string, body: string, clientId
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ body, clientId }),
   });
+}
+
+// ---- Push notifications (Learning Notes 58) ----
+
+// unsupported: this browser can't; install: iPhone in Safari, which can only after "Add to Home Screen";
+// ask: not decided yet (show our soft-ask button); denied: blocked in the browser; on: allowed
+export type PushState = "unsupported" | "install" | "ask" | "denied" | "on";
+
+export function pushState(): PushState {
+  if (!("serviceWorker" in navigator && "PushManager" in window && "Notification" in window)) {
+    const iPhone = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    return iPhone && !window.matchMedia("(display-mode: standalone)").matches ? "install" : "unsupported";
+  }
+  return Notification.permission === "granted" ? "on" : Notification.permission === "denied" ? "denied" : "ask";
+}
+
+// After our soft-ask button: now the browser's own prompt
+export async function enablePush(): Promise<PushState> {
+  await Notification.requestPermission();
+  await syncPush();
+  return pushState();
+}
+
+// Makes sure this browser's subscription is saved under whoever is logged in now (run on every load once allowed)
+// shortcut: a subscription made with an older VAPID key makes subscribe() fail; handle that if the keys are ever rotated
+export async function syncPush(): Promise<void> {
+  if (pushState() !== "on") return;
+  await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
+  const registration = await navigator.serviceWorker.ready;
+  const { publicKey } = await request<Schemas["PublicKey"]>("/api/v1/push/public-key");
+  const subscription =
+    (await registration.pushManager.getSubscription()) ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true, // every push must show a notification: browsers don't allow silent ones
+      applicationServerKey: Uint8Array.from(atob(publicKey.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
+    }));
+  await request<void>("/api/v1/push/subscriptions", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
+}
+
+// On logout: a shared browser must not keep getting this person's notifications (58.6)
+async function stopPush(): Promise<void> {
+  const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
+  const subscription = await registration?.pushManager.getSubscription();
+  if (subscription) {
+    await request<void>(`/api/v1/push/subscriptions?endpoint=${encodeURIComponent(subscription.endpoint)}`, { method: "DELETE" });
+  }
 }

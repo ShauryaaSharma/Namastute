@@ -15,7 +15,12 @@
    git clone https://github.com/ShauryaaSharma/Namastute.git && cd Namastute
    cp infra/.env.example infra/.env && chmod 600 infra/.env
    openssl rand -base64 32      # run three times: DB_PASSWORD, JWT_SECRET, OTP_HMAC_SECRET
-   nano infra/.env              # paste them in and set DOMAIN
+   # Push notification keys (VAPID): make them once and keep them; new keys break every existing subscription
+   openssl ecparam -name prime256v1 -genkey -noout -out vapid.pem
+   openssl pkcs8 -topk8 -nocrypt -in vapid.pem -outform DER | basenc --base64url -w0; echo                        # VAPID_PRIVATE_KEY
+   openssl ec -in vapid.pem -pubout -outform DER 2>/dev/null | tail -c 65 | basenc --base64url -w0; echo        # VAPID_PUBLIC_KEY
+   rm vapid.pem
+   nano infra/.env              # paste them all in and set DOMAIN
    ```
 6. **Start:**
    ```bash

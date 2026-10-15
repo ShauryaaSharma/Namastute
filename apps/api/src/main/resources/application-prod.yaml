@@ -14,6 +14,10 @@ namastute:
     hmac-secret: ${OTP_HMAC_SECRET}
   jwt:
     secret: ${JWT_SECRET}
+  push:
+    vapid-private-key: ${VAPID_PRIVATE_KEY}
+    vapid-public-key: ${VAPID_PUBLIC_KEY}
+    contact: ${PUSH_CONTACT}        # e.g. mailto:team@namastute.in
 
 server:
   # Behind Caddy: read the real client IP from X-Forwarded-For, trusted only from private-network

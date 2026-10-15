@@ -30,6 +30,7 @@
 		<java.version>21</java.version>
 		<spring-modulith.version>2.1.1</spring-modulith.version>
 		<springdoc.version>3.1.1</springdoc.version>
+		<zerodep-web-push.version>2.1.5</zerodep-web-push.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -61,6 +62,12 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
 			<version>${springdoc.version}</version>
+		</dependency>
+		<dependency>
+			<!-- Web Push: VAPID signing + RFC 8291 encryption with Java's own crypto; no runtime dependencies (Learning Notes 58.3) -->
+			<groupId>com.zerodeplibs</groupId>
+			<artifactId>zerodep-web-push-java</artifactId>
+			<version>${zerodep-web-push.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>

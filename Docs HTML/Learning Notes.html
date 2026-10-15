@@ -98,14 +98,16 @@
 <details><summary><a href="#55-code-walkthrough-the-production-build">55. Code walkthrough: the production build</a></summary><a class="sub" href="#551-what-exists-now">55.1 What exists now</a><a class="sub" href="#552-appsapidockerfile">55.2 apps/api/Dockerfile</a><a class="sub" href="#553-appswebdockerfile-and-nextconfigts">55.3 apps/web/Dockerfile and next.config.ts</a><a class="sub" href="#554-application-prodyaml">55.4 application-prod.yaml</a><a class="sub" href="#555-infradocker-composeprodyml">55.5 infra/docker-compose.prod.yml</a><a class="sub" href="#556-infracaddyfile">55.6 infra/Caddyfile</a><a class="sub" href="#557-forwardediptest">55.7 ForwardedIpTest</a><a class="sub" href="#558-verified-the-production-stack-on-the-laptop">55.8 Verified: the production stack on the laptop</a><a class="sub" href="#559-whats-left-before-real-users">55.9 What&#x27;s left before real users</a></details>
 <details><summary><a href="#56-safety-report-and-block">56. Safety: report and block</a></summary><a class="sub" href="#561-design-for-abuse">56.1 Design for abuse</a><a class="sub" href="#562-blocking">56.2 Blocking</a><a class="sub" href="#563-reporting">56.3 Reporting</a><a class="sub" href="#564-privacy-of-everyone-involved">56.4 Privacy of everyone involved</a><a class="sub" href="#565-modules">56.5 Modules</a><a class="sub" href="#566-decisions-2026-10-15">56.6 Decisions (2026-10-15)</a></details>
 <details><summary><a href="#57-code-walkthrough-report-and-block">57. Code walkthrough: report and block</a></summary><a class="sub" href="#571-v6__report_blocksql">57.1 V6__report_block.sql</a><a class="sub" href="#572-usersuserservice-blocks-the-users-module-owns-the-table">57.2 users/UserService: blocks (the users module owns the table)</a><a class="sub" href="#573-groupsgroupservice">57.3 groups/GroupService</a><a class="sub" href="#574-the-new-feedback-module">57.4 The new feedback module</a><a class="sub" href="#575-tests-feedbacktest-3">57.5 Tests: FeedbackTest (3)</a><a class="sub" href="#576-web">57.6 Web</a><a class="sub" href="#577-verified-in-a-real-browser-as-keshav-with-asha-and-neha-set-up-through-the-api">57.7 Verified in a real browser (as Keshav, with Asha and Neha set up through the API)</a></details>
-<details><summary><a href="#58-command-cheat-sheet">58. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#59-glossary">59. Glossary</a>
-<a class="topic" href="#60-interview-questions-to-practise">60. Interview questions to practise</a>
+<details><summary><a href="#58-push-notifications">58. Push notifications</a></summary><a class="sub" href="#581-the-problem">58.1 The problem</a><a class="sub" href="#582-the-four-pieces">58.2 The four pieces</a><a class="sub" href="#583-end-to-end-encryption">58.3 End-to-end encryption</a><a class="sub" href="#584-asking-politely">58.4 Asking politely</a><a class="sub" href="#585-lock-screen-privacy">58.5 Lock-screen privacy</a><a class="sub" href="#586-reality-checks">58.6 Reality checks</a><a class="sub" href="#587-ssrf-never-let-users-choose-where-your-server-sends-requests">58.7 SSRF: never let users choose where your server sends requests</a><a class="sub" href="#588-decisions-2026-10-15">58.8 Decisions (2026-10-15)</a></details>
+<details><summary><a href="#59-code-walkthrough-push-notifications">59. Code walkthrough: push notifications</a></summary><a class="sub" href="#591-settings-applicationyaml-application-prodyaml">59.1 Settings: application.yaml, application-prod.yaml</a><a class="sub" href="#592-the-new-notifications-module-pushservice">59.2 The new notifications module: PushService</a><a class="sub" href="#593-pushcontroller">59.3 PushController</a><a class="sub" href="#594-the-triggers-groups-and-chat-call-pushservice">59.4 The triggers (groups and chat call PushService)</a><a class="sub" href="#595-tests-notificationstest-6">59.5 Tests: NotificationsTest (6)</a><a class="sub" href="#596-web">59.6 Web</a><a class="sub" href="#597-verified-in-a-real-browser-and-what-couldnt-be">59.7 Verified in a real browser, and what couldn&#x27;t be</a></details>
+<details><summary><a href="#60-command-cheat-sheet">60. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#61-glossary">61. Glossary</a>
+<a class="topic" href="#62-interview-questions-to-practise">62. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-15 (report and block: concepts + code walkthrough).</p>
+<p>Last updated: 2026-10-15 (push notifications: concepts, and the code walkthrough with the fake push service test).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -166,9 +168,11 @@
 <li><a href="#55-code-walkthrough-the-production-build">Code walkthrough: the production build</a></li>
 <li><a href="#56-safety-report-and-block">Safety: report and block</a></li>
 <li><a href="#57-code-walkthrough-report-and-block">Code walkthrough: report and block</a></li>
-<li><a href="#58-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#59-glossary">Glossary</a></li>
-<li><a href="#60-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#58-push-notifications">Push notifications</a></li>
+<li><a href="#59-code-walkthrough-push-notifications">Code walkthrough: push notifications</a></li>
+<li><a href="#60-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#61-glossary">Glossary</a></li>
+<li><a href="#62-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -4973,7 +4977,277 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li>Testing note: <code>window.confirm</code> was replaced in the test page with a function that records the message and answers &quot;OK&quot;, because automated browsers can hang on native dialogs. The recorded messages are quoted above.</li>
 </ul>
 <hr>
-<h2 id="58-command-cheat-sheet">58. Command cheat sheet</h2>
+<h2 id="58-push-notifications">58. Push notifications</h2>
+<h3 id="581-the-problem">58.1 The problem</h3>
+<ul>
+<li>Live updates ride on the WebSocket, which only exists while the page is open. At the airport the phone is in a pocket and the browser closed, so people miss requests and messages.</li>
+<li>SMS costs money (and is needed for OTPs), email is slow, a native app needs app stores; <strong>Web Push</strong> is free and built into browsers.</li>
+</ul>
+<h3 id="582-the-four-pieces">58.2 The four pieces</h3>
+<ol>
+<li><strong>Service worker:</strong> a JavaScript file the browser keeps <strong>separately from the page</strong> and can wake even with no tab open. The only code that can receive a push.</li>
+<li><strong>Push service:</strong> run by the browser maker (Google for Chrome, Mozilla for Firefox, Apple for Safari, Microsoft for Edge). Our server never talks to the phone; it sends to the push service, which delivers.</li>
+<li><strong>Subscription:</strong> after the user allows notifications, the browser creates <code>{endpoint, keys: {p256dh, auth}}</code>: a unique URL at the push service plus two keys. Stored in <code>push_subscriptions</code> (exists since V1).</li>
+<li><strong>VAPID keys</strong> (Voluntary Application Server Identification): our server&#39;s own key pair. The browser subscribes with our <strong>public</strong> key, so the subscription only accepts pushes <strong>signed</strong> with our <strong>private</strong> key: nobody else can push to our users. Each push carries a small signed JWT.</li>
+</ol>
+<ul>
+<li>Journey: permission → <code>pushManager.subscribe(our public key)</code> → POST to our API → (later) API encrypts + signs → POST to the endpoint → push service → browser wakes the service worker → <code>showNotification</code> → tap opens the app.</li>
+</ul>
+<h3 id="583-end-to-end-encryption">58.3 End-to-end encryption</h3>
+<ul>
+<li>Messages are encrypted with the subscription&#39;s keys before leaving our server (RFC 8291: ECDH key agreement, HKDF, AES-GCM). The push service carries but can&#39;t read them.</li>
+<li><strong>Never write your own crypto.</strong> Library chosen after checking the options: <code>zerodep-web-push-java</code> 2.1.5 (Dec 2025), which uses Java&#39;s built-in crypto and has <strong>no runtime dependencies</strong>; the alternatives pulled in old BouncyCastle, extra HTTP clients, or the Kotlin runtime.</li>
+</ul>
+<h3 id="584-asking-politely">58.4 Asking politely</h3>
+<ul>
+<li>Prompting on page load gets hidden or blocked by browsers, and users click &quot;Block&quot; by reflex, which is almost permanent.</li>
+<li><strong>Soft ask:</strong> our own button, at a sensible moment (&quot;Get notified when someone wants to share&quot;); the browser&#39;s prompt appears only after that tap.</li>
+</ul>
+<h3 id="585-lock-screen-privacy">58.5 Lock-screen privacy</h3>
+<ul>
+<li>Notifications show on lock screens. Content stays minimal: a first name at most; never chat text, amounts or places.</li>
+</ul>
+<h3 id="586-reality-checks">58.6 Reality checks</h3>
+<ul>
+<li><strong>Best-effort:</strong> pushes can be late or lost; a nudge, never the source of truth.</li>
+<li><strong>TTL:</strong> how long the push service keeps a message for an offline phone (a &quot;wants to share&quot; push is useless after an hour).</li>
+<li><strong>Dead subscriptions:</strong> the push service answers <strong>404/410 Gone</strong> → delete the subscription.</li>
+<li><strong>iPhone:</strong> iOS 16.4+, and only for web apps <strong>added to the Home Screen</strong>, which needs a <strong>web app manifest</strong> (name, icons, colours) = an installable <strong>PWA</strong> (Progressive Web App).</li>
+<li><strong>No double notifications:</strong> chat pushes only go to members who aren&#39;t connected right now.</li>
+<li><strong>Shared browsers:</strong> on logout, the browser&#39;s subscription is removed, or the next person to use that browser would get the previous user&#39;s notifications.</li>
+</ul>
+<h3 id="587-ssrf-never-let-users-choose-where-your-server-sends-requests">58.7 SSRF: never let users choose where your server sends requests</h3>
+<ul>
+<li><strong>SSRF</strong> (Server-Side Request Forgery): the endpoint URL comes from the browser, i.e. from the user. An attacker could register <code>https://169.254.169.254/...</code> (the cloud&#39;s internal metadata address, which can hand out server credentials) or an internal service, and make <strong>our server</strong> send requests there.</li>
+<li>Defence: only accept endpoints that are <strong>HTTPS</strong> on the <strong>known push services&#39; hosts</strong> (an <strong>allowlist</strong>): <code>fcm.googleapis.com</code>, <code>*.push.services.mozilla.com</code>, <code>*.push.apple.com</code>, <code>*.notify.windows.com</code>.</li>
+</ul>
+<h3 id="588-decisions-2026-10-15">58.8 Decisions (2026-10-15)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Triggers</td>
+<td>Someone asks to share with you or your group; you&#39;re accepted into a group; a new chat message while you&#39;re <strong>not</strong> in the app; the fare is entered</td>
+</tr>
+<tr>
+<td>Lock screen</td>
+<td>First names only; never chat text, amounts or places</td>
+</tr>
+<tr>
+<td>Permission</td>
+<td>Soft-ask button on the trip card, never on page load; a clear message if blocked</td>
+</tr>
+<tr>
+<td>Crypto</td>
+<td><code>zerodep-web-push-java</code> 2.1.5; nothing hand-written</td>
+</tr>
+<tr>
+<td>iPhone</td>
+<td>Web app manifest + icons, and a hint to add Namastute to the Home Screen</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="59-code-walkthrough-push-notifications">59. Code walkthrough: push notifications</h2>
+<h3 id="591-settings-applicationyaml-application-prodyaml">59.1 Settings: <code>application.yaml</code>, <code>application-prod.yaml</code></h3>
+<ul>
+<li><code>namastute.push.vapid-private-key</code> / <code>vapid-public-key</code>: one line each, <strong>base64url</strong>. The private key is PKCS#8 (a standard wrapper for private keys); the public key is the raw 65-byte point (<code>0x04</code> + X + Y), which is also what browsers want.</li>
+<li>Development has <strong>dev-only</strong> default keys; production has <strong>no defaults</strong> (<code>${VAPID_PRIVATE_KEY}</code>), so a missing key stops the API at startup (54.3).</li>
+<li><code>contact</code>: who push services can contact about our pushes. Production uses <code>https://&lt;domain&gt;</code> (RFC 8292 allows a <code>mailto:</code> or <code>https:</code> address).</li>
+<li><code>allowed-hosts</code> + <code>require-https</code>: the SSRF allowlist (58.7). They&#39;re settings only so the test can point them at a fake push service on <code>http://localhost</code>.</li>
+</ul>
+<h3 id="592-the-new-notifications-module-pushservice">59.2 The new <code>notifications</code> module: <code>PushService</code></h3>
+<ul>
+<li><strong>Owns <code>push_subscriptions</code></strong> (design 2.2; the table has existed since V1).</li>
+<li><code>subscribe(userId, endpoint, p256dh, auth)</code>:<ol>
+<li><code>isAllowedEndpoint(...)</code> or <strong>400 <code>BAD_PUSH_ENDPOINT</code></strong>. It parses with <code>java.net.URI</code> and requires all of these: scheme <code>https</code>, a host, <strong>no user-info</strong> (<code>https://fcm.googleapis.com@169.254.169.254/</code> is really a request to <code>169.254.169.254</code>), and a host equal to an allowed one or ending in <code>&quot;.&quot; + allowed</code>. The dot matters: <code>evilpush.apple.com</code> must not pass as <code>push.apple.com</code>.</li>
+<li>Key sizes or <strong>400 <code>BAD_PUSH_KEYS</code></strong>: <code>p256dh</code> must decode to 65 bytes (a P-256 public key) and <code>auth</code> to 16.</li>
+<li><code>insert ... on conflict (endpoint) do update set user_id = excluded.user_id, keys = ...</code>: an <strong>upsert</strong>. One row per browser; if someone else logs in on the same browser, the row moves to them.</li>
+</ol>
+</li>
+<li><code>unsubscribe(userId, endpoint)</code>: <code>delete ... where user_id = ? and endpoint = ?</code>. You can only remove your own.</li>
+<li><code>send(userIds, Push(title, body, ttl))</code>, the method other modules call:<ol>
+<li>It reads the subscriptions <strong>now</strong>, inside the caller&#39;s transaction on the same connection. Never do database work after commit in a new transaction (51.5).</li>
+<li>It builds the JSON <code>{&quot;title&quot;, &quot;body&quot;}</code> with Jackson (<code>tools.jackson.databind.ObjectMapper</code>, Jackson 3).</li>
+<li>It sends <strong>after commit</strong> (<code>registerSynchronization(afterCommit)</code>, the same pattern as chat broadcasts). With no transaction, it sends straight away.</li>
+</ol>
+</li>
+<li><code>deliver(...)</code>: the library does the hard parts. <code>StandardHttpClientRequestPreparer.getBuilder()</code>:<ul>
+<li><code>.pushSubscription(...)</code>: endpoint + keys</li>
+<li><code>.vapidJWTExpiresAfter(12, HOURS)</code> and <code>.vapidJWTSubject(contact)</code>: the signed VAPID token</li>
+<li><code>.pushMessage(bytes)</code>: encrypted with RFC 8291</li>
+<li><code>.ttl(...)</code>, <code>.urgencyHigh()</code></li>
+<li><code>.build(vapid).toRequest()</code>: an ordinary <code>java.net.http.HttpRequest</code></li>
+</ul>
+</li>
+<li><strong><code>http.sendAsync(...)</code></strong>: the request goes out on the HTTP client&#39;s own threads, so a slow push service never holds up a request or a database connection. When the answer arrives:<ul>
+<li><strong>404/410</strong> → delete that subscription (58.6)</li>
+<li>another error → a warning in the log</li>
+<li>an exception → logged, never thrown (a push is best-effort)</li>
+</ul>
+</li>
+</ul>
+<h3 id="593-pushcontroller">59.3 <code>PushController</code></h3>
+<ul>
+<li><code>GET /api/v1/push/public-key</code> → <code>{&quot;publicKey&quot;: &quot;...&quot;}</code>: what the browser subscribes with.</li>
+<li><code>POST /api/v1/push/subscriptions</code> (204): the body is exactly what the browser&#39;s <code>subscription.toJSON()</code> produces: <code>{endpoint, keys: {p256dh, auth}}</code>. A nested record (<code>SubscriptionRequest.Keys</code>) with <code>@Valid</code> checks the inner fields too.</li>
+<li><code>DELETE /api/v1/push/subscriptions?endpoint=...</code> (204): used on logout.</li>
+<li><code>@Bean static VAPIDKeyPair vapidKeyPair(...)</code>: base64url → bytes → <code>PrivateKeySources.ofPKCS8Bytes</code> / <code>PublicKeySources.ofUncompressedBytes</code> → <code>VAPIDKeyPairs.of(...)</code>. It&#39;s <code>static</code> so Spring can create it without first creating the controller.</li>
+</ul>
+<h3 id="594-the-triggers-groups-and-chat-call-pushservice">59.4 The triggers (groups and chat call <code>PushService</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Who gets it</th>
+<th>Title / body</th>
+<th>TTL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GroupService.ask</code></td>
+<td>the person asked, plus everyone in their open group (<code>peopleAround</code>, <code>distinct()</code>)</td>
+<td>&quot;Ravi wants to share a cab&quot; / &quot;Open Namastute to answer&quot;</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td><code>GroupService.accept</code></td>
+<td>the person who asked</td>
+<td>&quot;You&#39;re in a cab group&quot; / &quot;Asha said yes. Open Namastute to chat.&quot;</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td><code>GroupService.enterFare</code></td>
+<td>every member except the booker</td>
+<td>&quot;Your share of the cab fare is ready&quot; / &quot;Open Namastute to see it and pay the booker&quot;</td>
+<td>1 day</td>
+</tr>
+<tr>
+<td><code>ChatService.post</code></td>
+<td>members who aren&#39;t connected, never the sender</td>
+<td>&quot;New message in your cab group&quot; / &quot;Open Namastute to read it&quot;</td>
+<td>10 minutes</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Lock-screen rule (58.5):</strong> at most a first name. No message text, no amount, no place. <code>nameOf(userId)</code> falls back to &quot;Someone&quot;, because the name is optional (V2).</li>
+<li><code>accept</code> and <code>enterFare</code> are <code>@Transactional</code>, so their pushes wait for the commit. <code>ask</code> and <code>post</code> have no transaction: their insert is already committed, so the push goes at once.</li>
+<li><strong>&quot;Not connected&quot;</strong>: <code>SimpUserRegistry.getUser(id) == null</code>. Spring keeps this registry of who has an open WebSocket; the name is the JWT subject, which is the user id (<code>StompAuth</code>). <code>shortcut:</code> a phone may keep a backgrounded tab&#39;s socket open for a while, and that person gets no push meanwhile. Track page visibility if pushes go missing.</li>
+<li>New public <code>GroupService.memberIds(groupId)</code> for chat.</li>
+<li><strong>Dependencies:</strong> groups → notifications, chat → notifications; notifications depends only on shared. No cycle, so <code>ModularityTest</code> passes.</li>
+</ul>
+<h3 id="595-tests-notificationstest-6">59.5 Tests: <code>NotificationsTest</code> (6)</h3>
+<p>The test plays <strong>both</strong> outside parties:</p>
+<ul>
+<li><p><strong>A fake push service:</strong> <code>com.sun.net.httpserver.HttpServer</code>, a tiny HTTP server built into the JDK, on a random localhost port. It records every request and answers 201, or <strong>410</strong> for paths under <code>/gone/</code>.</p>
+</li>
+<li><p><strong>A browser (<code>Browser</code> class):</strong> its own P-256 key pair and 16-byte auth secret, and a <code>decrypt(...)</code> that follows RFC 8291 step by step:</p>
+<ol>
+<li>Read the header: salt (16 bytes), record size, the sender&#39;s public key (65 bytes).</li>
+<li><strong>ECDH</strong> (Elliptic-Curve Diffie-Hellman): our private key + the sender&#39;s public key → a shared secret that only the two ends can compute.</li>
+<li><strong>HKDF</strong> (HMAC-based Key Derivation Function, built from <code>HmacSHA256</code>): mix the auth secret, the shared secret and both public keys into the content key and the nonce.</li>
+<li>AES-128-GCM decrypt, then remove the padding (the <code>0x02</code> delimiter and the zeros after it).</li>
+</ol>
+<p>If the library encrypted wrongly, GCM&#39;s authentication tag would reject it and the test would fail.</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pushesArriveEncryptedSignedAndMinimal</code></td>
+<td><code>Content-Encoding: aes128gcm</code>, <code>TTL: 3600</code>; <code>Authorization: vapid t=&lt;JWT&gt;, k=&lt;our public key&gt;</code>; the JWT&#39;s <code>aud</code> is the push service&#39;s origin; the decrypted JSON is <strong>exactly</strong> <code>{title: &quot;Ravi wants to share a cab&quot;, body: &quot;Open Namastute to answer&quot;}</code>; accepting sends &quot;You&#39;re in…&quot; / &quot;Asha said yes&quot;</td>
+</tr>
+<tr>
+<td><code>chatPushesOnlyReachMembersWhoAreNotConnected</code></td>
+<td>Keshav connected (real STOMP): <strong>no</strong> push; after he disconnects: a push saying &quot;New message…&quot; that <strong>doesn&#39;t contain</strong> the text</td>
+</tr>
+<tr>
+<td><code>deadSubscriptionsAreDeleted</code></td>
+<td>the push service answers 410 → the row is gone</td>
+</tr>
+<tr>
+<td><code>endpointsOutsideTheAllowlistAndBadKeysAreRefused</code></td>
+<td><code>http://169.254.169.254/...</code> → 400 <code>BAD_PUSH_ENDPOINT</code>; a short <code>auth</code> → 400 <code>BAD_PUSH_KEYS</code>; nothing saved</td>
+</tr>
+<tr>
+<td><code>theProductionAllowlistOnlyTakesHttpsPushServices</code></td>
+<td>the real list with HTTPS required: FCM/Mozilla/Apple pass; plain HTTP, <code>fcm.googleapis.com.evil.example</code>, <code>evilpush.apple.com</code>, a <code>user@</code> trick, the metadata IP and garbage fail</td>
+</tr>
+<tr>
+<td><code>aSharedBrowserFollowsWhoeverLoggedInLastAndUnsubscribeRemovesIt</code></td>
+<td>the same endpoint moves from Asha to Ravi; Asha can&#39;t delete Ravi&#39;s; Ravi can</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Proven to fail:</strong> with the &quot;is connected&quot; filter removed, the chat test went red (&quot;Keshav has the app open: … no push&quot;).</li>
+<li>Other modules&#39; pushes land in the same fake server, so <code>poll(browser)</code> only looks at that browser&#39;s endpoint path.</li>
+<li>The full suite: <strong>84 tests</strong>, all green.</li>
+</ul>
+<h3 id="596-web">59.6 Web</h3>
+<ul>
+<li><p><code>public/sw.js</code>, the service worker:</p>
+<ul>
+<li><code>push</code> → <code>showNotification(title, {body, icon, tag: title})</code>. The <strong>tag</strong> makes a second &quot;New message&quot; replace the first instead of stacking up.</li>
+<li><code>notificationclick</code> → focus an open Namastute tab, or open <code>/</code>.</li>
+<li>No caching, so there&#39;s no offline mode to get wrong.</li>
+</ul>
+</li>
+<li><p><code>app/manifest.ts</code>: Next serves it as <code>/manifest.webmanifest</code> and links it automatically: name, <code>display: &quot;standalone&quot;</code>, colours, icons (192, 512, and 512 &quot;maskable&quot;).</p>
+</li>
+<li><p><code>app/apple-icon.png</code>: Next&#39;s file convention adds <code>&lt;link rel=&quot;apple-touch-icon&quot;&gt;</code> for the iPhone Home Screen.</p>
+<ul>
+<li>The icons (a white &quot;N&quot; on black) were drawn with Python&#39;s standard library: PNG = signature + <code>IHDR</code> (size, colour type) + <code>IDAT</code> (zlib-compressed pixel rows) + <code>IEND</code>, each chunk with a CRC checksum.</li>
+</ul>
+</li>
+<li><p><code>lib/api.ts</code>:</p>
+<ul>
+<li><p><code>pushState()</code>: <code>unsupported</code> / <code>install</code> (iPhone Safari not added to the Home Screen) / <code>ask</code> / <code>denied</code> / <code>on</code>.</p>
+</li>
+<li><p><code>enablePush()</code>: <code>Notification.requestPermission()</code> → <code>syncPush()</code>.</p>
+</li>
+<li><p><code>syncPush()</code>:</p>
+<ol>
+<li>Register <code>/sw.js</code> with <code>updateViaCache: &quot;none&quot;</code>, so a changed service worker is always fetched fresh.</li>
+<li>Wait for <code>serviceWorker.ready</code>.</li>
+<li>Fetch our public key.</li>
+<li>Reuse the existing subscription, or <code>subscribe({userVisibleOnly: true, applicationServerKey})</code>. The base64url key is turned into bytes, which is what Safari needs.</li>
+<li>POST it.</li>
+</ol>
+<p>It runs on every load once allowed, so the subscription always belongs to whoever is logged in.</p>
+</li>
+<li><p><code>stopPush()</code>: called first in <code>logout()</code>, and its failures are swallowed so it can never block logging out.</p>
+</li>
+</ul>
+</li>
+<li><p><code>app/push-prompt.tsx</code> (on the trip card), the <strong>soft ask</strong>:</p>
+<ul>
+<li>a &quot;Notify me&quot; button: the browser&#39;s prompt appears only after a tap</li>
+<li>&quot;Notifications are on.&quot;</li>
+<li>the &quot;blocked&quot; message pointing at site settings</li>
+<li>the iPhone &quot;Share → Add to Home Screen&quot; hint</li>
+<li>nothing at all for unsupported browsers</li>
+</ul>
+<p><code>pushState()</code> reads browser-only values that don&#39;t exist during server rendering, so it runs in <code>useEffect</code>. That&#39;s the one place the lint rule <code>react-hooks/set-state-in-effect</code> is switched off, with the reason written next to it.</p>
+</li>
+<li><p><strong>Production:</strong> <code>docker-compose.prod.yml</code> requires <code>VAPID_PRIVATE_KEY</code>/<code>VAPID_PUBLIC_KEY</code> (<code>:?</code>) and sets <code>PUSH_CONTACT: https://${DOMAIN}</code>. The runbook has the OpenSSL commands. <strong>Make the keys once and keep them:</strong> new keys break every existing subscription. <code>shortcut:</code> there&#39;s no key rotation handling.</p>
+</li>
+</ul>
+<h3 id="597-verified-in-a-real-browser-and-what-couldnt-be">59.7 Verified in a real browser, and what couldn&#39;t be</h3>
+<ul>
+<li>The built-in browser has service workers and <code>PushManager</code>, but its notification permission is fixed at <strong>denied</strong>, and it refuses to fetch any service-worker script (even a wrong file gives the same &quot;unknown error&quot;, where Chrome would report a wrong type). So a real notification couldn&#39;t appear there.</li>
+<li>What was checked: the trip card shows &quot;Notifications are blocked for Namastute…&quot;; there&#39;s no prompt on page load and no push requests while blocked; <code>/manifest.webmanifest</code> and <code>apple-touch-icon</code> are in the page; <code>sw.js</code> is served as JavaScript; logout still works.</li>
+<li>The full path was checked by <code>NotificationsTest</code>: real VAPID signing and encryption, then decryption with the browser&#39;s algorithm. <strong>Still untested:</strong> delivery through Google&#39;s, Mozilla&#39;s or Apple&#39;s real push services. Try it on a phone after deploying, since push needs HTTPS (or localhost) and a real browser.</li>
+</ul>
+<hr>
+<h2 id="60-command-cheat-sheet">60. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -5037,7 +5311,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="59-glossary">59. Glossary</h2>
+<h2 id="61-glossary">61. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -5901,9 +6175,65 @@ git fetch --prune
 <td>Weaponised reporting</td>
 <td>Using a report button to harass or get someone banned unfairly</td>
 </tr>
+<tr>
+<td>Service worker</td>
+<td>Background JavaScript the browser can wake even when no tab is open</td>
+</tr>
+<tr>
+<td>Push service</td>
+<td>The browser maker&#39;s server that delivers pushes to devices</td>
+</tr>
+<tr>
+<td>Push subscription</td>
+<td>A browser&#39;s endpoint URL + keys for receiving pushes</td>
+</tr>
+<tr>
+<td>VAPID</td>
+<td>Our server&#39;s key pair; pushes are signed with it so only we can push to our subscribers</td>
+</tr>
+<tr>
+<td>End-to-end encryption</td>
+<td>Only sender and receiver can read it; carriers in between can&#39;t</td>
+</tr>
+<tr>
+<td>Soft ask</td>
+<td>Your own &quot;turn on notifications?&quot; button before the browser&#39;s real prompt</td>
+</tr>
+<tr>
+<td>PWA / web app manifest</td>
+<td>An installable web app / the file describing its name, icons and colours</td>
+</tr>
+<tr>
+<td>SSRF</td>
+<td>Server-Side Request Forgery: tricking a server into requesting a URL of the attacker&#39;s choosing</td>
+</tr>
+<tr>
+<td>Allowlist</td>
+<td>A list of the only values accepted; everything else is refused</td>
+</tr>
+<tr>
+<td>ECDH</td>
+<td>Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other&#39;s public key to get the same shared secret</td>
+</tr>
+<tr>
+<td>HKDF</td>
+<td>HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need</td>
+</tr>
+<tr>
+<td>Upsert</td>
+<td>Insert, or update if the row already exists (<code>on conflict ... do update</code>)</td>
+</tr>
+<tr>
+<td>Notification tag</td>
+<td>A label on a notification; a new one with the same tag replaces the old one</td>
+</tr>
+<tr>
+<td>SimpUserRegistry</td>
+<td>Spring&#39;s live list of who has an open WebSocket connection</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="60-interview-questions-to-practise">60. Interview questions to practise</h2>
+<h2 id="62-interview-questions-to-practise">62. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -6009,6 +6339,14 @@ git fetch --prune
 <li>Why do reports go to a human instead of automatically banning someone?</li>
 <li>How does the code make sure you can only report someone you actually met?</li>
 <li>Why does unblocking use a separate opaque id instead of the blocked person&#39;s user id?</li>
+<li>Walk through how a Web Push message travels from your server to a phone. Who can read it on the way?</li>
+<li>What are VAPID keys for?</li>
+<li>Why ask for notification permission with your own button first?</li>
+<li>What is SSRF, and why does accepting push subscriptions create that risk? How do you prevent it?</li>
+<li>Why are pushes sent after the transaction commits, and asynchronously? What would go wrong otherwise?</li>
+<li>Why is checking that a host &quot;ends with push.apple.com&quot; not enough? What else does the endpoint check refuse?</li>
+<li>How did the tests prove the push is really encrypted correctly, without a real phone?</li>
+<li>Two people use the same browser one after the other. How do you stop the second one getting the first one&#39;s notifications?</li>
 </ol>
 
 

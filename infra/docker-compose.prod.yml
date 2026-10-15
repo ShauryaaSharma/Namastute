@@ -37,6 +37,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in infra/.env}
       OTP_HMAC_SECRET: ${OTP_HMAC_SECRET:?set OTP_HMAC_SECRET in infra/.env}
       WEB_ORIGIN: https://${DOMAIN:?set DOMAIN in infra/.env}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:?set VAPID_PRIVATE_KEY in infra/.env}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:?set VAPID_PUBLIC_KEY in infra/.env}
+      PUSH_CONTACT: https://${DOMAIN}   # who push services contact about our pushes (RFC 8292)
     depends_on:
       postgres:
         condition: service_healthy

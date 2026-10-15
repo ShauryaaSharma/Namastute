@@ -20,6 +20,7 @@ import { plural } from "@/lib/format";
 import { formatIst } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
 import GroupCard from "./group-card";
+import PushPrompt from "./push-prompt";
 
 // Your active trip, or a link to plan one. undefined = still loading, null = no active trip.
 export default function CurrentTrip() {
@@ -59,6 +60,7 @@ export default function CurrentTrip() {
         {plural(trip.seats, "seat")}, {plural(trip.bags, "bag")}
         {trip.flightNo ? `, flight ${trip.flightNo}` : ""} · about {trip.soloKm} km
       </p>
+      <PushPrompt />
       {trip.status === "grouped" ? (
         <GroupCard version={version} onChange={reload} />
       ) : (
