@@ -123,6 +123,8 @@ page = f"""<!doctype html>
     const {{ default: mermaid }} = await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs");
     mermaid.initialize({{ startOnLoad: false, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }});
     await mermaid.run();
+    // Drawing the diagrams moves everything below them, so jump to the linked section again
+    if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
   }}
 </script>
 </body>

@@ -1,13 +1,127 @@
-# Namastute — Learning Notes
+# Building Namastute: a book about making a real web app
 
-My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
+How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.
 
-Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips of history).
+Last updated: 2026-10-16.
+
+---
+
+## About this book
+
+### Who it's for
+- **Someone new to computer science** who wants to see how a real app is built, from the first file to a server that could serve hundreds of people.
+- **A student preparing for interviews**, who needs to explain *why* things are built the way they are, not just *what* was typed.
+- **A future teammate** who wants to understand this codebase quickly.
+
+You don't need to know how to program to follow the ideas. Code appears often, but every code block is explained line by line, and every new word is defined before it's used.
+
+### How each chapter works
+- Most chapters start with **"Words first"**: a short list of the words that chapter uses, each explained in a sentence or two. Read it even if you think you know the words; the chapter relies on exactly those meanings.
+- **Concept chapters** teach one idea in the same order every time: **the problem** → **the naive way** (the first thing most people would try) → **why it hurts** → **the better tool** → **how it works** → **how Namastute uses it**.
+- **Code walkthrough chapters** follow a concept chapter. They open the real files and explain them piece by piece. Keep the file open next to the book.
+- **Decisions** tables record what the team chose and when, so you can see the reasoning, not just the result.
+- Lines marked **`shortcut:`** describe a limit we accepted on purpose, and when we'd remove it (chapter 64 explains the habit).
+
+### Numbers in this book
+- Chapters and sections have **fixed numbers** (for example 40.3). Comments in the code point to them ("see Learning Notes 40.3"), so they never change, even when a chapter is improved.
+- That's why some chapters have a section **.0** ("Words first"): it was added at the start without renumbering anything.
+- When a later chapter changed something an earlier chapter describes, the earlier one has a **Later change** note pointing forward.
+
+### How to read it
+- **Start here** and **The project in one page** (next) give you the basics and the map.
+- Then read the parts in order. Each part opens with a short page saying what it covers.
+- The **Glossary** (chapter 71) defines every term in the book, A to Z. The **Command cheat sheet** (70) and **Interview questions** (72) are for revision.
+
+---
+
+## Start here: the absolute basics
+
+This chapter is for readers with no computing background. If you know what a server, a database and Git are, skip to **The project in one page**.
+
+### Words first
+- **Program (software, app):** a list of instructions a computer follows. A web browser, a game and Namastute are all programs.
+- **Code (source code):** those instructions written in a **programming language** that people can read, such as Java or TypeScript. A program called a **compiler** turns code into a form the computer runs.
+- **Computer network:** computers connected so they can send each other messages. **The internet** is the worldwide network of networks.
+- **Server:** a computer (or a program on it) that waits for requests and answers them. **Client:** the program that sends the request, usually your browser or phone app.
+- **Browser:** the program you use to open websites (Chrome, Safari). It's a client.
+- **URL (web address):** text that says where something is on the internet, like `https://namastute.in/login`.
+- **Database:** a program that stores data in an organised way and answers questions about it ("which trips leave Terminal 3 in the next hour?").
+- **Frontend:** the part of an app people see and touch (screens, buttons). **Backend:** the part that runs on the server (rules, data, security).
+- **API (Application Programming Interface):** the list of requests a program accepts from other programs. Our frontend talks to our backend through our API.
+- **Terminal (command line):** a text window where you type commands instead of clicking.
+- **Version control (Git):** a tool that records every change to the code, so you can see history, undo mistakes and work in a team.
+
+### How a click becomes a result
+When you tap "Find co-travellers" in Namastute:
+1. **The browser** (client) sends a **request** over the internet to our **server**: "plan this trip for me".
+2. **The backend** on the server checks who you are, checks the request makes sense, and saves the trip in the **database**.
+3. It sends back a **response**: "done, here's your trip".
+4. **The frontend** shows the result on your screen.
+
+Almost everything in this book is about one of those four steps: making the request safe, making the rules correct, storing data reliably, or showing it clearly.
+
+### Why it's harder than it looks
+- **Many people at once.** Hundreds of requests can arrive in the same second. Two people might try to take the last seat in a cab at the same moment (chapter 40).
+- **Things fail.** Networks drop, phones go to sleep, servers restart. The app has to stay correct anyway.
+- **Bad actors exist.** Some people will try to read others' data, guess login codes or flood the server. Security runs through the whole book.
+- **People must trust strangers.** Namastute puts strangers in a car together at night, so privacy and safety shape many decisions (chapters 37.4, 56, 60).
+
+---
+
+## The project in one page
+
+### Words first
+- **Monorepo:** one code repository holding several related projects (here: the backend and the frontend).
+- **Module:** a self-contained part of a program with its own job (logging in, trips, groups…).
+- **Slice:** a small piece of the product built end to end (database, backend, frontend, tests), then merged. The book follows the slices in order.
+
+### What Namastute does
+Namastute helps people leaving **Delhi's IGI airport** share a cab with others going the same way, to save money. It **only connects people**: it never books cabs and never handles money.
+
+A typical journey:
+1. **Log in** with your phone number and a one-time code sent by SMS.
+2. **Plan a trip:** which terminal, when you'll be outside, where you're going.
+3. **See matches:** people (or groups) heading your way at about the same time, ranked by how little extra distance sharing adds.
+4. **Ask to share.** If they accept, you're in a **group** with a live **chat**.
+5. The person who started the group **locks** it and books a cab. At the pickup, everyone taps **"I'm here"** and can **share their live location** for a few minutes.
+6. After the ride, the booker enters the **fare**; everyone sees their fair **share** and a **UPI link** to pay the booker.
+7. Everyone can **rate** each other, **report** problems, or **block** someone.
+
+### How it's built
+```mermaid
+flowchart LR
+    B[Browser or phone] -->|HTTPS| C[Caddy: the front door, adds HTTPS]
+    C -->|"/api/*, /ws"| A[Backend: Spring Boot, Java]
+    C -->|pages| W[Frontend: Next.js, TypeScript]
+    A --> P[(Postgres + PostGIS: permanent data and maps)]
+    A --> R[(Redis: short-lived counters and codes)]
+    A -->|encrypted push| N[Phone push services]
+```
+- **The backend** (`apps/api`) is one Java program split into modules: `auth` (login), `users`, `trips` (planning and matching), `groups`, `chat`, `feedback` (ratings, reports, blocks), `notifications` (push) and `shared`. Chapter 1 explains why it's one program and not many.
+- **The frontend** (`apps/web`) is a Next.js web app that works on phones and can be installed on the home screen.
+- **Postgres** stores everything permanent; **PostGIS** lets it answer map questions ("destinations within 15 km"). **Redis** keeps short-lived data like login codes and request counters.
+- **In production** everything runs on one rented server, with **Caddy** in front handling HTTPS (chapter 54).
+
+### How the book is organised
+| Part | Chapters | What you'll learn |
+|---|---|---|
+| I. The big picture and the tools | 1–11 | How the app is structured; Java, Spring, databases, Docker, testing, the frontend tools |
+| II. Teamwork and the cloud | 12–17 | Git, automatic testing (CI), cross-platform traps, AWS, hosting, the terminal |
+| III. Logging in | 18–30 | HTTP, one-time codes, hashing, Redis, rate limits, tokens, security, the login screen |
+| IV. Profiles, trips and matching | 31–38 | Updating data, maps, time zones, and finding good co-travellers fast |
+| V. Groups and chat | 39–49 | State machines, races between requests, module boundaries, real-time chat, background jobs |
+| VI. Finishing the ride and shipping | 50–55 | Money, API contracts, containers and HTTPS for production |
+| VII. Safety and staying in touch | 56–63 | Report and block, push notifications, live location, ratings |
+| VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
+| Reference | 70–72 | Commands, glossary, interview questions |
 
 ---
 
 ## Contents
 
+**Front matter:** [About this book](#about-this-book) · [Start here: the absolute basics](#start-here-the-absolute-basics) · [The project in one page](#the-project-in-one-page)
+
+**[Part I. The big picture and the tools](#part-i-the-big-picture-and-the-tools)**
 1. [Architecture: monolith vs microservices](#1-architecture-monolith-vs-microservices)
 2. [Java and Spring foundations](#2-java-and-spring-foundations)
 3. [Spring Boot](#3-spring-boot)
@@ -19,12 +133,18 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 9. [Flyway: database migrations](#9-flyway-database-migrations)
 10. [Testing and Spring Modulith](#10-testing-and-spring-modulith)
 11. [Frontend: TypeScript, Node, pnpm, React, Next.js](#11-frontend-typescript-node-pnpm-react-nextjs)
+
+**[Part II. Teamwork and the cloud](#part-ii-teamwork-and-the-cloud)**
+
 12. [Git and GitHub workflow](#12-git-and-github-workflow)
 13. [CI with GitHub Actions](#13-ci-with-github-actions)
 14. [Cross-platform gotchas: permissions and line endings](#14-cross-platform-gotchas-permissions-and-line-endings)
 15. [AWS: account security and cost control](#15-aws-account-security-and-cost-control)
 16. [Hosting and infrastructure decisions](#16-hosting-and-infrastructure-decisions)
 17. [Terminal basics](#17-terminal-basics)
+
+**[Part III. Logging in](#part-iii-logging-in)**
+
 18. [HTTP and REST APIs](#18-http-and-rest-apis)
 19. [Authentication and phone OTP](#19-authentication-and-phone-otp)
 20. [Hashing, HMAC and keeping OTPs safe](#20-hashing-hmac-and-keeping-otps-safe)
@@ -38,6 +158,9 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 28. [Browsers, origins and CORS](#28-browsers-origins-and-cors)
 29. [React and Next.js in the browser](#29-react-and-nextjs-in-the-browser)
 30. [Code walkthrough: CORS and the login screen](#30-code-walkthrough-cors-and-the-login-screen)
+
+**[Part IV. Profiles, trips and matching](#part-iv-profiles-trips-and-matching)**
+
 31. [Updating data: PATCH, dirty checking, Unicode](#31-updating-data-patch-dirty-checking-unicode)
 32. [Code walkthrough: the profile](#32-code-walkthrough-the-profile)
 33. [Places, maps and geocoding](#33-places-maps-and-geocoding)
@@ -46,6 +169,9 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 36. [Matching: two-stage search and spatial indexes](#36-matching-two-stage-search-and-spatial-indexes)
 37. [Matching: detours, pure functions, privacy, N+1](#37-matching-detours-pure-functions-privacy-n1)
 38. [Code walkthrough: matching](#38-code-walkthrough-matching)
+
+**[Part V. Groups and chat](#part-v-groups-and-chat)**
+
 39. [Groups: state machines and consent](#39-groups-state-machines-and-consent)
 40. [Concurrency: the last-seat race](#40-concurrency-the-last-seat-race)
 41. [Code walkthrough: groups (slice 2a)](#41-code-walkthrough-groups-slice-2a)
@@ -57,12 +183,18 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 47. [Code walkthrough: group chat (slice 3)](#47-code-walkthrough-group-chat-slice-3)
 48. [Background jobs: sweeps, idempotency, time](#48-background-jobs-sweeps-idempotency-time)
 49. [Code walkthrough: expiry jobs](#49-code-walkthrough-expiry-jobs)
+
+**[Part VI. Finishing the ride and shipping](#part-vi-finishing-the-ride-and-shipping)**
+
 50. [Money: fare split and UPI links](#50-money-fare-split-and-upi-links)
 51. [Code walkthrough: fare split (and a pool-starvation bug)](#51-code-walkthrough-fare-split-and-a-pool-starvation-bug)
 52. [API contracts: OpenAPI and generated types](#52-api-contracts-openapi-and-generated-types)
 53. [Code walkthrough: OpenAPI and generated types](#53-code-walkthrough-openapi-and-generated-types)
 54. [Production: containers, config, HTTPS](#54-production-containers-config-https)
 55. [Code walkthrough: the production build](#55-code-walkthrough-the-production-build)
+
+**[Part VII. Safety and staying in touch](#part-vii-safety-and-staying-in-touch)**
+
 56. [Safety: report and block](#56-safety-report-and-block)
 57. [Code walkthrough: report and block](#57-code-walkthrough-report-and-block)
 58. [Push notifications](#58-push-notifications)
@@ -71,39 +203,63 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 61. [Code walkthrough: live location](#61-code-walkthrough-live-location)
 62. [Ratings after the ride](#62-ratings-after-the-ride)
 63. [Code walkthrough: ratings](#63-code-walkthrough-ratings)
+
+**[Part VIII. Getting ready for real users](#part-viii-getting-ready-for-real-users)**
+
 64. [Pre-launch clean-up: triaging technical debt](#64-pre-launch-clean-up-triaging-technical-debt)
 65. [Code walkthrough: pre-launch fixes](#65-code-walkthrough-pre-launch-fixes)
 66. [Load testing](#66-load-testing)
 67. [Code walkthrough: load tests and results](#67-code-walkthrough-load-tests-and-results)
 68. [Indexes and rate limits](#68-indexes-and-rate-limits)
 69. [Code walkthrough: indexes and rate limits](#69-code-walkthrough-indexes-and-rate-limits)
+
+**[Reference](#reference)**
+
 70. [Command cheat sheet](#70-command-cheat-sheet)
 71. [Glossary](#71-glossary)
 72. [Interview questions to practise](#72-interview-questions-to-practise)
 
 ---
 
+## Part I. The big picture and the tools
+
+Before writing any feature, a team has to decide how the program is shaped and which tools build it. This part explains those choices: why Namastute's backend is one program split into modules, what Java and Spring do for us, how the database and Docker fit in, how we test, and which tools build the frontend. Nothing here is specific to cab sharing; it's the foundation every later chapter stands on.
+
+---
+
 ## 1. Architecture: monolith vs microservices
 
-**Monolith:** the whole backend is one application. Deployed once, runs as one process, usually one database. One part calls another with a normal function call.
+### 1.0 Words first
+- **Architecture:** the overall shape of a software system: which big parts it has and how they talk to each other.
+- **Backend:** the part of an app that runs on a server: it holds the data, enforces the rules and answers requests (see *Start here*).
+- **Deploy:** to put a new version of a program onto the server where users reach it.
+- **Process:** one running program on a computer. A program can run as one process or as many.
+- **Function call:** one piece of code asking another piece *in the same program* to do something. It's instant and can't get lost.
+- **Network call:** a request sent to *another program* over a network. It's slower, and it can time out or fail.
+- **Service:** a separately running program with one job, which other programs call over the network.
+- **Scaling:** handling more users, usually by running more copies of a program or using bigger machines.
 
-**Microservices:** the backend is split into many small applications (auth service, matching service, chat service…), each deployed separately, usually with its own database. They talk over the network (HTTP, gRPC, message queues).
+### 1.1 Two ways to shape a backend
+A **monolith** is a backend built as **one application**. It's deployed once and runs as one process, usually with one database. When the login code needs the user code, it simply makes a function call.
+
+**Microservices** split the backend into many small applications, for example an auth service, a matching service and a chat service. Each one is deployed separately and usually has its own database. They talk to each other with network calls (HTTP, gRPC or message queues).
 
 | | Monolith | Microservices |
 |---|---|---|
-| Deploy | One app | Many apps, many pipelines |
+| Deploy | One app | Many apps, many deployment pipelines |
 | Calls between parts | Function call: fast, can't fail on the network | Network call: slower, can time out or fail |
-| Debugging | One log, one stack trace | A bug can span services; needs tracing |
+| Debugging | One log, one stack trace | A bug can span several services; you need tracing tools |
 | Scaling | Scale the whole app | Scale only the busy service |
 | Best for | Small teams, early products | Large teams, each owning a service |
 
-**Modular monolith (what we chose):** one deployable app, but the code is split into strict modules (`auth`, `trips`, `groups`, `chat`…). Each module owns its tables and only talks to others through public interfaces. Deployed like a monolith, organised like microservices.
+### 1.2 What we chose: a modular monolith
+A **modular monolith** is one deployable app whose code is split into **strict modules** (`auth`, `trips`, `groups`, `chat`…). Each module owns its own database tables, and modules only talk to each other through small, public doors (methods made public on purpose). It's deployed like a monolith but organised like microservices. Chapter 10 shows how a test enforces the boundaries.
 
-**Why it fits Namastute:**
-- Microservices mainly solve *team* problems (dozens of engineers stepping on each other). With 2 devs, that problem doesn't exist.
-- Their costs (network failures, many deploys, distributed debugging) are real from day one.
-- One server handles our load; nothing needs scaling separately yet.
-- Clean module boundaries keep the option to split a module out later.
+### 1.3 Why it fits Namastute
+- Microservices mainly solve **team** problems: dozens of engineers stepping on each other's toes. With two developers, that problem doesn't exist.
+- Their costs (network failures between services, many deployments, debugging across programs) are real from the first day.
+- One server handles our load (chapter 67 measured it), so nothing needs scaling separately.
+- Clean module boundaries keep the option to split a module into its own service later, if we ever need to.
 
 **Interview version:** "I chose a modular monolith because microservices solve team-scale and independent-scaling problems we don't have, and their operational cost is real from day one. Clean module boundaries, enforced by a test, keep the option to split later."
 
@@ -111,14 +267,22 @@ Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips o
 
 ## 2. Java and Spring foundations
 
+### 2.0 Words first
+- **Java:** the programming language our backend is written in. Java code runs on the **JVM** (Java Virtual Machine), a program that runs Java on any operating system.
+- **Framework:** a large, ready-made toolkit that gives a program its structure. You write the parts specific to your app; the framework handles the rest. **Spring** is the most popular Java framework.
+- **Class / object:** see 2.1.
+- **Dependency:** something a piece of code needs in order to work (2.2). The word also means a library a project uses (chapter 4).
+- **Annotation:** a tag starting with `@`, like `@Service`, that adds information to code without changing what it does. Frameworks read these tags.
+
 ### 2.1 Classes and objects
-- A **class** is a blueprint: "a Group has an id, a meeting time, members, and can lock itself".
-- An **object** is one real thing built from it while the program runs: *this* group, id 42, meeting at 10:30. Created with `new Group(...)`.
+- A **class** is a blueprint. For example: "a Group has an id, a meeting time and members, and it can lock itself."
+- An **object** is one real thing built from that blueprint while the program runs: *this* group, id 42, meeting at 10:30. In Java you create one with `new Group(...)`.
 
 ### 2.2 Dependencies
-Objects rarely work alone. `GroupService` needs a `GroupRepository` (reads/writes groups in the DB) and a `NotificationService` (sends pushes). Those are its **dependencies**.
+Objects rarely work alone. A `GroupService` needs a `GroupRepository` (to read and write groups in the database) and a `NotificationService` (to send pushes). Those are its **dependencies**: it can't do its job without them.
 
 ### 2.3 Wiring by hand, and why it hurts
+Without a framework, you'd create every object yourself and pass each one its dependencies:
 ```java
 DataSource db = new HikariDataSource(config);
 GroupRepository groups = new GroupRepository(db);
@@ -126,19 +290,19 @@ NotificationService notifications = new NotificationService(new PushSender(keys)
 GroupService groupService = new GroupService(groups, notifications);
 // ...dozens more, in the right order
 ```
-Problems:
-1. **Wiring grows** with every class, and order matters.
-2. **Swapping is painful:** tests want a fake `PushSender`; you'd rewrite the wiring per test.
-3. **Sharing:** you want exactly one connection pool shared by all; you must pass it around carefully.
+This "wiring" causes three problems:
+1. **It grows** with every new class, and the order matters (you can't create `groupService` before `groups`).
+2. **Swapping is painful.** A test wants a fake `PushSender` that doesn't really send anything; you'd have to rewrite the wiring for every test.
+3. **Sharing is fiddly.** You want exactly one database connection pool shared by everything, so you must pass it around carefully.
 
 ### 2.4 Inversion of Control (IoC)
-- **Control** = who decides when objects are created and connected.
-- Normally *your code* does (`new` everywhere). **IoC flips it:** a framework creates and connects objects; your classes only declare what they need.
-- The part of the framework that holds those objects is a **container**. In Spring it's the **ApplicationContext**.
-- An object managed by Spring is a **bean**.
+- **Control** here means: who decides when objects are created and connected?
+- Normally *your code* decides, by calling `new` everywhere. **Inversion of Control flips this:** a framework creates and connects the objects, and your classes only *declare* what they need.
+- The part of the framework that holds those objects is called a **container**. In Spring it's the **ApplicationContext**.
+- An object that Spring creates and manages is called a **bean**.
 
 ### 2.5 Dependency Injection (DI)
-The container **hands an object its dependencies from outside**, usually through the **constructor**:
+With **Dependency Injection**, the container **hands each object its dependencies from outside**, usually through the **constructor** (the special method that runs when an object is created):
 ```java
 @Service
 public class GroupService {
@@ -151,106 +315,126 @@ public class GroupService {
     }
 }
 ```
-- `@Service` is an **annotation**: a tag starting with `@` that adds information without changing the code. Spring reads it at startup.
-- Our convention: **constructor injection only** (no `@Autowired` on fields), so dependencies are explicit and the class is easy to test.
+- `@Service` is an annotation. Spring reads it at startup and knows: "create one of these and manage it".
+- Our convention is **constructor injection only** (never `@Autowired` on fields), so every dependency is visible in one place and the class is easy to test.
 
 **What Spring does at startup:**
-1. **Scan** `com.namastute` and its sub-packages for `@Service`, `@Repository`, `@RestController`…
-2. **Plan:** read constructors to map who needs whom.
-3. **Create** in dependency order.
+1. **Scan:** look through the `com.namastute` package and everything below it for tags like `@Service`, `@Repository` and `@RestController`.
+2. **Plan:** read the constructors to work out who needs whom.
+3. **Create** the objects in the right order.
 4. **Inject** each object into the constructors that asked for it.
-5. **Keep** them: by default one shared instance each (**singleton**).
+5. **Keep** them: by default there's exactly one shared object of each (a **singleton**).
 
-**How it fixes the problems:** add a class = add a tag; tests can swap in fakes; sharing is automatic.
+**How it fixes 2.3:** adding a class means adding one tag; tests can swap in fakes; sharing is automatic.
 
-**In our project:** `ApiApplication.java` has `@SpringBootApplication`, which turns on scanning from `com.namastute`. That's why the package name mattered: Spring only scans that package and below.
+**In our project:** `ApiApplication.java` carries `@SpringBootApplication`, which switches on scanning from `com.namastute`. That's why the package name mattered when the project was created (5.1): Spring only scans that package and the ones below it.
 
 ---
 
 ## 3. Spring Boot
 
-Plain Spring still needs to be *told* how to build infrastructure beans: the **connection pool** (reusable DB connections, because opening one per request is slow), the **web server**, the **JSON converter**, etc. Spring Boot removes that work with three ideas:
+### 3.0 Words first
+- **Infrastructure bean:** an object every app needs but nobody wants to write: the database connection pool, the web server, the JSON converter.
+- **Connection pool:** a small set of database connections opened once and reused, because opening a new connection for every request is slow.
+- **Library / jar:** a package of ready-made code. In Java, libraries come as **jar** files (zip files of compiled code).
+- **Classpath:** the list of all libraries available to the program while it runs.
+- **Configuration file:** a file of settings (like which database to use) read when the program starts. Ours is `application.yaml`.
+- **Port:** a numbered "door" on a computer that a program listens on, like 8080 for our API or 5432 for Postgres.
 
 ### 3.1 Auto-configuration
-- The **classpath** = all libraries (jars) available to the app at runtime.
-- At startup Boot runs many rules with **conditions**:
-  - "PostgreSQL driver on the classpath **and** `spring.datasource.url` set → create a connection pool."
-  - "Spring Web MVC on the classpath → start a web server on 8080."
-  - "You defined your own bean of this type → back off and use yours."
-- So: **adding a dependency turns a feature on; `application.yaml` adjusts it.**
-- We saw this live: with JPA + Flyway added but no database configured, the app would refuse to start, because auto-config tried to connect.
+Plain Spring still has to be *told* how to build infrastructure beans. **Spring Boot** removes that work. At startup it runs many rules with **conditions**, such as:
+- "The PostgreSQL driver is on the classpath **and** `spring.datasource.url` is set → create a connection pool."
+- "Spring Web MVC is on the classpath → start a web server on port 8080."
+- "You defined your own bean of this type → back off and use yours."
+
+So: **adding a library switches a feature on; `application.yaml` adjusts it.** We saw this early on: with the database libraries added but no database configured, the app refused to start, because auto-configuration tried to connect.
 
 ### 3.2 Starters
-One dependency that brings a tested set of libraries. `spring-boot-starter-data-jpa` = Hibernate + connection pool + transactions, at compatible versions.
+A **starter** is one dependency that brings a tested set of libraries together. For example `spring-boot-starter-data-jpa` brings Hibernate (chapter 8), a connection pool and transaction support, all at versions known to work together.
 
 ### 3.3 Embedded web server
-- A **web server** listens on a **port** for HTTP requests and sends responses. A port is a numbered door on a computer (8080, 5432…); each program listens on its own.
-- Old way: install Tomcat separately, copy your app into it. Boot way: Tomcat runs **inside** your app; you run one jar. That's why we chose **Jar** packaging.
+- A **web server** listens on a port for HTTP requests (chapter 18) and sends back responses.
+- The old way: install a web server called **Tomcat** separately, then copy your app into it. The Spring Boot way: Tomcat runs **inside** your app, so you run one jar and that's it. That's why we chose **Jar** packaging (5.1).
 
 ### 3.4 Spring Boot 4 specifics (we use 4.1.1)
-- Built on **Spring Framework 7** and **Jakarta EE 11**.
-- **Smaller, focused starters:** `spring-boot-starter-webmvc` (was `-web` in Boot 3), `spring-boot-starter-flyway`, plus a matching `-test` starter per module. Smaller jars, faster startup.
-- Most tutorials online are still Boot 3. If something from a tutorial fails, **check the version first**.
+- It's built on **Spring Framework 7** and **Jakarta EE 11** (the standard Java APIs for web apps).
+- Its starters are **smaller and more focused** than Boot 3's: `spring-boot-starter-webmvc` (it was `-web` in Boot 3), `spring-boot-starter-flyway`, and a matching `-test` starter for each. Smaller jars start faster.
+- Most tutorials online still use Boot 3. If something from a tutorial fails, **check the version first**.
 
 ### 3.5 Actuator
-Adds operational endpoints. `/actuator/health` answers "is the app alive and is the database reachable?". Used by Docker, CI, load balancers and Kubernetes. Ours returned `{"status":"UP"}`.
+**Actuator** adds endpoints for operating the app. `/actuator/health` answers "is the app alive, and can it reach the database?" Docker, CI and load balancers use it to check the app is ready. Ours answers `{"status":"UP"}`.
 
 ---
 
 ## 4. Maven
 
+### 4.0 Words first
+- **Build:** turning source code into a program you can run (4.1).
+- **Build tool:** the program that does the build. Ours is **Maven**.
+- **Bytecode:** the compiled form of Java code (`.class` files) that the JVM runs.
+- **Repository (of libraries):** an online store of libraries. Maven's is **Maven Central**.
+- **Plugin:** an add-on that gives a tool new commands.
+- **Version:** a label like `4.1.1` that identifies one release of a library or program.
+
 ### 4.1 What "building" means
-1. **Compile** `.java` (text) → `.class` (**bytecode**, run by the **JVM**, the Java Virtual Machine).
-2. **Fetch libraries** (jars = zip files of `.class` files) your code uses.
-3. **Test.**
-4. **Package** your classes + libraries into one runnable `.jar`.
+1. **Compile:** turn `.java` text files into `.class` bytecode files.
+2. **Fetch libraries:** download the jars your code uses.
+3. **Test:** run the automated tests (chapter 10).
+4. **Package:** put your classes and the libraries into one runnable `.jar`.
 
 ### 4.2 Maven's pieces
-- **`pom.xml`** (Project Object Model): project name, dependencies, plugins.
-- **Maven Central:** the public online library of jars. Downloads are cached in `C:\Users\Lenovo\.m2\repository`.
-- **Transitive dependencies:** need A, and A needs B and C → Maven fetches all three. ~7 lines in our pom → ~100 jars.
-- **Lifecycle phases:** `validate → compile → test → package → verify → install`. Running one runs all before it, so you can't package untested code.
-- **Plugins** add commands, e.g. `spring-boot:run` from the Spring Boot plugin.
+- **`pom.xml`** (Project Object Model): the file describing the project: its name, its dependencies and its plugins.
+- **Maven Central:** downloads are cached on your computer (in `C:\Users\Lenovo\.m2\repository`), so each library downloads once.
+- **Transitive dependencies:** if you need library A, and A needs B and C, Maven fetches all three. About 7 lines in our pom bring in about 100 jars.
+- **Lifecycle phases:** `validate → compile → test → package → verify → install`. Running one phase runs every phase before it, so you can't package code that hasn't passed its tests.
+- **Plugins** add commands, such as `spring-boot:run` from the Spring Boot plugin.
 
 ### 4.3 The Maven wrapper (`mvnw`)
-A script committed to the repo that downloads the exact Maven version in `.mvn/wrapper/`. Everyone (other dev, CI) builds identically with nothing to install.
-- `mvnw` = Linux/Mac/CI shell script. `mvnw.cmd` = Windows version.
+The **Maven wrapper** is a small script committed to the repository. It downloads the exact Maven version written in `.mvn/wrapper/`, so everyone (the other developer, the CI server) builds the same way with nothing to install.
+- `mvnw` is the version for Linux, Mac and CI; `mvnw.cmd` is the Windows version.
 
 ### 4.4 Inside our `pom.xml`
-- **Why no version numbers on dependencies:** the `<parent>` (`spring-boot-starter-parent`) includes a **BOM (Bill of Materials)**, a list of versions tested together. `spring-modulith-bom` in `<dependencyManagement>` does the same for Modulith. Prevents version clashes.
-- **Dependency scopes:**
-  - *(none)* = compile: needed to compile and run.
-  - `runtime`: needed to run, not to compile (e.g. the PostgreSQL driver; our code only talks to JDBC).
+- **Why dependencies have no version numbers:** the `<parent>` section (`spring-boot-starter-parent`) includes a **BOM** (Bill of Materials): a list of library versions tested together. `spring-modulith-bom` does the same for Spring Modulith. This prevents version clashes.
+- **Dependency scopes** say when a library is needed:
+  - *(none)* = compile: needed to compile and to run.
+  - `runtime`: needed only to run, not to compile (for example the PostgreSQL driver: our code only talks to the standard JDBC interface, chapter 8).
   - `test`: only for tests; never shipped.
-- **Project version `0.0.1-SNAPSHOT`:** *our* version. **SNAPSHOT** = in development, not released. Spring Boot's version is in `<parent>`.
-- **We trimmed it:** Initializr added 7 Modulith dependencies; we kept only `spring-modulith-starter-core` and `spring-modulith-starter-test`. Rule: **add a dependency when a feature needs it**, so you always know why it's there.
+- **Project version `0.0.1-SNAPSHOT`:** *our* version number. **SNAPSHOT** means "in development, not released". Spring Boot's version is in `<parent>`.
+- **We trimmed it:** the project generator added 7 Spring Modulith dependencies; we kept only `spring-modulith-starter-core` and `spring-modulith-starter-test`. The rule: **add a dependency when a feature needs it**, so you always know why each one is there.
 
 ---
 
 ## 5. The generated Spring project
 
+### 5.0 Words first
+- **start.spring.io (Spring Initializr):** a website that generates a starting Spring Boot project from a few choices.
+- **Package:** a folder-like namespace for Java classes, written with dots (`com.namastute.trips`). The folder structure on disk matches it.
+- **YAML:** a simple text format for settings, where indentation shows nesting (7.3).
+- **LTS (Long-Term Support):** a version that gets fixes for years. Java 21 is an LTS version.
+- **Environment variable:** a named value the operating system gives a program when it starts, like `DB_PASSWORD`. Used to keep secrets out of the code.
+
 ### 5.1 start.spring.io settings we chose
 | Setting | Value | Why |
 |---|---|---|
 | Project | Maven | Design decision |
-| Spring Boot | 4.1.1 | Newest *stable*; SNAPSHOT/M/RC are unfinished |
-| Group | `com.namastute` | Reverse-domain naming avoids package clashes |
-| Artifact | `api` | Jar name; lives in `apps/api` |
-| Package | `com.namastute` | Initializr appends the artifact by default (`com.namastute.api`); we removed it so modules are `com.namastute.trips`, not `com.namastute.api.trips` |
-| Packaging | Jar | Embedded Tomcat |
-| Config | YAML | Nested config reads better than long repeated prefixes |
-| Java | 21 | LTS (long-term support), installed locally |
+| Spring Boot | 4.1.1 | Newest *stable* version; SNAPSHOT, M (milestone) and RC (release candidate) versions are unfinished |
+| Group | `com.namastute` | Reverse-domain naming avoids clashes with other people's packages |
+| Artifact | `api` | The jar's name; the project lives in `apps/api` |
+| Package | `com.namastute` | The generator adds the artifact by default (`com.namastute.api`); we removed it so modules are `com.namastute.trips`, not `com.namastute.api.trips` |
+| Packaging | Jar | Runs with its own embedded web server (3.3) |
+| Config | YAML | Nested settings read better than long repeated prefixes |
+| Java | 21 | LTS, installed locally |
 
 ### 5.2 Files
 | File | Purpose |
 |---|---|
-| `pom.xml` | Build definition |
-| `mvnw`, `mvnw.cmd`, `.mvn/wrapper/` | Maven wrapper |
-| `src/main/java/com/namastute/ApiApplication.java` | Entry point (`@SpringBootApplication`) |
-| `src/main/resources/application.yaml` | Configuration |
-| `src/main/resources/db/migration/` | Flyway SQL migrations |
-| `src/test/java/...` | Tests |
-| `.gitignore` | Keeps `target/` (build output) out of git |
+| `pom.xml` | Build definition (chapter 4) |
+| `mvnw`, `mvnw.cmd`, `.mvn/wrapper/` | Maven wrapper (4.3) |
+| `src/main/java/com/namastute/ApiApplication.java` | Entry point: the class with `@SpringBootApplication` and the `main` method |
+| `src/main/resources/application.yaml` | Settings |
+| `src/main/resources/db/migration/` | Flyway's SQL migrations (chapter 9) |
+| `src/test/java/...` | Tests (chapter 10) |
+| `.gitignore` | Tells Git to ignore `target/` (build output) |
 
 ### 5.3 Our `application.yaml`
 ```yaml
@@ -264,29 +448,40 @@ spring:
       ddl-auto: validate
     open-in-view: false
 ```
-- **`${DB_PASSWORD:namastute}`** is a **placeholder**: use the **environment variable** `DB_PASSWORD` if set (a named value the OS gives a program at start), else the default. Real secrets never go in git.
-- **`open-in-view: false`:** by default Spring keeps a DB session open for the whole web request, hiding slow queries and holding connections longer. Turning it off is recommended practice.
-- `ddl-auto: validate`: see §8.
+- **`${DB_PASSWORD:namastute}`** is a **placeholder**: use the environment variable `DB_PASSWORD` if it's set, otherwise the default after the colon. Real secrets never go into Git (production has no defaults at all, 54.2).
+- **`open-in-view: false`:** by default Spring keeps a database session open for the whole web request, which hides slow queries and holds connections longer. Turning it off is recommended practice.
+- **`ddl-auto: validate`:** explained in chapter 8.
 
 ---
 
 ## 6. Databases: Postgres, PostGIS, SQL
 
-- A **database server** stores data in **tables** and answers questions written in **SQL**. Postgres listens on port **5432**.
-- One Postgres server can hold many **databases**; each database has **schemas** (namespaces for tables). The default schema is `public`.
-- **DDL** (Data Definition Language) = SQL that changes structure: `create table`, `alter table`.
-- An **extension** adds abilities to the database. **PostGIS** adds geographic types and functions (e.g. "points within 15 km"). Our matching depends on it.
-- **`spatial_ref_sys`** is a PostGIS table of **coordinate systems** (rules for turning a point on the round Earth into numbers). Our columns use `geography(point, 4326)`; **4326** = the GPS system (WGS 84).
-- The **`tiger`** and **`topology`** schemas came from the Docker image's own startup script (US address lookup, topology tools). We don't use them; they exist only locally.
+### 6.0 Words first
+- **Database server:** a program that stores data and answers questions about it. Ours is **PostgreSQL** ("Postgres").
+- **Table:** data arranged in rows and columns, like a spreadsheet. One row per thing (one trip), one column per fact (exit time).
+- **SQL** (Structured Query Language): the language for asking a database questions and changing its data: `select * from trips where terminal_id = 'DEL-T3'`.
+- **Query:** one SQL request.
+- **Schema:** a named group of tables inside a database, like a folder. The default one is `public`.
+- **Extension:** an add-on that gives a database new abilities.
+- **Coordinate system:** the rules for turning a point on the round Earth into numbers.
 
-### psql (Postgres's command-line client)
+### 6.1 Postgres and its pieces
+- Postgres listens on port **5432**. One Postgres server can hold many **databases**; each database has **schemas**, and each schema has tables.
+- **DDL** (Data Definition Language) is the part of SQL that changes *structure*: `create table`, `alter table`. Changing *data* uses `insert`, `update` and `delete`.
+
+### 6.2 PostGIS: maps inside the database
+- **PostGIS** is an extension that adds geographic types and functions, such as "find points within 15 km". Our matching depends on it (chapter 36).
+- **`spatial_ref_sys`** is a PostGIS table listing coordinate systems. Our columns use `geography(point, 4326)`; **4326** is the number of the GPS system (called WGS 84).
+- The **`tiger`** and **`topology`** schemas came from the Docker image's own startup script (US address lookup and map tools). We don't use them; they exist only on development machines.
+
+### 6.3 psql, Postgres's command-line client
 | Flag | Meaning |
 |---|---|
-| `-U namastute` | Log in as **U**ser `namastute` |
-| `-d namastute` | Connect to **d**atabase `namastute` |
-| `-c "..."` | Run one **c**ommand, print, exit |
+| `-U namastute` | Log in as the **U**ser `namastute` |
+| `-d namastute` | Connect to the **d**atabase `namastute` |
+| `-c "..."` | Run one **c**ommand, print the result, exit |
 
-Interactive meta-commands (start with `\`):
+Inside psql, commands starting with `\` are psql's own:
 | Command | Does |
 |---|---|
 | `\l` | List databases |
@@ -295,286 +490,397 @@ Interactive meta-commands (start with `\`):
 | `\d tablename` | Describe a table |
 | `\q` | Quit |
 
-No password was asked inside the container because the Postgres image trusts connections from inside its own container. Spring connects from outside via port 5432, so it needs the password.
+No password was asked inside the container because the Postgres image trusts connections from inside its own container. Spring connects from outside, through port 5432, so it needs the password.
 
 ---
 
 ## 7. Docker and Docker Compose
 
+### 7.0 Words first
+- **Operating system (OS):** the base software that runs a computer (Windows, Linux, macOS).
+- **Image:** a packaged, read-only snapshot of a program plus everything it needs to run (7.2).
+- **Container:** a running copy of an image, isolated from everything else (7.2).
+- **Virtual machine (VM):** a whole simulated computer running inside a real one.
+- **Kernel:** the core of an operating system, which talks to the hardware.
+- **Volume:** storage kept outside a container so its data survives the container being deleted.
+
 ### 7.1 Why not install Postgres on Windows?
-Different versions between devs, fiddly PostGIS setup, always running, messy to remove.
+Installing Postgres directly causes trouble: each developer ends up with a different version, PostGIS is fiddly to set up, the database runs all the time, and removing it is messy. Docker avoids all of that.
 
 ### 7.2 Core terms
-- **Image:** a packaged, read-only snapshot of a program plus everything it needs (small Linux system, libraries, settings). E.g. `postgis/postgis:16-3.5`.
-- **Container:** a **running copy** of an image, isolated (own files, network, processes). Start/stop/delete without affecting anything else.
-- **Docker Engine:** background program that pulls images and runs containers (inside Docker Desktop on Windows).
-- **Registry:** online store of images; **Docker Hub** is the default. Downloading = **pulling**.
-- **Container vs VM:** a VM simulates a whole computer with its own OS (heavy, slow). A container shares the host's Linux kernel (Docker Desktop provides one on Windows), so it starts in seconds and uses little memory.
-- **Port mapping** `"5432:5432"` = host port : container port. Lets Spring reach Postgres at `localhost:5432`.
-- **Volume:** storage kept *outside* the container and attached to it, so data survives container deletion. `down` keeps volumes; `down -v` deletes them.
+- **Image:** for example `postgis/postgis:16-3.5` = Postgres 16 with PostGIS 3.5, plus a small Linux system.
+- **Container:** a running copy of an image, with its own files, network and processes. You can start, stop and delete it without affecting anything else.
+- **Docker Engine:** the background program that downloads images and runs containers (on Windows it lives inside Docker Desktop).
+- **Registry:** an online store of images; **Docker Hub** is the default. Downloading an image is called **pulling** it.
+- **Container vs VM:** a VM simulates a whole computer with its own OS, so it's heavy and slow to start. A container shares the host's Linux kernel (Docker Desktop provides one on Windows), so it starts in seconds and uses little memory.
+- **Port mapping** `"5432:5432"` means "host port : container port". It lets Spring reach Postgres at `localhost:5432`.
+- **Volume:** `docker compose down` keeps volumes (your data survives); `down -v` deletes them too.
 
 ### 7.3 Docker Compose
-- Describe containers in a **YAML** file; start them all with one command; commit it so everyone has the same setup.
-- **YAML:** `key: value`; indentation (spaces, never tabs) nests things.
-- A **project** = the containers from one compose file. Default project name = the folder the file is in (ours would be `infra`), so we added `name: namastute` at the top.
-- **Service name** (`postgres` in the file) vs **container name** (`namastute-postgres-1` = project-service-copy number).
-- **Healthcheck:** how Docker checks the service is really ready (`pg_isready`), shown as `(healthy)`.
+- **Docker Compose** describes several containers in one **YAML** file and starts them all with one command. The file is committed, so everyone gets the same setup.
+- **YAML basics:** `key: value` pairs; indentation (spaces, never tabs) nests things inside each other.
+- A **project** is the set of containers from one compose file. Its default name is the folder the file is in (ours would be `infra`), so we added `name: namastute` at the top.
+- **Service name** (`postgres` in the file) vs **container name** (`namastute-postgres-1` = project, service and copy number).
+- **Healthcheck:** how Docker checks a service is truly ready (for Postgres, the `pg_isready` command). It shows as `(healthy)`.
 
 ### 7.4 `docker` vs `docker compose`
-- `docker ps` = **every** running container on the machine, by container name/ID.
-- `docker compose ps` = **only this project's** containers, by service name, with health.
-- `-f infra/docker-compose.yml` = which compose file (default is the current folder).
+- `docker ps` lists **every** running container on the machine, by container name or ID.
+- `docker compose ps` lists **only this project's** containers, by service name, with their health.
+- `-f infra/docker-compose.yml` says which compose file to use (the default is one in the current folder).
 - `docker compose down` stops **only this project**.
 
 ### 7.5 Getting inside a container
-- **Shell:** a program that reads and runs typed commands (PowerShell on Windows, **bash** on Linux). Inside a container you use Linux commands (`ls`, `cat`, `pwd`).
-- **Terminal (TTY):** the text window showing a shell.
-- `docker compose ... exec postgres bash` (Compose sets `-it` for you), or `docker exec -it <name-or-id> bash`.
-  - `-i` interactive: keep keyboard input connected. `-t`: allocate a terminal.
+- A **shell** is a program that reads and runs typed commands (PowerShell on Windows, **bash** on Linux). Inside a container you use Linux commands (`ls`, `cat`, `pwd`).
+- A **terminal (TTY)** is the text window showing a shell.
+- `docker compose ... exec postgres bash` opens a shell inside the `postgres` container. (`docker exec -it <name> bash` does the same; `-i` keeps keyboard input connected and `-t` gives it a terminal.)
 - Leave with `exit` or **Ctrl+D**. The container keeps running.
 
 ### 7.6 `image:` vs `build:` and the `--build` flag
-- `image:` = a ready-made image, **pulled** from a registry (all our services today).
-- `build:` = an image built on your machine from a **Dockerfile** (a step-by-step recipe: base image, copy files, start command).
-- `up --build` rebuilds `build:` services so code changes get in. Useless for `image:` services; we'll need it for the api's Dockerfile in Phase 2.
-- After editing the compose file, plain `up -d` creates new services and recreates only changed ones.
-- To update a ready-made image: `docker compose ... pull`, then `up -d` (or change the tag).
+- `image:` uses a ready-made image, **pulled** from a registry.
+- `build:` builds an image on your machine from a **Dockerfile**: a step-by-step recipe (start from this base image, copy these files, run this command).
+- `up --build` rebuilds the `build:` services so code changes get in; it does nothing for `image:` services.
+- After editing a compose file, plain `up -d` creates new services and recreates only the changed ones.
+- To update a ready-made image: `docker compose ... pull`, then `up -d` (or change its tag).
+- **Later change:** the production stack builds its own images for the API and web app from Dockerfiles (chapter 55).
 
 ---
 
 ## 8. Connecting Spring to the database: JDBC, JPA, Hibernate
 
-- **JDBC** (Java Database Connectivity): Java's standard API for talking to any database. Each database provides a **driver** implementing it.
-- **JDBC URL:** `jdbc:postgresql://localhost:5432/namastute` = protocol : driver : host : port / database. `localhost` = this computer.
-- **HikariCP:** the connection pool Spring uses. Log line `HikariPool-1 - Start completed` = connected.
-- **ORM** (Object-Relational Mapping): converts between Java objects and table rows.
-- **JPA** (Jakarta Persistence API): Java's standard rules for ORMs. **Hibernate**: the library that implements them.
-- **`ddl-auto`:**
-  - `update`: Hibernate creates/changes tables from Java classes. Risky: it guesses, never safely renames or removes.
-  - `validate` (ours): Hibernate only **checks** tables match the classes and refuses to start if not. Flyway owns the schema.
+### 8.0 Words first
+- **Driver:** a library that knows how to talk to one particular database.
+- **Interface (Java):** a list of methods a class promises to provide, without saying how. Code written against an interface works with any class that provides it.
+- **ORM (Object-Relational Mapping):** a tool that converts between objects in code and rows in tables.
+- **Entity:** a class whose objects are stored as rows of a table (chapter 26).
+- **Schema (of a table):** a table's structure: its columns and their types.
+
+### 8.1 The layers
+- **JDBC** (Java Database Connectivity) is Java's standard interface for talking to *any* database. Each database provides a **driver** that implements it.
+- A **JDBC URL** says where the database is: `jdbc:postgresql://localhost:5432/namastute` = protocol, driver, host, port and database name. `localhost` means "this computer".
+- **HikariCP** is the connection pool Spring uses. The log line `HikariPool-1 - Start completed` means it connected.
+- **JPA** (Jakarta Persistence API) is Java's standard set of rules for ORMs. **Hibernate** is the library that implements those rules.
+
+### 8.2 Who owns the table structure: `ddl-auto`
+- `update`: Hibernate creates and changes tables to match the Java classes. That's risky: it guesses, and it never safely renames or removes anything.
+- `validate` (ours): Hibernate only **checks** that the tables match the classes, and refuses to start if they don't. The structure itself belongs to Flyway (chapter 9).
+
+**Later in the book** you'll also meet `JdbcClient`, a thin helper for writing plain SQL without an ORM; several modules use it, starting with `groups` (41.4).
 
 ---
 
 ## 9. Flyway: database migrations
 
-**Problem:** code is versioned in git, but the database structure isn't. Changes get forgotten; databases drift; "column does not exist".
+### 9.0 Words first
+- **Migration:** one numbered change to the database's structure (or its reference data), written as an SQL file.
+- **Version control:** keeping the history of every change (Git, chapter 12).
+- **Checksum:** a short fingerprint of a file's contents. Change even one character and the checksum changes.
+- **Drift:** two copies of something (two databases) slowly becoming different without anyone noticing.
 
-**Solution:**
-- Every structural change is a **migration**: an SQL file in `src/main/resources/db/migration/`, e.g. `V1__init.sql` (capital V, version, **two** underscores, description).
-- At startup Flyway checks **`flyway_schema_history`**, runs **only new files in order**, and records them.
-- It stores a **checksum** (fingerprint of each file). If an already-applied file is edited, Flyway **refuses to start**.
-- **Golden rule:** never edit an applied migration. Add `V2__...` instead (**forward-only**).
-- Result: every database (laptop, CI, production) reaches the same structure just by starting the app.
+### 9.1 The problem
+Code is versioned in Git, but a database's structure isn't. Someone adds a column on their laptop and forgets to tell anyone; databases drift apart, and the app fails with "column does not exist".
 
-Our `V1__init.sql` = the full data model from Design v0.0.2 §3.1 (12 tables).
+### 9.2 How Flyway solves it
+- Every structural change is a **migration**: an SQL file in `src/main/resources/db/migration/`, named like `V1__init.sql` (capital V, the version number, **two** underscores, a description).
+- At startup, Flyway looks at a table called **`flyway_schema_history`**, runs **only the new files, in order**, and records each one.
+- It also stores each file's **checksum**. If a file that already ran is edited later, Flyway **refuses to start**.
+- **The golden rule:** never edit a migration that has already run. Add `V2__...` instead. This is called **forward-only**.
+- Result: every database (your laptop, CI, production) reaches the same structure just by starting the app.
+
+Our `V1__init.sql` is the full data model from the design document (12 tables). Chapter 69.5 tells the story of breaking the golden rule by editing just a comment, and how it was fixed.
 
 ---
 
 ## 10. Testing and Spring Modulith
 
+### 10.0 Words first
+- **Automated test:** code that runs your code and checks the result, failing loudly when it's wrong.
+- **Assertion:** the check inside a test ("the answer must be 42").
+- **Integration:** several parts working together (the app plus a real database).
+- **Module boundary:** the line between two modules that code should only cross through public doors (1.2).
+- **Dependency cycle:** two modules that each need the other (A uses B and B uses A).
+
 ### 10.1 Tests
-- An **automated test** runs your code and checks the result; fails loudly when wrong.
-- **JUnit:** the standard Java test library. Mark a method `@Test`.
-- **Unit test:** one small piece, no DB/server. Milliseconds.
-- **Integration test:** pieces together (starts Spring, real DB). Seconds; catches what unit tests can't.
-- `ApiApplicationTests.contextLoads()` starts the whole app (beans, DB, Flyway). That's why it needs Postgres running locally, and why CI starts a Postgres service.
-- Run all: `.\mvnw.cmd test` (or `verify` in CI).
+- **JUnit** is the standard Java testing library. You mark a method with `@Test` and it runs as a test.
+- A **unit test** checks one small piece with no database or server. It runs in milliseconds.
+- An **integration test** checks pieces together: it starts Spring and uses a real database. It takes seconds, but catches problems unit tests can't.
+- `ApiApplicationTests.contextLoads()` starts the whole app (all beans, the database, Flyway). That's why it needs Postgres running locally, and why CI starts a Postgres service too (chapter 13).
+- Run them all with `.\mvnw.cmd test` (CI runs `verify`, 4.2).
 
 ### 10.2 Spring Modulith
-Turns "modular monolith" from a claim into a check.
-- Each package directly under `com.namastute` is a **module**.
-- Classes directly in a module's package = its **public API**.
-- Sub-packages (e.g. `com.namastute.groups.internal`) = **private**.
-- `ApplicationModules.of(ApiApplication.class).verify()` fails if a module touches another's private classes, or if modules depend on each other in a **cycle** (A uses B and B uses A).
-- Our `ModularityTest` doesn't start Spring; it only reads compiled classes, so it's fast.
+Spring Modulith turns "modular monolith" from a promise into a check:
+- Each package directly under `com.namastute` is a **module** (`auth`, `trips`, `groups`…).
+- Classes directly in a module's package are its **public API**: other modules may use them.
+- Sub-packages (for example `com.namastute.groups.internal`) are **private**.
+- `ApplicationModules.of(ApiApplication.class).verify()` fails if a module touches another module's private classes, or if modules depend on each other in a **cycle**.
+- Our `ModularityTest` doesn't start Spring; it only reads the compiled classes, so it's fast.
+
+In practice we also keep most classes **package-private** (no `public`), so other modules physically can't reach them; only the few methods meant for other modules are `public` (27.3).
 
 ---
 
 ## 11. Frontend: TypeScript, Node, pnpm, React, Next.js
 
+### 11.0 Words first
+- **Frontend:** the part of the app that runs in the user's browser (see *Start here*).
+- **HTML:** the language for a page's structure (headings, buttons, forms). **CSS:** the language for how it looks. **JavaScript (JS):** the language for how it behaves.
+- **Type:** what kind of value something is (a number, some text, a list). A **type checker** catches mistakes like using text where a number was expected, before the code runs.
+- **Package:** a library for JavaScript (the same idea as a jar in Java).
+- **Component:** a reusable piece of a screen, like a button or a whole form (11.5).
+- **Build:** turning source files into the files a browser downloads (11.6).
+
 ### 11.1 Frontend vs backend
-- **Backend** (Spring Boot): runs on a server, holds data, enforces rules, answers requests.
-- **Frontend:** runs in the user's browser: screens, buttons, forms.
-- Browsers understand **HTML** (structure), **CSS** (appearance), **JavaScript** (behaviour).
+- The **backend** (Spring Boot) runs on a server: it holds the data, enforces the rules and answers requests.
+- The **frontend** runs in the user's browser: screens, buttons, forms.
+- Browsers only understand **HTML**, **CSS** and **JavaScript**, so every frontend tool ends up producing those.
 
 ### 11.2 TypeScript
-JavaScript + **types**, checked before running. Compiled to plain JS for browsers. Planned benefit: types generated from the Java API, so a renamed backend field breaks the frontend **build**, not the live app.
+**TypeScript** is JavaScript plus **types**, checked before the code runs, then compiled to plain JavaScript for browsers. Its big payoff in this project: the API's types are **generated from the Java code**, so renaming a backend field breaks the frontend **build**, not the live app (chapters 52–53).
 
 ### 11.3 Node.js
-Runs JavaScript outside the browser. Needed because all frontend tools (TS compiler, bundler, Next.js dev server) are JS programs.
+**Node.js** runs JavaScript outside the browser. We need it because every frontend tool (the TypeScript compiler, the bundler, the Next.js development server) is itself a JavaScript program.
 
 ### 11.4 pnpm
-- Same idea as Maven for JavaScript. Packages come from the **npm registry**.
-- `package.json` ≈ `pom.xml` (name, dependencies, **scripts** like `dev`, `build`, `lint`).
-- `node_modules/` = installed packages; never committed.
-- **Lockfile** `pnpm-lock.yaml` = exact versions of everything; **committed** so everyone installs the same.
-- Why pnpm: one shared copy per version on disk (fast, small) and **strict** (can't use undeclared packages).
-- **Install scripts** can run code during install (a known attack route), so recent pnpm blocks them unless approved. `pnpm-workspace.yaml` records ours (`sharp`, `unrs-resolver` not built; fallbacks work).
+- **pnpm** is to JavaScript what Maven is to Java: it downloads and manages packages, from the **npm registry**.
+- `package.json` ≈ `pom.xml`: the project's name, its dependencies and its **scripts** (named commands like `dev`, `build`, `lint`).
+- `node_modules/` holds the installed packages; it's never committed.
+- The **lockfile** `pnpm-lock.yaml` records the exact version of every package; it **is** committed, so everyone installs the same thing.
+- Why pnpm: it keeps one shared copy of each version on disk (fast and small) and it's **strict**: code can't use packages it didn't declare.
+- **Install scripts** (code a package runs while installing) are a known attack route, so recent pnpm blocks them unless approved. `pnpm-workspace.yaml` records our approvals (`sharp` and `unrs-resolver` aren't built; their fallbacks work).
 
 ### 11.5 React
-UI from **components** (functions returning what to show). Each describes the screen for the current data (**state**); React updates only what changed. Written in **JSX/TSX** (HTML-like tags in JS/TS).
-- `className` instead of `class` (`class` is a reserved word in JS).
+- **React** builds screens from **components**: functions that return what to show. Each component describes the screen for the current data (its **state**), and React updates only the parts that changed.
+- Components are written in **JSX/TSX**: HTML-like tags inside JavaScript or TypeScript.
+- Small differences from HTML: `className` instead of `class` (`class` is a reserved word in JavaScript).
 - `export default function Home()` = the component this file provides.
 
 ### 11.6 Next.js (we use 16.4, with React 19.3)
-Framework on top of React:
-- **File-based routing (App Router):** `app/page.tsx` = `/`; `app/trip/new/page.tsx` = `/trip/new`.
-- **Server rendering:** HTML prepared on a server so the first screen loads fast on slow mobile networks.
-- **Build tooling:** compiles TS, **bundles** (combines and shrinks files), dev server with **hot reload** (browser updates on save).
+**Next.js** is a framework on top of React. It gives us:
+- **File-based routing (the App Router):** the file `app/page.tsx` becomes the page `/`; `app/trip/new/page.tsx` becomes `/trip/new`.
+- **Server rendering:** HTML prepared on a server, so the first screen appears fast on slow mobile networks.
+- **Build tooling:** it compiles TypeScript, **bundles** files (combines and shrinks them), and runs a development server with **hot reload** (the browser updates when you save).
 - `app/layout.tsx` = the shared frame around every page.
-- `pnpm dev` (development, forgiving, port 3000) vs `pnpm build` (production build, type-checks everything; what CI runs).
+- `pnpm dev` = development mode (forgiving, port 3000); `pnpm build` = production build (type-checks everything; this is what CI runs).
 - `.next/` = build output, never committed.
-- `AGENTS.md` = Next.js's note for AI assistants: Next 16 changed a lot; read the bundled docs in `node_modules/next/dist/docs/`.
+- `AGENTS.md` = a note Next.js writes for AI coding assistants: Next 16 changed a lot, so read the docs bundled in `node_modules/next/dist/docs/`.
 
 ### 11.7 Tailwind and ESLint
-- **Tailwind CSS:** style with utility classes in markup: `p-8` padding, `text-3xl` big text, `font-bold`, `mt-2` margin-top.
-- **ESLint:** a **linter**; reads code without running it and flags likely bugs.
+- **Tailwind CSS:** styling with small **utility classes** written straight into the markup: `p-8` (padding), `text-3xl` (big text), `font-bold`, `mt-2` (margin on top).
+- **ESLint:** a **linter**: a tool that reads code without running it and flags likely bugs and bad patterns.
+
+---
+
+## Part II. Teamwork and the cloud
+
+Code isn't finished when it works on one laptop. It has to be shared, checked automatically, and eventually run on a server someone pays for. This part covers Git and GitHub (how changes are saved and reviewed), CI (how every change is tested on a clean machine), two traps that appear when Windows and Linux meet, keeping a cloud account safe and cheap, where the app will run, and the terminal skills used throughout the book.
 
 ---
 
 ## 12. Git and GitHub workflow
 
-### 12.1 Basics
-- **Commit:** a saved snapshot of files + message in local history.
-- **Staging area:** choose what goes into the next commit (`git add`), then save it (`git commit`).
-- **Push:** copy commits to GitHub. `git push -u origin <branch>` the first time links local and remote branches; afterwards just `git push`.
-- **Habit:** `git status` and `git diff --staged` before every commit. (An empty `ci.yml` once got committed because the editor never saved; this would have shown it.)
+### 12.0 Words first
+- **Git:** a version control tool. It records snapshots of your files over time, on your own computer.
+- **Repository (repo):** a project folder whose history Git tracks.
+- **GitHub:** a website that hosts Git repositories online, so a team can share them and review changes.
+- **Branch:** a separate line of work. You make changes on a branch without disturbing the main version, then merge them back.
+- **`main`:** the main branch: the version everyone trusts.
+- **Merge:** combining the changes from one branch into another.
+- **Remote:** the copy of the repository on GitHub (called `origin`), as opposed to your **local** copy.
 
-### 12.2 Branching: GitHub Flow (Design v0.0.2 §6.1)
-- One protected `main`, always deployable. Short-lived branches (2–3 days max).
-- Names: `type/short-description`, e.g. `feat/14-trip-request`, `fix/31-group-full-race`, `docs/...`, `chore/...`, `ci/...`, `refactor/...`, `test/...`, `spike/...`.
-- No GitFlow (`develop`, `release/*`): overhead for 2 devs.
-- **Conventional commits:** `feat:`, `fix:`, `docs:`, `chore:`, `ci:`… PR titles use the same format.
+### 12.1 Basics
+- **Commit:** a saved snapshot of files, with a message saying what changed, in your local history.
+- **Staging area:** where you choose what goes into the next commit (`git add`) before saving it (`git commit`).
+- **Push:** copy your commits to GitHub. The first time, `git push -u origin <branch>` links the local branch to the remote one; afterwards plain `git push` is enough.
+- **Pull:** bring new commits from GitHub into your local copy (`git pull`).
+- **Habit:** run `git status` and `git diff --staged` before every commit. (Once, an empty `ci.yml` got committed because the editor never saved the file; looking first would have shown it.)
+
+### 12.2 Branching: GitHub Flow (design §6.1)
+- **GitHub Flow:** one protected `main` that's always deployable, plus short-lived branches (2–3 days at most) for each change.
+- **Branch names:** `type/short-description`, for example `feat/14-trip-request`, `fix/31-group-full-race`, `docs/...`, `chore/...`, `ci/...`, `refactor/...`, `test/...`, `spike/...`.
+- **Not GitFlow** (with long-lived `develop` and `release/*` branches): too much overhead for two developers.
+- **Conventional commits:** commit messages start with their type, like `feat:`, `fix:`, `docs:`, `chore:`, `ci:`. Pull request titles use the same format.
+- **Always pull `main` before creating a new branch.** Twice in this project a branch started from an old `main` and was missing merged work; the fix was `git merge --ff-only main` while the branch had no commits.
 
 ### 12.3 Pull requests and merging
-- **PR:** a request to merge a branch into `main`; where review and CI happen.
-- **Draft PR:** marked not ready; can't merge but CI runs.
-- **Squash merge:** all the branch's commits become **one** new commit on `main` (title = PR title). Keeps history clean.
-- **Check the PR title before merging.** GitHub fills it from the branch name (PR #3 merged as `Docs/learning notes`); edit it to `type: description` so `main`'s history stays clean.
-- After a squash merge, `git branch -d` refuses to delete the branch (git doesn't see its original commits in `main`); use `-D` once you know it's merged.
-- `git fetch --prune` removes local records of deleted remote branches.
+- **Pull request (PR):** a request to merge a branch into `main`. It's where review and automatic checks happen.
+- **Draft PR:** marked "not ready"; it can't be merged, but the checks still run.
+- **Squash merge:** all of the branch's commits become **one** new commit on `main`, titled with the PR title. It keeps `main`'s history clean.
+- **Check the PR title before merging.** GitHub fills it from the branch name (PR #3 was merged as `Docs/learning notes`); edit it to `type: description` first.
+- After a squash merge, `git branch -d` refuses to delete the branch (Git can't see its original commits in `main`). Use `-D` once you know it was merged.
+- `git fetch --prune` removes your local records of branches deleted on GitHub.
 
 ### 12.4 Branch protection on `main` (what we set)
-PR required (also for admins), 0 approvals until the second dev joins (then 1), old approvals dismissed on new commits, comments must be resolved, linear history, no force pushes or deletion, **required checks `api` + `web`**, **branch must be up to date** before merging.
-- **Required check:** the Merge button stays disabled until named checks pass. Names = CI job names. GitHub only offers names it has seen run.
-- **Up to date before merging:** two PRs can each pass alone but break together; this forces CI to test the real combination ("Update branch" button).
-- Free branch protection is only enforced on **public** repos (or paid plans).
+**Branch protection** is a set of GitHub rules for a branch. Ours: a PR is required (even for admins); 0 approvals until the second developer joins (then 1); old approvals are dismissed when new commits arrive; review comments must be resolved; history must be linear; no force pushes or deletion; the **required checks `api` and `web`** must pass; and the **branch must be up to date** with `main` before merging.
+- **Required check:** the Merge button stays disabled until the named checks pass. The names are the CI job names (chapter 13); GitHub only offers names it has already seen run.
+- **Up to date before merging:** two PRs can each pass on their own but break together. This rule forces the checks to test the real combination (the "Update branch" button).
+- Free branch protection is only enforced on **public** repositories (or on paid plans).
 
 ### 12.5 Rewriting history (lesson from the Ubery repo)
-- Removing a line from a pushed commit means **rewriting** it (`git commit --amend`) and **force-pushing**, which replaces history on GitHub. Anyone who already pulled must reset.
-- GitHub's **contributors sidebar is cached**; it kept showing "claude" from a `Co-Authored-By` trailer even after the rewrite. That's why the project moved to the clean `Namastute` repo.
-- Rule now: no co-author trailers or AI attribution in commits or PRs.
+- Removing something from a commit that was already pushed means **rewriting** it (`git commit --amend`) and **force-pushing**, which replaces history on GitHub. Anyone who already pulled must reset their copy.
+- GitHub's **contributors sidebar is cached**: it kept showing an extra contributor from a `Co-Authored-By` line even after the rewrite. That's why the project moved to the clean `Namastute` repository.
+- The rule since then: no co-author lines and no AI attribution in commits or PRs.
 
 ---
 
 ## 13. CI with GitHub Actions
 
+### 13.0 Words first
+- **CI (Continuous Integration):** automatically building and testing every change before it can join `main` (13.1).
+- **Workflow:** an automated process described in a YAML file.
+- **Runner:** a fresh virtual machine that GitHub starts to run a job, then throws away.
+- **Pipeline:** the chain of automated steps a change goes through (build, test…).
+- **Cache:** saved downloads reused next time, so things run faster.
+
 ### 13.1 What CI is
-**Continuous Integration:** every change is automatically built and tested on a **clean machine** before it can join `main`.
-- Clean machine = only what's in git. Catches "works on my laptop" (cached jars, env vars, uncommitted files).
-- Automatic = nobody forgets to run tests.
-- With required checks, broken code **can't** be merged.
+Every change is automatically built and tested on a **clean machine** before it can be merged.
+- A clean machine has only what's in Git, so it catches "works on my laptop" problems: cached libraries, environment variables, files you forgot to commit.
+- It's automatic, so nobody can forget to run the tests.
+- With required checks (12.4), broken code **can't** be merged.
 
 ### 13.2 Parts of GitHub Actions
 | Term | Meaning | Ours |
 |---|---|---|
-| Workflow | YAML file in `.github/workflows/` | `ci.yml` |
-| Event/trigger | What starts it | PR opened/updated; push to `main` |
+| Workflow | A YAML file in `.github/workflows/` | `ci.yml` |
+| Event / trigger | What starts it | A PR opened or updated; a push to `main` |
 | Job | Steps on one machine; jobs run in parallel | `api`, `web` |
-| Runner | Fresh VM for a job, deleted after | `ubuntu-latest` |
+| Runner | The fresh machine for a job | `ubuntu-latest` |
 | Step | One command or action, in order; a failure stops the job | `./mvnw -B verify` |
-| Action | Reusable ready-made step (`uses:`) | `actions/checkout`, `setup-java`, `setup-node`, `pnpm/action-setup` |
-| Service container | Docker container beside a job | Postgres for `contextLoads` |
+| Action | A reusable ready-made step (`uses:`) | `actions/checkout`, `setup-java`, `setup-node`, `pnpm/action-setup` |
+| Service container | A Docker container running beside a job | Postgres and Redis for the integration tests |
 
 ### 13.3 Lines worth remembering
-- `./mvnw -B verify`: `verify` = compile + test + package + final checks; `-B` = batch mode, cleaner logs.
-- Postgres service uses the **same** DB name/user/password as `application.yaml`, so no config changes.
-- `pnpm install --frozen-lockfile`: install exactly the lockfile; fail if `package.json` disagrees.
+- `./mvnw -B verify`: `verify` = compile, test, package and final checks; `-B` = batch mode, for cleaner logs.
+- The Postgres service uses the **same** database name, user and password as `application.yaml`, so no settings change.
+- `pnpm install --frozen-lockfile`: install exactly what the lockfile says, and fail if `package.json` disagrees with it.
 - `cache: maven` / `cache: pnpm`: reuse downloads between runs (much faster).
-- `@v5`, `@v4`: pin action major versions so a new release can't change the build silently.
-- A workflow run that fails in **0 seconds** with "workflow file issue" = the YAML is invalid or empty.
+- `@v5`, `@v4`: pin each action's major version, so a new release can't silently change the build.
+- A run that fails in **0 seconds** with "workflow file issue" means the YAML is invalid or empty.
+- **Later additions:** both jobs check that the generated API types are up to date (53.5), and the API job starts Redis too (23.12).
 
 ---
 
 ## 14. Cross-platform gotchas: permissions and line endings
 
+### 14.0 Words first
+- **Cross-platform:** working on several operating systems (we develop on Windows; CI and servers run Linux).
+- **File permission:** a rule on a file saying who may read, write or run it.
+- **Line ending:** the invisible character(s) at the end of each line in a text file.
+
 ### 14.1 Executable permission
 - Linux runs a file as a program only if it has the **executable flag**. Windows has no such flag.
-- Extracting `mvnw` on Windows lost it: git recorded `100644` (normal) instead of `100755` (executable), so CI would fail with "Permission denied".
-- Fix: `git update-index --chmod=+x apps/api/mvnw`. Check: `git ls-files -s apps/api/mvnw`.
+- Extracting `mvnw` on Windows lost it: Git recorded the file as `100644` (normal) instead of `100755` (executable), so CI failed with "Permission denied".
+- **Fix:** `git update-index --chmod=+x apps/api/mvnw`. Check with `git ls-files -s apps/api/mvnw`.
 
 ### 14.2 Line endings
-- Windows ends lines with **CRLF** (`\r\n`, Carriage Return + Line Feed, from typewriters); Linux/Mac with **LF** (`\n`).
-- Mixed endings make git show every line as changed and break Linux scripts (`bad interpreter: /bin/sh^M`).
-- Fix: root **`.gitattributes`**:
+- Windows ends lines with **CRLF** (`\r\n`, "carriage return + line feed", a habit from typewriters); Linux and Mac use **LF** (`\n`).
+- Mixed endings make Git show every line as changed, and break Linux scripts (`bad interpreter: /bin/sh^M`).
+- **Fix:** a root **`.gitattributes`** file:
   ```
   * text=auto eol=lf
   *.cmd text eol=crlf
   *.bat text eol=crlf
   ```
-  then `git add --renormalize .` to re-apply to existing files.
+  then `git add --renormalize .` to apply it to existing files.
 
 ---
 
 ## 15. AWS: account security and cost control
 
+### 15.0 Words first
+- **AWS (Amazon Web Services):** a company that rents out servers, storage and other computing services by the hour.
+- **Cloud:** computers you rent over the internet instead of owning.
+- **Root user:** the original, all-powerful login of an AWS account (the sign-up email).
+- **MFA (multi-factor authentication):** logging in with something you know (a password) **and** something you have (a phone app's code).
+- **Region:** a group of AWS data centres in one area, like `ap-south-1` (Mumbai).
+
 ### 15.1 Root user and MFA
-- The **root user** (sign-up email) can do anything, including run up huge bills. A leaked root password without MFA is how student accounts get crypto-mining bills.
-- **MFA** (multi-factor authentication) added via `https://console.aws.amazon.com/iam/home#/security_credentials` → Assign MFA device → Authenticator app.
-- **TOTP** (Time-based One-Time Password): AWS and the phone share a secret from the QR code; each computes `HMAC(secret, time ÷ 30)` → 6 digits. No communication needed, works offline. AWS asks for two consecutive codes to check the clocks agree.
-- Keep a backup (cloud-backed authenticator or a second MFA device). Later: use an IAM user for daily work, root only for billing/emergencies.
+- The root user can do anything, including run up huge bills. A leaked root password without MFA is how student accounts end up with crypto-mining bills.
+- We added MFA via `https://console.aws.amazon.com/iam/home#/security_credentials` → *Assign MFA device* → *Authenticator app*.
+- **TOTP** (Time-based One-Time Password) is how authenticator apps work: AWS and your phone share a secret (from the QR code), and each computes `HMAC(secret, time ÷ 30)` (HMAC is explained in 20.3) → 6 digits. They never need to talk to each other, so it works offline. AWS asks for two codes in a row to check the clocks agree.
+- Keep a backup (a cloud-backed authenticator or a second device). Later, use a separate everyday user (an **IAM user**) and keep the root user for billing and emergencies.
 
 ### 15.2 AWS Budgets (`monthly-cost-guard`)
-- A budget is an **alarm, not a limit**: AWS keeps billing after it fires.
-- Cost data updates ~3 times a day, so alerts lag; use several low thresholds.
-- **Actual** = real spend crossed a line. **Forecasted** = AWS predicts you'll cross it by month-end (earliest warning).
-- **Credits trap:** by default credits are subtracted, so cost shows $0 and alerts never fire until credits run out. We **excluded Charge type: Credit** (now under Scope → Filter specific AWS cost dimensions).
-- Ours: $50/month, alerts at 20% ($10), 50% ($25), 100% ($50) actual + 100% forecasted.
-- **Unblended costs:** what each usage actually cost at the time; the plain number (others matter for Reserved Instances / Savings Plans).
-- Habit: **stop the EC2 instance** after demos.
+- A **budget** is an **alarm, not a limit**: AWS keeps charging after it fires.
+- Cost data updates about 3 times a day, so alerts lag; use several low thresholds.
+- **Actual** = real spending crossed a line. **Forecasted** = AWS predicts you'll cross it by the end of the month (the earliest warning).
+- **The credits trap:** by default, credits are subtracted, so cost shows $0 and alerts never fire until the credits run out. We **excluded the "Credit" charge type** (under *Scope → Filter specific AWS cost dimensions*).
+- Ours: $50 a month, alerts at 20% ($10), 50% ($25) and 100% ($50) of actual spending, plus 100% forecasted.
+- **Unblended costs:** what each use actually cost at the time; the plain number to watch.
+- Habit: **stop the EC2 server** after demos.
 
 ### 15.3 Regions
-- The URL showed `ap-southeast-2` (Sydney). For Delhi users, create servers in **`ap-south-1` (Mumbai)**: lower latency, and data stays in India (helps with the DPDP Act). Billing, IAM and Budgets are global.
+The AWS console first showed `ap-southeast-2` (Sydney). For Delhi users, servers belong in **`ap-south-1` (Mumbai)**: lower delay, and data stays in India (which helps with India's data protection law, the DPDP Act). Billing, user management (IAM) and Budgets are global, not per region.
 
 ---
 
 ## 16. Hosting and infrastructure decisions
 
+### 16.0 Words first
+- **Hosting:** running an app on a server that users can reach.
+- **EC2:** AWS's rentable virtual servers (an **instance** = one server).
+- **HTTPS:** HTTP with encryption, shown as the padlock in a browser (chapter 54).
+- **Domain:** a human-readable address like `namastute.in`.
+- **Kubernetes:** a system for running many containers across many servers (16.2).
+
 ### 16.1 Where Spring Boot runs: one EC2 instance
-- Next.js on **Vercel** (free); Spring Boot + Postgres + Redis on **one EC2 instance** with Docker Compose; **Caddy** in front for HTTPS (automatic Let's Encrypt certificates).
-- **⚠️ Changed in 54.6:** the web app now runs on the same EC2 server too, under one domain.
-- Why: WebSockets need an always-on server (free platforms that sleep drop connections); load balancers/RDS/Elastic Beanstalk add $15–30/month each; one instance ≈ $18/month ≈ 5 months of credits.
+- The first plan: Next.js on **Vercel** (free), and Spring Boot, Postgres and Redis on **one EC2 instance** with Docker Compose, with **Caddy** in front for HTTPS (free automatic certificates).
+- **Later change (54.6):** the web app runs on the same EC2 server too, under one domain.
+- **Why one server:** WebSockets (chapter 45) need an always-on server (free platforms that sleep drop connections); managed load balancers and databases add $15–30 a month each; one instance costs about $18 a month, about 5 months of our credits.
 - Details to remember:
-  - **t4g = ARM (Graviton):** build `linux/arm64` images in CI, or use t3 (Intel). The `postgis/postgis` image has historically been Intel-only.
-  - **Memory:** JVM + Postgres + Redis in 2 GB is tight → cap heap `-Xmx512m`, or t4g.medium (4 GB).
-  - **HTTPS needs a domain** pointing at the server; use an **Elastic IP** so the address doesn't change (billed while the instance is stopped).
-- Deploy at the start of Phase 2, not before.
+  - **t4g servers are ARM** (a different kind of processor) and the `postgis/postgis` image has historically been Intel-only, so we chose **t3** (Intel/AMD) servers (54.3).
+  - **Memory:** Java, Postgres and Redis in 2 GB is tight, so every container has a memory limit (55.5).
+  - **HTTPS needs a domain** pointing at the server; an **Elastic IP** keeps the server's address fixed (it's billed while the server is stopped).
+- **Status (2026-10-16):** not deployed yet. It waits on an SMS provider and a domain (*Before real users* checklist in `infra/README.md`).
 
 ### 16.2 Why no Kubernetes (Proposed Stash idea 2)
-- Kubernetes manages **many containers across many servers** (restarts, load spreading, rolling deploys, autoscaling).
-- We have 1 server, 1 app. EKS costs ~$73/month for the control plane alone; k3s needs RAM we don't have; weeks of config for 2 devs.
-- Plan: write manifests and test them on a **local** cluster (`kind`/`minikube`) for $0. Interview line: "Production runs on Docker Compose because one instance is enough; I tested Kubernetes manifests locally for when we scale."
+- Kubernetes manages **many containers across many servers**: restarting them, spreading load, rolling out new versions, adding servers automatically.
+- We have one server and one app. AWS's managed Kubernetes costs about $73 a month for the control plane alone; lighter versions need memory we don't have; and it would mean weeks of setup for two developers.
+- The plan instead: write Kubernetes files and test them on a **local** cluster (`kind` or `minikube`) for $0. Interview line: "Production runs on Docker Compose because one instance is enough; I tested Kubernetes manifests locally for when we scale."
 
 ### 16.3 C++ in the project (Proposed Stash idea 1)
-- Use each language where it genuinely fits. C++ = an **offline** road-distance engine: build a road graph from OpenStreetMap data, run multithreaded **Dijkstra** between ~500 localities, load the distance matrix into Postgres. Replaces the "straight-line × 1.4" shortcut without a paid routing API.
+Use each language where it genuinely fits. A C++ program could compute **real road distances offline**: build a road graph from OpenStreetMap data, run **Dijkstra's shortest-path algorithm** (in many threads at once) between about 500 localities, and load the distances into Postgres. That would replace our "straight-line × 1.4" estimate (33.3) without paying for a routing service.
 
 ---
 
 ## 17. Terminal basics
 
-- Every terminal has a **current directory** (shown in the prompt).
-- **`.\file`** (PowerShell) / **`./file`** (bash) = "this folder's file". PowerShell won't run programs from the current folder unless you say so; "not recognized as the name of a cmdlet" usually means you're in the wrong folder.
-- `cd apps\api` = go into a folder; `cd ..` = up one level; `cd ..\..` = up two.
-- **Environment variable:** a named value the OS gives programs at start (e.g. `DB_PASSWORD`, `JAVA_HOME`).
-- After installing a tool (like the JDK), **open a new terminal**; old ones don't see the updated PATH.
+### 17.0 Words first
+- **Terminal:** a text window for typing commands (see *Start here*).
+- **Shell:** the program inside it that runs your commands: **PowerShell** on Windows, **bash** on Linux and in Git Bash.
+- **Directory:** another word for folder.
+- **Path:** where a file is, written as folders separated by slashes, like `apps/api/mvnw`.
+- **PATH (with capitals):** an environment variable listing the folders where the shell looks for programs.
+
+### 17.1 Moving around
+- Every terminal has a **current directory**, shown in the prompt.
+- `cd apps\api` goes into a folder; `cd ..` goes up one level; `cd ..\..` goes up two.
+- **`.\file`** (PowerShell) or **`./file`** (bash) means "the file in *this* folder". PowerShell won't run a program from the current folder unless you say so, so "not recognized as the name of a cmdlet" usually means you're in the wrong folder or forgot the `.\`.
+
+### 17.2 Environment variables and new tools
+- An **environment variable** is a named value the operating system gives a program when it starts, such as `DB_PASSWORD` or `JAVA_HOME`.
+- After installing a tool (like the Java JDK), **open a new terminal**: old ones don't see the updated PATH.
+
+---
+
+## Part III. Logging in
+
+Logging in is the first real feature, and it touches almost every layer: how browsers and servers talk (HTTP), how to prove someone owns a phone number without passwords (one-time codes), how to store secrets safely (hashing), a fast in-memory database (Redis), how to stop abuse (rate limiting), how to stay logged in safely (tokens and cookies), how the backend checks every request (Spring Security), how Java objects become database rows (JPA), and how the browser side works (CORS, React). Concept chapters alternate with walkthroughs of the real code.
 
 ---
 
 ## 18. HTTP and REST APIs
 
+### 18.0 Words first
+- **Protocol:** an agreed format for messages, so both sides understand each other.
+- **HTTP (HyperText Transfer Protocol):** the protocol browsers and servers use to talk.
+- **Client / server:** the side that asks / the side that answers (see *Start here*).
+- **Request / response:** the message the client sends / the server's reply.
+- **Header:** a line of extra information attached to a request or response, like `Content-Type: application/json`.
+- **Body:** the main content of a request or response (the data itself).
+- **JSON:** a text format for data (18.5).
+
 ### 18.1 Request and response
-- Browser (frontend) and Spring (backend) talk using **HTTP**, a **protocol** (agreed message format).
-- Always a **request** from the client, then a **response** from the server. The server never speaks first.
+- The browser (frontend) and Spring (backend) talk using HTTP.
+- It's always a **request** from the client, then a **response** from the server. The server never speaks first (chapter 45 shows how chat gets around that).
 
 ### 18.2 Parts of a request
 ```
@@ -584,8 +890,8 @@ Content-Type: application/json
 
 {"phone": "+919876543210"}              ← body
 ```
-- **Method** = kind of action: `GET` read (no body), `POST` create/trigger, `PATCH` change part, `DELETE` remove.
-- **Path** = which thing. **Headers** = information about the request. **Body** = the data.
+- The **method** says what kind of action it is: `GET` reads (no body), `POST` creates or triggers something, `PATCH` changes part of something, `DELETE` removes.
+- The **path** says which thing. **Headers** carry information about the request. The **body** carries the data.
 
 ### 18.3 Parts of a response
 ```
@@ -594,37 +900,45 @@ Content-Type: application/json
 
 {"error": {"code": "OTP_RATE_LIMITED", "message": "Try again in 12 minutes"}}
 ```
-Our error body always has this shape: a machine-readable `code` the frontend can switch on, and a human-readable `message`.
+Our error bodies always have this shape: a machine-readable `code` the frontend can act on, and a human-readable `message` it can show.
 
 ### 18.4 Status codes
+A **status code** is a three-digit number saying how the request went.
 | Family | Meaning | Examples |
 |---|---|---|
 | 2xx | Success | `200 OK`, `201 Created`, `204 No Content` |
-| 4xx | Client's fault | `400` invalid input, `401` not logged in, `403` not allowed, `404` not found, `409` conflict (group full), `429` too many requests |
-| 5xx | Server's fault | `500` bug/crash |
+| 4xx | The client's fault | `400` invalid input, `401` not logged in, `403` not allowed, `404` not found, `409` conflict (for example "group full"), `429` too many requests |
+| 5xx | The server's fault | `500` a bug or crash |
 
 ### 18.5 JSON, APIs, REST, controllers
-- **JSON:** text format for bodies: `{"key": value}`, lists in `[...]`. Spring converts Java objects ↔ JSON automatically.
-- **API:** the set of requests a program accepts (ours: Design v0.0.2 §3.5).
-- **REST:** URLs name *things* (`/trips/42`), methods say what to do with them.
-- **Endpoint:** one method + path, e.g. `POST /api/v1/auth/otp`.
-- **Controller:** a `@RestController` class whose methods handle endpoints. Tomcat receives the request → Spring finds the method → JSON body becomes a Java object → result becomes JSON.
+- **JSON** (JavaScript Object Notation) is a text format for data: `{"key": value}`, with lists in `[...]`. Spring converts Java objects to JSON and back automatically.
+- An **API** is the set of requests a program accepts (ours is listed in design §3.5, and since chapter 52 in a generated OpenAPI file).
+- **REST** is a style for designing APIs: URLs name *things* (`/trips/42`), and methods say what to do with them.
+- An **endpoint** is one method plus one path, for example `POST /api/v1/auth/otp`.
+- A **controller** is a class marked `@RestController` whose methods handle endpoints. Tomcat receives the request → Spring finds the matching method → the JSON body becomes a Java object → the method's result becomes JSON again.
 
 ### 18.6 HTTP is stateless
-Each request stands alone; the server doesn't remember previous ones. So after login, **every request must carry proof of identity** (our JWT). This is why login systems look the way they do.
+**Stateless** means each request stands alone: the server doesn't remember previous ones. So after login, **every request must carry proof of who you are** (our JWT, chapter 24). That single fact explains why login systems look the way they do.
 
 ---
 
 ## 19. Authentication and phone OTP
 
+### 19.0 Words first
+- **Authentication:** proving *who you are*.
+- **Authorization:** deciding *what you may do* (for example, join a women-only group).
+- **OTP (One-Time Password):** a short code that works once and expires quickly.
+- **SMS provider:** a company whose service sends text messages for you, for a fee per message.
+- **Rate limiting:** capping how often something can be done (chapter 22).
+
 ### 19.1 Authentication vs authorization
-- **Authentication:** *who are you?*
-- **Authorization:** *what may you do?* (e.g. join a women-only group)
+Authentication asks "who are you?" and comes first. Authorization asks "what may you do?" and is checked on every action afterwards.
 
 ### 19.2 Why phone OTP
-- **OTP** = One-Time Password: short code, single use, expires fast.
-- No passwords to forget/reuse/leak; every traveller has a phone; proves the number is real (trust between strangers).
-- Trade-off: each SMS costs money and anyone reading the SMS can log in → needs rate limiting.
+- No passwords to forget, reuse or leak.
+- Every traveller has a phone.
+- It proves the number is real, which builds trust between strangers.
+- **The trade-off:** every SMS costs money, and anyone who sees the SMS can log in, so it needs rate limiting (chapter 22).
 
 ### 19.3 The flow
 ```
@@ -643,120 +957,141 @@ Browser                         Spring API                       Redis          
   |  200 OK  (tokens)               |                               |                    |
   |<--------------------------------|                               |                    |
 ```
-1. `POST /auth/otp {phone}` → rate-limit check → random 6-digit code → store its **HMAC** in Redis for 5 min → send SMS → `204 No Content`.
-2. `POST /auth/verify {phone, code}` → fetch stored HMAC → compare → on match delete it, **find or create** the user in Postgres → return tokens.
-- No separate sign-up: the first successful verify creates the user.
+1. `POST /auth/otp {phone}` → check the rate limits → make a random 6-digit code → store its **HMAC** (a keyed fingerprint, chapter 20) in Redis for 5 minutes → send the SMS → answer `204 No Content`.
+2. `POST /auth/verify {phone, code}` → fetch the stored HMAC → compare → if it matches, delete it, **find or create** the user in Postgres → return tokens (chapter 24).
+- There's no separate sign-up: the first successful verify creates the user.
 
 ### 19.4 Our slices
-`feat/otp-api` (request + verify) → `feat/auth-tokens` (JWT, refresh, Spring Security) → `feat/otp-ui` (login screen).
+Login was built in three slices: `feat/otp-api` (request and verify a code) → `feat/auth-tokens` (staying logged in: JWT, refresh tokens, Spring Security) → `feat/otp-ui` (the login screen).
 
 ---
 
 ## 20. Hashing, HMAC and keeping OTPs safe
 
+### 20.0 Words first
+- **Hash function:** a function that turns any input into a fixed-length fingerprint (20.1).
+- **SHA-256:** a widely used hash function; its fingerprints are 256 bits, written as 64 **hex** characters (`0-9`, `a-f`).
+- **Secret key:** a value only the server knows, used in cryptography.
+- **Attacker:** anyone trying to break the rules (read data, log in as someone else…).
+- **Brute force:** trying every possible value until one works.
+
 ### 20.1 Hashing
-- A **hash function** turns any input into a fixed-length fingerprint (SHA-256 → 64 hex characters).
-- **One-way:** no formula to get the input back. **Deterministic:** same input → same fingerprint, so you can check a guess without storing the original.
-- Store the hash, not the code: a leaked Redis shows fingerprints, not usable codes. (Flyway's checksum is also a hash.)
+- A hash function is **one-way**: there's no formula to get the input back from the fingerprint.
+- It's **deterministic**: the same input always gives the same fingerprint, so you can check a guess without storing the original.
+- So we store the hash, not the code: if Redis ever leaked, it would show fingerprints, not usable codes. (Flyway's checksum, chapter 9, is also a hash.)
 
 ### 20.2 Why a plain hash isn't enough for a 6-digit code
-Only 1,000,000 possible codes. An attacker with a stolen fingerprint hashes all of them in under a second and finds the match.
+There are only 1,000,000 possible codes. An attacker with a stolen fingerprint can hash all of them in under a second and find the match: a brute-force attack.
 
 ### 20.3 HMAC
-- **HMAC** = a hash that mixes in a **secret key** only the server knows: `HMAC(secret, code)`.
-- Without the secret, an attacker can't compute fingerprints to compare, so trying all codes is useless.
-- The secret lives in an environment variable on the server, never in git or Redis. (AWS MFA's TOTP also uses HMAC with a shared secret.)
+- **HMAC** (Hash-based Message Authentication Code) is a hash that mixes in a **secret key** only the server knows: `HMAC(secret, code)`.
+- Without the secret, an attacker can't compute fingerprints to compare against, so trying all the codes is useless.
+- The secret lives in an environment variable on the server, never in Git or in Redis. (AWS's MFA codes, 15.1, also use HMAC with a shared secret.)
 
 ### 20.4 All the protections
 | Protection | Rule | Stops |
 |---|---|---|
 | Secure random | `SecureRandom` (cryptographically secure), not `Random` (predictable) | Guessing the next code |
 | Expiry (TTL) | 5 minutes | Old codes used later |
-| Attempt limit | 5 wrong tries → code deleted | Guessing (5 in 1,000,000) |
+| Attempt limit | 5 wrong tries → the code is deleted | Guessing (5 chances in 1,000,000) |
 | Single use | Deleted on success | Reusing an intercepted code |
-| Constant-time compare | `MessageDigest.isEqual`, not `equals` | **Timing attacks** (a normal compare stops at the first difference, leaking information through response time) |
-| Never log codes | | Leaks through logs |
+| Constant-time compare | `MessageDigest.isEqual`, not `equals` | **Timing attacks**: a normal comparison stops at the first different character, so the response time leaks how much of a guess was right |
+| Never log codes | | Leaks through log files |
 
 ---
 
 ## 21. Redis
 
+### 21.0 Words first
+- **Key-value store:** a database that saves a **value** under a **key** and fetches it by that key, like a dictionary.
+- **RAM (memory):** a computer's fast, temporary storage. It's much faster than disk, but its contents vanish when the program stops.
+- **TTL (time to live):** how long a piece of data may exist before it's deleted automatically.
+- **Atomic:** happening as one indivisible step that nothing can interrupt (21.4).
+- **Race condition:** a bug that appears only when two things happen at the same moment (21.4, chapter 40).
+
 ### 21.1 What it is
-- A **key-value store**: save a **value** under a **key**, fetch it by key.
-- Keeps data in **RAM**, so operations take microseconds (Postgres reads disk and does much more per query).
-- Each key can have a **TTL** (time to live); Redis deletes it automatically when it runs out.
+- **Redis** is a key-value store that keeps its data **in RAM**, so each operation takes microseconds (Postgres reads from disk and does much more work per query).
+- Each key can have a TTL; Redis deletes it automatically when the time runs out.
 
 ### 21.2 What goes in Redis vs Postgres
-- OTPs are **temporary** (5 min) and **high-churn** (created, checked, deleted constantly). In Postgres, expired rows would pile up and need a **cleanup job**; Redis's TTL removes them for free.
-- Rate-limit counters are hit on **every** request, so speed matters.
-- Redis: **temporary, high-churn, fast** data that's fine to lose (OTPs, rate-limit counters, live location). If Redis forgets an OTP, the user requests another.
-- Postgres: **permanent** data (users, trips, groups).
-- So our Redis service has **no volume** on purpose.
+- OTPs are **temporary** (5 minutes) and **high-churn** (created, checked and deleted constantly). In Postgres, expired rows would pile up and need a cleanup job; Redis's TTL removes them for free.
+- Rate-limit counters (chapter 22) are hit on **every** request they protect, so speed matters.
+- So **Redis** holds temporary, high-churn, fast data that's fine to lose (OTPs and rate-limit counters). If Redis forgets an OTP, the user simply requests another.
+- **Postgres** holds permanent data (users, trips, groups).
+- That's why our Redis service has **no volume** on purpose (7.2).
+- **Correction:** an early version of this list also named live location. In the end live location isn't stored anywhere, not even in Redis: it's passed straight to the group and forgotten (chapter 60).
 
 ### 21.3 Commands
 | Command | Does |
 |---|---|
-| `SET key value EX 300` | Save with a 300 s TTL |
-| `GET key` | Read (`(nil)` if missing/expired) |
-| `DEL key` | Delete (returns how many keys were deleted) |
-| `TTL key` | Seconds left; `-2` = key doesn't exist, `-1` = no expiry |
-| `INCR key` | Add 1 atomically; creates it at 1 if missing |
+| `SET key value EX 300` | Save with a 300-second TTL |
+| `GET key` | Read it (`(nil)` if missing or expired) |
+| `DEL key` | Delete it (returns how many keys were deleted) |
+| `TTL key` | Seconds left; `-2` = the key doesn't exist, `-1` = no expiry |
+| `INCR key` | Add 1 atomically; creates the key at 1 if missing |
 | `EXPIRE key 900` | Set a TTL on an existing key (returns 1 if applied) |
-| `KEYS pattern` | List matching keys; **local only**, it blocks a busy server |
+| `KEYS pattern` | List matching keys. **Local exploring only**: it blocks a busy server |
 | `PING` | Health check (answers `PONG`) |
 
-Open it with: `docker compose -f infra/docker-compose.yml exec redis redis-cli` (leave with `exit`).
+Open Redis's command line with `docker compose -f infra/docker-compose.yml exec redis redis-cli` (leave with `exit`).
 
 ### 21.4 Atomic operations and race conditions
-- **Atomic** = happens as one indivisible step. Two simultaneous `INCR`s both count.
-- Doing "read 4, add 1, save 5" in separate steps from Java, two requests could both read 4 and both save 5, losing a count. That's a **race condition** (same family as the "last seat in a group" problem).
-- **Gotcha:** `INCR` then `EXPIRE` are *two* commands. If the app crashes between them, the counter has no TTL and the phone stays blocked forever. Fix: send both as one atomic unit (a Redis transaction/pipeline or a small Lua script), or check for a missing TTL.
+- Two simultaneous `INCR` commands both count, because each one is atomic.
+- If Java instead did "read 4, add 1, save 5" as separate steps, two requests could both read 4 and both save 5, and one count would be lost. That's a race condition, from the same family as "two people take the last seat" (chapter 40).
+- **A gotcha:** `INCR` followed by `EXPIRE` is *two* commands. If the app crashed between them, the counter would have no TTL and the phone would stay blocked forever. The fix is to run both as one atomic unit, which our code does with a tiny script inside Redis (23.4).
 
 ### 21.5 Hands-on lab: the OTP flow by hand (what each line did)
 
 **A. Store an OTP and watch it age**
 | Command | Result | Why |
 |---|---|---|
-| `SET otp:+919876543210 "fakehash123" EX 300` | `OK` | Saves a value under the key, with a 300 s TTL. The key name `otp:<phone>` is a **naming convention**: prefix says *what* it is, then *whose*. |
+| `SET otp:+919876543210 "fakehash123" EX 300` | `OK` | Saves a value under the key, with a 300-second TTL. The key name `otp:<phone>` follows a **naming convention**: the prefix says *what* it is, then *whose*. |
 | `GET otp:+919876543210` | `"fakehash123"` | Reads it back by key. In the app, this is where verify fetches the stored HMAC. |
 | `TTL ...` (twice) | `280`, then `266` | Seconds left. It counts down by itself: Redis tracks time per key. |
 
 **B. Automatic expiry**
 | Command | Result | Why |
 |---|---|---|
-| `SET short "bye" EX 10` | `OK` | A key that lives 10 s. |
+| `SET short "bye" EX 10` | `OK` | A key that lives 10 seconds. |
 | `GET short` (at once) | `"bye"` | Still alive. |
-| `GET short` (after 10 s) | `(nil)` | Redis **deleted it on its own**; `nil` = nothing there. No cleanup job needed. |
-| `TTL short` | `-2` | `-2` = key doesn't exist (`-1` would be "exists, never expires"). |
+| `GET short` (after 10 s) | `(nil)` | Redis **deleted it on its own**; `nil` means nothing is there. No cleanup job needed. |
+| `TTL short` | `-2` | `-2` = the key doesn't exist (`-1` would mean "exists, never expires"). |
 
 **C. Fixed-window rate limiter**
 | Command | Result | Why |
 |---|---|---|
-| `INCR rate:otp:phone:...` | `1` | Key didn't exist → created at 0 and incremented to 1. First request of the window. |
-| `EXPIRE ... 900` | `1` | Starts the 15-minute window (`1` = TTL applied; `0` if the key were missing). |
-| `INCR` ×3 more | `2`, `3`, `4` | Requests 2 and 3 are allowed (≤ 3). **4 > 3 → the app would reply 429.** |
+| `INCR rate:otp:phone:...` | `1` | The key didn't exist, so it was created at 0 and increased to 1: the first request of the window. |
+| `EXPIRE ... 900` | `1` | Starts the 15-minute window (`1` = TTL applied). |
+| `INCR` ×3 more | `2`, `3`, `4` | Requests 2 and 3 are allowed (3 or fewer). **4 > 3, so the app would answer 429.** |
 | `TTL ...` | `882` | The window is running; at 0 the counter vanishes and the phone may request again. |
 
 **D. Single use**
 | Command | Result | Why |
 |---|---|---|
-| `DEL otp:+919876543210` | `1` | Number of keys deleted. In the app, a correct code is deleted at once so it can't be reused. |
+| `DEL otp:+919876543210` | `1` | The number of keys deleted. In the app, a correct code is deleted at once so it can't be reused. |
 | `GET otp:...` | `(nil)` | Proves it's gone. |
-| `KEYS *` | only `rate:otp:phone:...` | The OTP is gone; the counter stays until its window ends. (`KEYS` is for local exploring only.) |
+| `KEYS *` | only `rate:otp:phone:...` | The OTP is gone; the counter stays until its window ends. |
 
-**Lesson hidden in C:** `INCR` and `EXPIRE` were two separate commands. If the app crashed between them, the counter would never expire and the phone would be blocked forever. In code they must run as one atomic unit (see 21.4).
+**The lesson hidden in C:** `INCR` and `EXPIRE` were two separate commands. In code they must run as one atomic unit (21.4).
 
 ---
 
 ## 22. Rate limiting
 
+### 22.0 Words first
+- **Rate limit:** at most N actions per period of time.
+- **Window:** the period being counted (for example 15 minutes).
+- **IP address:** the network address a request comes from, like a return address on a letter.
+- **Burst:** many requests arriving close together.
+
 ### 22.1 Why
-Stops someone requesting thousands of OTPs to *someone else's* number (harassment + our SMS bill) and endless code guessing.
+Rate limiting stops someone requesting thousands of OTPs to *someone else's* number (harassment, plus our SMS bill) and stops endless code guessing.
 
 ### 22.2 Our rules
-- Per phone: **3 OTPs / 15 minutes**.
-- Per **IP address** (the network address a request comes from): **10 / hour**, to stop cycling through many numbers.
-- Resend cooldown: **30 seconds**.
+- Per phone number: **3 OTPs per 15 minutes**.
+- Per IP address: **10 per hour**, to stop one attacker cycling through many numbers.
+- A **30-second cooldown** before asking for another code.
+- **Later additions:** per-person limits on searching matches, asking to share and planning trips, plus a limit on chat and location messages (chapters 65 and 68).
 
 ### 22.3 Fixed window counter
 ```
@@ -764,12 +1099,16 @@ count = INCR rate:otp:phone:<phone>
 if count == 1: EXPIRE rate:otp:phone:<phone> 900
 if count > 3:  reject with 429
 ```
-- Simple; the TTL resets the window by itself.
-- **Weakness:** bursts at the window edge (3 at 14:59 + 3 at 15:01 = 6 in two minutes). Sliding window or token bucket fix it; fine for protecting SMS spend. A classic interview trade-off.
+- Simple, and the TTL resets the window by itself.
+- **Its weakness:** bursts at the edge of a window. Three requests at 14:59 plus three at 15:01 make six in two minutes. A **sliding window** or a **token bucket** (other counting methods) would fix that; for protecting SMS spending it's fine. It's a classic interview trade-off.
+- **Later change:** since chapter 69 this counter lives in one shared class, `shared/RateLimiter`, used by OTP and the newer limits alike.
 
 ---
 
 ## 23. Code walkthrough: the OTP service
+
+### 23.0 Before you read
+This is the first **code walkthrough**: the real `OtpService.java`, read piece by piece. It turns the ideas of chapters 19–22 into Java. Java words appear here for the first time (package, import, constant, field, constructor, exception); each one is explained where it's used, so read slowly. Keep the file open beside the book.
 
 File: `apps/api/src/main/java/com/namastute/auth/OtpService.java`. This is the **service layer** for OTP login: all the rules from topics 19–22, with no HTTP in it. Read it next to the file.
 
@@ -831,6 +1170,8 @@ private static final RedisScript<Long> HIT = RedisScript.of("""
 - `"""..."""` is a Java **text block**: a string that spans several lines, so the script stays readable.
 - `RedisScript.of(script, Long.class)` wraps the script and says "the result is a `Long`" (a whole number object).
 - `RedisScript<Long>`: the `<Long>` is a **generic type parameter**: "a RedisScript that returns a Long". The compiler uses it to check we treat the result as a number.
+
+**Later change (69.3):** this script now lives in one shared class, `shared/RateLimiter`, and also returns the time left in the window; `OtpService` calls it.
 
 ### 23.5 The fields (what each OtpService object holds)
 ```java
@@ -986,6 +1327,8 @@ private long hit(String key, Duration window) {
 - `IllegalStateException`: Java's standard "something is in a state that should be impossible" exception. Not an `ApiException`, so it becomes a **500**: a server problem, not the user's fault.
 - `return count`: Java automatically converts the `Long` object to a plain `long` number (**unboxing**).
 
+**Later change (69.3):** `hit` is now one line, `limits.hit(key, window).count()`, using the shared `RateLimiter`. A Redis failure still throws, so OTP never sends codes it can't count.
+
 ### 23.10 `hmac`: the fingerprint
 ```java
 private String hmac(String code) {
@@ -1036,6 +1379,15 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 ---
 
 ## 24. Login tokens: JWT, refresh tokens, cookies
+
+### 24.0 Words first
+- **Session:** the period during which the server treats you as logged in.
+- **Token:** a piece of text the browser sends to prove who it is, like a ticket.
+- **Signature:** a cryptographic stamp (made with a secret key) that proves a token was issued by us and hasn't been changed.
+- **Encoding vs encryption:** encoding only changes the format (anyone can decode it); encryption hides the content (only someone with the key can read it).
+- **Expiry:** the moment a token stops being valid.
+- **Revoke:** to cancel something before it would expire by itself.
+- **Cookie:** a small piece of data the server asks the browser to store and send back automatically (24.1).
 
 ### 24.1 Two ways to remember who's logged in
 HTTP is stateless (18.6), so after login the browser needs proof it sends with every request.
@@ -1089,6 +1441,13 @@ HTTP is stateless (18.6), so after login the browser needs proof it sends with e
 
 ## 25. Spring Security
 
+### 25.0 Words first
+- **Filter:** code that looks at every request before it reaches a controller, and may stop it (25.1).
+- **Principal:** whoever is making the current request, once they're identified.
+- **Bearer token:** a token sent in the `Authorization: Bearer ...` header; whoever carries it is trusted (24.3).
+- **401 vs 403:** "I don't know who you are" vs "I know who you are, and you may not do this" (18.4).
+- **CSRF:** a trick where another website makes your browser send a request to our API (24.6).
+
 ### 25.1 Filters
 - A **filter** inspects a request **before** it reaches a controller; it can add information or reject the request.
 - Spring Security is a **chain of filters**. The **bearer token filter** reads `Authorization: Bearer ...`, asks the **`JwtDecoder`** to check signature, `exp` and issuer, and if valid records the **authenticated principal** (who's calling). Missing/invalid on a protected path → **401**, controller never runs.
@@ -1108,6 +1467,14 @@ HTTP is stateless (18.6), so after login the browser needs proof it sends with e
 
 ## 26. JPA entities and Spring Data repositories
 
+### 26.0 Words first
+- **Entity:** a Java class whose objects are stored as rows of a table.
+- **Repository:** an object whose job is reading and writing one kind of entity.
+- **Query:** a question to the database; **JPQL** is a SQL-like language that uses class and field names instead of table and column names.
+- **Transaction:** a group of database changes that all happen or none do.
+- **`Optional`:** a Java box that either holds a value or is empty, so "not found" can't be forgotten.
+- **Constraint:** a rule the database itself enforces, like "phone numbers are unique".
+
 - **Entity:** a class marked `@Entity` that maps to a table (`User` ↔ `users`); each field ↔ a column. Spring Boot's naming rule turns `userId` into `user_id`.
 - We map **only the columns the code uses**. On insert, the others get their **database defaults** (`verification = 'unverified'`, `role = 'user'`, `created_at = now()`).
 - `ddl-auto: validate` (8) checks every mapped field matches a real column at startup, so a typo fails fast.
@@ -1120,6 +1487,9 @@ HTTP is stateless (18.6), so after login the browser needs proof it sends with e
 ---
 
 ## 27. Code walkthrough: tokens, security and users
+
+### 27.0 Before you read
+This walkthrough covers the slice that made logging in last: the `users` module (entity, repository, service, the first protected endpoint), refresh tokens and their rotation, access tokens (JWT), and Spring Security's configuration. It applies chapters 24–26. New Java ideas, such as records, method references and builders, are explained where they appear.
 
 Files in `apps/api/src/main/java/com/namastute/`. Read each part next to its file.
 
@@ -1434,6 +1804,13 @@ private static ResponseCookie refreshCookie(String value, Duration maxAge) {
 
 ## 28. Browsers, origins and CORS
 
+### 28.0 Words first
+- **Origin:** the scheme, host and port a page or API lives at, like `http://localhost:3000` (28.1).
+- **Scheme / host / port:** `https` / `namastute.in` / `443` in `https://namastute.in:443`.
+- **Cross-origin request:** a page from one origin calling an API at another.
+- **Credentials:** cookies (and similar) sent along with a request.
+- **Preflight:** an automatic permission check the browser sends before certain cross-origin requests (28.3).
+
 ### 28.1 Origin
 **Origin = scheme + host + port.** `http://localhost:3000` (web) and `http://localhost:8080` (API) are **different origins**: change any one part and it's different.
 
@@ -1457,10 +1834,19 @@ private static ResponseCookie refreshCookie(String value, Duration maxAge) {
   - `namastute.vercel.app` ↔ `api.namastute.in`: **different sites**.
 - `SameSite=Lax` cookies are only sent on **same-site** requests. If the web app stayed on `*.vercel.app` while the API is on our domain, the refresh cookie would never be sent, and users would be logged out every 15 minutes.
 - **Decision for deployment (Phase 2):** host the web app and API under the **same domain** (e.g. `app.namastute.in` + `api.namastute.in`); Vercel allows custom domains on the free plan.
+- **Later change (54.6):** the web app and API now share one domain *and* one origin: Caddy serves both from the same address, so CORS isn't needed in production at all.
 
 ---
 
 ## 29. React and Next.js in the browser
+
+### 29.0 Words first
+- **Render:** to work out what a component should show, and draw it.
+- **State:** data a component remembers between renders.
+- **Hook:** a React function starting with `use` that gives a component an ability (29.2).
+- **Effect:** code that runs after something appears on screen, to talk to the world outside React.
+- **Promise:** a JavaScript value that arrives later, such as an HTTP response (29.3).
+- **Server vs client component:** drawn on the server vs running in the browser (29.1).
 
 ### 29.1 Server vs Client Components
 - Next.js App Router components are **Server Components** by default: rendered on the server, sent as HTML.
@@ -1497,6 +1883,9 @@ private static ResponseCookie refreshCookie(String value, Duration maxAge) {
 ---
 
 ## 30. Code walkthrough: CORS and the login screen
+
+### 30.0 Before you read
+Now the browser side of logging in: the backend's CORS settings, `lib/api.ts` (the only file that talks to the API, including the careful token refresh from 29.4), the login screen and the "logged in as…" box. It applies chapters 28–29. TypeScript features are explained as they come up.
 
 ### 30.1 API: `SecurityConfig.java` (CORS part)
 ```java
@@ -1732,7 +2121,20 @@ Invalid number → instant message, no request · valid number → code sent, ti
 
 ---
 
+## Part IV. Profiles, trips and matching
+
+With login working, people need a name, a trip and someone to share with. This part covers changing data safely (PATCH, transactions), names in every Indian script, maps and geocoding, time zones, the rules a trip must follow, and the heart of the app: finding good co-travellers quickly and fairly, without leaking anyone's private details.
+
+---
+
 ## 31. Updating data: PATCH, dirty checking, Unicode
+
+### 31.0 Words first
+- **Partial update:** changing only some fields of a record, leaving the rest alone.
+- **Validation:** checking input is acceptable before using it.
+- **Regular expression (regex):** a pattern describing allowed text, like "starts with a letter, then letters or spaces".
+- **Unicode:** the standard that gives every character in every writing system a number and a category.
+- **Personal data:** information that identifies a person (phone, UPI ID); laws like India's DPDP Act limit how it may be used.
 
 ### 31.1 PATCH and partial updates
 - **`PUT`** = replace the whole thing (send every field). **`PATCH`** = change **part** of it (send only what changes).
@@ -1762,7 +2164,7 @@ Invalid number → instant message, no request · valid number → code sent, ti
 
 ### 31.4 Privacy by design
 - The UPI ID is **personal data**. Rule (design §4.4): shown only to the user themselves and their own group members.
-- Today only `/me` returns it, so it's safe. Every future endpoint that returns *other* users must leave it out unless the caller is in the same group.
+- Today only `/me` returns it, so it's safe. (**Later:** members of your group also see the booker's UPI ID, because they need it to pay, 39.3.) Every future endpoint that returns *other* users must leave it out unless the caller is in the same group.
 - Stored lower-cased (UPI IDs are case-insensitive), so later comparisons are simple.
 
 ### 31.5 Testing protected endpoints without logging in
@@ -1777,6 +2179,9 @@ Invalid number → instant message, no request · valid number → code sent, ti
 ---
 
 ## 32. Code walkthrough: the profile
+
+### 32.0 Before you read
+This walkthrough adds names and UPI IDs to profiles: the backend's PATCH endpoint and its validation, the shared `useAction` hook, and the profile page. It applies chapter 31.
 
 ### 32.1 `users/User.java` (additions)
 ```java
@@ -1945,6 +2350,13 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 
 ## 33. Places, maps and geocoding
 
+### 33.0 Words first
+- **Latitude / longitude:** a position's north–south and east–west coordinates, in degrees (33.1).
+- **Geocoding:** turning a place name into coordinates, or back again (33.7).
+- **Map tiles:** the small square images a web map is built from (33.6).
+- **Great-circle distance:** the shortest distance between two points on a sphere (33.3).
+- **Reference data:** fixed data the app needs to work, such as the list of terminals (33.5).
+
 ### 33.1 Coordinates
 - **Latitude:** north–south position, −90° (South Pole) to 90° (North Pole). **Longitude:** east–west, −180° to 180°, measured from Greenwich. Delhi ≈ 28.6° N, 77.2° E.
 - **The order trap:** people say "lat, lng", but maths-style libraries (Java's **JTS**, PostGIS, GeoJSON) use **(x, y) = (longitude, latitude)**. Swap them and Delhi (28.6, 77.2) becomes a point in the Indian Ocean. Our code only ever builds points through `Geo.point(lat, lng)`, and a test asks PostGIS itself which number is the latitude.
@@ -1964,7 +2376,7 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 
 ### 33.5 Data migrations (reference data)
 - `V3__seed_terminals.sql` **inserts rows**, not structure: the three IGI terminals and their pickup points. Versioned like any migration, so every database has the same terminals.
-- The coordinates are approximate; the PM's on-site corrections will ship as a **new** migration (`V4…`), never by editing V3.
+- The coordinates are approximate; the PM's on-site corrections will ship as a **new** migration (a later `V…` file; V4 ended up being join requests), never by editing V3.
 
 ### 33.6 Maps in the browser
 - **Leaflet:** a small, popular JavaScript map library. A map is built from **tiles**: 256×256 images, loaded for the area and zoom level you're viewing.
@@ -1982,6 +2394,13 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 ---
 
 ## 34. Time zones, enums and trip rules
+
+### 34.0 Words first
+- **Time zone:** a region's offset from UTC. India Standard Time (**IST**) is UTC+05:30.
+- **UTC:** the world's reference time, used for storing moments unambiguously.
+- **Timestamp:** a stored moment in time.
+- **Enum:** a type that only allows a fixed list of values, like trip statuses (34.3).
+- **Prerendering:** building a page ahead of time, before anyone visits (34.2).
 
 ### 34.1 Time zones
 - The database stores **instants in UTC** (`timestamptz`). Java's `Instant` and JSON strings ending in `Z` ("Zulu" = UTC) are UTC too.
@@ -2008,7 +2427,7 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 | **One active trip per user** | **Database** unique index `trip_one_active` → 409 `ACTIVE_TRIP_EXISTS` | Two simultaneous requests can't both pass; same "let the database decide" idea as `UserService.create` |
 | Can't cancel someone else's trip | SQL `where user_id = :userId` → 404 | Don't even reveal it exists |
 
-- **Stale trips:** a trip expires at exit + 60 min (design §3.7). There's no scheduled job yet, so: `current` simply ignores old trips, and `create` first marks the user's stale trips `expired`, otherwise a forgotten trip would block a new one through the unique index. A scheduled job will do this for everyone later.
+- **Stale trips:** a trip expires at exit + 60 min (design §3.7). There was no scheduled job yet (**later change:** since chapter 48 a background sweep expires everyone's stale trips every minute), so: `current` simply ignores old trips, and `create` first marks the user's stale trips `expired`, otherwise a forgotten trip would block a new one through the unique index. A scheduled job will do this for everyone later.
 
 ### 34.5 Status codes used
 - **201 Created:** a new thing was made (`POST /trips`).
@@ -2019,6 +2438,9 @@ New number → after the code, lands on **Complete your profile** · invalid UPI
 ---
 
 ## 35. Code walkthrough: trips
+
+### 35.0 Before you read
+This walkthrough covers planning a trip end to end: the terminals seed, the geography helpers, the trip entity and its rules, the API, and the trip page with its map and search. It applies chapters 33–34.
 
 ### 35.1 `pom.xml` and `V3__seed_terminals.sql`
 - `hibernate-spatial` added (version managed by Spring Boot's BOM).
@@ -2177,6 +2599,13 @@ Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search
 
 ## 36. Matching: two-stage search and spatial indexes
 
+### 36.0 Words first
+- **Candidate:** a row that might be a good answer and deserves a closer look.
+- **Index:** a sorted lookup structure that lets the database find rows without reading the whole table (36.3).
+- **Prefilter:** a cheap first pass that throws away obviously wrong rows.
+- **Ranking:** ordering the survivors from best to worst using the exact rules.
+- **Query plan:** the database's chosen way of answering a query (36.6).
+
 ### 36.1 The problem
 - Input: **my trip** (terminal, exit time, destination, seats, bags). Output: the **5 best other travellers** to share a cab with.
 - "Best" needs real maths (route order, who rides how far extra). That maths is hard to write in SQL and slow to run on every row.
@@ -2204,6 +2633,7 @@ Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search
   - To find "within 15 km of X": make a box around X grown by 15 km, then walk down **only** into nodes whose boxes overlap it. Whole regions (Noida, Faridabad…) are skipped without looking at a single row inside.
   - The boxes only *approximate* the answer, so Postgres then does the **exact** distance check on the survivors (shown as "Recheck Cond" / "Filter" in a plan). Two stages again, inside the database.
 - Ours (V1 migration): `create index trip_dest_gist on trip_requests using gist (dest);`
+- **Later change (69.1):** V8 made it a **partial** index, `where status = 'searching'`, so it no longer grows with every trip ever made.
 
 ### 36.5 `ST_DWithin`, not `ST_Distance < x`
 - `ST_DWithin(a, b, 15000)`: true if `a` and `b` are within 15,000 **metres** (geography). PostGIS knows how to turn it into the box search above, so the **index is used**.
@@ -2223,6 +2653,14 @@ Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search
 ---
 
 ## 37. Matching: detours, pure functions, privacy, N+1
+
+### 37.0 Words first
+- **Detour:** the extra distance sharing adds compared with riding alone.
+- **Greedy algorithm:** one that always takes the step that looks best right now (37.1).
+- **Pure function:** a function whose result depends only on its inputs, and which changes nothing outside itself (37.3).
+- **Side effect:** anything a function does besides returning a value (database, network, clock, logs).
+- **Data minimisation:** sending and storing only the personal data a feature really needs (37.4).
+- **Round trip:** one request to the database (or server) and its answer; each costs time (37.5).
 
 ### 37.1 The detour model
 - **Pickup** = the terminal's cab pickup point. **Solo km** = straight-line km from pickup to my destination × `Geo.ROAD_FACTOR` (1.4). Already stored on every trip as `solo_km`.
@@ -2277,6 +2715,9 @@ Log in → **Plan a trip** · form defaults to T3 and now + 30 min IST · search
 ---
 
 ## 38. Code walkthrough: matching
+
+### 38.0 Before you read
+This walkthrough shows matching in code: the pure ranking function, the SQL prefilter, loading names in one query, and the matches list on screen. It applies chapters 36–37.
 
 No new migration: V1 already created `blocks`, `trip_search` and `trip_dest_gist`.
 
@@ -2483,7 +2924,20 @@ List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVaria
 
 ---
 
+## Part V. Groups and chat
+
+Matching suggests people; groups are where they actually agree to share. This part covers the rules a group follows (state machines), what happens when two people act at the same moment (concurrency), showing groups in matches, keeping modules from depending on each other in circles, real-time chat over WebSockets, and work the server does on its own as time passes (background jobs).
+
+---
+
 ## 39. Groups: state machines and consent
+
+### 39.0 Words first
+- **State:** one of the fixed situations something can be in (a group is `open`, `locked`, `met`…).
+- **Transition:** an allowed move from one state to another.
+- **Join request:** "I'd like to share with you", waiting for an answer.
+- **Consent:** agreement; here, both sides saying yes before anyone shares a cab.
+- **Opaque id:** a random id that reveals nothing about what it points to (39.3).
 
 ### 39.1 State machines
 - A **state machine** = a fixed list of **states** a thing can be in, plus the allowed **transitions** (arrows) between them. Anything not drawn is forbidden.
@@ -2514,6 +2968,13 @@ List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVaria
 ---
 
 ## 40. Concurrency: the last-seat race
+
+### 40.0 Words first
+- **Thread:** a separate line of execution inside a running program; a server handles each request on its own thread.
+- **Concurrency:** several pieces of work running at the same time and touching the same data.
+- **Race condition:** a bug that only appears when things happen at the same moment (40.2).
+- **Lock (database):** a temporary claim on a row that makes others wait.
+- **Commit / roll back:** make a transaction's changes permanent / undo them all.
 
 ### 40.1 The problem
 - A group: capacity 4, **3 seats taken**. Two pending requests: Chirag (1 seat) and Divya (1 seat).
@@ -2591,6 +3052,9 @@ where id = :group and status = 'open'
 ---
 
 ## 41. Code walkthrough: groups (slice 2a)
+
+### 41.0 Before you read
+This walkthrough builds groups: the join-requests table, the group rules the team chose, `GroupService` written in plain SQL with `JdbcClient`, a test that fires 10 accepts at once, and the group card. It applies chapters 39–40.
 
 ### 41.1 The rules we chose (team decisions, 2026-10-14)
 | Rule | Choice |
@@ -2746,6 +3210,13 @@ create index join_requests_to on join_requests (to_trip_id) where status = 'pend
 
 ## 42. Groups in matches: routes with several drops
 
+### 42.0 Words first
+- **Route:** the order in which a cab drops its riders.
+- **Heuristic:** a quick rule that gives a good, though not guaranteed best, answer (42.3).
+- **Generalise:** to turn a special-case function into one that handles more cases (42.2).
+- **Refactoring:** changing how code is written without changing what it does (42.5).
+- **Regression:** something that used to work and stopped.
+
 ### 42.1 The problem
 - After slice 2a, people **in** a group vanish from matches (their trips are `grouped`). A third or fourth person can't find them, so cabs rarely fill up.
 - Slice 2b: matches show **open groups with free seats** next to lone travellers, ranked together.
@@ -2786,6 +3257,12 @@ create index join_requests_to on join_requests (to_trip_id) where status = 'pend
 
 ## 43. Module dependencies: cycles and dependency inversion
 
+### 43.0 Words first
+- **Dependency (between modules):** module A uses module B's code.
+- **Cycle:** A depends on B and B depends on A (43.1).
+- **Interface / abstraction:** a description of *what* is needed, without saying *how* it's done.
+- **Port and adapter:** an interface a module defines (port) and another module's implementation of it (adapter) (43.3).
+
 ### 43.1 The problem: a cycle
 - Matching lives in `trips`. To list groups, it needs data the `groups` module owns. But `groups` already depends on `trips` (it moves trips to `grouped`).
 - `trips → groups` **and** `groups → trips` = a **dependency cycle**. Spring Modulith's `ModularityTest` fails on cycles, and for good reason:
@@ -2821,6 +3298,9 @@ create index join_requests_to on join_requests (to_trip_id) where status = 'pend
 ---
 
 ## 44. Code walkthrough: groups in matches (slice 2b)
+
+### 44.0 Before you read
+This walkthrough extends the ranker from pairs to groups of up to four, and connects matching to groups without a dependency cycle (a port in `trips`, an adapter in `groups`). It applies chapters 42–43.
 
 ### 44.1 `trips/MatchRanker.java`: from pairs to N riders
 ```java
@@ -2931,6 +3411,13 @@ groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
 
 ## 45. Real-time: WebSocket and STOMP
 
+### 45.0 Words first
+- **Polling:** asking "anything new?" over and over (45.1).
+- **Server push:** the server sending data the moment it exists, without being asked.
+- **Latency:** the delay between something happening and you seeing it.
+- **Connection:** an open line between two programs that can carry many messages.
+- **Message broker:** software that receives messages and delivers them to everyone subscribed (45.3).
+
 ### 45.1 Why plain HTTP isn't enough
 - HTTP is **request/response**: the browser asks, the server answers. The server **can't speak first**.
 - **Naive way: polling.** The browser asks "anything new?" every 2 seconds. 4 people × 30 requests/minute = 120 requests a minute, almost all answered "nothing", draining batteries and data. And a message can still wait up to 2 s (**latency** = the delay between something happening and you seeing it).
@@ -2952,6 +3439,13 @@ groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
 ---
 
 ## 46. Chat: security, saving and history
+
+### 46.0 Words first
+- **Interceptor:** code that inspects every incoming message before it's handled (46.1).
+- **Pagination:** sending a long list one page at a time.
+- **Cursor:** a bookmark ("older than message 1234") that marks where the next page starts (46.4).
+- **XSS (Cross-Site Scripting):** an attacker's script running inside our page, often via text other users typed.
+- **Optimistic UI:** showing a change on screen before the server confirms it (46.3).
 
 ### 46.1 Authentication: the token goes in the CONNECT frame
 - The browser's WebSocket API **can't add custom headers** like `Authorization`. Cookies would be sent, but our access token lives in memory (24.6).
@@ -2978,11 +3472,14 @@ groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
 |---|---|
 | Who can chat | Accepted members while the group is open or locked; leaving removes access immediately |
 | Live group updates | Yes: a small "group changed" event (`/topic/groups.{id}.updated`) so everyone's card refreshes on its own |
-| Not in this slice | Live location sharing (needs its own privacy lesson) and push notifications |
+| Not in this slice | Live location sharing (needs its own privacy lesson) and push notifications (both came later: chapters 58 and 60) |
 
 ---
 
 ## 47. Code walkthrough: group chat (slice 3)
+
+### 47.0 Before you read
+This walkthrough builds group chat: events between modules, the chat service, the checkpoint that guards every WebSocket frame, real-WebSocket tests, and the chat on screen. It applies chapters 45–46.
 
 ### 47.1 The shape
 - New **`chat`** module (design §2.2 says chat owns `messages`): `ChatService`, `ChatController`, `StompAuth`, `WebSocketConfig`.
@@ -3089,6 +3586,13 @@ public record GroupChanged(UUID groupId, String systemMessage) {}
 
 ## 48. Background jobs: sweeps, idempotency, time
 
+### 48.0 Words first
+- **Background job:** code the server runs on its own, on a timer, with no request behind it.
+- **Scheduler:** the part of a program that runs jobs at set times.
+- **Sweep:** a job that finds *everything* that's due and handles it in one go (48.2).
+- **Idempotent:** running it twice has the same effect as running it once (48.4).
+- **Clock skew:** different computers' clocks disagreeing slightly (48.5).
+
 ### 48.1 The problem
 - Some changes must happen **because time passed**, not because someone clicked: expire trips an hour after their exit time, lock a group 5 minutes before meeting, close groups long after meeting.
 - **Lazy expiry** (what we had): when *you* create a trip, *your* stale trips expire. Everyone else's stale data stays, and "lock 5 minutes before" can't be lazy: no request arrives at that moment.
@@ -3130,6 +3634,9 @@ public record GroupChanged(UUID groupId, String systemMessage) {}
 ---
 
 ## 49. Code walkthrough: expiry jobs
+
+### 49.0 Before you read
+This walkthrough adds the one-minute sweep that expires trips, expires and auto-locks groups, and finishes old rides, and shows how to test time-based code without waiting. It applies chapter 48.
 
 No new library, no new table: one `@Scheduled` sweep per module (48.3).
 
@@ -3189,7 +3696,20 @@ void sweep() {
 
 ---
 
+## Part VI. Finishing the ride and shipping
+
+A ride ends with a fare to split, and a product ends up on a real server. This part covers handling money correctly, keeping the frontend's and backend's idea of the API in sync automatically, and everything needed to run in production: containers, configuration, HTTPS and the real client address behind a proxy.
+
+---
+
 ## 50. Money: fare split and UPI links
+
+### 50.0 Words first
+- **Floating point:** the way computers usually store decimals, which can't represent most of them exactly (50.2).
+- **`BigDecimal` / `numeric`:** exact decimal types in Java / Postgres.
+- **Rounding mode:** the rule for which way to round a half (50.3).
+- **UPI:** India's instant bank-to-bank payment system (50.4).
+- **Deep link:** a link that opens a specific app with details filled in.
 
 ### 50.1 Finishing the ride: `met` and the fare
 - The group state machine (39.1) continues: `locked → met` when **2 or more** members tap **"I'm here"** at the pickup; then the **booker** enters the real fare after the ride.
@@ -3227,6 +3747,9 @@ void sweep() {
 ---
 
 ## 51. Code walkthrough: fare split (and a pool-starvation bug)
+
+### 51.0 Before you read
+This walkthrough adds "I'm here", the fare and the shares, and tells the story of a bug the new tests uncovered: **pool starvation**, where requests waited forever for database connections. Two words help: a **connection pool** is the small set of reusable database connections (3.0), and **transaction propagation** decides whether a method joins the current transaction or starts its own.
 
 ### 51.1 `groups/FareSplit.java`: the pure function
 ```java
@@ -3302,6 +3825,13 @@ record FareRequest(@NotNull @DecimalMin("50") @DecimalMax("10000") @Digits(integ
 
 ## 52. API contracts: OpenAPI and generated types
 
+### 52.0 Words first
+- **API contract:** the agreement about what each request and response looks like (52.1).
+- **Single source of truth:** writing something once and deriving every other copy from it.
+- **Schema (data shape):** a description of the fields a piece of data has.
+- **Code generation:** a program writing source code from a description (52.4).
+- **Drift check:** an automatic check that a generated copy still matches its source (52.5).
+
 ### 52.1 The problem: two copies of the same truth
 - Every response shape exists twice: a Java record (`MatchView`) and a hand-typed TypeScript type (`Match` in `lib/api.ts`).
 - **API contract** = the agreement between both sides about what each request and response looks like.
@@ -3345,6 +3875,9 @@ record FareRequest(@NotNull @DecimalMin("50") @DecimalMax("10000") @Digits(integ
 ---
 
 ## 53. Code walkthrough: OpenAPI and generated types
+
+### 53.0 Before you read
+This walkthrough builds the pipeline from Java records to TypeScript types: a test writes the OpenAPI file, a script generates the types, and CI fails if either is out of date. It applies chapter 52.
 
 ### 53.1 The pipeline
 ```
@@ -3404,6 +3937,13 @@ Both generated files are committed, and CI checks that both are up to date.
 
 ## 54. Production: containers, config, HTTPS
 
+### 54.0 Words first
+- **Production:** the real environment real users use, as opposed to **development** on a laptop.
+- **Configuration:** settings that change between environments (passwords, addresses), kept out of the code.
+- **Reverse proxy:** a server that sits in front of an app and passes requests to it (54.4).
+- **TLS / certificate:** the encryption behind HTTPS / the signed file that proves a server owns its domain.
+- **Attack surface:** everything an attacker could try to use; smaller is safer.
+
 ### 54.1 Dev vs production
 | Today (dev) | Fine on a laptop | Dangerous in production |
 |---|---|---|
@@ -3459,6 +3999,9 @@ Both generated files are committed, and CI checks that both are up to date.
 ---
 
 ## 55. Code walkthrough: the production build
+
+### 55.0 Before you read
+This walkthrough builds the production setup: the two Dockerfiles, production settings, the production compose file, Caddy's configuration, a test for the real client IP, and a full run of the production stack on a laptop. It applies chapter 54.
 
 ### 55.1 What exists now
 | File | Job |
@@ -3568,7 +4111,20 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
+## Part VII. Safety and staying in touch
+
+Strangers sharing a car at night need to feel safe and stay reachable. This part covers reporting and blocking (designed with abuse in mind), push notifications that work with the app closed, sharing live location only around the pickup, and ratings that build trust without enabling revenge.
+
+---
+
 ## 56. Safety: report and block
+
+### 56.0 Words first
+- **Threat modelling:** systematically asking how a feature could be misused (56.1).
+- **Abuse case:** one specific way a bad actor could misuse a feature.
+- **Silent block:** blocking someone without telling them anything (56.2).
+- **Moderation:** people reviewing reports and deciding what to do.
+- **Retaliation:** getting back at someone, for example after learning they reported you.
 
 ### 56.1 Design for abuse
 - Safety features must also ask **"how would a bad person misuse this?"** Doing that systematically is **threat modelling**; the misuse cases are **abuse cases**.
@@ -3613,6 +4169,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ---
 
 ## 57. Code walkthrough: report and block
+
+### 57.0 Before you read
+This walkthrough builds report and block: a migration, blocks in the `users` module, the silent-block check in asking, the new `feedback` module, and the screens. It applies chapter 56.
 
 ### 57.1 `V6__report_block.sql`
 - `reports.category`: `not null default 'other'` with a `check` listing the five categories. Old rows get `'other'`.
@@ -3670,6 +4229,15 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ## 58. Push notifications
 
+### 58.0 Words first
+- **Push notification:** a message that appears on a phone or computer even when the app isn't open.
+- **Service worker:** a script the browser keeps separately from the page and can wake up later (58.2).
+- **Subscription:** the address and keys a browser creates so a server can push to it (58.2).
+- **VAPID keys:** our server's key pair; pushes are signed with it so only we can push to our users (58.2).
+- **End-to-end encryption:** only the sender and the receiver can read a message; carriers in between can't (58.3).
+- **SSRF:** tricking a server into sending requests to an address the attacker chose (58.7).
+- **PWA (Progressive Web App):** a website that can be installed on a phone's home screen like an app.
+
 ### 58.1 The problem
 - Live updates ride on the WebSocket, which only exists while the page is open. At the airport the phone is in a pocket and the browser closed, so people miss requests and messages.
 - SMS costs money (and is needed for OTPs), email is slow, a native app needs app stores; **Web Push** is free and built into browsers.
@@ -3716,6 +4284,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ---
 
 ## 59. Code walkthrough: push notifications
+
+### 59.0 Before you read
+This walkthrough builds push notifications: the `notifications` module, what triggers a push, a test that decrypts real pushes like a browser would, the service worker and the "Notify me" prompt. It applies chapter 58.
 
 ### 59.1 Settings: `application.yaml`, `application-prod.yaml`
 - `namastute.push.vapid-private-key` / `vapid-public-key`: one line each, **base64url**. The private key is PKCS#8 (a standard wrapper for private keys); the public key is the raw 65-byte point (`0x04` + X + Y), which is also what browsers want.
@@ -3826,6 +4397,9 @@ The test plays **both** outside parties:
 
 ## 60. Live location at the pickup
 
+### 60.0 Before you read
+Live location helps a group find each other at a busy terminal. The words this chapter relies on are defined first, in 60.1; then the usual problem → naive way → design.
+
 ### 60.1 Terms
 - **Geolocation:** the device's own idea of where it is (latitude, longitude). **GPS** is satellites: good outdoors (often 5–10 m), poor under concrete. **Wi-Fi/cell positioning** looks up nearby networks: works indoors but rougher (tens to hundreds of metres).
 - **Accuracy radius:** every position comes with "probably within N metres". A map shows it as a circle.
@@ -3871,6 +4445,9 @@ The test plays **both** outside parties:
 ---
 
 ## 61. Code walkthrough: live location
+
+### 61.0 Before you read
+This walkthrough builds live location: the pickup-time window check, relaying positions over the chat's WebSocket, a test for every rule, the map on screen, and a two-person browser test. It applies chapter 60.
 
 ### 61.1 `groups/GroupService`
 - `SHARE_BEFORE = 20 min`, `SHARE_AFTER = 30 min`: the window, defined once.
@@ -3927,6 +4504,9 @@ Real STOMP, step by step:
 
 ## 62. Ratings after the ride
 
+### 62.0 Before you read
+Ratings build trust between strangers, but naive ratings invite fakes and revenge. The words this chapter relies on are defined first, in 62.1.
+
 ### 62.1 Terms
 - **Reputation system:** lets strangers judge whether to trust someone, from others' experience (Uber stars, Airbnb reviews, eBay feedback).
 - **Aggregate:** one number summarising many rows (`count(*)`, `sum(...)`, "92% thumbs up").
@@ -3967,6 +4547,9 @@ Real STOMP, step by step:
 ---
 
 ## 63. Code walkthrough: ratings
+
+### 63.0 Before you read
+This walkthrough builds ratings: a migration from stars to thumbs, the counters, the "met together" check, and the "How was the ride?" card. It applies chapter 62.
 
 ### 63.1 `V7__thumbs_ratings.sql`
 - `drop column score` (the 1–5 stars) and `add column up boolean not null`. Safe because nothing could write ratings before, so the table was empty everywhere. Flyway stays forward-only: V1 is never edited.
@@ -4021,7 +4604,16 @@ Real STOMP, step by step:
 
 ---
 
+## Part VIII. Getting ready for real users
+
+Before launch, the work shifts from features to confidence: deciding which known shortcuts must be fixed, measuring how much traffic one server can take, and making sure the database and the API stay fast and fair as usage grows.
+
+---
+
 ## 64. Pre-launch clean-up: triaging technical debt
+
+### 64.0 Before you read
+Before launch, every known shortcut was listed and sorted into fix now, team task, or accept. This chapter is about how to make those decisions; its words are defined in 64.1.
 
 ### 64.1 Terms
 - **Technical debt:** a shortcut taken on purpose to ship sooner. Fine while you know about it and pay it back before the "interest" (bugs, incidents, rewrites) grows.
@@ -4053,6 +4645,9 @@ Real STOMP, step by step:
 ---
 
 ## 65. Code walkthrough: pre-launch fixes
+
+### 65.0 Before you read
+This walkthrough builds the four fixes chosen in chapter 64: a message flood limit, admin alerts for reports, automatic refresh of matches, and "not sent" chat messages.
 
 ### 65.1 Flood limit: `chat/StompAuth`
 - `SEND_LIMIT = 20` per `SEND_WINDOW = 10 s`, per person, chat and location together.
@@ -4091,6 +4686,9 @@ Real STOMP, step by step:
 ---
 
 ## 66. Load testing
+
+### 66.0 Before you read
+How many travellers can one small server handle, and what slows down first? This chapter explains load testing; its words are defined in 66.1.
 
 ### 66.1 Terms
 - **Load test:** many simulated users at once, at the traffic you expect. **Stress test:** keep adding users until something breaks (the breaking point). **Spike test:** a sudden jump (a flight lands). **Soak test:** steady load for hours, to find slow leaks.
@@ -4131,6 +4729,9 @@ Real STOMP, step by step:
 
 ## 67. Code walkthrough: load tests and results
 
+### 67.0 Before you read
+This walkthrough covers the load-test scripts, the results at 100, 300 and 1000 travellers, and a test run spoiled by a sleeping laptop. It applies chapter 66.
+
 ### 67.1 `load/compose.limits.yml` and `setup.py`
 - `compose.limits.yml` is a second compose file layered on the production one (`-f ... -f ...`): `cpus: 1.4` for the API, `0.6` for Postgres. `docker inspect` confirmed `NanoCpus=1400000000` / `600000000`.
 - `setup.py`:
@@ -4159,7 +4760,7 @@ Real STOMP, step by step:
 | 300 / 75 | 39 ms | 0% | 18 ms | faster than 100: the API was warm |
 | 1000 / 250 | **593 ms ✗** (p99 1.04 s) | 1 in 16,342 | 10 ms | API CPU max 139% of its 140% cap, Postgres 66% of 60%; API memory 675 of 768 MB with 1000 WebSockets |
 - **Verdict:** 300 travellers per wave passes with a lot of headroom. At 1000, the arrival waves saturate both CPUs and matching (the heaviest request) queues.
-- **Where matching's time goes:** `EXPLAIN ANALYZE` on the candidate query: ~18 ms alone, almost all in the `trip_dest_gist` scan, which indexes *every* trip ever planned (2,800 here: grouped and cancelled ones too) and filters `searching` afterwards. A temporary partial index (`where status = 'searching'`) took it to ~12 ms; it was dropped again so the database matches the migrations, and the idea is a `shortcut:` comment in `TripRepository`. Most of the 593 ms is queueing for CPU, not the query itself.
+- **Where matching's time goes:** `EXPLAIN ANALYZE` on the candidate query: ~18 ms alone, almost all in the `trip_dest_gist` scan, which indexes *every* trip ever planned (2,800 here: grouped and cancelled ones too) and filters `searching` afterwards. A temporary partial index (`where status = 'searching'`) took it to ~12 ms; it was dropped again so the database matches the migrations, and the idea is a `shortcut:` comment in `TripRepository` (done in chapter 69). Most of the 593 ms is queueing for CPU, not the query itself.
 - **Not fixed, by decision 6** (the failure was at 1000). Options recorded in the README.
 
 ### 67.5 What went wrong, and what it taught
@@ -4171,6 +4772,9 @@ Real STOMP, step by step:
 ---
 
 ## 68. Indexes and rate limits
+
+### 68.0 Before you read
+Two kinds of protection for growth: indexes keep everyday lookups fast as history piles up, and per-person rate limits stop one user from slowing everyone. The words are defined in 68.1.
 
 ### 68.1 Terms
 - **Sequential scan:** reading every row of a table. Fine for 100 rows, slow for 100,000. **Index scan:** jumping straight to the rows through an index.
@@ -4211,6 +4815,9 @@ Real STOMP, step by step:
 
 ## 69. Code walkthrough: indexes and rate limits
 
+### 69.0 Before you read
+This walkthrough adds three indexes (measured before and after on 100,000 trips of history), a shared rate limiter, and tells how editing one comment in a migration broke two databases. It applies chapter 68.
+
 ### 69.1 `V8__indexes.sql`
 - `create index group_members_trip on group_members (trip_id)` and `create index push_subscriptions_user on push_subscriptions (user_id)`.
 - `drop index trip_dest_gist` + recreate it with `where status = 'searching'`, same name. The matching query already says `t.status = 'searching'`, so Postgres can use it.
@@ -4250,7 +4857,15 @@ History: ~105,000 trips (33k done, 38k cancelled, 33k expired, 300 searching), 3
 
 ---
 
+## Reference
+
+The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
+
+---
+
 ## 70. Command cheat sheet
+
+The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -4336,277 +4951,359 @@ git fetch --prune
 
 ## 71. Glossary
 
+Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
+
 | Term | Meaning |
 |---|---|
-| Annotation | `@Something` tag adding information to code without changing it |
-| ApplicationContext | Spring's IoC container |
-| Bean | An object created and managed by Spring |
-| BOM | Bill of Materials: a list of library versions tested together |
-| Bytecode | Compiled `.class` instructions run by the JVM |
-| Checksum | A fingerprint of a file's contents; changes if the file changes |
-| Classpath | All libraries available to the app at runtime |
-| Connection pool | Reusable, ready-made database connections |
-| Container (Docker) | A running, isolated copy of an image |
-| CI | Continuous Integration: automatic build + test on every change |
-| DDL | SQL that changes structure (`create table`) |
-| DI | Dependency Injection: dependencies handed in from outside |
-| Extension (Postgres) | Add-on giving the database new abilities (PostGIS) |
-| Healthcheck | A test of whether a service is really ready |
-| Hot reload | Browser updates automatically when a file is saved |
-| Image (Docker) | Packaged, read-only snapshot of a program and its environment |
-| IoC | Inversion of Control: the framework creates and wires objects |
-| JDBC | Java's standard database API |
-| JPA / Hibernate | Java's ORM standard / its implementation |
-| Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
-| Linter | Tool that flags likely bugs without running code |
-| Lockfile | Exact versions of all installed packages |
-| Migration | A versioned SQL change to the database structure |
-| ORM | Object-Relational Mapping: objects ↔ table rows |
-| Port | Numbered "door" a program listens on |
-| Registry | Online store of packages or images (Maven Central, npm, Docker Hub) |
-| Runner | The VM that runs a CI job |
-| Schema (DB) | A namespace for tables inside a database |
-| Singleton | One shared instance of a bean |
-| SNAPSHOT | A Maven version still in development |
-| Squash merge | All PR commits combined into one commit on `main` |
-| SRID 4326 | ID of the GPS coordinate system (WGS 84) |
-| Starter | One dependency bringing a tested set of libraries |
-| TOTP | Time-based one-time password (authenticator apps) |
-| Volume | Docker storage that outlives containers |
-| Atomic | Happens as one indivisible step; can't be interleaved |
-| Authentication / Authorization | Who you are / what you may do |
-| Dockerfile | Recipe for building your own image |
-| Endpoint | One HTTP method + path the API accepts |
-| Hash | One-way fixed-length fingerprint of data |
-| HMAC | A hash mixed with a secret key |
-| HTTP | Request/response protocol between browser and server |
-| IP address | The network address a request comes from |
-| JSON | Text format for data: `{"key": value}` |
-| Key-value store | Database that saves values under keys (Redis) |
-| OTP | One-time password |
-| Race condition | Bug where the result depends on the timing of simultaneous operations |
-| Rate limiting | Capping how often something can be done |
-| REST | API style: URLs name things, methods say what to do |
-| Stateless | Each request stands alone; the server remembers nothing between them |
-| Status code | 3-digit result of an HTTP request (2xx/4xx/5xx) |
-| Timing attack | Learning secrets from how long comparisons take |
-| TTL | Time to live: automatic expiry of a key |
-| YAML | Indentation-based settings format |
+| 429 / Retry-After | "Too Many Requests" / the header saying how many seconds to wait |
+| Abstraction | A description of what is needed, without saying how it's done |
+| Abuse case | A specific way a bad actor could misuse a feature |
+| Accepted risk | A known limit you decided to live with for now, written down with when you'd change it |
 | Access token | Short-lived JWT sent with every request |
-| Base64URL | Encoding bytes as URL-safe text (not encryption) |
-| Bearer token | A token whose holder is trusted; sent as `Authorization: Bearer ...` |
-| Claim | A statement inside a JWT (`sub`, `exp`, `iss`, `iat`) |
-| Cookie | Data the browser stores and sends back automatically |
-| CSRF | Another site making the user's browser send requests to us |
-| Entity | A class mapped to a database table |
-| Filter | Code that inspects a request before the controller |
-| JPQL | SQL-like query language using entity and field names |
-| JWT | JSON Web Token: header.payload.signature |
-| Optional | A box that holds a value or is empty |
-| Principal | The authenticated caller of a request |
-| Refresh token | Long-lived random token used only to get new access tokens |
-| Repository | Interface whose database code Spring generates |
-| Rotation | Replacing a token every time it's used |
-| Transaction | Database changes that all happen or none do |
-| XSS | Attacker's script running on our page |
-| Client Component | React component that runs in the browser (`"use client"`) |
-| CORS | Server headers allowing another origin to read responses |
-| Effect | Code run after a component appears (`useEffect`) |
-| Hook | React function starting with `use` that gives components abilities |
-| Origin | Scheme + host + port |
-| Preflight | Browser's automatic `OPTIONS` permission check before a cross-origin request |
-| Promise | A value that will arrive later; `await` waits for it |
-| Same-Origin Policy | Browser rule: scripts can't read other origins' responses by default |
-| Server Component | React component rendered on the server (Next.js default) |
-| Site | Registrable domain, ignoring port and subdomains |
-| State | Data a component remembers; changing it redraws the component |
-| StrictMode | React dev mode that runs effects twice to expose unsafe ones |
-| Web Locks API | Browser-wide lock shared by all tabs (`navigator.locks`) |
-| Combining mark | Unicode sign that attaches to the previous letter (Indian vowel signs); `\p{M}` |
-| Custom hook | Your own `use...` function bundling React state and logic for reuse |
-| Dirty checking | Hibernate detects changed fields and writes them at commit |
-| PATCH | HTTP method for changing part of a resource |
-| PUT | HTTP method for replacing a whole resource |
-| Geocoding | Text → coordinates (forward) or coordinates → place name (reverse) |
-| geography (PostGIS) | Points on the round Earth; distances in metres |
-| Great circle | Shortest path between two points on a sphere |
-| Haversine | Formula for great-circle distance from two lat/lng pairs |
-| JTS | Java Topology Suite: Java's standard shapes library (Point…) |
-| Latitude / longitude | North–south / east–west position in degrees |
-| Native query | Plain SQL in a repository (`nativeQuery = true`) |
-| Postgres enum | A column type allowing only listed values (`trip_status`) |
-| Prerendering | Building a page ahead of time instead of per visitor |
-| Ref (React) | A value kept between redraws without causing one (`useRef`) |
-| Tile | One square image of a map at a given zoom level |
-| WKT | Well-Known Text: `POINT(lng lat)` |
-| Bounding box | Smallest rectangle containing a shape or a group of shapes |
-| Candidate | A row that survived the cheap first stage of a search |
-| Composite index | One index over several columns, sorted by the first, then the next |
-| Data minimisation | Collect and share only the personal data a feature really needs |
-| EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
-| GiST | Generalized Search Tree: Postgres index framework for unsortable data like shapes |
-| Greedy algorithm | Takes the best-looking step now and never reconsiders |
-| N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
-| Partial index | Index holding only rows matching a `where` |
-| Pure function | Output depends only on inputs; no side effects |
-| Query planner | The part of Postgres that decides how to run a query |
-| R-tree | Tree of nested bounding boxes; how PostGIS indexes points |
-| Seq Scan | Reading every row of a table |
-| Side effect | Anything a function does besides returning a value (DB, network, clock…) |
-| Trilateration | Finding a hidden point from its distances to known points |
-| Two-stage search | Cheap prefilter in the database, then exact ranking in code |
-| Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
-| Self-join | A table joined with itself under two names (`me` and `t`) |
-| State machine | A fixed set of states plus the allowed transitions between them |
-| Transition | One allowed move between states, e.g. `open → locked` |
-| Join request | "I'd like to share with you": pending until accepted or declined |
-| Opaque id | A random identifier that reveals nothing about the person (a UUID) |
-| Concurrency | Several pieces of work running at the same time on shared data |
-| Thread | One line of execution inside a program; a server runs many at once |
-| Check-then-act (TOCTOU) | Bug where the fact you checked is stale by the time you act on it |
-| Lost update | Two writers start from the same old value; one overwrites the other |
+| Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
 | ACID | Atomic, Consistent, Isolated, Durable: what a transaction guarantees |
-| READ COMMITTED | Postgres's default isolation level: you only see committed data |
-| Row lock | Postgres's hold on a row being changed; other writers wait |
-| Pessimistic locking | Lock the row when reading it (`select ... for update`) |
-| Optimistic locking | Detect conflicts with a `version` column and retry |
-| Deadlock | Two transactions each waiting for a lock the other holds |
-| Proxy (Spring) | Wrapper object Spring puts around a bean to add transactions etc. |
-| Self-invocation | A method calling another in the same class, bypassing the proxy |
-| ExecutorService | A pool of threads that run submitted tasks |
-| CountDownLatch | A gate that makes threads wait until it's opened |
+| Aggregate | One number summarising many rows, e.g. a count or a percentage |
+| Allowlist | A list of the only values accepted; everything else is refused |
+| Annotation | `@Something` tag adding information to code without changing it |
+| Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
+| API | Application Programming Interface: the list of requests a program accepts from other programs |
+| API contract | The agreed shape of every request and response between two sides |
+| Application event | A message one module publishes inside the app; listeners react without the publisher knowing them |
+| ApplicationContext | Spring's IoC container |
+| Architecture | The overall shape of a software system: its big parts and how they talk |
+| Assertion | The check inside a test ("the answer must be 42") |
+| AsyncAPI | OpenAPI's sibling standard for message-based APIs (WebSocket, queues) |
+| Atomic | Happens as one indivisible step; can't be interleaved |
 | AtomicInteger | A counter that's safe to change from many threads |
-| Testcontainers | Library that starts throwaway databases in Docker for tests |
-| JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
-| RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
-| Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
-| Foreign key | A column that must point at an existing row in another table |
-| Circular import | Two files importing each other; avoided by moving shared code to a third file |
-| Travelling salesman problem | Finding the shortest route through all stops; orders grow as n! |
-| Heuristic | A quick rule giving a good (not guaranteed best) answer |
+| Attack surface | Everything an attacker could try to use; smaller is safer |
+| Authentication / Authorization | Who you are / what you may do |
+| Backend | The part of an app that runs on a server: data, rules, security |
+| Background job | Code the server runs on a timer, with no request behind it |
+| Base64URL | Encoding bytes as URL-safe text (not encryption) |
+| Bean | An object created and managed by Spring |
+| Bearer token | A token whose holder is trusted; sent as `Authorization: Bearer ...` |
+| BigDecimal | Java's exact decimal number type, used for money |
+| Blast radius | How many people one failure affects |
+| BOM | (1) Bill of Materials: a list of library versions tested together; (2) Byte-order mark: invisible bytes at a file's start that some tools reject |
+| Bounding box | Smallest rectangle containing a shape or a group of shapes |
+| Branch | A separate line of work in Git, merged back when finished |
+| Browser | The program used to open websites (Chrome, Safari); a client |
 | Brute force | Trying every possibility (e.g. all 24 orders of 4 drops) |
-| Refactoring | Changing how code is written without changing what it does |
-| Regression | Something that used to work breaking after a change |
+| Build | Turning source code into something that runs (compile, bundle, package) |
+| Burst | Many requests arriving close together |
+| Bytecode | Compiled `.class` instructions run by the JVM |
+| Candidate | A row that survived the cheap first stage of a search |
+| ChannelInterceptor | Spring checkpoint that every incoming STOMP frame passes through |
+| Check-then-act (TOCTOU) | Bug where the fact you checked is stale by the time you act on it |
+| Checksum | A fingerprint of a file's contents; changes if the file changes |
+| CI | Continuous Integration: automatic build + test on every change |
+| Circular import | Two files importing each other; avoided by moving shared code to a third file |
+| Claim | A statement inside a JWT (`sub`, `exp`, `iss`, `iat`) |
+| Class | A blueprint for objects ("a Group has an id and members") |
+| Classpath | All libraries available to the app at runtime |
+| Client | The program that sends requests: a browser or phone app |
+| Client Component | React component that runs in the browser (`"use client"`) |
+| Clock skew | Small differences between the clocks of different machines |
+| Cloud | Computers rented over the internet instead of owned |
+| Code generation | A program writing source code from a description |
+| Code-first / contract-first | Generate the spec from code / write the spec first and generate code |
+| Cold start | A new user (or item) with no history yet |
+| Combining mark | Unicode sign that attaches to the previous letter (Indian vowel signs); `\p{M}` |
+| Commit | A saved snapshot of files, with a message, in Git's history |
+| Component | A reusable piece of a screen (React) |
+| Composite index | One index over several columns, sorted by the first, then the next |
+| Concurrency | Several pieces of work running at the same time on shared data |
+| Connection pool | Reusable, ready-made database connections |
+| Connection pool (HikariCP) | A fixed set of reusable database connections (10 by default) |
+| Consent | Agreement; in Namastute, both sides say yes before sharing a cab |
+| Constructor | The special method that runs when an object is created |
+| Container (Docker) | A running, isolated copy of an image |
+| Cookie | Data the browser stores and sends back automatically |
+| CORS | Server headers allowing another origin to read responses |
+| CountDownLatch | A gate that makes threads wait until it's opened |
+| CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
+| CSRF | Another site making the user's browser send requests to us |
+| CSWSH | Cross-site WebSocket hijacking: another site opening a socket with your cookies |
+| Cursor (pagination) | A bookmark like "older than message 1234" marking where the next page starts |
+| Cursor pagination | "Items older than id X": stable and index-friendly, unlike OFFSET |
+| Custom hook | Your own `use...` function bundling React state and logic for reuse |
+| Data minimisation | Collect and share only the personal data a feature really needs |
+| Database | A program that stores data and answers questions about it |
+| DDL | SQL that changes structure (`create table`) |
+| Deadlock | Two transactions each waiting for a lock the other holds |
+| Deduplication | Recognising the same item arriving twice and keeping one |
+| Deep link | A URL that opens an app (e.g. `upi://pay?...`) instead of a web page |
+| Denormalisation | Storing a value you could calculate, for cheap reads; you must keep it correct yourself |
 | Dependency cycle | Module A depends on B and B on A; neither stands alone |
 | Dependency Inversion | Depend on an interface you own; others implement it (the D in SOLID) |
-| Port / adapter | The interface a module defines / the code that plugs into it |
-| OptionalDouble | Java's box for "a number, or nothing" |
-| Effectively final | A variable that never changes after it's set; only these can be used inside a lambda |
-| git stash | Puts uncommitted changes on a temporary shelf (`git stash pop` brings them back) |
-| Polling | Asking the server "anything new?" again and again |
-| Latency | The delay between something happening and you seeing it |
-| Server push | The server sending data without being asked |
-| WebSocket | A long-lived two-way connection between browser and server |
-| Full-duplex | Both sides can send at the same time |
-| STOMP | Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE) |
-| Pub/sub | Publish to a topic; every subscriber gets a copy |
-| Message broker | The part that delivers published messages to subscribers |
-| ChannelInterceptor | Spring checkpoint that every incoming STOMP frame passes through |
-| CSWSH | Cross-site WebSocket hijacking: another site opening a socket with your cookies |
-| Optimistic UI | Showing your action as done before the server confirms it |
-| Deduplication | Recognising the same item arriving twice and keeping one |
-| Cursor pagination | "Items older than id X": stable and index-friendly, unlike OFFSET |
-| Application event | A message one module publishes inside the app; listeners react without the publisher knowing them |
-| @TransactionalEventListener | Runs a listener at a transaction phase, by default after commit |
-| REQUIRES_NEW | Start a brand-new transaction, separate from any current one |
-| Outbox | Saving events in the same transaction as the change, then delivering them reliably |
-| Supply-chain risk | Danger of a malicious or broken release of a library you depend on |
-| Background job | Code the server runs on a timer, with no request behind it |
-| Sweep | A periodic job that handles everything that's due in one go |
-| @Scheduled | Spring annotation that runs a method on a timer (needs @EnableScheduling) |
-| Idempotent | Running it twice has the same effect as running it once |
-| Clock skew | Small differences between the clocks of different machines |
-| Floating point | How double stores numbers in binary; most decimal fractions are slightly off |
-| BigDecimal | Java's exact decimal number type, used for money |
-| Minor units | Money stored as an integer count of the smallest unit (paise) |
-| Rounding mode | The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING |
-| UPI / VPA | India's instant bank payments / a payment address like name@bank |
-| Deep link | A URL that opens an app (e.g. `upi://pay?...`) instead of a web page |
-| Connection pool (HikariCP) | A fixed set of reusable database connections (10 by default) |
-| Pool starvation | Every connection is taken and threads wait forever for one more |
-| TransactionSynchronization | Spring hook to run code at a transaction moment, e.g. afterCommit |
-| API contract | The agreed shape of every request and response between two sides |
-| Drift | Two copies of the same truth slowly stop matching |
-| OpenAPI (Swagger) | Standard document describing an HTTP API's paths and data shapes |
-| Code-first / contract-first | Generate the spec from code / write the spec first and generate code |
-| Code generation | A program writing source code from a description |
-| Drift check | CI regenerates a file and fails if it differs from the committed one |
-| AsyncAPI | OpenAPI's sibling standard for message-based APIs (WebSocket, queues) |
-| springdoc | Library that generates an OpenAPI document from Spring controllers |
+| Deploy | Put a new version of a program where users reach it |
 | Deterministic | Same input always gives byte-identical output |
-| BOM | Byte-order mark: invisible bytes at a file's start that some tools reject |
-| Twelve-Factor App | Rules for server software; factor III: config lives in the environment |
-| Spring profile | A named set of settings switched on with SPRING_PROFILES_ACTIVE |
+| Detour | The extra distance sharing adds compared with riding alone |
+| DI | Dependency Injection: dependencies handed in from outside |
+| Directory | Another word for folder |
+| Dirty checking | Hibernate detects changed fields and writes them at commit |
+| Dockerfile | Recipe for building your own image |
+| Domain | A human-readable address like namastute.in |
+| Drift | Two copies of the same truth slowly stop matching |
+| Drift check | CI regenerates a file and fails if it differs from the committed one |
+| Driver | A library that knows how to talk to one particular database |
+| ECDH | Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other's public key to get the same shared secret |
+| Effect | Code run after a component appears (`useEffect`) |
+| Effectively final | A variable that never changes after it's set; only these can be used inside a lambda |
+| Encoding vs encryption | Changing format (anyone can undo it) vs hiding content (needs a key) |
+| End-to-end encryption | Only sender and receiver can read it; carriers in between can't |
+| Endpoint | One HTTP method + path the API accepts |
+| Entity | A class mapped to a database table |
+| Ephemeral data | Data that is passed along and never saved |
+| ExecutorService | A pool of threads that run submitted tasks |
+| Expiry | The moment something (a code, a token) stops being valid |
+| EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
+| Extension (Postgres) | Add-on giving the database new abilities (PostGIS) |
 | Fail fast | Stop at startup when something essential is missing, instead of running wrongly |
-| Multi-stage build | A Dockerfile that builds in a big image and ships only the result in a small one |
-| Attack surface | Everything an attacker could try to use; smaller is safer |
-| Reverse proxy | A server in front of your apps that receives requests and forwards them |
-| TLS termination | Decrypting HTTPS at the proxy, then forwarding plain HTTP privately |
+| Fail open / fail closed | When a safety check itself breaks: let requests through / refuse them |
+| Filter | Code that inspects a request before the controller |
+| Fixed window (rate limit) | Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends |
+| Floating point | How double stores numbers in binary; most decimal fractions are slightly off |
+| Foreign key | A column that must point at an existing row in another table |
+| Framework | A large ready-made toolkit that gives a program its structure (Spring, Next.js) |
+| Frontend | The part of an app people see and use, running in the browser |
+| Full-duplex | Both sides can send at the same time |
+| Function call | One piece of code asking another in the same program to do something |
+| Geocoding | Text → coordinates (forward) or coordinates → place name (reverse) |
+| geography (PostGIS) | Points on the round Earth; distances in metres |
+| Geolocation API | The browser feature for reading the device's position (`watchPosition`, `clearWatch`) |
+| GiST | Generalized Search Tree: Postgres index framework for unsortable data like shapes |
+| Git | A version control tool that records every change to the code |
+| git stash | Puts uncommitted changes on a temporary shelf (`git stash pop` brings them back) |
+| GitHub | A website hosting Git repositories, with pull requests and CI |
+| Great circle | Shortest path between two points on a sphere |
+| Greedy algorithm | Takes the best-looking step now and never reconsiders |
+| Hash | One-way fixed-length fingerprint of data |
+| Haversine | Formula for great-circle distance from two lat/lng pairs |
+| Header (HTTP) | A line of extra information on a request or response |
+| Healthcheck | A test of whether a service is really ready |
+| Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
+| Heuristic | A quick rule giving a good (not guaranteed best) answer |
+| HKDF | HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need |
+| HMAC | A hash mixed with a secret key |
+| Hook | React function starting with `use` that gives components abilities |
+| Hosting | Running an app on a server that users can reach |
+| Hot reload | Browser updates automatically when a file is saved |
+| HTTP | Request/response protocol between browser and server |
+| Idempotent | Running it twice has the same effect as running it once |
+| Image (Docker) | Packaged, read-only snapshot of a program and its environment |
+| Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
+| Interceptor | Code that inspects every incoming message before it's handled |
+| Interface (Java) | A list of methods a class promises to provide, without saying how |
+| Internet | The worldwide network of computer networks |
+| IoC | Inversion of Control: the framework creates and wires objects |
+| IP address | The network address a request comes from |
+| JDBC | Java's standard database API |
+| JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
+| JIT warm-up | Java gets faster after its first minute as hot code is compiled |
+| Join request | "I'd like to share with you": pending until accepted or declined |
+| JPA / Hibernate | Java's ORM standard / its implementation |
+| JPQL | SQL-like query language using entity and field names |
+| JSON | Text format for data: `{"key": value}` |
+| JTS | Java Topology Suite: Java's standard shapes library (Point…) |
+| JWT | JSON Web Token: header.payload.signature |
+| Key-value store | Database that saves values under keys (Redis) |
+| Latency | The delay between something happening and you seeing it |
+| Latitude / longitude | North–south / east–west position in degrees |
+| Launch blocker | Something that must be done before real users |
 | Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
-| X-Forwarded-For | Header a proxy adds with the real client's IP address |
-| Standalone output | Next.js build mode producing a small self-contained server.js |
-| Profile expression | Spring condition like "!prod \| fake-sms" (not prod, or fake-sms) |
+| Library | A package of ready-made code a project uses (a jar in Java, a package in JavaScript) |
+| Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
+| Linter | Tool that flags likely bugs without running code |
+| Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
+| Lock (database) | A temporary claim on a row that makes others wait |
+| Lockfile | Exact versions of all installed packages |
+| Lost update | Two writers start from the same old value; one overwrites the other |
+| Merge | Combining the changes from one branch into another |
+| Message broker | The part that delivers published messages to subscribers |
+| Migration | A versioned SQL change to the database structure |
+| Migration checksum | Flyway's fingerprint of an applied migration; editing the file (even a comment) breaks startup |
+| Minimum sample | Only show an aggregate once there is enough data for it to mean something |
+| Minor units | Money stored as an integer count of the smallest unit (paise) |
+| Mitigation | A change that makes the harm smaller without removing the cause |
+| Moderation | People reviewing reports and deciding what to do |
+| Module | A self-contained part of a program with its own job |
+| Monorepo | One repository holding several related projects |
+| Multi-stage build | A Dockerfile that builds in a big image and ships only the result in a small one |
+| N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
 | Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
-| Runbook | Step-by-step instructions for operating a system |
-| Threat modelling | Systematically asking how a feature could be misused |
-| Abuse case | A specific way a bad actor could misuse a feature |
-| Silent block | Blocking without telling the blocked person anything |
-| Weaponised reporting | Using a report button to harass or get someone banned unfairly |
-| Service worker | Background JavaScript the browser can wake even when no tab is open |
+| Native query | Plain SQL in a repository (`nativeQuery = true`) |
+| Network call | A request to another program over a network; slower and can fail |
+| Notification tag | A label on a notification; a new one with the same tag replaces the old one |
+| Object | One real thing built from a class while the program runs |
+| Opaque id | A random identifier that reveals nothing about the person (a UUID) |
+| OpenAPI (Swagger) | Standard document describing an HTTP API's paths and data shapes |
+| Operating system | The base software that runs a computer (Windows, Linux, macOS) |
+| Optimistic locking | Detect conflicts with a `version` column and retry |
+| Optimistic UI | Showing your action as done before the server confirms it |
+| Optional | A box that holds a value or is empty |
+| OptionalDouble | Java's box for "a number, or nothing" |
+| Origin | Scheme + host + port |
+| ORM | Object-Relational Mapping: objects ↔ table rows |
+| OTP | One-time password |
+| Outbox | Saving events in the same transaction as the change, then delivering them reliably |
+| Pagination | Sending a long list one page at a time |
+| Partial index | Index holding only rows matching a `where` |
+| PATCH | HTTP method for changing part of a resource |
+| Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
+| Personal data | Information that identifies a person (phone number, UPI ID) |
+| Pessimistic locking | Lock the row when reading it (`select ... for update`) |
+| Polling | Asking the server "anything new?" again and again |
+| Pool starvation | Every connection is taken and threads wait forever for one more |
+| Port | Numbered "door" a program listens on |
+| Port / adapter | The interface a module defines / the code that plugs into it |
+| Postgres enum | A column type allowing only listed values (`trip_status`) |
+| Prefilter | A cheap first pass that throws away obviously wrong rows |
+| Preflight | Browser's automatic `OPTIONS` permission check before a cross-origin request |
+| Prerendering | Building a page ahead of time instead of per visitor |
+| Principal | The authenticated caller of a request |
+| Process | One running program |
+| Production | The real environment real users use |
+| Profile expression | Spring condition like "!prod \| fake-sms" (not prod, or fake-sms) |
+| Program | A list of instructions a computer follows |
+| Promise | A value that will arrive later; `await` waits for it |
+| Protocol | An agreed message format, so both sides understand each other |
+| Proxy (Spring) | Wrapper object Spring puts around a bean to add transactions etc. |
+| Pub/sub | Publish to a topic; every subscriber gets a copy |
+| Pull request (PR) | A request to merge a branch into main; where review and CI happen |
+| Pure function | Output depends only on inputs; no side effects |
+| Push notification | A message shown on a device even when the app isn't open |
 | Push service | The browser maker's server that delivers pushes to devices |
 | Push subscription | A browser's endpoint URL + keys for receiving pushes |
-| VAPID | Our server's key pair; pushes are signed with it so only we can push to our subscribers |
-| End-to-end encryption | Only sender and receiver can read it; carriers in between can't |
-| Soft ask | Your own "turn on notifications?" button before the browser's real prompt |
+| PUT | HTTP method for replacing a whole resource |
 | PWA / web app manifest | An installable web app / the file describing its name, icons and colours |
-| SSRF | Server-Side Request Forgery: tricking a server into requesting a URL of the attacker's choosing |
-| Allowlist | A list of the only values accepted; everything else is refused |
-| ECDH | Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other's public key to get the same shared secret |
-| HKDF | HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need |
-| Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
-| Notification tag | A label on a notification; a new one with the same tag replaces the old one |
-| SimpUserRegistry | Spring's live list of who has an open WebSocket connection |
-| Geolocation API | The browser feature for reading the device's position (`watchPosition`, `clearWatch`) |
-| Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
-| Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
-| Ephemeral data | Data that is passed along and never saved |
-| Throttling | Sending at most every so often, however often updates arrive |
-| Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
-| Staleness | How old a reading is; old positions may be wrong |
-| Reputation system | A way for strangers to judge trust from others' experience (stars, reviews, thumbs) |
-| Aggregate | One number summarising many rows, e.g. a count or a percentage |
-| Denormalisation | Storing a value you could calculate, for cheap reads; you must keep it correct yourself |
+| Query | One question to the database |
+| Query planner | The part of Postgres that decides how to run a query |
+| R-tree | Tree of nested bounding boxes; how PostGIS indexes points |
+| Race condition | Bug where the result depends on the timing of simultaneous operations |
+| RAM | A computer's fast, temporary memory; emptied when a program stops |
+| Ranking | Ordering candidates from best to worst using the exact rules |
+| Rate limiting | Capping how often something can be done |
 | Rating inflation | Almost everyone gives the top score, so the scale stops carrying information |
-| Cold start | A new user (or item) with no history yet |
-| Minimum sample | Only show an aggregate once there is enough data for it to mean something |
+| READ COMMITTED | Postgres's default isolation level: you only see committed data |
+| Ref (React) | A value kept between redraws without causing one (`useRef`) |
+| Refactoring | Changing how code is written without changing what it does |
+| Reference data | Fixed data the app needs to work, like the list of terminals |
+| Refresh token | Long-lived random token used only to get new access tokens |
+| Region (cloud) | A group of data centres in one area, like ap-south-1 (Mumbai) |
+| Registry | Online store of packages or images (Maven Central, npm, Docker Hub) |
+| Regression | Something that used to work breaking after a change |
+| Render | Work out what a component should show, and draw it |
+| Repository | (1) Spring Data: an interface whose database code Spring generates; (2) Git: a project folder whose history Git tracks |
+| Reputation system | A way for strangers to judge trust from others' experience (stars, reviews, thumbs) |
+| Request / response | The message a client sends / the server's reply |
+| REQUIRES_NEW | Start a brand-new transaction, separate from any current one |
+| REST | API style: URLs name things, methods say what to do |
 | Retaliation | Rating someone down because they rated you down |
-| Sybil attack | One person running many fake identities to sway a system |
-| Technical debt | A shortcut taken on purpose to ship sooner, to be paid back later |
-| Triage | Sorting problems by urgency so each gets a decision: fix now, later, or accept |
-| Severity / likelihood | How bad a problem is when it happens / how likely it is to happen |
-| Blast radius | How many people one failure affects |
-| Mitigation | A change that makes the harm smaller without removing the cause |
-| Accepted risk | A known limit you decided to live with for now, written down with when you'd change it |
-| Launch blocker | Something that must be done before real users |
-| Fixed window (rate limit) | Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends |
-| Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
-| Virtual user (VU) | One simulated person in a load test |
-| Think time | The pauses a real person takes between actions |
-| Throughput | Work done per second, e.g. requests per second |
-| Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
+| RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
+| Reverse proxy | A server in front of your apps that receives requests and forwards them |
+| Revoke | Cancel something before it would expire by itself |
+| Rotation | Replacing a token every time it's used |
+| Rounding mode | The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING |
+| Route | The order in which a cab drops its riders |
+| Row lock | Postgres's hold on a row being changed; other writers wait |
+| Runbook | Step-by-step instructions for operating a system |
+| Runner | The VM that runs a CI job |
+| Same-Origin Policy | Browser rule: scripts can't read other origins' responses by default |
 | Saturation | A resource is fully used, so work queues and latency climbs |
+| Scaling | Handling more users, with more copies or bigger machines |
+| @Scheduled | Spring annotation that runs a method on a timer (needs @EnableScheduling) |
+| Schema (data shape) | A description of the fields a piece of data has |
+| Schema (DB) | A namespace for tables inside a database |
+| Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
+| Self-invocation | A method calling another in the same class, bypassing the proxy |
+| Self-join | A table joined with itself under two names (`me` and `t`) |
+| Seq Scan | Reading every row of a table |
+| Server | A computer or program that waits for requests and answers them |
+| Server Component | React component rendered on the server (Next.js default) |
+| Server push | The server sending data without being asked |
+| Service (microservice) | A separately running program with one job, called over the network |
+| Service worker | Background JavaScript the browser can wake even when no tab is open |
+| Session | The period during which the server treats someone as logged in |
+| Severity / likelihood | How bad a problem is when it happens / how likely it is to happen |
+| Side effect | Anything a function does besides returning a value (DB, network, clock…) |
+| Signature | A cryptographic stamp proving who issued something and that it's unchanged |
+| Silent block | Blocking without telling the blocked person anything |
+| SimpUserRegistry | Spring's live list of who has an open WebSocket connection |
+| Single source of truth | Writing something once and deriving every other copy from it |
+| Singleton | One shared instance of a bean |
+| Site | Registrable domain, ignoring port and subdomains |
+| Slice | A small piece of the product built end to end, then merged |
 | SLO / threshold | A pass line set in advance, e.g. p95 under 500 ms |
-| JIT warm-up | Java gets faster after its first minute as hot code is compiled |
-| CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
+| SNAPSHOT | A Maven version still in development |
+| Soft ask | Your own "turn on notifications?" button before the browser's real prompt |
+| Spring profile | A named set of settings switched on with SPRING_PROFILES_ACTIVE |
+| springdoc | Library that generates an OpenAPI document from Spring controllers |
+| SQL | Structured Query Language: the language for asking and changing a database |
+| Squash merge | All PR commits combined into one commit on `main` |
+| SRID 4326 | ID of the GPS coordinate system (WGS 84) |
+| SSRF | Server-Side Request Forgery: tricking a server into requesting a URL of the attacker's choosing |
+| Staleness | How old a reading is; old positions may be wrong |
+| Standalone output | Next.js build mode producing a small self-contained server.js |
+| Starter | One dependency bringing a tested set of libraries |
+| State | Data a component remembers; changing it redraws the component |
+| State machine | A fixed set of states plus the allowed transitions between them |
+| Stateless | Each request stands alone; the server remembers nothing between them |
+| Status code | 3-digit result of an HTTP request (2xx/4xx/5xx) |
+| STOMP | Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE) |
+| StrictMode | React dev mode that runs effects twice to expose unsafe ones |
+| Supply-chain risk | Danger of a malicious or broken release of a library you depend on |
+| Sweep | A periodic job that handles everything that's due in one go |
+| Sybil attack | One person running many fake identities to sway a system |
+| Table | Data arranged in rows and columns |
+| Technical debt | A shortcut taken on purpose to ship sooner, to be paid back later |
+| Terminal | A text window for typing commands |
+| Testcontainers | Library that starts throwaway databases in Docker for tests |
+| Think time | The pauses a real person takes between actions |
+| Thread | One line of execution inside a program; a server runs many at once |
 | Thread dump | A snapshot of every thread's stack in a running Java program (`kill -3`) |
-| Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
-| 429 / Retry-After | "Too Many Requests" / the header saying how many seconds to wait |
-| Fail open / fail closed | When a safety check itself breaks: let requests through / refuse them |
-| Migration checksum | Flyway's fingerprint of an applied migration; editing the file (even a comment) breaks startup |
+| Threat modelling | Systematically asking how a feature could be misused |
+| Throttling | Sending at most every so often, however often updates arrive |
+| Throughput | Work done per second, e.g. requests per second |
+| Tile | One square image of a map at a given zoom level |
+| Time zone | A region's offset from UTC; IST is UTC+05:30 |
+| Timing attack | Learning secrets from how long comparisons take |
+| TLS termination | Decrypting HTTPS at the proxy, then forwarding plain HTTP privately |
+| Token | Text the browser sends to prove who it is, like a ticket |
+| TOTP | Time-based one-time password (authenticator apps) |
+| Transaction | Database changes that all happen or none do |
+| @TransactionalEventListener | Runs a listener at a transaction phase, by default after commit |
+| TransactionSynchronization | Spring hook to run code at a transaction moment, e.g. afterCommit |
+| Transition | One allowed move between states, e.g. `open → locked` |
+| Travelling salesman problem | Finding the shortest route through all stops; orders grow as n! |
+| Triage | Sorting problems by urgency so each gets a decision: fix now, later, or accept |
+| Trilateration | Finding a hidden point from its distances to known points |
+| TTL | Time to live: automatic expiry of a key |
+| Twelve-Factor App | Rules for server software; factor III: config lives in the environment |
+| Two-stage search | Cheap prefilter in the database, then exact ranking in code |
+| UPI / VPA | India's instant bank payments / a payment address like name@bank |
+| Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
+| URL | A web address, like https://namastute.in/login |
+| Validation | Checking input is acceptable before using it |
+| VAPID | Our server's key pair; pushes are signed with it so only we can push to our subscribers |
+| Version | A label like 4.1.1 identifying one release |
+| Version control | Recording every change to code, so history can be seen and undone |
+| Virtual user (VU) | One simulated person in a load test |
+| Volume | Docker storage that outlives containers |
+| Weaponised reporting | Using a report button to harass or get someone banned unfairly |
+| Web Locks API | Browser-wide lock shared by all tabs (`navigator.locks`) |
+| WebSocket | A long-lived two-way connection between browser and server |
+| WKT | Well-Known Text: `POINT(lng lat)` |
+| Workflow (CI) | An automated process described in a YAML file |
+| X-Forwarded-For | Header a proxy adds with the real client's IP address |
+| XSS | Attacker's script running on our page |
+| YAML | Indentation-based settings format |
 
 ---
 
 ## 72. Interview questions to practise
+
+Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
