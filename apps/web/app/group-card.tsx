@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { blockTraveller, getCurrentGroup, imHere, leaveGroup, lockGroup, type Group } from "@/lib/api";
-import { plural } from "@/lib/format";
+import { plural, ratingText } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import FareSection from "./fare-section";
 import GroupChat from "./group-chat";
 import PickupLocation from "./pickup-location";
 import ReportForm from "./report-form";
+import RideRatings from "./ride-ratings";
 
 // Your cab group: who's in it, lock, "I'm here", live location (PickupLocation), leave, the fare (FareSection) and the live chat.
 // Not re-created on every refresh (version is a prop, not a key), so the chat connection stays open.
@@ -57,7 +58,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
       <ul className="mt-1 list-disc pl-5">
         {g.members.map((m) => (
           <li key={m.tripId}>
-            {m.you ? "You" : m.firstName}
+            {m.you ? "You" : `${m.firstName} (${ratingText(m.rating)})`}
             {m.booker ? " (booker)" : ""} · {m.destArea} · {plural(m.seats, "seat")}, {plural(m.bags, "bag")}
             {m.here ? " · here ✓" : ""}
             {!m.you && (
@@ -91,6 +92,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
       )}
       <PickupLocation group={g} />
       {met && <FareSection group={g} onChange={onChange} />}
+      {met && <RideRatings group={g} />}
       {g.youAreBooker && g.status === "open" && (
         <button
           onClick={() => run(async () => { await lockGroup(g.id); onChange(); })}

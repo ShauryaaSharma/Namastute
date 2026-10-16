@@ -16,7 +16,7 @@ import {
   type SentRequest,
   type Trip,
 } from "@/lib/api";
-import { plural } from "@/lib/format";
+import { plural, ratingText } from "@/lib/format";
 import { formatIst } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
 import GroupCard from "./group-card";
@@ -121,9 +121,9 @@ function Matches(props: { tripId: string; asked: string[]; askedYou: string[]; o
           return (
             <li key={m.tripId}>
               {group
-                ? `${m.riders.map((r) => `${r.firstName} (${r.destArea})`).join(" + ")} · group of ${m.riders.length} · ` +
+                ? `${m.riders.map((r) => `${r.firstName} (${ratingText(r.rating)}, ${r.destArea})`).join(" + ")} · group of ${m.riders.length} · ` +
                   `${plural(CAR_SEATS - m.seats, "seat")} free · meeting ${timing(m.minutesAfterYou)}`
-                : `${names} · out ${timing(m.minutesAfterYou)} · ${m.riders[0].destArea}`}
+                : `${names} (${ratingText(m.riders[0].rating)}) · out ${timing(m.minutesAfterYou)} · ${m.riders[0].destArea}`}
               {" · "}
               {m.detourKm === 0 ? "no detour" : `${m.detourKm} km detour`}
               {ids.some((id) => asked.includes(id)) ? (
@@ -177,7 +177,7 @@ function Received({ requests, onChange }: { requests: ReceivedRequest[]; onChang
       <ul className="mt-1 list-disc pl-5">
         {requests.map((r) => (
           <li key={r.id}>
-            {r.firstName} · out {timing(r.minutesAfterYou)} · {r.destArea} · {plural(r.seats, "seat")}, {plural(r.bags, "bag")}
+            {r.firstName} ({ratingText(r.rating)}) · out {timing(r.minutesAfterYou)} · {r.destArea} · {plural(r.seats, "seat")}, {plural(r.bags, "bag")}
             <button onClick={() => answer(r.id, "accept")} disabled={busy} aria-label={`Accept ${r.firstName}`}
                     className="ml-2 underline disabled:opacity-50">
               Accept

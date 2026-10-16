@@ -1,6 +1,8 @@
 package com.namastute.feedback;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,6 +15,7 @@ import com.namastute.users.UserService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +102,55 @@ class FeedbackTest {
                 String.class, asha, keshav)).isEqualTo("harassment");
     }
 
+    // Ratings (Learning Notes 62): only after meeting, once per person per ride, counted in the same transaction,
+    // and shown as a percentage only from 3 ratings on
+    @Test
+    void ratingsNeedAMetRideHappenOnceAndShowOnlyAsATotal() throws Exception {
+        UUID asha = user("Asha Rao"), keshav = user("Keshav Dixit"), stranger = user("Neel Shah");
+        String ashaTrip = trip(asha), keshavTrip = trip(keshav);
+        ask(keshav, ashaTrip).andExpect(status().isCreated());   // Keshav asked first, so he's the booker
+        String request = JsonPath.read(mvc.perform(get("/api/v1/requests").with(as(asha))).andReturn().getResponse()
+                .getContentAsString(), "$.received[0].id");
+        mvc.perform(post("/api/v1/requests/" + request + "/accept").with(as(asha))).andExpect(status().isNoContent());
+        String group = JsonPath.read(mvc.perform(get("/api/v1/groups/current").with(as(asha))).andReturn().getResponse()
+                .getContentAsString(), "$.id");
+
+        rate(keshav, ashaTrip, true).andExpect(status().isNotFound())   // not met yet
+                .andExpect(jsonPath("$.error.code").value("NOT_RATEABLE"));
+
+        mvc.perform(post("/api/v1/groups/" + group + "/lock").with(as(keshav))).andExpect(status().isNoContent());
+        mvc.perform(post("/api/v1/groups/" + group + "/here").with(as(keshav))).andExpect(status().isNoContent());
+        mvc.perform(post("/api/v1/groups/" + group + "/here").with(as(asha))).andExpect(status().isNoContent());
+
+        rate(keshav, ashaTrip, true).andExpect(status().isNoContent());
+        rate(keshav, ashaTrip, false).andExpect(status().isConflict())   // final: no second rating, no change of mind
+                .andExpect(jsonPath("$.error.code").value("ALREADY_RATED"));
+        rate(keshav, keshavTrip, true).andExpect(status().isNotFound());   // not yourself
+        rate(stranger, ashaTrip, true).andExpect(status().isNotFound());   // never rode together
+        rate(asha, keshavTrip, false).andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/v1/groups/" + group + "/ratings").with(as(keshav)))   // only what YOU gave
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].tripId").value(ashaTrip)).andExpect(jsonPath("$[0].up").value(true));
+        mvc.perform(get("/api/v1/groups/" + group + "/ratings").with(as(stranger))).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForList("select rating_count, rating_sum from users where id = ?", asha))
+                .containsExactly(Map.of("rating_count", 1, "rating_sum", 1));
+
+        // Below 3 ratings: a count, no percentage ("New")
+        mvc.perform(get("/api/v1/groups/current").with(as(keshav)))
+                .andExpect(jsonPath("$.members[?(@.tripId == '" + ashaTrip + "')].rating.count").value(1))
+                .andExpect(jsonPath("$.members[?(@.tripId == '" + ashaTrip + "')].rating.upPercent").value(contains(nullValue())));
+        jdbc.update("update users set rating_count = 12, rating_sum = 11 where id = ?", asha);
+        mvc.perform(get("/api/v1/groups/current").with(as(keshav)))
+                .andExpect(jsonPath("$.members[?(@.tripId == '" + ashaTrip + "')].rating.upPercent").value(92));   // 11/12
+    }
+
     // ---- helpers ----
+
+    private ResultActions rate(UUID user, String tripId, boolean up) throws Exception {
+        return mvc.perform(post("/api/v1/ratings").with(as(user)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"tripId\":\"" + tripId + "\",\"up\":" + up + "}"));
+    }
 
     private UUID user(String name) {
         UUID id = users.findOrCreateByPhone("+9197" + String.format("%08d", (int) (Math.random() * 100_000_000)));

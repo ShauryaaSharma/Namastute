@@ -102,14 +102,16 @@
 <details><summary><a href="#59-code-walkthrough-push-notifications">59. Code walkthrough: push notifications</a></summary><a class="sub" href="#591-settings-applicationyaml-application-prodyaml">59.1 Settings: application.yaml, application-prod.yaml</a><a class="sub" href="#592-the-new-notifications-module-pushservice">59.2 The new notifications module: PushService</a><a class="sub" href="#593-pushcontroller">59.3 PushController</a><a class="sub" href="#594-the-triggers-groups-and-chat-call-pushservice">59.4 The triggers (groups and chat call PushService)</a><a class="sub" href="#595-tests-notificationstest-6">59.5 Tests: NotificationsTest (6)</a><a class="sub" href="#596-web">59.6 Web</a><a class="sub" href="#597-verified-in-a-real-browser-and-what-couldnt-be">59.7 Verified in a real browser, and what couldn&#x27;t be</a></details>
 <details><summary><a href="#60-live-location-at-the-pickup">60. Live location at the pickup</a></summary><a class="sub" href="#601-terms">60.1 Terms</a><a class="sub" href="#602-the-problem">60.2 The problem</a><a class="sub" href="#603-the-naive-way-and-why-it-hurts">60.3 The naive way, and why it hurts</a><a class="sub" href="#604-the-design">60.4 The design</a><a class="sub" href="#605-reality-checks">60.5 Reality checks</a><a class="sub" href="#606-decisions-2026-10-16">60.6 Decisions (2026-10-16)</a></details>
 <details><summary><a href="#61-code-walkthrough-live-location">61. Code walkthrough: live location</a></summary><a class="sub" href="#611-groupsgroupservice">61.1 groups/GroupService</a><a class="sub" href="#612-chat-one-more-topic-one-more-handler">61.2 chat: one more topic, one more handler</a><a class="sub" href="#613-test-chattestlocationreachesthegrouponlyaroundpickupandisneverstored">61.3 Test: ChatTest.locationReachesTheGroupOnlyAroundPickupAndIsNeverStored</a><a class="sub" href="#614-web">61.4 Web</a><a class="sub" href="#615-verified-in-a-real-browser-keshav-in-the-browser-asha-played-by-a-node-script">61.5 Verified in a real browser (Keshav in the browser, Asha played by a Node script)</a></details>
-<details><summary><a href="#62-command-cheat-sheet">62. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#63-glossary">63. Glossary</a>
-<a class="topic" href="#64-interview-questions-to-practise">64. Interview questions to practise</a>
+<details><summary><a href="#62-ratings-after-the-ride">62. Ratings after the ride</a></summary><a class="sub" href="#621-terms">62.1 Terms</a><a class="sub" href="#622-the-problem-the-naive-way-and-why-it-hurts">62.2 The problem, the naive way, and why it hurts</a><a class="sub" href="#623-the-design">62.3 The design</a><a class="sub" href="#624-limits">62.4 Limits</a><a class="sub" href="#625-decisions-2026-10-16">62.5 Decisions (2026-10-16)</a></details>
+<details><summary><a href="#63-code-walkthrough-ratings">63. Code walkthrough: ratings</a></summary><a class="sub" href="#631-v7__thumbs_ratingssql">63.1 V7__thumbs_ratings.sql</a><a class="sub" href="#632-usersuserservice-the-users-module-owns-the-counters">63.2 users/UserService (the users module owns the counters)</a><a class="sub" href="#633-groupsgroupservice">63.3 groups/GroupService</a><a class="sub" href="#634-tripstripservice">63.4 trips/TripService</a><a class="sub" href="#635-the-feedback-module-owns-ratings">63.5 The feedback module (owns ratings)</a><a class="sub" href="#636-tests">63.6 Tests</a><a class="sub" href="#637-web">63.7 Web</a><a class="sub" href="#638-verified-in-a-real-browser-as-keshav-ashas-side-through-the-api">63.8 Verified in a real browser (as Keshav; Asha&#x27;s side through the API)</a></details>
+<details><summary><a href="#64-command-cheat-sheet">64. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#65-glossary">65. Glossary</a>
+<a class="topic" href="#66-interview-questions-to-practise">66. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-16 (live location at the pickup: concepts and code walkthrough).</p>
+<p>Last updated: 2026-10-16 (ratings after the ride: concepts and code walkthrough).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -174,9 +176,11 @@
 <li><a href="#59-code-walkthrough-push-notifications">Code walkthrough: push notifications</a></li>
 <li><a href="#60-live-location-at-the-pickup">Live location at the pickup</a></li>
 <li><a href="#61-code-walkthrough-live-location">Code walkthrough: live location</a></li>
-<li><a href="#62-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#63-glossary">Glossary</a></li>
-<li><a href="#64-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#62-ratings-after-the-ride">Ratings after the ride</a></li>
+<li><a href="#63-code-walkthrough-ratings">Code walkthrough: ratings</a></li>
+<li><a href="#64-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#65-glossary">Glossary</a></li>
+<li><a href="#66-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -5389,7 +5393,142 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not tested:</strong> a real phone&#39;s GPS, and how accurate it is inside IGI&#39;s terminals.</li>
 </ul>
 <hr>
-<h2 id="62-command-cheat-sheet">62. Command cheat sheet</h2>
+<h2 id="62-ratings-after-the-ride">62. Ratings after the ride</h2>
+<h3 id="621-terms">62.1 Terms</h3>
+<ul>
+<li><strong>Reputation system:</strong> lets strangers judge whether to trust someone, from others&#39; experience (Uber stars, Airbnb reviews, eBay feedback).</li>
+<li><strong>Aggregate:</strong> one number summarising many rows (<code>count(*)</code>, <code>sum(...)</code>, &quot;92% thumbs up&quot;).</li>
+<li><strong>Denormalisation:</strong> storing a value you <em>could</em> calculate (a <code>rating_count</code> column instead of counting rows), so reads are cheap. The price: you keep it correct yourself, <strong>in the same transaction</strong> as the change.</li>
+<li><strong>Rating inflation:</strong> on 5 stars almost everyone gives 5, so 4 secretly means &quot;bad&quot; and the number says little.</li>
+<li><strong>Cold start:</strong> a new user has no ratings. <strong>Minimum sample:</strong> only show an aggregate once there are enough ratings to mean something.</li>
+<li><strong>Retaliation:</strong> &quot;you rated me down, so I&#39;ll rate you down&quot;. It kills honest ratings when people can see who rated them.</li>
+<li><strong>Collusion / Sybil attack:</strong> friends or fake accounts rating each other up; a Sybil attack is one person with many fake identities.</li>
+</ul>
+<h3 id="622-the-problem-the-naive-way-and-why-it-hurts">62.2 The problem, the naive way, and why it hurts</h3>
+<ul>
+<li>Before sharing a cab with strangers at night, you see only a first name and an area: no trust signal.</li>
+<li><strong>Naive:</strong> a public 5-star average, and anyone can rate anyone at any time.</li>
+<li><strong>Why it hurts:</strong> fake ratings both ways (collusion, Sybils, angry strangers); retaliation once people can see who rated them; inflation; one early 1-star makes a newcomer look like the worst user; and if low ratings banned people automatically, ratings would become a harassment tool (the lesson of reports, 56).</li>
+</ul>
+<h3 id="623-the-design">62.3 The design</h3>
+<ol>
+<li><strong>Only people you actually rode with:</strong> accepted members of a group that reached <strong>met</strong>, the same &quot;real ride&quot; evidence reports use. Fakes would need a phone number with an OTP <em>and</em> a real ride each.</li>
+<li><strong>Once per person per ride, final:</strong> the V1 primary key <code>(group_id, rater_id, ratee_id)</code> refuses a second one.</li>
+<li><strong>👍 / 👎 instead of stars:</strong> honest about what people mean; no inflation.</li>
+<li><strong>Private ratings, public total:</strong> nobody in the app, not even the person rated, sees who gave what. Admins can, with SQL.</li>
+<li><strong>Minimum sample of 3:</strong> below that, &quot;New&quot; instead of a percentage.</li>
+<li><strong>Counters (as the design planned):</strong> <code>users.rating_count</code> and <code>rating_sum</code> change in the <strong>same transaction</strong> as the new <code>ratings</code> row, so they can&#39;t disagree, and showing ratings costs no extra counting.</li>
+<li><strong>No automatic consequences:</strong> no bans, no blocks, no change to match ranking (ranking by ratings is in the design&#39;s later column). A 👎 points to Report for anything serious.</li>
+</ol>
+<h3 id="624-limits">62.4 Limits</h3>
+<ul>
+<li>Ratings are given on the group card, which is shown until the group closes (4 hours after meeting). Forget, and the chance is gone; a reminder could come later.</li>
+<li>In a group of two, the other person can work out what you gave by watching their own total change. Hiding that would need delays or batching, which isn&#39;t worth it yet.</li>
+</ul>
+<h3 id="625-decisions-2026-10-16">62.5 Decisions (2026-10-16)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scale</td>
+<td>👍 / 👎 (V7 migration; the table was empty)</td>
+</tr>
+<tr>
+<td>Who and when</td>
+<td>Accepted members of a met group; each other member once; final; while the group card is shown</td>
+</tr>
+<tr>
+<td>Where shown</td>
+<td>Matches, requests you received, the group card: &quot;92% 👍 · 12 ratings&quot;, or &quot;New&quot; below 3</td>
+</tr>
+<tr>
+<td>Privacy</td>
+<td>Who gave what is never shown in the app; only the total</td>
+</tr>
+<tr>
+<td>Counting</td>
+<td>The existing <code>users</code> counters, updated in the same transaction</td>
+</tr>
+<tr>
+<td>Consequences</td>
+<td>None automatic; a 👎 shows a &quot;use Report&quot; hint</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="63-code-walkthrough-ratings">63. Code walkthrough: ratings</h2>
+<h3 id="631-v7__thumbs_ratingssql">63.1 <code>V7__thumbs_ratings.sql</code></h3>
+<ul>
+<li><code>drop column score</code> (the 1–5 stars) and <code>add column up boolean not null</code>. Safe because nothing could write ratings before, so the table was empty everywhere. Flyway stays forward-only: V1 is never edited.</li>
+</ul>
+<h3 id="632-usersuserservice-the-users-module-owns-the-counters">63.2 <code>users/UserService</code> (the users module owns the counters)</h3>
+<ul>
+<li><code>Rating(int count, Integer upPercent)</code>: <code>upPercent</code> is null below <code>MIN_RATINGS = 3</code>.</li>
+<li><code>ratings(ids)</code>: one query (<code>select id, rating_count, rating_sum from users where id in (:ids)</code>) for everyone on a screen, like <code>firstNames</code> (no N+1). An empty list returns early, because SQL <code>in ()</code> is a syntax error.</li>
+<li><code>rating(count, ups)</code>: <code>Math.round(100.0 * ups / count)</code>, so 11 of 12 → 92.</li>
+<li><code>addRating(userId, up)</code>: <code>rating_count + 1</code>, <code>rating_sum + (up ? 1 : 0)</code>. Only called inside feedback&#39;s transaction.</li>
+</ul>
+<h3 id="633-groupsgroupservice">63.3 <code>groups/GroupService</code></h3>
+<ul>
+<li><code>metWith(me, theirTripId)</code> → <code>RideTogether(groupId, userId)</code>: a self-join on <code>group_members</code> (&quot;them&quot; and &quot;me&quot; both accepted) joined to <code>groups</code> with <code>status = &#39;met&#39;</code>, excluding yourself. A met group closes 4 hours after meeting (<code>finish</code> sweep, 49), which is what ends the rating window.</li>
+<li><code>memberTripsByUser(groupId)</code>: user id → trip handle, so ratings stored by user can be shown against the handles the card uses (users ids never reach the browser, 56).</li>
+<li><code>RequestView</code> and <code>MemberView</code> gain <code>rating</code>; <code>current()</code> and <code>requests()</code> fetch them in one query each.</li>
+</ul>
+<h3 id="634-tripstripservice">63.4 <code>trips/TripService</code></h3>
+<ul>
+<li><code>Rider</code> gains <code>rating</code>: <code>matches()</code> collects the rider ids once and asks for names and ratings with them.</li>
+</ul>
+<h3 id="635-the-feedback-module-owns-ratings">63.5 The <code>feedback</code> module (owns <code>ratings</code>)</h3>
+<ul>
+<li><code>rate(me, tripId, up)</code>, <code>@Transactional</code>:<ol>
+<li><code>groups.metWith(...)</code> or 404 <code>NOT_RATEABLE</code>;</li>
+<li><code>insert ... on conflict do nothing</code>: 0 rows → 409 <code>ALREADY_RATED</code> (final: no change of mind);</li>
+<li><code>users.addRating(...)</code>. Same transaction, so the row and the counters commit together or not at all.</li>
+</ol>
+</li>
+<li><code>myRatings(me, groupId)</code>: members only; only the ratings <strong>you</strong> gave, as <code>MyRating(tripId, up)</code>.</li>
+<li><code>POST /api/v1/ratings {tripId, up}</code> → 204; <code>GET /api/v1/groups/{id}/ratings</code> → your ratings in that group.</li>
+</ul>
+<h3 id="636-tests">63.6 Tests</h3>
+<ul>
+<li><code>FeedbackTest.ratingsNeedAMetRideHappenOnceAndShowOnlyAsATotal</code>:<ul>
+<li>before meeting → 404;</li>
+<li>after lock + both &quot;I&#39;m here&quot;: 👍 → 204; a second rating → 409; rating yourself → 404; a stranger → 404;</li>
+<li>&quot;my ratings&quot; shows only your own; the counters are 1/1; the card shows <code>count 1</code>, <code>upPercent null</code>; with 12/11 → <code>92</code>.</li>
+</ul>
+</li>
+<li><strong>Proven to fail:</strong> without <code>g.status = &#39;met&#39;</code>, the first step answered 204 instead of 404.</li>
+<li><code>MatchesTest</code>&#39;s privacy guard counted 3 fields per rider; it now names <code>rating</code> and expects 4, so any <em>other</em> new field still fails it.</li>
+<li>Gotchas:<ul>
+<li>A JSON filter (<code>$.members[?(...)]</code>) returns a <strong>list</strong>, so &quot;is null&quot; is checked as <code>contains(nullValue())</code>.</li>
+<li>The first version created an extra searching trip at Terminal 2 for no reason. With today&#39;s earlier runs&#39; leftovers, that pushed an expected match out of an older test&#39;s top 5. Removing the extra trip fixed it. <strong>Lesson:</strong> tests sharing a database must be careful about what they leave behind.</li>
+</ul>
+</li>
+<li>86 API tests, all green.</li>
+</ul>
+<h3 id="637-web">63.7 Web</h3>
+<ul>
+<li><code>lib/format.ts</code> <code>ratingText(r)</code>: &quot;92% 👍 · 12 ratings&quot; or &quot;New&quot;. Used for match riders, received requests and group members.</li>
+<li><code>lib/api.ts</code>: <code>rateTraveller(tripId, up)</code>, <code>getMyRatings(groupId)</code>.</li>
+<li><code>app/ride-ratings.tsx</code> (shown in met groups): &quot;How was the ride? Only the total is shown to others…&quot;, then per other member:<ul>
+<li>👍 / 👎 buttons, with <code>aria-label</code>s like &quot;Thumbs down for Asha&quot; for screen readers;</li>
+<li>or &quot;you gave 👍&quot;;</li>
+<li>or &quot;you gave 👎. If something serious happened, use Report next to Asha&#39;s name.&quot;</li>
+</ul>
+</li>
+</ul>
+<h3 id="638-verified-in-a-real-browser-as-keshav-ashas-side-through-the-api">63.8 Verified in a real browser (as Keshav; Asha&#39;s side through the API)</h3>
+<ul>
+<li>The group went to met (both &quot;I&#39;m here&quot; through the API). The card showed &quot;Asha (New)&quot; and &quot;How was the ride? Asha: 👍 👎&quot;.</li>
+<li>👎 → the Report hint. After a reload it still said &quot;you gave 👎&quot;, so no second chance appeared. Database: one row, Asha&#39;s counters 1 / 0.</li>
+<li>With Asha&#39;s counters temporarily at 12 / 11: &quot;Asha (92% 👍 (12))&quot;. The nested brackets read badly, so the format became &quot;92% 👍 · 12 ratings&quot; (&quot;Asha (92% 👍 · 12 ratings)&quot;). The counters were then put back.</li>
+<li><strong>Not checked in the browser:</strong> the summary in matches and received requests (Keshav was already in a group); they use the same <code>ratingText</code>, and <code>MatchesTest</code> checks the API side.</li>
+</ul>
+<hr>
+<h2 id="64-command-cheat-sheet">64. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -5453,7 +5592,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="63-glossary">63. Glossary</h2>
+<h2 id="65-glossary">65. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -6401,9 +6540,41 @@ git fetch --prune
 <td>Staleness</td>
 <td>How old a reading is; old positions may be wrong</td>
 </tr>
+<tr>
+<td>Reputation system</td>
+<td>A way for strangers to judge trust from others&#39; experience (stars, reviews, thumbs)</td>
+</tr>
+<tr>
+<td>Aggregate</td>
+<td>One number summarising many rows, e.g. a count or a percentage</td>
+</tr>
+<tr>
+<td>Denormalisation</td>
+<td>Storing a value you could calculate, for cheap reads; you must keep it correct yourself</td>
+</tr>
+<tr>
+<td>Rating inflation</td>
+<td>Almost everyone gives the top score, so the scale stops carrying information</td>
+</tr>
+<tr>
+<td>Cold start</td>
+<td>A new user (or item) with no history yet</td>
+</tr>
+<tr>
+<td>Minimum sample</td>
+<td>Only show an aggregate once there is enough data for it to mean something</td>
+</tr>
+<tr>
+<td>Retaliation</td>
+<td>Rating someone down because they rated you down</td>
+</tr>
+<tr>
+<td>Sybil attack</td>
+<td>One person running many fake identities to sway a system</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="64-interview-questions-to-practise">64. Interview questions to practise</h2>
+<h2 id="66-interview-questions-to-practise">66. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -6522,6 +6693,11 @@ git fetch --prune
 <li>Why send a heartbeat when the phone isn&#39;t moving? What problem does it solve without server memory?</li>
 <li>What can&#39;t a web page do with location that a native app can, and how did the design work around it?</li>
 <li>How did we test location sharing in a browser that blocks location, and what does that test not prove?</li>
+<li>How do you stop fake or revenge ratings in a ride-sharing app?</li>
+<li>Why thumbs up/down instead of 5 stars?</li>
+<li>Why store rating counters on the user row, and how do you keep them consistent with the ratings table?</li>
+<li>Why show &quot;New&quot; instead of a percentage for someone with one or two ratings?</li>
+<li>Two tests share a database and one starts failing after the other changes. What&#39;s happening, and how do you avoid it?</li>
 </ol>
 
 

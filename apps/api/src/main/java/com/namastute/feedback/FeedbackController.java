@@ -29,6 +29,8 @@ class FeedbackController {
             @Schema(allowableValues = {"unsafe", "harassment", "no_show", "fake_profile", "other"}) String category,
             @Size(max = 500) @Schema(nullable = true) String details) {}
 
+    record RateRequest(@NotNull UUID tripId, @NotNull Boolean up) {}
+
     private final FeedbackService feedback;
 
     FeedbackController(FeedbackService feedback) {
@@ -57,6 +59,19 @@ class FeedbackController {
     ResponseEntity<Void> report(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ReportRequest req) {
         feedback.report(userId(jwt), req.tripId(), req.category(), req.details());
         return ResponseEntity.noContent().build();   // nothing to send back: the reporter only needs "thanks"
+    }
+
+    // Thumbs up (up: true) or down for a member of your met group (Learning Notes 62)
+    @PostMapping("/api/v1/ratings")
+    ResponseEntity<Void> rate(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody RateRequest req) {
+        feedback.rate(userId(jwt), req.tripId(), req.up());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Only the ratings YOU gave in this group
+    @GetMapping("/api/v1/groups/{id}/ratings")
+    List<FeedbackService.MyRating> myRatings(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return feedback.myRatings(userId(jwt), id);
     }
 
     private static UUID userId(Jwt jwt) {

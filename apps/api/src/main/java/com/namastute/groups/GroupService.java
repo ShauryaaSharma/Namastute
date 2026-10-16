@@ -37,13 +37,14 @@ public class GroupService {
     // Live location at the pickup: from 20 minutes before the meeting time to 30 after (Learning Notes 60)
     static final Duration SHARE_BEFORE = Duration.ofMinutes(20), SHARE_AFTER = Duration.ofMinutes(30);
 
-    record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
+    record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags,
+                       UserService.Rating rating) {}
     record SentView(UUID id, UUID toTripId, String firstName, @Schema(allowableValues = {"pending", "declined"}) String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     // share: what this member owes the booker (the booker's own share is what they paid themselves); null until the fare
     // tripId: an opaque handle for report/block (Learning Notes 56), never the user id
     record MemberView(UUID tripId, String firstName, String destArea, int seats, int bags, boolean booker, boolean you,
-                      boolean here, @Schema(nullable = true) BigDecimal share) {}
+                      boolean here, @Schema(nullable = true) BigDecimal share, UserService.Rating rating) {}
     // sharingFrom/Until: when live location works (locked or met groups only)
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
                      @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members,
@@ -123,10 +124,11 @@ public class GroupService {
                 .list();
         Map<UUID, TripSummary> askers = byId(pending.stream().map(Pending::fromTripId).toList());
         Map<UUID, String> askerNames = users.firstNames(askers.values().stream().map(TripSummary::userId).toList());
+        Map<UUID, UserService.Rating> askerRatings = users.ratings(askers.values().stream().map(TripSummary::userId).toList());
         List<RequestView> received = pending.stream().map(p -> {
             TripSummary t = askers.get(p.fromTripId());
             return new RequestView(p.id(), p.fromTripId(), askerNames.get(t.userId()), t.destArea(),
-                    Duration.between(mine.get().exitAt(), t.exitAt()).toMinutes(), t.seats(), t.bags());
+                    Duration.between(mine.get().exitAt(), t.exitAt()).toMinutes(), t.seats(), t.bags(), askerRatings.get(t.userId()));
         }).toList();
         return new Requests(sent, received);
     }
@@ -416,10 +418,11 @@ public class GroupService {
                 .param(groupId).query(MemberRow.class).list();
         Map<UUID, TripSummary> memberTrips = byId(members.stream().map(MemberRow::tripId).toList());
         Map<UUID, String> names = users.firstNames(members.stream().map(MemberRow::userId).toList());
+        Map<UUID, UserService.Rating> ratings = users.ratings(members.stream().map(MemberRow::userId).toList());
         List<MemberView> views = members.stream().map(m -> {
             TripSummary t = memberTrips.get(m.tripId());
             return new MemberView(m.tripId(), names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
-                    m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share());
+                    m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share(), ratings.get(m.userId()));
         }).toList();
         OffsetDateTime meetAt = db.sql("select meet_at from groups where id = ?").param(groupId).query(OffsetDateTime.class).single();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
@@ -443,6 +446,26 @@ public class GroupService {
                           and now() between g.meet_at - make_interval(mins => ?) and g.meet_at + make_interval(mins => ?)""")
                 .params(groupId, userId, (int) SHARE_BEFORE.toMinutes(), (int) SHARE_AFTER.toMinutes())
                 .query(UUID.class).optional();
+    }
+
+    // ---- For the feedback module: ratings (Learning Notes 62) ----
+
+    public record RideTogether(UUID groupId, UUID userId) {}
+
+    // The group you and this trip's owner both rode in, if it reached "met" (and is still open for ratings)
+    public Optional<RideTogether> metWith(UUID me, UUID theirTripId) {
+        return db.sql("""
+                        select them.group_id, them.user_id from group_members them
+                        join group_members me on me.group_id = them.group_id and me.user_id = ? and me.status = 'accepted'
+                        join groups g on g.id = them.group_id and g.status = 'met'
+                        where them.trip_id = ? and them.status = 'accepted' and them.user_id <> ?""")
+                .params(me, theirTripId, me).query(RideTogether.class).optional();
+    }
+
+    // Each member's trip handle, so ratings (stored by user) can be shown against the group card's handles
+    public Map<UUID, UUID> memberTripsByUser(UUID groupId) {
+        return db.sql("select user_id, trip_id from group_members where group_id = ?").param(groupId)
+                .query(Member.class).list().stream().collect(Collectors.toMap(Member::userId, Member::tripId));
     }
 
     // For the chat module: who to notify about a new message

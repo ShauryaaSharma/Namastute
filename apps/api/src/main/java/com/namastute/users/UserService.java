@@ -20,6 +20,12 @@ public class UserService {
     public record BlockView(UUID id, String firstName) {}
     record BlockRow(UUID id, UUID blockedId) {}
 
+    // "92% 👍 · 12 ratings". upPercent stays null below MIN_RATINGS, so one early thumbs-down can't brand a newcomer
+    public record Rating(int count, @Schema(nullable = true) Integer upPercent) {}
+    record RatingRow(UUID id, int ratingCount, int ratingSum) {}
+
+    static final int MIN_RATINGS = 3;
+
     private final UserRepository users;
     private final JdbcClient db;
 
@@ -41,6 +47,27 @@ public class UserService {
             // Another request created this phone's user a moment ago (unique constraint on phone); use theirs
             return users.findByPhone(phone).orElseThrow().getId();
         }
+    }
+
+    // Ratings summaries for everyone shown on a screen, in one query. rating_sum counts thumbs up (V7).
+    public Map<UUID, Rating> ratings(Collection<UUID> ids) {
+        Map<UUID, Rating> out = new HashMap<>();
+        if (!ids.isEmpty()) {
+            db.sql("select id, rating_count, rating_sum from users where id in (:ids)").param("ids", ids)
+                    .query(RatingRow.class).list()
+                    .forEach(r -> out.put(r.id(), rating(r.ratingCount(), r.ratingSum())));
+        }
+        return out;
+    }
+
+    static Rating rating(int count, int ups) {
+        return new Rating(count, count < MIN_RATINGS ? null : (int) Math.round(100.0 * ups / count));
+    }
+
+    // For the feedback module, inside its transaction: the counters move together with the new ratings row
+    public void addRating(UUID userId, boolean up) {
+        db.sql("update users set rating_count = rating_count + 1, rating_sum = rating_sum + ? where id = ?")
+                .params(up ? 1 : 0, userId).update();
     }
 
     // For showing other travellers (trips module): first names only, all ids in ONE query (no N+1).

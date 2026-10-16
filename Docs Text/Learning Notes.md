@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-16 (live location at the pickup: concepts and code walkthrough).
+Last updated: 2026-10-16 (ratings after the ride: concepts and code walkthrough).
 
 ---
 
@@ -69,9 +69,11 @@ Last updated: 2026-10-16 (live location at the pickup: concepts and code walkthr
 59. [Code walkthrough: push notifications](#59-code-walkthrough-push-notifications)
 60. [Live location at the pickup](#60-live-location-at-the-pickup)
 61. [Code walkthrough: live location](#61-code-walkthrough-live-location)
-62. [Command cheat sheet](#62-command-cheat-sheet)
-63. [Glossary](#63-glossary)
-64. [Interview questions to practise](#64-interview-questions-to-practise)
+62. [Ratings after the ride](#62-ratings-after-the-ride)
+63. [Code walkthrough: ratings](#63-code-walkthrough-ratings)
+64. [Command cheat sheet](#64-command-cheat-sheet)
+65. [Glossary](#65-glossary)
+66. [Interview questions to practise](#66-interview-questions-to-practise)
 
 ---
 
@@ -3917,7 +3919,103 @@ Real STOMP, step by step:
 
 ---
 
-## 62. Command cheat sheet
+## 62. Ratings after the ride
+
+### 62.1 Terms
+- **Reputation system:** lets strangers judge whether to trust someone, from others' experience (Uber stars, Airbnb reviews, eBay feedback).
+- **Aggregate:** one number summarising many rows (`count(*)`, `sum(...)`, "92% thumbs up").
+- **Denormalisation:** storing a value you *could* calculate (a `rating_count` column instead of counting rows), so reads are cheap. The price: you keep it correct yourself, **in the same transaction** as the change.
+- **Rating inflation:** on 5 stars almost everyone gives 5, so 4 secretly means "bad" and the number says little.
+- **Cold start:** a new user has no ratings. **Minimum sample:** only show an aggregate once there are enough ratings to mean something.
+- **Retaliation:** "you rated me down, so I'll rate you down". It kills honest ratings when people can see who rated them.
+- **Collusion / Sybil attack:** friends or fake accounts rating each other up; a Sybil attack is one person with many fake identities.
+
+### 62.2 The problem, the naive way, and why it hurts
+- Before sharing a cab with strangers at night, you see only a first name and an area: no trust signal.
+- **Naive:** a public 5-star average, and anyone can rate anyone at any time.
+- **Why it hurts:** fake ratings both ways (collusion, Sybils, angry strangers); retaliation once people can see who rated them; inflation; one early 1-star makes a newcomer look like the worst user; and if low ratings banned people automatically, ratings would become a harassment tool (the lesson of reports, 56).
+
+### 62.3 The design
+1. **Only people you actually rode with:** accepted members of a group that reached **met**, the same "real ride" evidence reports use. Fakes would need a phone number with an OTP *and* a real ride each.
+2. **Once per person per ride, final:** the V1 primary key `(group_id, rater_id, ratee_id)` refuses a second one.
+3. **👍 / 👎 instead of stars:** honest about what people mean; no inflation.
+4. **Private ratings, public total:** nobody in the app, not even the person rated, sees who gave what. Admins can, with SQL.
+5. **Minimum sample of 3:** below that, "New" instead of a percentage.
+6. **Counters (as the design planned):** `users.rating_count` and `rating_sum` change in the **same transaction** as the new `ratings` row, so they can't disagree, and showing ratings costs no extra counting.
+7. **No automatic consequences:** no bans, no blocks, no change to match ranking (ranking by ratings is in the design's later column). A 👎 points to Report for anything serious.
+
+### 62.4 Limits
+- Ratings are given on the group card, which is shown until the group closes (4 hours after meeting). Forget, and the chance is gone; a reminder could come later.
+- In a group of two, the other person can work out what you gave by watching their own total change. Hiding that would need delays or batching, which isn't worth it yet.
+
+### 62.5 Decisions (2026-10-16)
+| Decision | Choice |
+|---|---|
+| Scale | 👍 / 👎 (V7 migration; the table was empty) |
+| Who and when | Accepted members of a met group; each other member once; final; while the group card is shown |
+| Where shown | Matches, requests you received, the group card: "92% 👍 · 12 ratings", or "New" below 3 |
+| Privacy | Who gave what is never shown in the app; only the total |
+| Counting | The existing `users` counters, updated in the same transaction |
+| Consequences | None automatic; a 👎 shows a "use Report" hint |
+
+---
+
+## 63. Code walkthrough: ratings
+
+### 63.1 `V7__thumbs_ratings.sql`
+- `drop column score` (the 1–5 stars) and `add column up boolean not null`. Safe because nothing could write ratings before, so the table was empty everywhere. Flyway stays forward-only: V1 is never edited.
+
+### 63.2 `users/UserService` (the users module owns the counters)
+- `Rating(int count, Integer upPercent)`: `upPercent` is null below `MIN_RATINGS = 3`.
+- `ratings(ids)`: one query (`select id, rating_count, rating_sum from users where id in (:ids)`) for everyone on a screen, like `firstNames` (no N+1). An empty list returns early, because SQL `in ()` is a syntax error.
+- `rating(count, ups)`: `Math.round(100.0 * ups / count)`, so 11 of 12 → 92.
+- `addRating(userId, up)`: `rating_count + 1`, `rating_sum + (up ? 1 : 0)`. Only called inside feedback's transaction.
+
+### 63.3 `groups/GroupService`
+- `metWith(me, theirTripId)` → `RideTogether(groupId, userId)`: a self-join on `group_members` ("them" and "me" both accepted) joined to `groups` with `status = 'met'`, excluding yourself. A met group closes 4 hours after meeting (`finish` sweep, 49), which is what ends the rating window.
+- `memberTripsByUser(groupId)`: user id → trip handle, so ratings stored by user can be shown against the handles the card uses (users ids never reach the browser, 56).
+- `RequestView` and `MemberView` gain `rating`; `current()` and `requests()` fetch them in one query each.
+
+### 63.4 `trips/TripService`
+- `Rider` gains `rating`: `matches()` collects the rider ids once and asks for names and ratings with them.
+
+### 63.5 The `feedback` module (owns `ratings`)
+- `rate(me, tripId, up)`, `@Transactional`:
+  1. `groups.metWith(...)` or 404 `NOT_RATEABLE`;
+  2. `insert ... on conflict do nothing`: 0 rows → 409 `ALREADY_RATED` (final: no change of mind);
+  3. `users.addRating(...)`. Same transaction, so the row and the counters commit together or not at all.
+- `myRatings(me, groupId)`: members only; only the ratings **you** gave, as `MyRating(tripId, up)`.
+- `POST /api/v1/ratings {tripId, up}` → 204; `GET /api/v1/groups/{id}/ratings` → your ratings in that group.
+
+### 63.6 Tests
+- `FeedbackTest.ratingsNeedAMetRideHappenOnceAndShowOnlyAsATotal`:
+  - before meeting → 404;
+  - after lock + both "I'm here": 👍 → 204; a second rating → 409; rating yourself → 404; a stranger → 404;
+  - "my ratings" shows only your own; the counters are 1/1; the card shows `count 1`, `upPercent null`; with 12/11 → `92`.
+- **Proven to fail:** without `g.status = 'met'`, the first step answered 204 instead of 404.
+- `MatchesTest`'s privacy guard counted 3 fields per rider; it now names `rating` and expects 4, so any *other* new field still fails it.
+- Gotchas:
+  - A JSON filter (`$.members[?(...)]`) returns a **list**, so "is null" is checked as `contains(nullValue())`.
+  - The first version created an extra searching trip at Terminal 2 for no reason. With today's earlier runs' leftovers, that pushed an expected match out of an older test's top 5. Removing the extra trip fixed it. **Lesson:** tests sharing a database must be careful about what they leave behind.
+- 86 API tests, all green.
+
+### 63.7 Web
+- `lib/format.ts` `ratingText(r)`: "92% 👍 · 12 ratings" or "New". Used for match riders, received requests and group members.
+- `lib/api.ts`: `rateTraveller(tripId, up)`, `getMyRatings(groupId)`.
+- `app/ride-ratings.tsx` (shown in met groups): "How was the ride? Only the total is shown to others…", then per other member:
+  - 👍 / 👎 buttons, with `aria-label`s like "Thumbs down for Asha" for screen readers;
+  - or "you gave 👍";
+  - or "you gave 👎. If something serious happened, use Report next to Asha's name."
+
+### 63.8 Verified in a real browser (as Keshav; Asha's side through the API)
+- The group went to met (both "I'm here" through the API). The card showed "Asha (New)" and "How was the ride? Asha: 👍 👎".
+- 👎 → the Report hint. After a reload it still said "you gave 👎", so no second chance appeared. Database: one row, Asha's counters 1 / 0.
+- With Asha's counters temporarily at 12 / 11: "Asha (92% 👍 (12))". The nested brackets read badly, so the format became "92% 👍 · 12 ratings" ("Asha (92% 👍 · 12 ratings)"). The counters were then put back.
+- **Not checked in the browser:** the summary in matches and received requests (Keshav was already in a group); they use the same `ratingText`, and `MatchesTest` checks the API side.
+
+---
+
+## 64. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -4001,7 +4099,7 @@ git fetch --prune
 
 ---
 
-## 63. Glossary
+## 65. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -4240,10 +4338,18 @@ git fetch --prune
 | Throttling | Sending at most every so often, however often updates arrive |
 | Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
 | Staleness | How old a reading is; old positions may be wrong |
+| Reputation system | A way for strangers to judge trust from others' experience (stars, reviews, thumbs) |
+| Aggregate | One number summarising many rows, e.g. a count or a percentage |
+| Denormalisation | Storing a value you could calculate, for cheap reads; you must keep it correct yourself |
+| Rating inflation | Almost everyone gives the top score, so the scale stops carrying information |
+| Cold start | A new user (or item) with no history yet |
+| Minimum sample | Only show an aggregate once there is enough data for it to mean something |
+| Retaliation | Rating someone down because they rated you down |
+| Sybil attack | One person running many fake identities to sway a system |
 
 ---
 
-## 64. Interview questions to practise
+## 66. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4362,3 +4468,8 @@ git fetch --prune
 115. Why send a heartbeat when the phone isn't moving? What problem does it solve without server memory?
 116. What can't a web page do with location that a native app can, and how did the design work around it?
 117. How did we test location sharing in a browser that blocks location, and what does that test not prove?
+118. How do you stop fake or revenge ratings in a ride-sharing app?
+119. Why thumbs up/down instead of 5 stars?
+120. Why store rating counters on the user row, and how do you keep them consistent with the ratings table?
+121. Why show "New" instead of a percentage for someone with one or two ratings?
+122. Two tests share a database and one starts failing after the other changes. What's happening, and how do you avoid it?
