@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { type BlockView, getBlocks, restoreSession, unblock, updateMe, type Profile } from "@/lib/api";
 import { useAction } from "@/lib/use-action";
+import PushPrompt from "../push-prompt";
 
 // Same rules as the API (MeController), checked here first for instant, friendly messages
 const NAME = /^\p{L}([\p{L}\p{M} .'-]*[\p{L}\p{M}.])?$/u;
@@ -98,6 +99,7 @@ export default function ProfilePage() {
         {error}
       </p>
 
+      {me.name && <PushPrompt />}
       {me.name && <BlockedPeople />}
     </main>
   );

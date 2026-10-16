@@ -36,8 +36,22 @@ export default function CurrentTrip() {
         setTrip(t);
         setRequests(r);
       })
-      .catch(() => setTrip(null));
+      .catch(() => setTrip((old) => (old === undefined ? null : old))); // a failed refresh keeps what's on screen
   }, [version]);
+
+  // New matches and requests appear without reloading the page: every minute, and when you come back to the tab
+  // (Learning Notes 64). Skipped while the tab is hidden, to save the phone's battery and data.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") setVersion((v) => v + 1);
+    };
+    const every = setInterval(refresh, 60_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(every);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
 
   if (trip === undefined) return null;
 
@@ -65,7 +79,7 @@ export default function CurrentTrip() {
         <GroupCard version={version} onChange={reload} />
       ) : (
         <Matches
-          key={version}
+          version={version}
           tripId={trip.id}
           asked={requests.sent.map((s) => s.toTripId)}
           askedYou={requests.received.map((r) => r.fromTripId)}
@@ -91,20 +105,23 @@ export default function CurrentTrip() {
 const CAR_SEATS = 4; // a sedan, same as the API's MatchRanker.CAR_SEATS
 
 // Travellers and open groups you could share a cab with, best first.
-// shortcut: loaded once when the page opens; reload for new matches. Push notifications come later (design 3.3 step 3).
-function Matches(props: { tripId: string; asked: string[]; askedYou: string[]; onChange: () => void }) {
-  const { tripId, asked, askedYou, onChange } = props;
+// Reloaded whenever the card refreshes (version); the old list stays on screen meanwhile.
+function Matches(props: { version: number; tripId: string; asked: string[]; askedYou: string[]; onChange: () => void }) {
+  const { version, tripId, asked, askedYou, onChange } = props;
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [failed, setFailed] = useState(false);
   const { busy, error, run } = useAction();
 
   useEffect(() => {
     getMatches(tripId)
-      .then(setMatches)
+      .then((m) => {
+        setMatches(m);
+        setFailed(false);
+      })
       .catch(() => setFailed(true));
-  }, [tripId]);
+  }, [tripId, version]);
 
-  if (failed) return <p className="mt-1 text-sm text-red-600">Couldn&apos;t load matches. Reload the page to try again.</p>;
+  if (failed && matches === null) return <p className="mt-1 text-sm text-red-600">Couldn&apos;t load matches. Reload the page to try again.</p>;
   if (matches === null) return <p className="mt-1 text-sm">Looking for co-travellers…</p>;
   if (matches.length === 0) {
     return <p className="mt-1 text-sm">No one heading your way yet. Check back closer to your exit time.</p>;

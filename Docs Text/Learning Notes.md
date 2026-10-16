@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-16 (ratings after the ride: concepts and code walkthrough).
+Last updated: 2026-10-16 (pre-launch clean-up: triaging the shortcuts, and the four fixes).
 
 ---
 
@@ -71,9 +71,11 @@ Last updated: 2026-10-16 (ratings after the ride: concepts and code walkthrough)
 61. [Code walkthrough: live location](#61-code-walkthrough-live-location)
 62. [Ratings after the ride](#62-ratings-after-the-ride)
 63. [Code walkthrough: ratings](#63-code-walkthrough-ratings)
-64. [Command cheat sheet](#64-command-cheat-sheet)
-65. [Glossary](#65-glossary)
-66. [Interview questions to practise](#66-interview-questions-to-practise)
+64. [Pre-launch clean-up: triaging technical debt](#64-pre-launch-clean-up-triaging-technical-debt)
+65. [Code walkthrough: pre-launch fixes](#65-code-walkthrough-pre-launch-fixes)
+66. [Command cheat sheet](#66-command-cheat-sheet)
+67. [Glossary](#67-glossary)
+68. [Interview questions to practise](#68-interview-questions-to-practise)
 
 ---
 
@@ -4015,7 +4017,76 @@ Real STOMP, step by step:
 
 ---
 
-## 64. Command cheat sheet
+## 64. Pre-launch clean-up: triaging technical debt
+
+### 64.1 Terms
+- **Technical debt:** a shortcut taken on purpose to ship sooner. Fine while you know about it and pay it back before the "interest" (bugs, incidents, rewrites) grows.
+- **`shortcut:` comment:** our rule since slice 1: every known shortcut is written where it lives, with when to upgrade it. That is why one search could list them all (`git grep -n "shortcut:"`).
+- **Triage:** sorting by urgency, like a hospital emergency room. Not everything gets fixed; everything gets *decided*.
+- **Severity:** how bad it is when it happens. Here: safety > privacy > lost data or money > confusion > inconvenience.
+- **Likelihood:** how likely *at launch scale* (one airport, tens of users, one server).
+- **Blast radius:** how many people one failure hits: one user, one group, everyone.
+- **Mitigation vs fix:** a mitigation makes the harm smaller (admins get alerted); a fix removes the cause.
+- **Accepted risk / known limit:** "we know, we decided it's fine for now, and here's when we'd change it". Written down, not forgotten.
+- **Launch blocker:** must be done before real users, whatever it costs.
+
+### 64.2 The problem and the naive ways
+- 14 marked shortcuts plus a few unmarked risks. **Fix everything** = weeks for scale we don't have. **Fix nothing** = the dangerous ones get forgotten. **Fix what's interesting** = effort follows curiosity, not risk.
+
+### 64.3 The tool: four questions per item
+1. Who gets hurt, and how badly? 2. How likely at our size? 3. How many people does one failure hit? 4. What does fixing cost now versus later, and is there a cheap mitigation?
+- Three bins: **fix now**, **team task** (a decision, an account or a site visit; not code), **accept and write down**.
+
+### 64.4 The result (2026-10-16)
+| Bin | Items |
+|---|---|
+| Fix now | Message flood limit (chat + location); admins pushed for every new report; matches and requests refresh by themselves; unconfirmed chat messages show "not sent" |
+| Team tasks | SMS provider + DLT; the real pickup points (V3 is approximate); a map provider before growing; an uptime monitor |
+| Accept (README "Known limits") | One server (broker + flood counter in memory); women-only off until ID verification; straight-line × 1.4 distances and the 15 km prefilter; 200-message catch-up; chat pushes skip any open socket; a blocked person's request to another member stays visible; VAPID keys never change; reports reviewed with SQL |
+- Worked example: an *unsafe* report filed on Friday night sat unseen until someone ran the SQL. Severity: safety; likelihood: every report; fix cost: tiny (push notifications exist) → **fix now**. The single-server chat broker: no harm with one server, days to change → **accept**, with the trigger "before a second API instance".
+- Two of the risks (pickup points, uptime monitoring) and the chat half of the flood limit had **no** `shortcut:` comment: found by thinking about the launch, not by searching. A full audit might find more.
+
+---
+
+## 65. Code walkthrough: pre-launch fixes
+
+### 65.1 Flood limit: `chat/StompAuth`
+- `SEND_LIMIT = 20` per `SEND_WINDOW = 10 s`, per person, chat and location together.
+- `tooMany(user)`: a **fixed window** in a `ConcurrentHashMap<String, long[]>` (`{window start, count}`); `compute(...)` updates it atomically per user: a new window after 10 s, otherwise count + 1.
+- In the `SEND` case: over the limit → `log.warn(...)` (the user id and limit, never the content) and **`return null`**. In a `ChannelInterceptor`, `null` means "drop this message"; throwing (like the other checks) would send an ERROR frame and **disconnect**. A flood only costs the flooder those messages.
+- `shortcut:` the counter lives in this server's memory, like the simple broker; with a second server it moves to Redis.
+- The location `shortcut:` in `ChatService` is gone.
+
+### 65.2 Admin alerts: `feedback/FeedbackService`
+- `UserService.adminIds()`: `select id from users where role = 'admin'` (the `role` column exists since V1; admins are made with SQL, see `infra/README.md`).
+- `alertAdmins(category)`: `push.send(admins, Push("New report: no show", "Review it with the reports query in infra/README.md", 1 day))`. Category only: the lock-screen rule (58.5) applies to admins' phones too.
+- Called after a report is saved, and in `onMemberLeftLockedGroup` only when the insert added a row (`update() == 1`; `on conflict do nothing` gives 0). That listener runs inside the groups transaction, so its push waits for the commit (59.2).
+- The profile page now shows the **Notify me** prompt too, because an admin may have no trip card.
+
+### 65.3 Web
+- `app/current-trip.tsx`: an effect bumps `version` every 60 s **and** on `visibilitychange`, only while the tab is visible (battery and data). `Matches` gets `version` as a prop instead of `key={version}`, so the old list stays on screen while refreshing (no "Looking for co-travellers…" flash every minute).
+  - **A regression avoided:** a failed load used to switch the card to "Plan a trip". With a refresh every minute on airport Wi-Fi, one dropped request would have hidden the trip. Now a failed refresh keeps what's on screen (`setTrip(old => old === undefined ? null : old)`), and matches show the error only if none were ever loaded.
+- `app/group-chat.tsx`: 10 s after sending, a message still `pending` (same `clientId`) becomes `failed` → "not sent" in red. If the server's copy arrives later, the usual merge replaces it.
+
+### 65.4 Docs
+- `infra/README.md`: "Before real users: team checklist" (the four team tasks) and "Admins" (the SQL, then Notify me on the admin's phone).
+- `README.md`: "Known limits" (the accepted items, each with when it would change).
+
+### 65.5 Tests
+- `ChatTest.floodsAreCutOffWithoutDisconnecting`: 25 messages at once → exactly 20 arrive, 20 saved, still connected.
+- `NotificationsTest.adminsArePushedForEveryNewReport`: an admin's subscribed "phone" (the fake push service, 59.5) decrypts "New report: no show", without either name or the details. The test sets the role back to `user` in `finally`, so later runs' reports don't push to a dead test endpoint.
+- **Proven to fail:** with the flood check disabled, and with `alertAdmins` commented out, both went red; both restored.
+- 88 API tests, all green.
+
+### 65.6 Verified in a real browser
+- **"Not sent":** Keshav's page loaded, then the group was marked `done` in the database (as after the 4-hour close). "At pillar 12" showed "sending…", then "not sent" 10 s later; the API log showed the server refusing it. The group was set back to `met`.
+- **Profile:** "Notifications are blocked for Namastute…" appears there now (this browser blocks notifications).
+- **Refreshing matches:** logged in as Ravi (Terminal 1, matches "Keshav (New)" and a group "Asha … + Neha …", leftovers from `MatchesTest`, which also confirmed the ratings text in matches). A new traveller, Tara, planned a matching trip through the API; firing the `visibilitychange` event (as when you return to the tab) added "Tara (New)" at the top **without reloading** (a marker on `window` survived).
+- **Not checked:** the 60-second timer in real time (it calls the same refresh as `visibilitychange`), and a real admin phone receiving the push (the fake push service checked the content).
+
+---
+
+## 66. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -4099,7 +4170,7 @@ git fetch --prune
 
 ---
 
-## 65. Glossary
+## 67. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -4346,10 +4417,18 @@ git fetch --prune
 | Minimum sample | Only show an aggregate once there is enough data for it to mean something |
 | Retaliation | Rating someone down because they rated you down |
 | Sybil attack | One person running many fake identities to sway a system |
+| Technical debt | A shortcut taken on purpose to ship sooner, to be paid back later |
+| Triage | Sorting problems by urgency so each gets a decision: fix now, later, or accept |
+| Severity / likelihood | How bad a problem is when it happens / how likely it is to happen |
+| Blast radius | How many people one failure affects |
+| Mitigation | A change that makes the harm smaller without removing the cause |
+| Accepted risk | A known limit you decided to live with for now, written down with when you'd change it |
+| Launch blocker | Something that must be done before real users |
+| Fixed window (rate limit) | Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends |
 
 ---
 
-## 66. Interview questions to practise
+## 68. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4473,3 +4552,7 @@ git fetch --prune
 120. Why store rating counters on the user row, and how do you keep them consistent with the ratings table?
 121. Why show "New" instead of a percentage for someone with one or two ratings?
 122. Two tests share a database and one starts failing after the other changes. What's happening, and how do you avoid it?
+123. How do you decide which technical debt to fix before a launch? Walk through one item you fixed and one you accepted.
+124. Why does the flood limit drop the message instead of throwing, and what would throwing do?
+125. Why did adding an automatic refresh risk hiding the user's trip, and how was that prevented?
+126. Which launch risks had no `shortcut:` comment, and how did you find them?

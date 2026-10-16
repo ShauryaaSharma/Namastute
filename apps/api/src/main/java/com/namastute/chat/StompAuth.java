@@ -1,9 +1,14 @@
 package com.namastute.chat;
 
 import com.namastute.groups.GroupService;
+import java.time.Duration;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -21,6 +26,15 @@ class StompAuth implements ChannelInterceptor {
 
     private static final Pattern GROUP_TOPIC = Pattern.compile("/topic/groups\\.([0-9a-f-]{36})\\.(chat|updated|location)");
 
+    // Flood guard (Learning Notes 64): chat and location together. Normal use is one position every 15 s plus typing.
+    static final int SEND_LIMIT = 20;
+    static final Duration SEND_WINDOW = Duration.ofSeconds(10);
+
+    private static final Logger log = LoggerFactory.getLogger(StompAuth.class);
+
+    // user id → {window start in ms, messages in this window}
+    // shortcut: kept in this server's memory (like the simple broker, WebSocketConfig); move to Redis with a second server
+    private final Map<String, long[]> sends = new ConcurrentHashMap<>();
     private final JwtDecoder jwts;
     private final GroupService groups;
 
@@ -60,9 +74,22 @@ class StompAuth implements ChannelInterceptor {
                 if (stomp.getUser() == null || !String.valueOf(stomp.getDestination()).startsWith("/app/")) {
                     throw new AccessDeniedException("Not allowed");
                 }
+                if (tooMany(stomp.getUser().getName())) {
+                    log.warn("Dropped a message from user {}: over {} in {}", stomp.getUser().getName(), SEND_LIMIT, SEND_WINDOW);
+                    return null;   // drops just this message; throwing would disconnect them
+                }
             }
             default -> { }
         }
         return message;
+    }
+
+    // A fixed window per person: the first message starts a 10-second window, and the 21st inside it is refused
+    private boolean tooMany(String user) {
+        long now = System.currentTimeMillis();
+        long[] window = sends.compute(user, (k, w) -> w == null || now - w[0] >= SEND_WINDOW.toMillis()
+                ? new long[] {now, 1}
+                : new long[] {w[0], w[1] + 1});
+        return window[1] > SEND_LIMIT;
     }
 }

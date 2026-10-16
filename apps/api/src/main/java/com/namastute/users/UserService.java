@@ -64,6 +64,11 @@ public class UserService {
         return new Rating(count, count < MIN_RATINGS ? null : (int) Math.round(100.0 * ups / count));
     }
 
+    // Who reviews reports (users.role, V1). Made by hand with SQL, see infra/README.md.
+    public List<UUID> adminIds() {
+        return db.sql("select id from users where role = 'admin'").query(UUID.class).list();
+    }
+
     // For the feedback module, inside its transaction: the counters move together with the new ratings row
     public void addRating(UUID userId, boolean up) {
         db.sql("update users set rating_count = rating_count + 1, rating_sum = rating_sum + ? where id = ?")

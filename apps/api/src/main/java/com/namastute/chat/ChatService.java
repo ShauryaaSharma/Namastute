@@ -96,7 +96,6 @@ class ChatService {
     }
 
     // Live location at the pickup (Learning Notes 60): relayed to the group and forgotten; never saved or logged.
-    // shortcut: no server-side rate limit (the browser throttles itself); add one if a member ever floods their group
     void shareLocation(UUID userId, UUID groupId, ChatController.Position p) {
         UUID tripId = groups.sharingTrip(groupId, userId).orElseThrow(() ->
                 new ApiException(HttpStatus.CONFLICT, "NOT_PICKUP_TIME", "Location sharing is only open around pickup time"));

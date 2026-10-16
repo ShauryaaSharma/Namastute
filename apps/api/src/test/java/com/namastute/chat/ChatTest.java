@@ -197,6 +197,27 @@ class ChatTest {
                 .as("positions are relayed, not saved").isEqualTo(messages);
     }
 
+    // Flood guard (Learning Notes 64): 20 messages per 10 seconds per person; the rest are dropped, the connection stays
+    @Test
+    void floodsAreCutOffWithoutDisconnecting() throws Exception {
+        UUID asha = user("Asha Rao"), keshav = user("Keshav Dixit");
+        String group = pair(keshav, asha);
+        BlockingQueue<Map<String, Object>> keshavInbox = subscribe(connect(keshav), keshav, "/topic/groups." + group + ".chat");
+        StompSession ashaLive = connect(asha);
+
+        for (int i = 1; i <= 25; i++) {
+            ashaLive.send("/app/groups/" + group + "/chat", Map.of("body", "spam " + i, "clientId", "c-" + i));
+        }
+        int arrived = 0;
+        while (keshavInbox.poll(2, TimeUnit.SECONDS) != null) {
+            arrived++;
+        }
+        assertThat(arrived).isEqualTo(StompAuth.SEND_LIMIT);
+        assertThat(jdbc.queryForObject("select count(*) from messages where group_id = ?::uuid and user_id = ?",
+                Integer.class, group, asha)).as("dropped messages aren't saved either").isEqualTo(StompAuth.SEND_LIMIT);
+        assertThat(ashaLive.isConnected()).as("still connected: one person's flood only costs them those messages").isTrue();
+    }
+
     // ---- helpers ----
 
     // Keshav asks Asha, Asha accepts; returns the group id

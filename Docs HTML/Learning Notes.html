@@ -104,14 +104,16 @@
 <details><summary><a href="#61-code-walkthrough-live-location">61. Code walkthrough: live location</a></summary><a class="sub" href="#611-groupsgroupservice">61.1 groups/GroupService</a><a class="sub" href="#612-chat-one-more-topic-one-more-handler">61.2 chat: one more topic, one more handler</a><a class="sub" href="#613-test-chattestlocationreachesthegrouponlyaroundpickupandisneverstored">61.3 Test: ChatTest.locationReachesTheGroupOnlyAroundPickupAndIsNeverStored</a><a class="sub" href="#614-web">61.4 Web</a><a class="sub" href="#615-verified-in-a-real-browser-keshav-in-the-browser-asha-played-by-a-node-script">61.5 Verified in a real browser (Keshav in the browser, Asha played by a Node script)</a></details>
 <details><summary><a href="#62-ratings-after-the-ride">62. Ratings after the ride</a></summary><a class="sub" href="#621-terms">62.1 Terms</a><a class="sub" href="#622-the-problem-the-naive-way-and-why-it-hurts">62.2 The problem, the naive way, and why it hurts</a><a class="sub" href="#623-the-design">62.3 The design</a><a class="sub" href="#624-limits">62.4 Limits</a><a class="sub" href="#625-decisions-2026-10-16">62.5 Decisions (2026-10-16)</a></details>
 <details><summary><a href="#63-code-walkthrough-ratings">63. Code walkthrough: ratings</a></summary><a class="sub" href="#631-v7__thumbs_ratingssql">63.1 V7__thumbs_ratings.sql</a><a class="sub" href="#632-usersuserservice-the-users-module-owns-the-counters">63.2 users/UserService (the users module owns the counters)</a><a class="sub" href="#633-groupsgroupservice">63.3 groups/GroupService</a><a class="sub" href="#634-tripstripservice">63.4 trips/TripService</a><a class="sub" href="#635-the-feedback-module-owns-ratings">63.5 The feedback module (owns ratings)</a><a class="sub" href="#636-tests">63.6 Tests</a><a class="sub" href="#637-web">63.7 Web</a><a class="sub" href="#638-verified-in-a-real-browser-as-keshav-ashas-side-through-the-api">63.8 Verified in a real browser (as Keshav; Asha&#x27;s side through the API)</a></details>
-<details><summary><a href="#64-command-cheat-sheet">64. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#65-glossary">65. Glossary</a>
-<a class="topic" href="#66-interview-questions-to-practise">66. Interview questions to practise</a>
+<details><summary><a href="#64-pre-launch-clean-up-triaging-technical-debt">64. Pre-launch clean-up: triaging technical debt</a></summary><a class="sub" href="#641-terms">64.1 Terms</a><a class="sub" href="#642-the-problem-and-the-naive-ways">64.2 The problem and the naive ways</a><a class="sub" href="#643-the-tool-four-questions-per-item">64.3 The tool: four questions per item</a><a class="sub" href="#644-the-result-2026-10-16">64.4 The result (2026-10-16)</a></details>
+<details><summary><a href="#65-code-walkthrough-pre-launch-fixes">65. Code walkthrough: pre-launch fixes</a></summary><a class="sub" href="#651-flood-limit-chatstompauth">65.1 Flood limit: chat/StompAuth</a><a class="sub" href="#652-admin-alerts-feedbackfeedbackservice">65.2 Admin alerts: feedback/FeedbackService</a><a class="sub" href="#653-web">65.3 Web</a><a class="sub" href="#654-docs">65.4 Docs</a><a class="sub" href="#655-tests">65.5 Tests</a><a class="sub" href="#656-verified-in-a-real-browser">65.6 Verified in a real browser</a></details>
+<details><summary><a href="#66-command-cheat-sheet">66. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#67-glossary">67. Glossary</a>
+<a class="topic" href="#68-interview-questions-to-practise">68. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-16 (ratings after the ride: concepts and code walkthrough).</p>
+<p>Last updated: 2026-10-16 (pre-launch clean-up: triaging the shortcuts, and the four fixes).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -178,9 +180,11 @@
 <li><a href="#61-code-walkthrough-live-location">Code walkthrough: live location</a></li>
 <li><a href="#62-ratings-after-the-ride">Ratings after the ride</a></li>
 <li><a href="#63-code-walkthrough-ratings">Code walkthrough: ratings</a></li>
-<li><a href="#64-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#65-glossary">Glossary</a></li>
-<li><a href="#66-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#64-pre-launch-clean-up-triaging-technical-debt">Pre-launch clean-up: triaging technical debt</a></li>
+<li><a href="#65-code-walkthrough-pre-launch-fixes">Code walkthrough: pre-launch fixes</a></li>
+<li><a href="#66-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#67-glossary">Glossary</a></li>
+<li><a href="#68-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -5528,7 +5532,101 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked in the browser:</strong> the summary in matches and received requests (Keshav was already in a group); they use the same <code>ratingText</code>, and <code>MatchesTest</code> checks the API side.</li>
 </ul>
 <hr>
-<h2 id="64-command-cheat-sheet">64. Command cheat sheet</h2>
+<h2 id="64-pre-launch-clean-up-triaging-technical-debt">64. Pre-launch clean-up: triaging technical debt</h2>
+<h3 id="641-terms">64.1 Terms</h3>
+<ul>
+<li><strong>Technical debt:</strong> a shortcut taken on purpose to ship sooner. Fine while you know about it and pay it back before the &quot;interest&quot; (bugs, incidents, rewrites) grows.</li>
+<li><strong><code>shortcut:</code> comment:</strong> our rule since slice 1: every known shortcut is written where it lives, with when to upgrade it. That is why one search could list them all (<code>git grep -n &quot;shortcut:&quot;</code>).</li>
+<li><strong>Triage:</strong> sorting by urgency, like a hospital emergency room. Not everything gets fixed; everything gets <em>decided</em>.</li>
+<li><strong>Severity:</strong> how bad it is when it happens. Here: safety &gt; privacy &gt; lost data or money &gt; confusion &gt; inconvenience.</li>
+<li><strong>Likelihood:</strong> how likely <em>at launch scale</em> (one airport, tens of users, one server).</li>
+<li><strong>Blast radius:</strong> how many people one failure hits: one user, one group, everyone.</li>
+<li><strong>Mitigation vs fix:</strong> a mitigation makes the harm smaller (admins get alerted); a fix removes the cause.</li>
+<li><strong>Accepted risk / known limit:</strong> &quot;we know, we decided it&#39;s fine for now, and here&#39;s when we&#39;d change it&quot;. Written down, not forgotten.</li>
+<li><strong>Launch blocker:</strong> must be done before real users, whatever it costs.</li>
+</ul>
+<h3 id="642-the-problem-and-the-naive-ways">64.2 The problem and the naive ways</h3>
+<ul>
+<li>14 marked shortcuts plus a few unmarked risks. <strong>Fix everything</strong> = weeks for scale we don&#39;t have. <strong>Fix nothing</strong> = the dangerous ones get forgotten. <strong>Fix what&#39;s interesting</strong> = effort follows curiosity, not risk.</li>
+</ul>
+<h3 id="643-the-tool-four-questions-per-item">64.3 The tool: four questions per item</h3>
+<ol>
+<li>Who gets hurt, and how badly? 2. How likely at our size? 3. How many people does one failure hit? 4. What does fixing cost now versus later, and is there a cheap mitigation?</li>
+</ol>
+<ul>
+<li>Three bins: <strong>fix now</strong>, <strong>team task</strong> (a decision, an account or a site visit; not code), <strong>accept and write down</strong>.</li>
+</ul>
+<h3 id="644-the-result-2026-10-16">64.4 The result (2026-10-16)</h3>
+<table>
+<thead>
+<tr>
+<th>Bin</th>
+<th>Items</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fix now</td>
+<td>Message flood limit (chat + location); admins pushed for every new report; matches and requests refresh by themselves; unconfirmed chat messages show &quot;not sent&quot;</td>
+</tr>
+<tr>
+<td>Team tasks</td>
+<td>SMS provider + DLT; the real pickup points (V3 is approximate); a map provider before growing; an uptime monitor</td>
+</tr>
+<tr>
+<td>Accept (README &quot;Known limits&quot;)</td>
+<td>One server (broker + flood counter in memory); women-only off until ID verification; straight-line × 1.4 distances and the 15 km prefilter; 200-message catch-up; chat pushes skip any open socket; a blocked person&#39;s request to another member stays visible; VAPID keys never change; reports reviewed with SQL</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Worked example: an <em>unsafe</em> report filed on Friday night sat unseen until someone ran the SQL. Severity: safety; likelihood: every report; fix cost: tiny (push notifications exist) → <strong>fix now</strong>. The single-server chat broker: no harm with one server, days to change → <strong>accept</strong>, with the trigger &quot;before a second API instance&quot;.</li>
+<li>Two of the risks (pickup points, uptime monitoring) and the chat half of the flood limit had <strong>no</strong> <code>shortcut:</code> comment: found by thinking about the launch, not by searching. A full audit might find more.</li>
+</ul>
+<hr>
+<h2 id="65-code-walkthrough-pre-launch-fixes">65. Code walkthrough: pre-launch fixes</h2>
+<h3 id="651-flood-limit-chatstompauth">65.1 Flood limit: <code>chat/StompAuth</code></h3>
+<ul>
+<li><code>SEND_LIMIT = 20</code> per <code>SEND_WINDOW = 10 s</code>, per person, chat and location together.</li>
+<li><code>tooMany(user)</code>: a <strong>fixed window</strong> in a <code>ConcurrentHashMap&lt;String, long[]&gt;</code> (<code>{window start, count}</code>); <code>compute(...)</code> updates it atomically per user: a new window after 10 s, otherwise count + 1.</li>
+<li>In the <code>SEND</code> case: over the limit → <code>log.warn(...)</code> (the user id and limit, never the content) and <strong><code>return null</code></strong>. In a <code>ChannelInterceptor</code>, <code>null</code> means &quot;drop this message&quot;; throwing (like the other checks) would send an ERROR frame and <strong>disconnect</strong>. A flood only costs the flooder those messages.</li>
+<li><code>shortcut:</code> the counter lives in this server&#39;s memory, like the simple broker; with a second server it moves to Redis.</li>
+<li>The location <code>shortcut:</code> in <code>ChatService</code> is gone.</li>
+</ul>
+<h3 id="652-admin-alerts-feedbackfeedbackservice">65.2 Admin alerts: <code>feedback/FeedbackService</code></h3>
+<ul>
+<li><code>UserService.adminIds()</code>: <code>select id from users where role = &#39;admin&#39;</code> (the <code>role</code> column exists since V1; admins are made with SQL, see <code>infra/README.md</code>).</li>
+<li><code>alertAdmins(category)</code>: <code>push.send(admins, Push(&quot;New report: no show&quot;, &quot;Review it with the reports query in infra/README.md&quot;, 1 day))</code>. Category only: the lock-screen rule (58.5) applies to admins&#39; phones too.</li>
+<li>Called after a report is saved, and in <code>onMemberLeftLockedGroup</code> only when the insert added a row (<code>update() == 1</code>; <code>on conflict do nothing</code> gives 0). That listener runs inside the groups transaction, so its push waits for the commit (59.2).</li>
+<li>The profile page now shows the <strong>Notify me</strong> prompt too, because an admin may have no trip card.</li>
+</ul>
+<h3 id="653-web">65.3 Web</h3>
+<ul>
+<li><code>app/current-trip.tsx</code>: an effect bumps <code>version</code> every 60 s <strong>and</strong> on <code>visibilitychange</code>, only while the tab is visible (battery and data). <code>Matches</code> gets <code>version</code> as a prop instead of <code>key={version}</code>, so the old list stays on screen while refreshing (no &quot;Looking for co-travellers…&quot; flash every minute).<ul>
+<li><strong>A regression avoided:</strong> a failed load used to switch the card to &quot;Plan a trip&quot;. With a refresh every minute on airport Wi-Fi, one dropped request would have hidden the trip. Now a failed refresh keeps what&#39;s on screen (<code>setTrip(old =&gt; old === undefined ? null : old)</code>), and matches show the error only if none were ever loaded.</li>
+</ul>
+</li>
+<li><code>app/group-chat.tsx</code>: 10 s after sending, a message still <code>pending</code> (same <code>clientId</code>) becomes <code>failed</code> → &quot;not sent&quot; in red. If the server&#39;s copy arrives later, the usual merge replaces it.</li>
+</ul>
+<h3 id="654-docs">65.4 Docs</h3>
+<ul>
+<li><code>infra/README.md</code>: &quot;Before real users: team checklist&quot; (the four team tasks) and &quot;Admins&quot; (the SQL, then Notify me on the admin&#39;s phone).</li>
+<li><code>README.md</code>: &quot;Known limits&quot; (the accepted items, each with when it would change).</li>
+</ul>
+<h3 id="655-tests">65.5 Tests</h3>
+<ul>
+<li><code>ChatTest.floodsAreCutOffWithoutDisconnecting</code>: 25 messages at once → exactly 20 arrive, 20 saved, still connected.</li>
+<li><code>NotificationsTest.adminsArePushedForEveryNewReport</code>: an admin&#39;s subscribed &quot;phone&quot; (the fake push service, 59.5) decrypts &quot;New report: no show&quot;, without either name or the details. The test sets the role back to <code>user</code> in <code>finally</code>, so later runs&#39; reports don&#39;t push to a dead test endpoint.</li>
+<li><strong>Proven to fail:</strong> with the flood check disabled, and with <code>alertAdmins</code> commented out, both went red; both restored.</li>
+<li>88 API tests, all green.</li>
+</ul>
+<h3 id="656-verified-in-a-real-browser">65.6 Verified in a real browser</h3>
+<ul>
+<li><strong>&quot;Not sent&quot;:</strong> Keshav&#39;s page loaded, then the group was marked <code>done</code> in the database (as after the 4-hour close). &quot;At pillar 12&quot; showed &quot;sending…&quot;, then &quot;not sent&quot; 10 s later; the API log showed the server refusing it. The group was set back to <code>met</code>.</li>
+<li><strong>Profile:</strong> &quot;Notifications are blocked for Namastute…&quot; appears there now (this browser blocks notifications).</li>
+<li><strong>Refreshing matches:</strong> logged in as Ravi (Terminal 1, matches &quot;Keshav (New)&quot; and a group &quot;Asha … + Neha …&quot;, leftovers from <code>MatchesTest</code>, which also confirmed the ratings text in matches). A new traveller, Tara, planned a matching trip through the API; firing the <code>visibilitychange</code> event (as when you return to the tab) added &quot;Tara (New)&quot; at the top <strong>without reloading</strong> (a marker on <code>window</code> survived).</li>
+<li><strong>Not checked:</strong> the 60-second timer in real time (it calls the same refresh as <code>visibilitychange</code>), and a real admin phone receiving the push (the fake push service checked the content).</li>
+</ul>
+<hr>
+<h2 id="66-command-cheat-sheet">66. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -5592,7 +5690,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="65-glossary">65. Glossary</h2>
+<h2 id="67-glossary">67. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -6572,9 +6670,41 @@ git fetch --prune
 <td>Sybil attack</td>
 <td>One person running many fake identities to sway a system</td>
 </tr>
+<tr>
+<td>Technical debt</td>
+<td>A shortcut taken on purpose to ship sooner, to be paid back later</td>
+</tr>
+<tr>
+<td>Triage</td>
+<td>Sorting problems by urgency so each gets a decision: fix now, later, or accept</td>
+</tr>
+<tr>
+<td>Severity / likelihood</td>
+<td>How bad a problem is when it happens / how likely it is to happen</td>
+</tr>
+<tr>
+<td>Blast radius</td>
+<td>How many people one failure affects</td>
+</tr>
+<tr>
+<td>Mitigation</td>
+<td>A change that makes the harm smaller without removing the cause</td>
+</tr>
+<tr>
+<td>Accepted risk</td>
+<td>A known limit you decided to live with for now, written down with when you&#39;d change it</td>
+</tr>
+<tr>
+<td>Launch blocker</td>
+<td>Something that must be done before real users</td>
+</tr>
+<tr>
+<td>Fixed window (rate limit)</td>
+<td>Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="66-interview-questions-to-practise">66. Interview questions to practise</h2>
+<h2 id="68-interview-questions-to-practise">68. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -6698,6 +6828,10 @@ git fetch --prune
 <li>Why store rating counters on the user row, and how do you keep them consistent with the ratings table?</li>
 <li>Why show &quot;New&quot; instead of a percentage for someone with one or two ratings?</li>
 <li>Two tests share a database and one starts failing after the other changes. What&#39;s happening, and how do you avoid it?</li>
+<li>How do you decide which technical debt to fix before a launch? Walk through one item you fixed and one you accepted.</li>
+<li>Why does the flood limit drop the message instead of throwing, and what would throwing do?</li>
+<li>Why did adding an automatic refresh risk hiding the user&#39;s trip, and how was that prevented?</li>
+<li>Which launch risks had no <code>shortcut:</code> comment, and how did you find them?</li>
 </ol>
 
 
