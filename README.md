@@ -16,6 +16,7 @@ Travellers landing at Delhi IGI around the same time, heading the same way, find
 - **Background jobs:** stale trips expire, groups lock themselves 5 minutes before meeting, and old groups close.
 - **Finishing the ride:** "I'm here" at the pickup, then the booker enters the real fare and everyone sees their share with a UPI pay link.
 - **Safety:** report someone you shared a cab with (reviewed by a person, with "Call 112" for emergencies), and silently block anyone so you never see each other again.
+- **Live location at the pickup:** around meeting time, group members can choose to share where they are on a small map ("about 150 m away"). Only the group sees it, it switches off by itself, and positions are never saved.
 - **Push notifications** (Web Push, works with the app closed): someone wants to share, you're in a group, a new chat message while you're away, the fare is in. The lock screen only ever shows a first name. Installable on the Home Screen (needed for iPhone).
 
 ## Architecture
@@ -87,7 +88,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust and safety:** in progress. Fare split, the production build, report and block, and push notifications are done. Next: SMS provider, deployment, ratings, ID verification and women-only groups, live location at pickup.
+- **Phase 2, trust and safety:** in progress. Fare split, the production build, report and block, push notifications and live location at the pickup are done. Next: SMS provider, deployment, ratings, ID verification and women-only groups.
 - **Phase 3:** flight-delay tracking, auto-matching, load testing and more.
 
 The full roadmap is in the design doc, section 7.

@@ -34,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class GroupService {
 
     static final int CAR_BAGS = 4;   // a sedan (design 3.3); seats are limited by groups.capacity
+    // Live location at the pickup: from 20 minutes before the meeting time to 30 after (Learning Notes 60)
+    static final Duration SHARE_BEFORE = Duration.ofMinutes(20), SHARE_AFTER = Duration.ofMinutes(30);
 
     record RequestView(UUID id, UUID fromTripId, String firstName, String destArea, long minutesAfterYou, int seats, int bags) {}
     record SentView(UUID id, UUID toTripId, String firstName, @Schema(allowableValues = {"pending", "declined"}) String status) {}
@@ -42,8 +44,10 @@ public class GroupService {
     // tripId: an opaque handle for report/block (Learning Notes 56), never the user id
     record MemberView(UUID tripId, String firstName, String destArea, int seats, int bags, boolean booker, boolean you,
                       boolean here, @Schema(nullable = true) BigDecimal share) {}
+    // sharingFrom/Until: when live location works (locked or met groups only)
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
-                     @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members) {}
+                     @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members,
+                     OffsetDateTime sharingFrom, OffsetDateTime sharingUntil) {}
     record ShareView(String firstName, boolean booker, BigDecimal share) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}
@@ -417,8 +421,9 @@ public class GroupService {
             return new MemberView(m.tripId(), names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
                     m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share());
         }).toList();
+        OffsetDateTime meetAt = db.sql("select meet_at from groups where id = ?").param(groupId).query(OffsetDateTime.class).single();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
-                g.fareTotal(), views));
+                g.fareTotal(), views, meetAt.minus(SHARE_BEFORE), meetAt.plus(SHARE_AFTER)));
     }
 
     // For the chat module: may this user read and write this group's chat? (accepted member of an open, locked or met group)
@@ -427,6 +432,17 @@ public class GroupService {
                         select count(*) from group_members m join groups g on g.id = m.group_id
                         where m.group_id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('open', 'locked', 'met')""")
                 .params(groupId, userId).query(Integer.class).single() > 0;
+    }
+
+    // For the chat module: your trip (the handle others see) if you may share your location right now:
+    // an accepted member of a locked or met group, inside the pickup window
+    public Optional<UUID> sharingTrip(UUID groupId, UUID userId) {
+        return db.sql("""
+                        select m.trip_id from group_members m join groups g on g.id = m.group_id
+                        where m.group_id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('locked', 'met')
+                          and now() between g.meet_at - make_interval(mins => ?) and g.meet_at + make_interval(mins => ?)""")
+                .params(groupId, userId, (int) SHARE_BEFORE.toMinutes(), (int) SHARE_AFTER.toMinutes())
+                .query(UUID.class).optional();
     }
 
     // For the chat module: who to notify about a new message

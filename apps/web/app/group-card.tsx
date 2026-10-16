@@ -6,9 +6,10 @@ import { plural } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import FareSection from "./fare-section";
 import GroupChat from "./group-chat";
+import PickupLocation from "./pickup-location";
 import ReportForm from "./report-form";
 
-// Your cab group: who's in it, lock, "I'm here", leave, the fare (FareSection) and the live chat.
+// Your cab group: who's in it, lock, "I'm here", live location (PickupLocation), leave, the fare (FareSection) and the live chat.
 // Not re-created on every refresh (version is a prop, not a key), so the chat connection stays open.
 export default function GroupCard({ version, onChange }: { version: number; onChange: () => void }) {
   const [group, setGroup] = useState<Group | null>(null);
@@ -88,6 +89,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
           I&apos;m here at the pickup
         </button>
       )}
+      <PickupLocation group={g} />
       {met && <FareSection group={g} onChange={onChange} />}
       {g.youAreBooker && g.status === "open" && (
         <button

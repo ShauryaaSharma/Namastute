@@ -40,6 +40,9 @@ class ChatService {
 
     record Updated(UUID groupId) {}
 
+    // tripId: the member's opaque handle (the group card knows whose it is); sharing false = their dot disappears
+    record Located(UUID tripId, boolean sharing, Double lat, Double lng, Double accuracy) {}
+
     private final JdbcClient db;
     private final GroupService groups;
     private final UserService users;
@@ -90,6 +93,26 @@ class ChatService {
         push.send(groups.memberIds(groupId).stream()
                         .filter(m -> !m.equals(userId) && connected.getUser(m.toString()) == null).toList(),
                 new Push("New message in your cab group", "Open Namastute to read it", Duration.ofMinutes(10)));
+    }
+
+    // Live location at the pickup (Learning Notes 60): relayed to the group and forgotten; never saved or logged.
+    // shortcut: no server-side rate limit (the browser throttles itself); add one if a member ever floods their group
+    void shareLocation(UUID userId, UUID groupId, ChatController.Position p) {
+        UUID tripId = groups.sharingTrip(groupId, userId).orElseThrow(() ->
+                new ApiException(HttpStatus.CONFLICT, "NOT_PICKUP_TIME", "Location sharing is only open around pickup time"));
+        boolean sharing = p.lat() != null;
+        if (sharing && !isPosition(p)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_LOCATION", "That isn't a valid position");
+        }
+        broker.convertAndSend("/topic/groups." + groupId + ".location", sharing
+                ? new Located(tripId, true, p.lat(), p.lng(), p.accuracy())
+                : new Located(tripId, false, null, null, null));
+    }
+
+    // NaN and infinities fail these comparisons too
+    static boolean isPosition(ChatController.Position p) {
+        return p.lng() != null && Math.abs(p.lat()) <= 90 && Math.abs(p.lng()) <= 180
+                && (p.accuracy() == null || (p.accuracy() >= 0 && p.accuracy() <= 100_000));
     }
 
     // Runs INSIDE the groups module's transaction (when there is one), on the same database connection: the system
