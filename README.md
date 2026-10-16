@@ -94,6 +94,20 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 The full roadmap is in the design doc, section 7.
 
+## Load test results
+The local production stack squeezed into the t3.small's 2 cores (API 1.4, Postgres 0.6), with k6 ([load/](load/README.md), Learning Notes 66–67). Pass line: p95 under 500 ms, under 1% errors.
+
+| Travellers in one arrival wave | Matches p95 | Slowest request type p95 | Errors | Pickup groups of 4 chatting | Chat delivery p95 |
+|---|---|---|---|---|---|
+| 100 | 47 ms | 59 ms (ask) | 0% | 25 | 21 ms |
+| 300 | 39 ms | 39 ms (matches) | 0% | 75 | 18 ms |
+| 1000 | **593 ms ✗** | 593 ms (matches) | 1 in 16,342 | 250 | 10 ms |
+
+- **One server handles 300 travellers per arrival wave comfortably**, far above a pilot.
+- **At 1000, matching gets slow at the peaks:** the API and Postgres both hit their CPU caps. Not fixed yet (the agreed bar was 300). Options when needed: a partial index on searching trips (a `shortcut:` comment in `TripRepository`), fewer candidates per search, or a bigger server.
+- **Memory is the next limit for WebSockets:** with 1000 open connections the API used 675 MB of its 768 MB.
+- **Caveats:** measured on a laptop, not the t3.small; Caddy isn't in the path; a t3 runs at full speed only while it has CPU credits. Re-run on the real server after deploying.
+
 ## Known limits
 Deliberate shortcuts for launch, each marked `shortcut:` in the code with when it would change (Learning Notes 64):
 - **One API server.** The chat broker and the message flood limit live in that server's memory; a second server needs a shared broker (RabbitMQ or Redis).

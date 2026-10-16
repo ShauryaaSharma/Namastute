@@ -1,0 +1,8 @@
+# Load tests only (Learning Notes 66): squeeze the local production stack into the t3.small's 2 cores.
+# On the server the API and Postgres share those 2 cores, so they're split here rather than each given 2.
+# Use with: docker compose -f infra/docker-compose.prod.yml -f load/compose.limits.yml --env-file infra/.env up -d --build
+services:
+  api:
+    cpus: 1.4
+  postgres:
+    cpus: 0.6
