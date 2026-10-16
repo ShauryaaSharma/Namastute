@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-16 (pre-launch clean-up: triaging the shortcuts, and the four fixes).
+Last updated: 2026-10-16 (load testing: method, k6 scripts and the results).
 
 ---
 
@@ -73,9 +73,11 @@ Last updated: 2026-10-16 (pre-launch clean-up: triaging the shortcuts, and the f
 63. [Code walkthrough: ratings](#63-code-walkthrough-ratings)
 64. [Pre-launch clean-up: triaging technical debt](#64-pre-launch-clean-up-triaging-technical-debt)
 65. [Code walkthrough: pre-launch fixes](#65-code-walkthrough-pre-launch-fixes)
-66. [Command cheat sheet](#66-command-cheat-sheet)
-67. [Glossary](#67-glossary)
-68. [Interview questions to practise](#68-interview-questions-to-practise)
+66. [Load testing](#66-load-testing)
+67. [Code walkthrough: load tests and results](#67-code-walkthrough-load-tests-and-results)
+68. [Command cheat sheet](#68-command-cheat-sheet)
+69. [Glossary](#69-glossary)
+70. [Interview questions to practise](#70-interview-questions-to-practise)
 
 ---
 
@@ -4086,7 +4088,87 @@ Real STOMP, step by step:
 
 ---
 
-## 66. Command cheat sheet
+## 66. Load testing
+
+### 66.1 Terms
+- **Load test:** many simulated users at once, at the traffic you expect. **Stress test:** keep adding users until something breaks (the breaking point). **Spike test:** a sudden jump (a flight lands). **Soak test:** steady load for hours, to find slow leaks.
+- **Virtual user (VU):** one simulated person running a script. **Think time:** the pauses real people take; without it, 100 VUs behave like 10,000 impatient robots.
+- **Throughput:** work done per second (requests/s). **Latency / response time:** how long one request takes.
+- **Percentiles:** p50 = the median; **p95** = 95% of requests were faster; p99 = the slowest 1%. Averages hide pain: 19 requests at 50 ms and 1 at 5 s average out "fine", but every twentieth person waits 5 seconds.
+- **Error rate:** the share of requests that failed (5xx, timeouts, refused connections).
+- **Bottleneck:** the resource that runs out first (CPU, memory, the connection pool, a slow query). **Saturation:** the bottleneck is full, requests queue, latency climbs steeply.
+- **Threshold / SLO (Service Level Objective):** the pass line set *in advance*, e.g. "p95 under 500 ms, under 1% errors".
+- **Warm-up / JIT:** Java's just-in-time compiler turns hot code into fast machine code while running, so the first minute is slower.
+- **CPU credits:** a t3 server only *borrows* full speed; when its credits run out it slows to a baseline (or bills extra in "unlimited" mode). A laptop can't imitate that.
+
+### 66.2 The problem, the naive ways, why they hurt
+- Flights land in waves: hundreds of people can enter the same 30-minute matching window. How many can one t3.small (2 cores, 2 GB, shared by everything) serve, and what fails first?
+- **Naive:** "two browsers worked"; a `curl` loop timed by hand; the laptop's dev server.
+- **Why they hurt:** one user never meets **contention** (our pool starvation in 51 needed 20 threads); a sequential loop has no concurrency; hand timing gives averages; a laptop has 8+ cores and plenty of memory.
+
+### 66.3 The method
+1. **k6** (Grafana Labs): JavaScript scripts, percentiles and thresholds built in, WebSocket support, run as a Docker image (`grafana/k6:1.3.0`), so nothing to install. (Alternatives: Gatling, JMeter.)
+2. **Test production, not the dev server:** `docker-compose.prod.yml` locally, the same images and memory limits, squeezed into **2 cores in total**: API 1.4, Postgres 0.6, because on the real server they share the same 2.
+3. **Logins without SMS:** OTP is rate-limited per phone and IP on purpose (23), which would block a load test. A setup script inserts test users with SQL and signs their tokens with the *local* secret, and refuses unless `DOMAIN=localhost`. The app has no test login.
+4. **Realistic scenarios with think time:** an **arrival rush** (plan a trip, refresh trip/requests/matches every minute, some ask and accept) and **pickup chatter** (groups of four on WebSockets: location every 15 s, chat every 30–40 s).
+5. **Steps:** 100 → 300 → 1000 travellers; watch p95, errors, and `docker stats` (CPU and memory per container).
+6. **Act:** fix a bottleneck only if it fails at 300 or fewer (what we'll really see soon); record everything else with numbers.
+
+### 66.4 Decisions (2026-10-16)
+| Decision | Choice |
+|---|---|
+| Tool | k6 via Docker |
+| What's tested | The local production stack, capped at 2 cores in total |
+| Logins | Test users + tokens signed with the local secret, localhost only |
+| Scenarios | Arrival rush; pickup chatter |
+| Steps and pass line | 100 → 300 → 1000; p95 under 500 ms, under 1% errors |
+| Afterwards | Fix only failures at ≤ 300; record all results |
+| Where | `load/` with a how-to; not in CI |
+
+---
+
+## 67. Code walkthrough: load tests and results
+
+### 67.1 `load/compose.limits.yml` and `setup.py`
+- `compose.limits.yml` is a second compose file layered on the production one (`-f ... -f ...`): `cpus: 1.4` for the API, `0.6` for Postgres. `docker inspect` confirmed `NanoCpus=1400000000` / `600000000`.
+- `setup.py`:
+  - guard: `DOMAIN` in `infra/.env` must be `localhost`;
+  - `cleanup()` cancels only load-test users' trips and groups (phones `+91 1000…` / `+91 1001…`, which can't be real Indian mobiles: those start with 6–9). An earlier idea that touched *everyone's* Terminal 2 trips was rejected (63.6);
+  - users with one SQL statement (`generate_series` + `on conflict do nothing`);
+  - pickup groups of four inserted directly (locked, meeting in 10 minutes, so inside the location window);
+  - tokens: HS256 by hand with `hmac` and `hashlib` (header + payload in base64url, signed with the UTF-8 bytes of `JWT_SECRET`, issuer `namastute-api`), the same shape `AccessTokens` issues. Checked with `GET /me` before the first run.
+  - `tokens.json` and `results/` are git-ignored.
+
+### 67.2 `arrival-rush.js`
+- `ramping-vus`: 2 minutes to reach `TRAVELLERS` (the wave), 3 minutes holding, 20 s down.
+- Each VU is one traveller: plans a trip once (10 areas around Delhi NCR, spread ±1 km, all leaving within the same half hour), then every ~60 s (`sleep(50 + random 20)`): current trip, requests, and matches (if searching) or the group (if grouped); a third ask their best match once; half of the received requests get accepted.
+- Every request is **tagged** (`tags: { name: "matches" }`) so thresholds and the summary are per kind of request.
+- `http.expectedStatuses(..., 404, 409)` on ask/accept: at a busy airport "already asked" or "they just got grouped" are normal answers, not failures.
+
+### 67.3 `pickup-chatter.js`
+- `k6/ws` with STOMP written by hand: `CONNECT` (with the token), `SUBSCRIBE` to the group's chat and location topics, `SEND` positions every 15 s and chat every 30–40 s. A frame is command, headers, blank line, body, NUL (45).
+- Chat bodies are the send time (`Date.now()`); every member records `Date.now() - sentAt` in a custom `Trend` (`chat_delivery`): real end-to-end delivery time. `ERROR` frames count in `stomp_errors`.
+- Each session closes after 4 minutes and reconnects, as phones do.
+
+### 67.4 Results
+| Step | Matches p95 | Errors | Chat p95 | Notes |
+|---|---|---|---|---|
+| 100 / 25 groups | 47 ms | 0% | 21 ms | plan trip p99 1.8 s: JIT warm-up at the start |
+| 300 / 75 | 39 ms | 0% | 18 ms | faster than 100: the API was warm |
+| 1000 / 250 | **593 ms ✗** (p99 1.04 s) | 1 in 16,342 | 10 ms | API CPU max 139% of its 140% cap, Postgres 66% of 60%; API memory 675 of 768 MB with 1000 WebSockets |
+- **Verdict:** 300 travellers per wave passes with a lot of headroom. At 1000, the arrival waves saturate both CPUs and matching (the heaviest request) queues.
+- **Where matching's time goes:** `EXPLAIN ANALYZE` on the candidate query: ~18 ms alone, almost all in the `trip_dest_gist` scan, which indexes *every* trip ever planned (2,800 here: grouped and cancelled ones too) and filters `searching` afterwards. A temporary partial index (`where status = 'searching'`) took it to ~12 ms; it was dropped again so the database matches the migrations, and the idea is a `shortcut:` comment in `TripRepository`. Most of the 593 ms is queueing for CPU, not the query itself.
+- **Not fixed, by decision 6** (the failure was at 1000). Options recorded in the README.
+
+### 67.5 What went wrong, and what it taught
+- **The computer slept during the first 1000-person chatter run.** k6 seemed to "hang" for 1 h 40 min; the API log filled with "Location sharing is only open around pickup time". The clue: a **thread dump** (`kill -3 1` inside the container prints every Java thread's stack) showed broker threads idle, not stuck, and every thread's `elapsed=2153s`: Java had only *experienced* 36 minutes while the wall clock said 2 h 18 m since start. While a laptop sleeps, Docker's VM pauses, so monotonic clocks stop but wall clocks jump. The run was discarded, not reported, and repeated with the machine kept awake and a hard `timeout 480` around `docker run`: it finished in 5.5 minutes with 96 messages/s sent (the expected rate) and all 1000 sessions clean.
+- **Lesson:** before trusting a strange result, check the test itself. Here, the sent-messages rate (2.9/s instead of ~95/s) gave it away.
+- A wait loop using `read -t 1 < /dev/zero` doesn't wait at all (`/dev/zero` always has data), so an early CPU snapshot was taken too soon. `timeout 20 docker stats` both waits and measures.
+- Caveats: a laptop, not the t3.small; Caddy not in the path; no CPU-credit behaviour. Re-run on the real server.
+
+---
+
+## 68. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -4170,7 +4252,7 @@ git fetch --prune
 
 ---
 
-## 67. Glossary
+## 69. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -4425,10 +4507,21 @@ git fetch --prune
 | Accepted risk | A known limit you decided to live with for now, written down with when you'd change it |
 | Launch blocker | Something that must be done before real users |
 | Fixed window (rate limit) | Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends |
+| Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
+| Virtual user (VU) | One simulated person in a load test |
+| Think time | The pauses a real person takes between actions |
+| Throughput | Work done per second, e.g. requests per second |
+| Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
+| Saturation | A resource is fully used, so work queues and latency climbs |
+| SLO / threshold | A pass line set in advance, e.g. p95 under 500 ms |
+| JIT warm-up | Java gets faster after its first minute as hot code is compiled |
+| CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
+| Thread dump | A snapshot of every thread's stack in a running Java program (`kill -3`) |
+| Partial index | An index over only the rows matching a condition, e.g. active trips |
 
 ---
 
-## 68. Interview questions to practise
+## 70. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4556,3 +4649,8 @@ git fetch --prune
 124. Why does the flood limit drop the message instead of throwing, and what would throwing do?
 125. Why did adding an automatic refresh risk hiding the user's trip, and how was that prevented?
 126. Which launch risks had no `shortcut:` comment, and how did you find them?
+127. Why look at p95 and p99 instead of the average response time?
+128. Why does a load test need think time, and what happens without it?
+129. How did you log in hundreds of load-test users when OTP is rate-limited, without adding a backdoor?
+130. Matching got slow at 1000 users. How did you work out whether it was the database or the CPU queue?
+131. A load test "hung" for over an hour. How did you find out the real cause?
