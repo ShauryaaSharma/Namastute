@@ -10,6 +10,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.namastute.shared.RateLimiter;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -41,9 +43,11 @@ class TripController {
             boolean womenOnly) {}
 
     private final TripService trips;
+    private final RateLimiter limits;
 
-    TripController(TripService trips) {
+    TripController(TripService trips, RateLimiter limits) {
         this.trips = trips;
+        this.limits = limits;
     }
 
     @GetMapping("/api/v1/terminals")
@@ -55,6 +59,7 @@ class TripController {
 
     @PostMapping("/api/v1/trips")
     ResponseEntity<TripService.TripView> create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateTripRequest req) {
+        limits.check("plan-trip", userId(jwt), 5, Duration.ofMinutes(1));   // Learning Notes 68: far above any real person
         TripService.TripView trip = trips.create(userId(jwt), new TripService.CreateTrip(req.terminalId(), req.flightNo(),
                 req.exitAt(), req.destLat(), req.destLng(), req.destArea(), req.seats(), req.bags(), req.womenOnly()));
         return ResponseEntity.status(HttpStatus.CREATED).body(trip);   // 201: a new thing was created
@@ -71,6 +76,7 @@ class TripController {
     // Up to 5 people to share a cab with, best first; 404 unless it's your own active trip
     @GetMapping("/api/v1/trips/{id}/matches")
     List<TripService.MatchView> matches(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        limits.check("matches", userId(jwt), 30, Duration.ofMinutes(1));   // the app refreshes once a minute
         return trips.matches(userId(jwt), id);
     }
 

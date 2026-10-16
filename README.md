@@ -7,7 +7,7 @@ Travellers landing at Delhi IGI around the same time, heading the same way, find
 *The name: **namaste** (a warm Indian greeting) + **astute** (smart). A smart way to greet a stranger and split a cab.*
 
 ## What works today
-- **Phone login with OTP:** short-lived access tokens and rotating refresh tokens in an HttpOnly cookie.
+- **Phone login with OTP:** short-lived access tokens and rotating refresh tokens in an HttpOnly cookie. Code requests and guesses are rate-limited.
 - **Profile:** name in any Indian script, plus an optional UPI ID.
 - **Plan a trip:** terminal, time you'll be outside (India time), seats, bags, and destination by search or by tapping a map.
 - **Matching:** travellers and open groups heading your way, ranked by detour and time. No rider is taken more than max(3 km, 25%) beyond their own trip, and others only ever see your first name and area.
@@ -16,6 +16,7 @@ Travellers landing at Delhi IGI around the same time, heading the same way, find
 - **Background jobs:** stale trips expire, groups lock themselves 5 minutes before meeting, and old groups close.
 - **Finishing the ride:** "I'm here" at the pickup, then the booker enters the real fare and everyone sees their share with a UPI pay link.
 - **Safety:** report someone you shared a cab with (reviewed by a person, with "Call 112" for emergencies), and silently block anyone so you never see each other again.
+- **Abuse limits:** per person, at most 30 match searches, 10 share requests and 5 trip plans a minute (429 with `Retry-After`), and 20 chat/location messages per 10 seconds.
 - **Ratings:** after meeting up, a thumbs up or down for each person in your group, once. Others see only the total ("92% 👍 · 12 ratings", or "New"); nobody sees who gave what.
 - **Live location at the pickup:** around meeting time, group members can choose to share where they are on a small map ("about 150 m away"). Only the group sees it, it switches off by itself, and positions are never saved.
 - **Push notifications** (Web Push, works with the app closed): someone wants to share, you're in a group, a new chat message while you're away, the fare is in. The lock screen only ever shows a first name. Installable on the Home Screen (needed for iPhone).
@@ -104,7 +105,7 @@ The local production stack squeezed into the t3.small's 2 cores (API 1.4, Postgr
 | 1000 | **593 ms ✗** | 593 ms (matches) | 1 in 16,342 | 250 | 10 ms |
 
 - **One server handles 300 travellers per arrival wave comfortably**, far above a pilot.
-- **At 1000, matching gets slow at the peaks:** the API and Postgres both hit their CPU caps. Not fixed yet (the agreed bar was 300). Options when needed: a partial index on searching trips (a `shortcut:` comment in `TripRepository`), fewer candidates per search, or a bigger server.
+- **At 1000, matching gets slow at the peaks:** the API and Postgres both hit their CPU caps. Not fixed yet (the agreed bar was 300). The partial index on searching trips is now in (V8: the candidate query went from 13.3 to 10.2 ms with 100,000 old trips, and no longer grows with history). Further options when needed: fewer candidates per search, or a bigger server.
 - **Memory is the next limit for WebSockets:** with 1000 open connections the API used 675 MB of its 768 MB.
 - **Caveats:** measured on a laptop, not the t3.small; Caddy isn't in the path; a t3 runs at full speed only while it has CPU credits. Re-run on the real server after deploying.
 

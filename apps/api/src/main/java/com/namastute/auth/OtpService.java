@@ -1,6 +1,7 @@
 package com.namastute.auth;
 
 import com.namastute.shared.ApiException;
+import com.namastute.shared.RateLimiter;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -12,7 +13,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -27,21 +27,16 @@ class OtpService {
     private static final int IP_LIMIT = 10;
     private static final Duration IP_WINDOW = Duration.ofHours(1);
 
-    // INCR + set the TTL on the first hit, run inside Redis as one atomic step
-    private static final RedisScript<Long> HIT = RedisScript.of("""
-            local count = redis.call('INCR', KEYS[1])
-            if count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
-            return count
-            """, Long.class);
-
     private final StringRedisTemplate redis;
+    private final RateLimiter limits;
     private final SmsSender sms;
     private final SecretKeySpec hmacKey;
     private final SecureRandom random = new SecureRandom();
 
-    OtpService(StringRedisTemplate redis, SmsSender sms,
+    OtpService(StringRedisTemplate redis, RateLimiter limits, SmsSender sms,
                @Value("${namastute.otp.hmac-secret}") String secret) {
         this.redis = redis;
+        this.limits = limits;
         this.sms = sms;
         this.hmacKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
@@ -85,13 +80,9 @@ class OtpService {
         redis.delete(triesKey(phone));
     }
 
-    // Counts one hit in a fixed window that starts at the first hit; returns the count so far
+    // Counts one hit in a fixed window (shared RateLimiter); a Redis failure is thrown, so no code goes out unlimited
     private long hit(String key, Duration window) {
-        Long count = redis.execute(HIT, List.of(key), String.valueOf(window.toMillis()));
-        if (count == null) {
-            throw new IllegalStateException("Redis returned no count for " + key);
-        }
-        return count;
+        return limits.hit(key, window).count();
     }
 
     // HMAC-SHA256 of the code with our server secret, as 64 hex characters

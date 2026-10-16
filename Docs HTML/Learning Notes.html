@@ -108,14 +108,16 @@
 <details><summary><a href="#65-code-walkthrough-pre-launch-fixes">65. Code walkthrough: pre-launch fixes</a></summary><a class="sub" href="#651-flood-limit-chatstompauth">65.1 Flood limit: chat/StompAuth</a><a class="sub" href="#652-admin-alerts-feedbackfeedbackservice">65.2 Admin alerts: feedback/FeedbackService</a><a class="sub" href="#653-web">65.3 Web</a><a class="sub" href="#654-docs">65.4 Docs</a><a class="sub" href="#655-tests">65.5 Tests</a><a class="sub" href="#656-verified-in-a-real-browser">65.6 Verified in a real browser</a></details>
 <details><summary><a href="#66-load-testing">66. Load testing</a></summary><a class="sub" href="#661-terms">66.1 Terms</a><a class="sub" href="#662-the-problem-the-naive-ways-why-they-hurt">66.2 The problem, the naive ways, why they hurt</a><a class="sub" href="#663-the-method">66.3 The method</a><a class="sub" href="#664-decisions-2026-10-16">66.4 Decisions (2026-10-16)</a></details>
 <details><summary><a href="#67-code-walkthrough-load-tests-and-results">67. Code walkthrough: load tests and results</a></summary><a class="sub" href="#671-loadcomposelimitsyml-and-setuppy">67.1 load/compose.limits.yml and setup.py</a><a class="sub" href="#672-arrival-rushjs">67.2 arrival-rush.js</a><a class="sub" href="#673-pickup-chatterjs">67.3 pickup-chatter.js</a><a class="sub" href="#674-results">67.4 Results</a><a class="sub" href="#675-what-went-wrong-and-what-it-taught">67.5 What went wrong, and what it taught</a></details>
-<details><summary><a href="#68-command-cheat-sheet">68. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#69-glossary">69. Glossary</a>
-<a class="topic" href="#70-interview-questions-to-practise">70. Interview questions to practise</a>
+<details><summary><a href="#68-indexes-and-rate-limits">68. Indexes and rate limits</a></summary><a class="sub" href="#681-terms">68.1 Terms</a><a class="sub" href="#682-the-problem">68.2 The problem</a><a class="sub" href="#683-naive-ways-and-why-they-hurt">68.3 Naive ways, and why they hurt</a><a class="sub" href="#684-the-plan">68.4 The plan</a><a class="sub" href="#685-decisions-2026-10-16">68.5 Decisions (2026-10-16)</a></details>
+<details><summary><a href="#69-code-walkthrough-indexes-and-rate-limits">69. Code walkthrough: indexes and rate limits</a></summary><a class="sub" href="#691-v8__indexessql">69.1 V8__indexes.sql</a><a class="sub" href="#692-measured-local-production-database-06-cores-for-postgres">69.2 Measured (local production database, 0.6 cores for Postgres)</a><a class="sub" href="#693-sharedratelimiter">69.3 shared/RateLimiter</a><a class="sub" href="#694-tests">69.4 Tests</a><a class="sub" href="#695-a-flyway-lesson-learned-live">69.5 A Flyway lesson, learned live</a><a class="sub" href="#696-web">69.6 Web</a></details>
+<details><summary><a href="#70-command-cheat-sheet">70. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#71-glossary">71. Glossary</a>
+<a class="topic" href="#72-interview-questions-to-practise">72. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="namastute--learning-notes">Namastute — Learning Notes</h1>
 <p>My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.</p>
-<p>Last updated: 2026-10-16 (load testing: method, k6 scripts and the results).</p>
+<p>Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips of history).</p>
 <hr>
 <h2 id="contents">Contents</h2>
 <ol>
@@ -186,9 +188,11 @@
 <li><a href="#65-code-walkthrough-pre-launch-fixes">Code walkthrough: pre-launch fixes</a></li>
 <li><a href="#66-load-testing">Load testing</a></li>
 <li><a href="#67-code-walkthrough-load-tests-and-results">Code walkthrough: load tests and results</a></li>
-<li><a href="#68-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#69-glossary">Glossary</a></li>
-<li><a href="#70-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#68-indexes-and-rate-limits">Indexes and rate limits</a></li>
+<li><a href="#69-code-walkthrough-indexes-and-rate-limits">Code walkthrough: indexes and rate limits</a></li>
+<li><a href="#70-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#71-glossary">Glossary</a></li>
+<li><a href="#72-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="1-architecture-monolith-vs-microservices">1. Architecture: monolith vs microservices</h2>
@@ -5769,7 +5773,138 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li>Caveats: a laptop, not the t3.small; Caddy not in the path; no CPU-credit behaviour. Re-run on the real server.</li>
 </ul>
 <hr>
-<h2 id="68-command-cheat-sheet">68. Command cheat sheet</h2>
+<h2 id="68-indexes-and-rate-limits">68. Indexes and rate limits</h2>
+<h3 id="681-terms">68.1 Terms</h3>
+<ul>
+<li><strong>Sequential scan:</strong> reading every row of a table. Fine for 100 rows, slow for 100,000. <strong>Index scan:</strong> jumping straight to the rows through an index.</li>
+<li><strong>B-tree:</strong> the default index, a sorted tree; good for <code>=</code>, ranges and sorting. (<strong>GiST</strong> is the kind for locations, used by matching.)</li>
+<li><strong>Foreign key:</strong> a column pointing at another table (<code>group_members.trip_id → trip_requests</code>). <strong>Postgres does not index foreign keys by itself.</strong></li>
+<li><strong>Partial index:</strong> indexes only rows matching a condition (<code>where status = &#39;searching&#39;</code>): smaller, faster, and it doesn&#39;t grow with history.</li>
+<li><strong>The cost of an index:</strong> every insert and update also updates it, so add the ones that pay off.</li>
+<li><strong>Rate limit / fixed window:</strong> at most N actions per time window, per person, counted in Redis (the OTP method, 23).</li>
+<li><strong>429 Too Many Requests</strong> + <strong><code>Retry-After</code>:</strong> the standard &quot;slow down&quot; answer and how many seconds to wait.</li>
+<li><strong>Fail open / fail closed:</strong> if the limiter itself breaks, let requests through (open) or refuse them (closed).</li>
+</ul>
+<h3 id="682-the-problem">68.2 The problem</h3>
+<ul>
+<li>&quot;Which group is this trip in?&quot; runs on almost every request, and its column had no index. Tiny tables hide it; after months of trips every request would read the whole history.</li>
+<li>One person or one buggy script could call matching (our most expensive request, 67.4) as fast as they like and slow the app for everyone. Logged-in actions only had OTP&#39;s limits at the door.</li>
+</ul>
+<h3 id="683-naive-ways-and-why-they-hurt">68.3 Naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Index everything:</strong> slow writes, wasted memory. <strong>Index nothing until it hurts:</strong> reads slow down quietly as data grows.</li>
+<li><strong>Trust the app to be gentle:</strong> a script ignores the app; the limit has to live on the server.</li>
+</ul>
+<h3 id="684-the-plan">68.4 The plan</h3>
+<ul>
+<li><strong>V8:</strong> <code>group_members (trip_id)</code>, <code>push_subscriptions (user_id)</code>, and the destination index made partial (<code>where status = &#39;searching&#39;</code>). Smaller ones (<code>sessions.user_id</code>, admins by <code>role</code>) skipped: they run rarely (a refresh-token reuse, a new report).</li>
+<li><strong>Measured honestly:</strong> 100,000 generated past trips in the local production database; <code>EXPLAIN ANALYZE</code> before and after.</li>
+<li><strong>Limits, per person per minute:</strong> matches 30, ask 10, plan a trip 5 → 429 with <code>Retry-After</code> and &quot;You&#39;re going a bit fast. Try again in a minute.&quot; A real person never gets near them.</li>
+<li><strong>One shared limiter</strong> (<code>shared/RateLimiter</code>), reused by OTP with its numbers unchanged.</li>
+<li><strong>Redis down:</strong> the three new limits <strong>fail open</strong> (a warning in the log); OTP stays <strong>fail closed</strong> (no codes go out unlimited).</li>
+</ul>
+<h3 id="685-decisions-2026-10-16">68.5 Decisions (2026-10-16)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Indexes</td>
+<td><code>group_members.trip_id</code>, <code>push_subscriptions.user_id</code>, partial destination index; smaller ones only if they matter</td>
+</tr>
+<tr>
+<td>Measured on</td>
+<td>~100,000 generated old trips in the local production database, <code>EXPLAIN ANALYZE</code> before/after</td>
+</tr>
+<tr>
+<td>Limits</td>
+<td>matches 30/min, ask 10/min, plan trip 5/min, per person</td>
+</tr>
+<tr>
+<td>Response</td>
+<td>429 + <code>Retry-After</code> + a friendly message</td>
+</tr>
+<tr>
+<td>Code</td>
+<td>One shared limiter in <code>shared</code>; OTP limits unchanged</td>
+</tr>
+<tr>
+<td>Redis down</td>
+<td>Fail open for the three; OTP unchanged (fail closed)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="69-code-walkthrough-indexes-and-rate-limits">69. Code walkthrough: indexes and rate limits</h2>
+<h3 id="691-v8__indexessql">69.1 <code>V8__indexes.sql</code></h3>
+<ul>
+<li><code>create index group_members_trip on group_members (trip_id)</code> and <code>create index push_subscriptions_user on push_subscriptions (user_id)</code>.</li>
+<li><code>drop index trip_dest_gist</code> + recreate it with <code>where status = &#39;searching&#39;</code>, same name. The matching query already says <code>t.status = &#39;searching&#39;</code>, so Postgres can use it.</li>
+<li>Plain <code>create index</code> (not <code>concurrently</code>): it locks the table briefly, fine at our size; <code>concurrently</code> can&#39;t run inside Flyway&#39;s transaction anyway.</li>
+</ul>
+<h3 id="692-measured-local-production-database-06-cores-for-postgres">69.2 Measured (local production database, 0.6 cores for Postgres)</h3>
+<p>History: ~105,000 trips (33k done, 38k cancelled, 33k expired, 300 searching), 37,862 group memberships, 20,000 push subscriptions. Best of 3 runs:</p>
+<table>
+<thead>
+<tr>
+<th>Lookup</th>
+<th>Before</th>
+<th>After</th>
+<th>Plan after</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Which group is this trip in</td>
+<td>0.97 ms (scanned all of <code>groups</code>)</td>
+<td><strong>0.045 ms</strong></td>
+<td>index scan on <code>group_members_trip</code></td>
+</tr>
+<tr>
+<td>Push subscriptions for 3 people</td>
+<td>2.14 ms (read all 20,000)</td>
+<td><strong>0.075 ms</strong></td>
+<td><code>push_subscriptions_user</code></td>
+</tr>
+<tr>
+<td>Matching candidates</td>
+<td>13.3 ms</td>
+<td><strong>10.2 ms</strong></td>
+<td>the partial <code>trip_dest_gist</code> (300 rows instead of 105,000)</td>
+</tr>
+</tbody></table>
+<ul>
+<li>The &quot;before&quot; times grow with every trip ever made; the &quot;after&quot; ones stay flat. What&#39;s left in matching is computing exact distances for the searching trips.</li>
+</ul>
+<h3 id="693-sharedratelimiter">69.3 <code>shared/RateLimiter</code></h3>
+<ul>
+<li>The Lua script from <code>OtpService</code> moved here and now also returns the time left: <code>INCR</code>, <code>PEXPIRE</code> on the first hit, then <code>{count, PTTL}</code>, as one atomic step inside Redis.</li>
+<li><code>hit(key, window)</code> → <code>Hit(count, left)</code>; a Redis failure is <strong>thrown</strong>. <code>OtpService</code> now calls this (its own copy is gone), so OTP still refuses to send codes when it can&#39;t count them.</li>
+<li><code>check(action, userId, max, window)</code>: key <code>rate:&lt;action&gt;:&lt;user&gt;</code>; over the limit → <code>ApiException(429, &quot;TOO_MANY_REQUESTS&quot;, …, retryAfterSeconds)</code>; a Redis failure is <strong>caught and logged</strong>: fail open.</li>
+<li><code>ApiException</code> gained an optional <code>retryAfterSeconds</code>; <code>ApiExceptionHandler</code> adds the <code>Retry-After</code> header when it&#39;s set.</li>
+<li>One line in each controller: <code>TripController.create</code> (&quot;plan-trip&quot;, 5), <code>TripController.matches</code> (30), <code>GroupController.ask</code> (10). Validation errors (400 from <code>@Valid</code>) happen before the controller runs, so they don&#39;t count; refused but valid-looking attempts do.</li>
+</ul>
+<h3 id="694-tests">69.4 Tests</h3>
+<ul>
+<li><code>RateLimitsTest</code> (real Redis): 30 matches OK, the 31st → 429 with the message and a <code>Retry-After</code> between 1 and 60; another person&#39;s matches still OK. 10 asks (404s, nobody there) then 429. 5 refused trip plans (unknown terminal) then 429, even for a valid one.</li>
+<li><code>RateLimiterTest</code>: a fake <code>StringRedisTemplate</code> whose scripts throw <code>RedisConnectionFailureException</code>: <code>check</code> lets the request through, <code>hit</code> throws.</li>
+<li><strong>Proven to fail:</strong> without the matches check, &quot;expected 429 but was 200&quot;. All OTP tests passed unchanged after the move.</li>
+<li>93 API tests, all green.</li>
+</ul>
+<h3 id="695-a-flyway-lesson-learned-live">69.5 A Flyway lesson, learned live</h3>
+<ul>
+<li>After V8 had run on the dev database (during the tests) and on the local production one, I changed <strong>only a comment</strong> in it. Flyway stores a checksum of every applied migration, and a comment counts: both databases would have refused to start (&quot;checksum mismatch&quot;).</li>
+<li>V8 had never run anywhere else, so the fix was to undo it on those two local databases (drop the indexes, restore V1&#39;s index, delete V8&#39;s row in <code>flyway_schema_history</code>) and let Flyway apply the final file again. Both now record the same checksum.</li>
+<li><strong>Rule:</strong> once a migration has run anywhere that matters, never edit it, not even a comment; write the next one.</li>
+</ul>
+<h3 id="696-web">69.6 Web</h3>
+<ul>
+<li>No changes needed: a 429 arrives as our usual error JSON, so <code>useAction</code> shows &quot;You&#39;re going a bit fast…&quot;, and the auto-refresh keeps the old matches on screen when a refresh fails (65.3).</li>
+<li>Not checked in the browser: hitting a limit through the UI (it takes 30 match loads in a minute); the API side is tested.</li>
+</ul>
+<hr>
+<h2 id="70-command-cheat-sheet">70. Command cheat sheet</h2>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
 git pull
@@ -5833,7 +5968,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="69-glossary">69. Glossary</h2>
+<h2 id="71-glossary">71. Glossary</h2>
 <table>
 <thead>
 <tr>
@@ -6886,12 +7021,24 @@ git fetch --prune
 <td>A snapshot of every thread&#39;s stack in a running Java program (<code>kill -3</code>)</td>
 </tr>
 <tr>
-<td>Partial index</td>
-<td>An index over only the rows matching a condition, e.g. active trips</td>
+<td>Index scan / B-tree</td>
+<td>Finding rows through an index / the default index type, a sorted tree</td>
+</tr>
+<tr>
+<td>429 / Retry-After</td>
+<td>&quot;Too Many Requests&quot; / the header saying how many seconds to wait</td>
+</tr>
+<tr>
+<td>Fail open / fail closed</td>
+<td>When a safety check itself breaks: let requests through / refuse them</td>
+</tr>
+<tr>
+<td>Migration checksum</td>
+<td>Flyway&#39;s fingerprint of an applied migration; editing the file (even a comment) breaks startup</td>
 </tr>
 </tbody></table>
 <hr>
-<h2 id="70-interview-questions-to-practise">70. Interview questions to practise</h2>
+<h2 id="72-interview-questions-to-practise">72. Interview questions to practise</h2>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
 <li>What is Inversion of Control? What problem does dependency injection solve?</li>
@@ -7024,6 +7171,10 @@ git fetch --prune
 <li>How did you log in hundreds of load-test users when OTP is rate-limited, without adding a backdoor?</li>
 <li>Matching got slow at 1000 users. How did you work out whether it was the database or the CPU queue?</li>
 <li>A load test &quot;hung&quot; for over an hour. How did you find out the real cause?</li>
+<li>Postgres doesn&#39;t index foreign keys automatically. Which one mattered in Namastute, and how did you prove it?</li>
+<li>When is a partial index better than a normal one?</li>
+<li>Why do the new rate limits fail open while OTP fails closed?</li>
+<li>Why must you never edit a Flyway migration that has already run, even a comment?</li>
 </ol>
 
 
