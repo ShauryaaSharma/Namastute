@@ -59,7 +59,8 @@ class MatchesTest {
                 .andExpect(jsonPath("$[0].riders.length()").value(1))   // a lone traveller
                 .andExpect(jsonPath("$[0].riders[0].firstName").value("Asha"))
                 .andExpect(jsonPath("$[0].riders[0].destArea").value("Sector 29, Gurugram"))
-                .andExpect(jsonPath("$[0].riders[0].length()").value(3))   // tripId, firstName, destArea
+                .andExpect(jsonPath("$[0].riders[0].rating.count").value(0))   // a new user: no ratings yet ("New")
+                .andExpect(jsonPath("$[0].riders[0].length()").value(4))   // tripId, firstName, destArea, rating
                 .andExpect(jsonPath("$[0].minutesAfterYou").value(10))
                 .andExpect(jsonPath("$[0].detourKm").value(0.5))   // 0.498 km from T1, shown to the nearest 0.5
                 .andExpect(jsonPath("$[0].seats").value(1))

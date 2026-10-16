@@ -8,17 +8,23 @@ import com.namastute.trips.TripService.TripSummary;
 import com.namastute.users.UserService;
 import com.namastute.users.UserService.BlockView;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-// Report and block (Learning Notes 56). People are named by the opaque trip handles the app already shows,
+// Report, block (Learning Notes 56) and ratings (62). People are named by the opaque trip handles the app already shows,
 // and every answer is the same whether a target doesn't exist or isn't yours to act on.
 @Service
 class FeedbackService {
+
+    // What you gave in this ride, so the card shows "You gave 👍" instead of the buttons
+    record MyRating(UUID tripId, boolean up) {}
+    record RatingRow(UUID rateeId, boolean up) {}
 
     private final JdbcClient db;
     private final TripService trips;
@@ -62,6 +68,29 @@ class FeedbackService {
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "ALREADY_REPORTED", "You've already reported them for this ride");
         }
+    }
+
+    // A thumbs up or down for someone you met up with: once per person per ride (the primary key), final, and
+    // never shown individually to anyone in the app. The row and the counters change in ONE transaction.
+    @Transactional
+    void rate(UUID me, UUID tripId, boolean up) {
+        GroupService.RideTogether ride = groups.metWith(me, tripId).orElseThrow(() ->
+                new ApiException(HttpStatus.NOT_FOUND, "NOT_RATEABLE", "You can rate people once you've met up for a ride together"));
+        int added = db.sql("insert into ratings (group_id, rater_id, ratee_id, up) values (?, ?, ?, ?) on conflict do nothing")
+                .params(ride.groupId(), me, ride.userId(), up).update();
+        if (added == 0) {
+            throw new ApiException(HttpStatus.CONFLICT, "ALREADY_RATED", "You've already rated them for this ride");
+        }
+        users.addRating(ride.userId(), up);
+    }
+
+    List<MyRating> myRatings(UUID me, UUID groupId) {
+        if (!groups.isActiveMember(groupId, me)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "GROUP_NOT_FOUND", "You're not in that group");
+        }
+        Map<UUID, UUID> handles = groups.memberTripsByUser(groupId);
+        return db.sql("select ratee_id, up from ratings where group_id = ? and rater_id = ?").params(groupId, me)
+                .query(RatingRow.class).list().stream().map(r -> new MyRating(handles.get(r.rateeId()), r.up())).toList();
     }
 
     // Leaving a locked group with a reason files a report on the booker. Runs inside the groups transaction

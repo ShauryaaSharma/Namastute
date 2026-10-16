@@ -206,6 +206,18 @@ export async function reportTraveller(report: ReportRequest): Promise<void> {
   await request<void>("/api/v1/reports", { method: "POST", body: JSON.stringify(report) });
 }
 
+export type MyRating = Schemas["MyRating"];
+
+// Thumbs up or down for someone from your met group: once, final (Learning Notes 62)
+export async function rateTraveller(tripId: string, up: boolean): Promise<void> {
+  await request<void>("/api/v1/ratings", { method: "POST", body: JSON.stringify({ tripId, up }) });
+}
+
+// Only the ratings you gave in this group
+export function getMyRatings(groupId: string): Promise<MyRating[]> {
+  return request<MyRating[]>(`/api/v1/groups/${groupId}/ratings`);
+}
+
 // A reason is required only when the group is locked
 export async function leaveGroup(id: string, reason?: string): Promise<void> {
   await request<void>(`/api/v1/groups/${id}/leave`, { method: "POST", body: JSON.stringify({ reason }) });

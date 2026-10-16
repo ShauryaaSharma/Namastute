@@ -212,6 +212,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/{id}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["myRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -255,6 +271,22 @@ export interface paths {
         put?: never;
         post: operations["subscribe"];
         delete: operations["unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -485,6 +517,7 @@ export interface components {
             destArea: string;
             firstName: string;
             here: boolean;
+            rating: components["schemas"]["Rating"];
             /** Format: int32 */
             seats: number;
             share: number | null;
@@ -504,6 +537,11 @@ export interface components {
             kind: "text" | "system";
             you: boolean;
         };
+        MyRating: {
+            /** Format: uuid */
+            tripId: string;
+            up: boolean;
+        };
         OtpRequest: {
             phone: string;
         };
@@ -516,6 +554,17 @@ export interface components {
         };
         PublicKey: {
             publicKey: string;
+        };
+        RateRequest: {
+            /** Format: uuid */
+            tripId: string;
+            up: boolean;
+        };
+        Rating: {
+            /** Format: int32 */
+            count: number;
+            /** Format: int32 */
+            upPercent: number | null;
         };
         ReportRequest: {
             /** @enum {string} */
@@ -535,6 +584,7 @@ export interface components {
             id: string;
             /** Format: int64 */
             minutesAfterYou: number;
+            rating: components["schemas"]["Rating"];
             /** Format: int32 */
             seats: number;
         };
@@ -545,6 +595,7 @@ export interface components {
         Rider: {
             destArea: string;
             firstName: string;
+            rating: components["schemas"]["Rating"];
             /** Format: uuid */
             tripId: string;
         };
@@ -929,6 +980,28 @@ export interface operations {
             };
         };
     };
+    myRatings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MyRating"][];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -1025,6 +1098,28 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

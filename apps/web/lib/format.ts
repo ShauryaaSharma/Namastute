@@ -13,3 +13,8 @@ export function rupees(amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+// A ratings summary (Learning Notes 62): "92% 👍 · 12 ratings", or "New" until there are enough ratings to mean something
+export function ratingText(r: { count: number; upPercent: number | null }): string {
+  return r.upPercent === null ? "New" : `${r.upPercent}% 👍 · ${plural(r.count, "rating")}`;
+}

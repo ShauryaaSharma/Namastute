@@ -41,7 +41,7 @@ public class TripService {
     // What others may see about a match: never phone, exact destination or UPI ID (design 4.4).
     // A match is a lone traveller (one rider) or an open group (2–3 riders). Trip ids are opaque handles:
     // tripId (the first rider's) is what "ask to share" sends; any group member can answer (Learning Notes 41.1).
-    record Rider(UUID tripId, String firstName, String destArea) {}
+    record Rider(UUID tripId, String firstName, String destArea, UserService.Rating rating) {}
     record MatchView(UUID tripId, List<Rider> riders, long minutesAfterYou, int seats, int bags, double detourKm) {}
 
     // What the groups module may know about a trip
@@ -126,11 +126,12 @@ public class TripService {
         groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
 
         List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, candidates);
-        Map<UUID, String> names = users.firstNames(
-                ranked.stream().flatMap(r -> r.riders().stream()).map(TripRequest::getUserId).toList());
+        List<UUID> riderIds = ranked.stream().flatMap(r -> r.riders().stream()).map(TripRequest::getUserId).toList();
+        Map<UUID, String> names = users.firstNames(riderIds);
+        Map<UUID, UserService.Rating> ratings = users.ratings(riderIds);
         return ranked.stream().map(r -> new MatchView(
                 r.riders().get(0).getId(),
-                r.riders().stream().map(t -> new Rider(t.getId(), names.get(t.getUserId()), t.getDestArea())).toList(),
+                r.riders().stream().map(t -> new Rider(t.getId(), names.get(t.getUserId()), t.getDestArea(), ratings.get(t.getUserId()))).toList(),
                 Duration.between(mine.getExitAt(), r.riders().stream().map(TripRequest::getExitAt).max(Instant::compareTo).orElseThrow()).toMinutes(),
                 r.riders().stream().mapToInt(TripRequest::getSeats).sum(),
                 r.riders().stream().mapToInt(TripRequest::getBags).sum(),
