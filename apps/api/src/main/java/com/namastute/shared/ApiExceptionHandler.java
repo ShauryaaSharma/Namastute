@@ -1,6 +1,7 @@
 package com.namastute.shared;
 
 import java.util.stream.Collectors;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,8 +17,11 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ErrorBody> handleApi(ApiException e) {
-        return ResponseEntity.status(e.status())
-                .body(new ErrorBody(new ErrorBody.Error(e.code(), e.getMessage())));
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(e.status());
+        if (e.retryAfterSeconds() != null) {
+            response.header(HttpHeaders.RETRY_AFTER, String.valueOf(e.retryAfterSeconds()));
+        }
+        return response.body(new ErrorBody(new ErrorBody.Error(e.code(), e.getMessage())));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

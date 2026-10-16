@@ -7,7 +7,9 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import com.namastute.shared.RateLimiter;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -33,14 +35,17 @@ class GroupController {
     record FareRequest(@NotNull @DecimalMin("50") @DecimalMax("10000") @Digits(integer = 5, fraction = 2) BigDecimal total) {}
 
     private final GroupService groups;
+    private final RateLimiter limits;
 
-    GroupController(GroupService groups) {
+    GroupController(GroupService groups, RateLimiter limits) {
         this.groups = groups;
+        this.limits = limits;
     }
 
     // Ask a traveller (from your matches) to share a cab
     @PostMapping("/api/v1/requests")
     ResponseEntity<Created> ask(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AskRequest req) {
+        limits.check("ask", userId(jwt), 10, Duration.ofMinutes(1));   // Learning Notes 68
         return ResponseEntity.status(HttpStatus.CREATED).body(new Created(groups.ask(userId(jwt), req.toTripId())));
     }
 

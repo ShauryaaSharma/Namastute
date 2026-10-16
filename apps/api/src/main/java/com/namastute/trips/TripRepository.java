@@ -65,8 +65,6 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
     // Stage 1 of matching: cheap filters the indexes can answer (trip_search, trip_dest_gist). MatchRanker does the rest.
     // shortcut: "destinations within 15 km" misses riders going much further down the same road;
     // filter by direction from the airport (bearing) once that matters.
-    // shortcut: trip_dest_gist (V1) indexes every trip ever made, so this scan slows as history grows; a partial index
-    // "where status = 'searching'" took it from 18 to 12 ms with only 2,800 trips (Learning Notes 67). Add it as history builds up.
     @Query(nativeQuery = true, value = """
             select t.* from trip_requests me
             join trip_requests t

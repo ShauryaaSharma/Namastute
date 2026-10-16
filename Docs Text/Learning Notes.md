@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-16 (load testing: method, k6 scripts and the results).
+Last updated: 2026-10-16 (indexes and rate limits, measured with 100,000 trips of history).
 
 ---
 
@@ -75,9 +75,11 @@ Last updated: 2026-10-16 (load testing: method, k6 scripts and the results).
 65. [Code walkthrough: pre-launch fixes](#65-code-walkthrough-pre-launch-fixes)
 66. [Load testing](#66-load-testing)
 67. [Code walkthrough: load tests and results](#67-code-walkthrough-load-tests-and-results)
-68. [Command cheat sheet](#68-command-cheat-sheet)
-69. [Glossary](#69-glossary)
-70. [Interview questions to practise](#70-interview-questions-to-practise)
+68. [Indexes and rate limits](#68-indexes-and-rate-limits)
+69. [Code walkthrough: indexes and rate limits](#69-code-walkthrough-indexes-and-rate-limits)
+70. [Command cheat sheet](#70-command-cheat-sheet)
+71. [Glossary](#71-glossary)
+72. [Interview questions to practise](#72-interview-questions-to-practise)
 
 ---
 
@@ -4168,7 +4170,87 @@ Real STOMP, step by step:
 
 ---
 
-## 68. Command cheat sheet
+## 68. Indexes and rate limits
+
+### 68.1 Terms
+- **Sequential scan:** reading every row of a table. Fine for 100 rows, slow for 100,000. **Index scan:** jumping straight to the rows through an index.
+- **B-tree:** the default index, a sorted tree; good for `=`, ranges and sorting. (**GiST** is the kind for locations, used by matching.)
+- **Foreign key:** a column pointing at another table (`group_members.trip_id → trip_requests`). **Postgres does not index foreign keys by itself.**
+- **Partial index:** indexes only rows matching a condition (`where status = 'searching'`): smaller, faster, and it doesn't grow with history.
+- **The cost of an index:** every insert and update also updates it, so add the ones that pay off.
+- **Rate limit / fixed window:** at most N actions per time window, per person, counted in Redis (the OTP method, 23).
+- **429 Too Many Requests** + **`Retry-After`:** the standard "slow down" answer and how many seconds to wait.
+- **Fail open / fail closed:** if the limiter itself breaks, let requests through (open) or refuse them (closed).
+
+### 68.2 The problem
+- "Which group is this trip in?" runs on almost every request, and its column had no index. Tiny tables hide it; after months of trips every request would read the whole history.
+- One person or one buggy script could call matching (our most expensive request, 67.4) as fast as they like and slow the app for everyone. Logged-in actions only had OTP's limits at the door.
+
+### 68.3 Naive ways, and why they hurt
+- **Index everything:** slow writes, wasted memory. **Index nothing until it hurts:** reads slow down quietly as data grows.
+- **Trust the app to be gentle:** a script ignores the app; the limit has to live on the server.
+
+### 68.4 The plan
+- **V8:** `group_members (trip_id)`, `push_subscriptions (user_id)`, and the destination index made partial (`where status = 'searching'`). Smaller ones (`sessions.user_id`, admins by `role`) skipped: they run rarely (a refresh-token reuse, a new report).
+- **Measured honestly:** 100,000 generated past trips in the local production database; `EXPLAIN ANALYZE` before and after.
+- **Limits, per person per minute:** matches 30, ask 10, plan a trip 5 → 429 with `Retry-After` and "You're going a bit fast. Try again in a minute." A real person never gets near them.
+- **One shared limiter** (`shared/RateLimiter`), reused by OTP with its numbers unchanged.
+- **Redis down:** the three new limits **fail open** (a warning in the log); OTP stays **fail closed** (no codes go out unlimited).
+
+### 68.5 Decisions (2026-10-16)
+| Decision | Choice |
+|---|---|
+| Indexes | `group_members.trip_id`, `push_subscriptions.user_id`, partial destination index; smaller ones only if they matter |
+| Measured on | ~100,000 generated old trips in the local production database, `EXPLAIN ANALYZE` before/after |
+| Limits | matches 30/min, ask 10/min, plan trip 5/min, per person |
+| Response | 429 + `Retry-After` + a friendly message |
+| Code | One shared limiter in `shared`; OTP limits unchanged |
+| Redis down | Fail open for the three; OTP unchanged (fail closed) |
+
+---
+
+## 69. Code walkthrough: indexes and rate limits
+
+### 69.1 `V8__indexes.sql`
+- `create index group_members_trip on group_members (trip_id)` and `create index push_subscriptions_user on push_subscriptions (user_id)`.
+- `drop index trip_dest_gist` + recreate it with `where status = 'searching'`, same name. The matching query already says `t.status = 'searching'`, so Postgres can use it.
+- Plain `create index` (not `concurrently`): it locks the table briefly, fine at our size; `concurrently` can't run inside Flyway's transaction anyway.
+
+### 69.2 Measured (local production database, 0.6 cores for Postgres)
+History: ~105,000 trips (33k done, 38k cancelled, 33k expired, 300 searching), 37,862 group memberships, 20,000 push subscriptions. Best of 3 runs:
+
+| Lookup | Before | After | Plan after |
+|---|---|---|---|
+| Which group is this trip in | 0.97 ms (scanned all of `groups`) | **0.045 ms** | index scan on `group_members_trip` |
+| Push subscriptions for 3 people | 2.14 ms (read all 20,000) | **0.075 ms** | `push_subscriptions_user` |
+| Matching candidates | 13.3 ms | **10.2 ms** | the partial `trip_dest_gist` (300 rows instead of 105,000) |
+- The "before" times grow with every trip ever made; the "after" ones stay flat. What's left in matching is computing exact distances for the searching trips.
+
+### 69.3 `shared/RateLimiter`
+- The Lua script from `OtpService` moved here and now also returns the time left: `INCR`, `PEXPIRE` on the first hit, then `{count, PTTL}`, as one atomic step inside Redis.
+- `hit(key, window)` → `Hit(count, left)`; a Redis failure is **thrown**. `OtpService` now calls this (its own copy is gone), so OTP still refuses to send codes when it can't count them.
+- `check(action, userId, max, window)`: key `rate:<action>:<user>`; over the limit → `ApiException(429, "TOO_MANY_REQUESTS", …, retryAfterSeconds)`; a Redis failure is **caught and logged**: fail open.
+- `ApiException` gained an optional `retryAfterSeconds`; `ApiExceptionHandler` adds the `Retry-After` header when it's set.
+- One line in each controller: `TripController.create` ("plan-trip", 5), `TripController.matches` (30), `GroupController.ask` (10). Validation errors (400 from `@Valid`) happen before the controller runs, so they don't count; refused but valid-looking attempts do.
+
+### 69.4 Tests
+- `RateLimitsTest` (real Redis): 30 matches OK, the 31st → 429 with the message and a `Retry-After` between 1 and 60; another person's matches still OK. 10 asks (404s, nobody there) then 429. 5 refused trip plans (unknown terminal) then 429, even for a valid one.
+- `RateLimiterTest`: a fake `StringRedisTemplate` whose scripts throw `RedisConnectionFailureException`: `check` lets the request through, `hit` throws.
+- **Proven to fail:** without the matches check, "expected 429 but was 200". All OTP tests passed unchanged after the move.
+- 93 API tests, all green.
+
+### 69.5 A Flyway lesson, learned live
+- After V8 had run on the dev database (during the tests) and on the local production one, I changed **only a comment** in it. Flyway stores a checksum of every applied migration, and a comment counts: both databases would have refused to start ("checksum mismatch").
+- V8 had never run anywhere else, so the fix was to undo it on those two local databases (drop the indexes, restore V1's index, delete V8's row in `flyway_schema_history`) and let Flyway apply the final file again. Both now record the same checksum.
+- **Rule:** once a migration has run anywhere that matters, never edit it, not even a comment; write the next one.
+
+### 69.6 Web
+- No changes needed: a 429 arrives as our usual error JSON, so `useAction` shows "You're going a bit fast…", and the auto-refresh keeps the old matches on screen when a refresh fails (65.3).
+- Not checked in the browser: hitting a limit through the UI (it takes 30 match loads in a minute); the API side is tested.
+
+---
+
+## 70. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -4252,7 +4334,7 @@ git fetch --prune
 
 ---
 
-## 69. Glossary
+## 71. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -4517,11 +4599,14 @@ git fetch --prune
 | JIT warm-up | Java gets faster after its first minute as hot code is compiled |
 | CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
 | Thread dump | A snapshot of every thread's stack in a running Java program (`kill -3`) |
-| Partial index | An index over only the rows matching a condition, e.g. active trips |
+| Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
+| 429 / Retry-After | "Too Many Requests" / the header saying how many seconds to wait |
+| Fail open / fail closed | When a safety check itself breaks: let requests through / refuse them |
+| Migration checksum | Flyway's fingerprint of an applied migration; editing the file (even a comment) breaks startup |
 
 ---
 
-## 70. Interview questions to practise
+## 72. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4654,3 +4739,7 @@ git fetch --prune
 129. How did you log in hundreds of load-test users when OTP is rate-limited, without adding a backdoor?
 130. Matching got slow at 1000 users. How did you work out whether it was the database or the CPU queue?
 131. A load test "hung" for over an hour. How did you find out the real cause?
+132. Postgres doesn't index foreign keys automatically. Which one mattered in Namastute, and how did you prove it?
+133. When is a partial index better than a normal one?
+134. Why do the new rate limits fail open while OTP fails closed?
+135. Why must you never edit a Flyway migration that has already run, even a comment?
