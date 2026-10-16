@@ -229,11 +229,8 @@ export function getMessages(groupId: string, cursor: { before?: number; after?: 
   return request<ChatMessage[]>(`/api/v1/groups/${groupId}/messages${q}`);
 }
 
-// One live STOMP connection for a group: its chat and its "group changed" events. Call deactivate() to close it.
-export function connectGroup(
-  groupId: string,
-  on: { message: (m: ChatMessage) => void; updated: () => void; connected: () => void; disconnected: () => void },
-): Client {
+// A STOMP connection to the API that logs in, reconnects, and calls onConnect after every (re)connect
+function stomp(onConnect: (client: Client) => void, onClose: () => void = () => {}): Client {
   const client = new Client({
     brokerURL: `${API_URL.replace(/^http/, "ws")}/ws`, // http → ws, https → wss
     reconnectDelay: 3000, // connections drop at airports: try again every 3 s
@@ -241,15 +238,23 @@ export function connectGroup(
     beforeConnect: async () => {
       client.connectHeaders = { Authorization: `Bearer ${await freshAccessToken()}` };
     },
-    onConnect: () => {
-      client.subscribe(`/topic/groups.${groupId}.chat`, (frame) => on.message(JSON.parse(frame.body)));
-      client.subscribe(`/topic/groups.${groupId}.updated`, () => on.updated());
-      on.connected();
-    },
-    onWebSocketClose: () => on.disconnected(),
+    onConnect: () => onConnect(client),
+    onWebSocketClose: onClose,
   });
   client.activate();
   return client;
+}
+
+// One live STOMP connection for a group: its chat and its "group changed" events. Call deactivate() to close it.
+export function connectGroup(
+  groupId: string,
+  on: { message: (m: ChatMessage) => void; updated: () => void; connected: () => void; disconnected: () => void },
+): Client {
+  return stomp((client) => {
+    client.subscribe(`/topic/groups.${groupId}.chat`, (frame) => on.message(JSON.parse(frame.body)));
+    client.subscribe(`/topic/groups.${groupId}.updated`, () => on.updated());
+    on.connected();
+  }, on.disconnected);
 }
 
 export function sendChat(client: Client, groupId: string, body: string, clientId: string): void {
@@ -257,6 +262,28 @@ export function sendChat(client: Client, groupId: string, body: string, clientId
     destination: `/app/groups/${groupId}/chat`,
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ body, clientId }),
+  });
+}
+
+// ---- Live location at the pickup (Learning Notes 60) ----
+
+// Sent only over STOMP, so it isn't in openapi.json: mirrors ChatService.Located in the API
+export type Located = { tripId: string; sharing: boolean; lat: number | null; lng: number | null; accuracy: number | null };
+export type Position = { lat: number; lng: number; accuracy: number };
+
+// Its own connection, open only during the pickup window (the chat's connection stays as it is)
+export function connectLocation(groupId: string, onLocated: (l: Located) => void): Client {
+  return stomp((client) => {
+    client.subscribe(`/topic/groups.${groupId}.location`, (frame) => onLocated(JSON.parse(frame.body)));
+  });
+}
+
+// null = "I stopped sharing"
+export function sendLocation(client: Client, groupId: string, p: Position | null): void {
+  client.publish({
+    destination: `/app/groups/${groupId}/location`,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(p ? { lat: p.lat, lng: p.lng, accuracy: p.accuracy } : { lat: null }),
   });
 }
 

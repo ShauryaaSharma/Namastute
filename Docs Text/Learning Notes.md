@@ -2,7 +2,7 @@
 
 My revision notes from building Namastute. Organised by topic, not by date. Each section: the idea, why it exists, and where it shows up in this project.
 
-Last updated: 2026-10-15 (push notifications: concepts, and the code walkthrough with the fake push service test).
+Last updated: 2026-10-16 (live location at the pickup: concepts and code walkthrough).
 
 ---
 
@@ -67,9 +67,11 @@ Last updated: 2026-10-15 (push notifications: concepts, and the code walkthrough
 57. [Code walkthrough: report and block](#57-code-walkthrough-report-and-block)
 58. [Push notifications](#58-push-notifications)
 59. [Code walkthrough: push notifications](#59-code-walkthrough-push-notifications)
-60. [Command cheat sheet](#60-command-cheat-sheet)
-61. [Glossary](#61-glossary)
-62. [Interview questions to practise](#62-interview-questions-to-practise)
+60. [Live location at the pickup](#60-live-location-at-the-pickup)
+61. [Code walkthrough: live location](#61-code-walkthrough-live-location)
+62. [Command cheat sheet](#62-command-cheat-sheet)
+63. [Glossary](#63-glossary)
+64. [Interview questions to practise](#64-interview-questions-to-practise)
 
 ---
 
@@ -3814,7 +3816,108 @@ The test plays **both** outside parties:
 
 ---
 
-## 60. Command cheat sheet
+## 60. Live location at the pickup
+
+### 60.1 Terms
+- **Geolocation:** the device's own idea of where it is (latitude, longitude). **GPS** is satellites: good outdoors (often 5–10 m), poor under concrete. **Wi-Fi/cell positioning** looks up nearby networks: works indoors but rougher (tens to hundreds of metres).
+- **Accuracy radius:** every position comes with "probably within N metres". A map shows it as a circle.
+- **Geolocation API:** `navigator.geolocation.watchPosition(onPosition, onError, options)` calls you each time the position changes; `clearWatch(id)` stops it.
+- **Secure context:** HTTPS or `localhost`. Location, like push, is only allowed there.
+- **Ephemeral data:** passed along and never saved.
+- **Throttling:** sending at most every so often, however often updates arrive.
+- **Heartbeat:** repeating your last state on a timer, so newcomers learn it and silence can mean "gone".
+- **Staleness:** how old a reading is; old positions may be wrong.
+
+### 60.2 The problem
+- After locking, strangers must find each other outside a terminal, often at night. "Pillar 12" in chat helps, but pillars get misread, people are on different levels, someone hasn't come out yet.
+
+### 60.3 The naive way, and why it hurts
+- Save every phone's position to the database each second; every phone polls for the others.
+- **Privacy:** a table of timestamped positions is a record of where people were; leaked, it's a stalking tool, and kept, it needs deletion rules. **Load:** about 8 requests a second per group, for data useless a minute later. **Trust:** sharing that starts by itself or never stops scares people off.
+
+### 60.4 The design
+1. **Your own tap**, every time ("Share my location"), then the browser's prompt: the soft ask again (58.4).
+2. **Relay, don't store:** SEND to `/app/groups/{id}/location` → the server checks membership and the window → broadcast on `/topic/groups.{id}.location`. Never written to the database or the logs.
+3. **A server-enforced window:** locked or met groups only, from 20 minutes before meeting to 30 after. Outside it the server drops positions, whatever the browser does.
+4. **Throttle + heartbeat in the browser:** send after moving 10 m, or every 15 s anyway. The heartbeat means latecomers see you within 15 s without the server remembering anything.
+5. **Staleness on screen:** "Asha · about 150 m away (± 40 m) · 20 s ago"; dots hidden after 2 minutes of silence; Stop sends "stopped" so your dot disappears at once.
+6. **Distance:** haversine, the same formula as the trips module's `Geo`, in the browser.
+
+### 60.5 Reality checks
+- **Indoors, accuracy can be 100 m or worse:** show the circle and say so. Live location helps; "pillar 12" stays the main way to meet.
+- **Web pages can't track in the background:** a locked phone or hidden tab stops `watchPosition`. Only native apps can. So: "Keep Namastute open".
+- **Battery:** GPS drains it: another reason for the window and Stop.
+- **Blocked permission:** a clear message pointing at site settings.
+- **Safety:** exact positions, but only to your group and only around pickup; someone you blocked can't be in your group (56).
+
+### 60.6 Decisions (2026-10-16)
+| Decision | Choice |
+|---|---|
+| When | Locked or met groups, from 20 min before meeting to 30 min after (enforced by the server) |
+| How it starts | Your own tap every time, with a visible "Sharing · Stop" bar |
+| Stored? | No: relayed only, never in the database or logs |
+| Precision | Exact, to your group only, with the accuracy circle |
+| Display | A small Leaflet map plus "about 150 m away (± 40 m) · 20 s ago" |
+| Rate | Send after moving 10 m or every 15 s; dots hidden after 2 min |
+
+---
+
+## 61. Code walkthrough: live location
+
+### 61.1 `groups/GroupService`
+- `SHARE_BEFORE = 20 min`, `SHARE_AFTER = 30 min`: the window, defined once.
+- `sharingTrip(groupId, userId)`, public for chat: one query returns your **trip id** (the opaque handle, 56) only if you're an accepted member of a **locked or met** group and `now() between meet_at - make_interval(mins => 20) and meet_at + make_interval(mins => 30)`. `make_interval` wants an `integer`, so the Java side casts the minutes to `int` (a `long` arrives as `bigint`, which Postgres won't quietly narrow).
+- `GroupView` gains `sharingFrom` / `sharingUntil`: the browser reads the window from the API instead of repeating the 20/30 rule.
+
+### 61.2 `chat`: one more topic, one more handler
+- `StompAuth`: the SUBSCRIBE pattern now allows `chat|updated|location`, still for members only.
+- `ChatController.location(...)`: `@MessageMapping("/groups/{groupId}/location")` with `Position(Double lat, Double lng, Double accuracy)`. `lat` null = "I stopped sharing".
+- `ChatService.shareLocation(...)`:
+  - `sharingTrip(...)` or `NOT_PICKUP_TIME` (dropped);
+  - `isPosition`: `|lat| ≤ 90`, `|lng| ≤ 180`, accuracy 0–100 km or absent; NaN and infinity fail these comparisons by themselves;
+  - broadcast `Located(tripId, sharing, lat, lng, accuracy)`. Nothing saved, nothing logged (the exception messages carry no numbers).
+  - `shortcut:` no server-side rate limit; the browser throttles itself.
+- A refused STOMP message is only logged on the server (the same shortcut as chat); the browser knows the window, so it shouldn't send outside it.
+
+### 61.3 Test: `ChatTest.locationReachesTheGroupOnlyAroundPickupAndIsNeverStored`
+Real STOMP, step by step:
+1. Open group → Keshav's position doesn't reach Asha.
+2. Lock, move `meet_at` to now + 10 min → `/groups/current` has `sharingFrom/Until`; the position arrives with Keshav's **trip id** and the exact numbers.
+3. `lat: 200` → dropped. `{lat: null}` → `sharing: false`.
+4. A stranger subscribing to `.location` gets nothing (refused by `StompAuth`).
+5. Meeting moved an hour away → dropped again (before the window).
+6. The `messages` count is unchanged: positions are relayed, not saved.
+- Gotcha: sending `{}` failed with "Payload value must not be empty", so "stopped" is sent as `{"lat": null}`, which is what the browser sends anyway.
+- **Proven to fail:** with the status and time conditions removed from `sharingTrip`, step 1 went red. The full log of a run contained none of the test coordinates.
+- 85 API tests, all green.
+
+### 61.4 Web
+- `lib/api.ts`: `stomp(onConnect, onClose)` now holds what every connection needs (URL, reconnect every 3 s, fresh token before each connect); `connectGroup` (chat) and the new `connectLocation` both use it. `sendLocation(client, groupId, position | null)`. `Located` is typed by hand, with a comment: it travels only over STOMP, so it isn't in `openapi.json`.
+- `app/pickup-location.tsx` (inside the group card):
+  - a 5-second clock (`now`) drives "20 s ago", stale dots and the window opening and closing;
+  - its **own** connection, opened only while the window is open; closing the window or leaving the page clears the watch and sends "stopped";
+  - `watchPosition(..., {enableHighAccuracy: true, maximumAge: 5000, timeout: 30000})`; a position is sent if nothing was sent yet, you moved ≥ 10 m, or 15 s passed; the heartbeat effect re-sends the latest position every 15 s when you stand still;
+  - errors: "Location is blocked… site settings" or "Couldn't find your location. Tell your group your pillar number in the chat instead.";
+  - before the window: "You can share your live location from 5:09 pm…".
+- `app/pickup-map.tsx`: Leaflet (loaded with `ssr: false`, like the trip map): a dot and an accuracy circle per person (you blue, others red), centred once and then left alone so it doesn't jump while you pan.
+
+### 61.5 Verified in a real browser (Keshav in the browser, Asha played by a Node script)
+- The script logged Asha in through the API, joined the locked group and sent her position every 5 s over STOMP (`@stomp/stompjs` and Node's built-in `WebSocket`).
+- Before sharing, Keshav already saw "Asha · 0 s ago" and her dot.
+- The built-in browser's location permission is **denied**: tapping Share showed "Location is blocked for Namastute…", then the button came back. That's the real blocked path.
+- For the sharing path, `navigator.geolocation.watchPosition` was replaced in the test page by one fixed position (the same trick as `window.confirm` in 57.7). Then:
+  - the bar said "Sharing your location with your group until 5:04 pm… Accurate to about 25 m. Stop";
+  - "Asha · about 150 m away (± 40 m)" (by hand: 0.001° lat ≈ 111 m, 0.001° lng ≈ 98 m → ~148 m);
+  - the map showed both dots and circles;
+  - Asha received Keshav's position, then 2 heartbeats in ~35 s from a single fix;
+  - Stop → `clearWatch` called, Asha received `sharing: false`; Asha's own stop removed her dot ("No one else is sharing…");
+  - the coordinates appeared nowhere in the API log or the `messages` table.
+- Meeting moved an hour later → "You can share your live location from 5:09 pm".
+- **Not tested:** a real phone's GPS, and how accurate it is inside IGI's terminals.
+
+---
+
+## 62. Command cheat sheet
 
 ### After a PR is merged (from `Namastute`)
 ```bash
@@ -3898,7 +4001,7 @@ git fetch --prune
 
 ---
 
-## 61. Glossary
+## 63. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -4130,10 +4233,17 @@ git fetch --prune
 | Upsert | Insert, or update if the row already exists (`on conflict ... do update`) |
 | Notification tag | A label on a notification; a new one with the same tag replaces the old one |
 | SimpUserRegistry | Spring's live list of who has an open WebSocket connection |
+| Geolocation API | The browser feature for reading the device's position (`watchPosition`, `clearWatch`) |
+| Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
+| Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
+| Ephemeral data | Data that is passed along and never saved |
+| Throttling | Sending at most every so often, however often updates arrive |
+| Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
+| Staleness | How old a reading is; old positions may be wrong |
 
 ---
 
-## 62. Interview questions to practise
+## 64. Interview questions to practise
 
 1. Why a modular monolith instead of microservices? How do you *enforce* the module boundaries?
 2. What is Inversion of Control? What problem does dependency injection solve?
@@ -4247,3 +4357,8 @@ git fetch --prune
 110. Why is checking that a host "ends with push.apple.com" not enough? What else does the endpoint check refuse?
 111. How did the tests prove the push is really encrypted correctly, without a real phone?
 112. Two people use the same browser one after the other. How do you stop the second one getting the first one's notifications?
+113. Why relay live locations instead of storing them? What would storing them oblige you to do?
+114. Why must the server, not the browser, enforce when location sharing is allowed?
+115. Why send a heartbeat when the phone isn't moving? What problem does it solve without server memory?
+116. What can't a web page do with location that a native app can, and how did the design work around it?
+117. How did we test location sharing in a browser that blocks location, and what does that test not prove?

@@ -152,6 +152,51 @@ class ChatTest {
                 .andExpect(jsonPath("$[0].body").value("m7"));
     }
 
+    // Live location (Learning Notes 60): relayed to the group only around pickup time, never saved
+    @Test
+    void locationReachesTheGroupOnlyAroundPickupAndIsNeverStored() throws Exception {
+        UUID asha = user("Asha Rao"), keshav = user("Keshav Dixit"), stranger = user("Ravi Kumar");
+        String group = pair(keshav, asha);
+        String topic = "/topic/groups." + group + ".location";
+        BlockingQueue<Map<String, Object>> ashaSees = subscribe(connect(asha), asha, topic);
+        StompSession keshavLive = connect(keshav);
+        Map<String, Object> pillar12 = Map.of("lat", 28.5562, "lng", 77.0870, "accuracy", 35.0);
+
+        keshavLive.send("/app/groups/" + group + "/location", pillar12);
+        assertThat(ashaSees.poll(1, TimeUnit.SECONDS)).as("open group: the cab isn't booked yet").isNull();
+
+        mvc.perform(post("/api/v1/groups/" + group + "/lock").with(as(keshav))).andExpect(status().isNoContent());
+        jdbc.update("update groups set meet_at = now() + interval '10 minutes' where id = ?::uuid", group);
+        mvc.perform(get("/api/v1/groups/current").with(as(asha)))   // the browser learns the window from here
+                .andExpect(jsonPath("$.sharingFrom").exists()).andExpect(jsonPath("$.sharingUntil").exists());
+        int messages = jdbc.queryForObject("select count(*) from messages where group_id = ?::uuid", Integer.class, group);
+
+        keshavLive.send("/app/groups/" + group + "/location", pillar12);
+        assertThat(ashaSees.poll(5, TimeUnit.SECONDS)).containsEntry("tripId", tripOf(keshav)).containsEntry("sharing", true)
+                .containsEntry("lat", 28.5562).containsEntry("lng", 77.0870).containsEntry("accuracy", 35.0);
+
+        keshavLive.send("/app/groups/" + group + "/location", Map.of("lat", 200.0, "lng", 77.0870));
+        assertThat(ashaSees.poll(1, TimeUnit.SECONDS)).as("impossible position dropped").isNull();
+
+        Map<String, Object> stopped = new java.util.HashMap<>();
+        stopped.put("lat", null);   // "I stopped sharing", as the browser sends it
+        keshavLive.send("/app/groups/" + group + "/location", stopped);
+        assertThat(ashaSees.poll(5, TimeUnit.SECONDS)).containsEntry("sharing", false).containsEntry("lat", null);
+
+        BlockingQueue<Map<String, Object>> snoop = new LinkedBlockingQueue<>();
+        connect(stranger).subscribe(topic, collector(snoop));   // refused by StompAuth
+        keshavLive.send("/app/groups/" + group + "/location", pillar12);
+        assertThat(ashaSees.poll(5, TimeUnit.SECONDS)).isNotNull();
+        assertThat(snoop.poll(1, TimeUnit.SECONDS)).isNull();
+
+        jdbc.update("update groups set meet_at = now() + interval '1 hour' where id = ?::uuid", group);
+        keshavLive.send("/app/groups/" + group + "/location", pillar12);
+        assertThat(ashaSees.poll(1, TimeUnit.SECONDS)).as("before the window opens").isNull();
+
+        assertThat(jdbc.queryForObject("select count(*) from messages where group_id = ?::uuid", Integer.class, group))
+                .as("positions are relayed, not saved").isEqualTo(messages);
+    }
+
     // ---- helpers ----
 
     // Keshav asks Asha, Asha accepts; returns the group id

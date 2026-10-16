@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 class StompAuth implements ChannelInterceptor {
 
-    private static final Pattern GROUP_TOPIC = Pattern.compile("/topic/groups\\.([0-9a-f-]{36})\\.(chat|updated)");
+    private static final Pattern GROUP_TOPIC = Pattern.compile("/topic/groups\\.([0-9a-f-]{36})\\.(chat|updated|location)");
 
     private final JwtDecoder jwts;
     private final GroupService groups;

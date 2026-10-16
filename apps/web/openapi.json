@@ -821,6 +821,14 @@
               "$ref" : "#/components/schemas/MemberView"
             }
           },
+          "sharingFrom" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "sharingUntil" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "open", "locked", "met" ]

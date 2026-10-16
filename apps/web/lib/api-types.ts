@@ -450,6 +450,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             members: components["schemas"]["MemberView"][];
+            /** Format: date-time */
+            sharingFrom: string;
+            /** Format: date-time */
+            sharingUntil: string;
             /** @enum {string} */
             status: "open" | "locked" | "met";
             youAreBooker: boolean;

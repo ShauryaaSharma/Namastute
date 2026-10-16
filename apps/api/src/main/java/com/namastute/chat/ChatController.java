@@ -18,6 +18,9 @@ class ChatController {
 
     record Outgoing(String body, String clientId) {}
 
+    // lat/lng null = "I stopped sharing"; accuracy = the browser's "within N metres"
+    record Position(Double lat, Double lng, Double accuracy) {}
+
     private final ChatService chat;
 
     ChatController(ChatService chat) {
@@ -37,5 +40,11 @@ class ChatController {
     @MessageMapping("/groups/{groupId}/chat")
     void send(@DestinationVariable UUID groupId, Outgoing message, Principal user) {
         chat.post(UUID.fromString(user.getName()), groupId, message.body(), message.clientId());
+    }
+
+    // STOMP: SEND /app/groups/{groupId}/location  {"lat": 28.55, "lng": 77.08, "accuracy": 35}  (Learning Notes 60)
+    @MessageMapping("/groups/{groupId}/location")
+    void location(@DestinationVariable UUID groupId, Position position, Principal user) {
+        chat.shareLocation(UUID.fromString(user.getName()), groupId, position);
     }
 }
