@@ -2,11 +2,14 @@ package com.namastute.feedback;
 
 import com.namastute.groups.GroupService;
 import com.namastute.groups.MemberLeftLockedGroup;
+import com.namastute.notifications.PushService;
+import com.namastute.notifications.PushService.Push;
 import com.namastute.shared.ApiException;
 import com.namastute.trips.TripService;
 import com.namastute.trips.TripService.TripSummary;
 import com.namastute.users.UserService;
 import com.namastute.users.UserService.BlockView;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,12 +33,14 @@ class FeedbackService {
     private final TripService trips;
     private final GroupService groups;
     private final UserService users;
+    private final PushService push;
 
-    FeedbackService(JdbcClient db, TripService trips, GroupService groups, UserService users) {
+    FeedbackService(JdbcClient db, TripService trips, GroupService groups, UserService users, PushService push) {
         this.db = db;
         this.trips = trips;
         this.groups = groups;
         this.users = users;
+        this.push = push;
     }
 
     // Anyone you can see (a match or a group member). Silent: the other person is never told.
@@ -56,7 +61,7 @@ class FeedbackService {
     }
 
     // Only someone you've shared a group with: the group is the evidence. One report per person per group.
-    // shortcut: reports wait in the database for an admin (query in infra/README.md); an admin panel comes later
+    // Reports wait in the database (query in infra/README.md); admins get a push for each one, so none sits unseen
     void report(UUID me, UUID tripId, String category, String details) {
         UUID them = ownerOf(tripId, me);
         UUID group = groups.sharedGroup(me, tripId)
@@ -68,6 +73,13 @@ class FeedbackService {
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "ALREADY_REPORTED", "You've already reported them for this ride");
         }
+        alertAdmins(category);
+    }
+
+    // Learning Notes 64: a safety report must not wait until someone happens to run the SQL. Category only: no names.
+    private void alertAdmins(String category) {
+        push.send(users.adminIds(), new Push("New report: " + category.replace('_', ' '),
+                "Review it with the reports query in infra/README.md", Duration.ofDays(1)));
     }
 
     // A thumbs up or down for someone you met up with: once per person per ride (the primary key), final, and
@@ -97,10 +109,12 @@ class FeedbackService {
     // (same connection, Learning Notes 51.5); "do nothing" if the member already reported the booker for this group.
     @EventListener
     void onMemberLeftLockedGroup(MemberLeftLockedGroup event) {
-        db.sql("""
+        if (db.sql("""
                         insert into reports (reporter_id, reported_id, group_id, category, reason) values (?, ?, ?, 'other', ?)
                         on conflict (reporter_id, reported_id, group_id) do nothing""")
-                .params(event.memberId(), event.bookerId(), event.groupId(), event.reason()).update();
+                .params(event.memberId(), event.bookerId(), event.groupId(), event.reason()).update() == 1) {
+            alertAdmins("other");
+        }
     }
 
     private UUID ownerOf(UUID tripId, UUID me) {

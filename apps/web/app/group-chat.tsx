@@ -7,7 +7,11 @@ import { formatIstTime } from "@/lib/time";
 
 const MAX_LENGTH = 1000; // same limit as the API and the messages table
 
-type Line = ChatMessage & { pending?: boolean }; // pending = sent by me, not yet confirmed by the server
+// pending = sent by me, not yet confirmed by the server; failed = still unconfirmed after SEND_TIMEOUT_MS
+type Line = ChatMessage & { pending?: boolean; failed?: boolean };
+
+// No copy back from the server in this time = refused (e.g. the group just closed) or lost (Learning Notes 64)
+const SEND_TIMEOUT_MS = 10_000;
 
 // Adds messages, dropping duplicates (same id) and replacing my grey "pending" copy when the server's copy arrives
 // with the same clientId (Learning Notes 46.3). Confirmed messages are kept in id order, pending ones at the end.
@@ -87,6 +91,8 @@ export default function GroupChat({ groupId, onUpdated }: { groupId: string; onU
     // Optimistic UI: show it right away, greyed out, until the server's copy replaces it
     setLines((old) => [...old, { id: 0, kind: "text", firstName: null, body, createdAt: new Date().toISOString(), clientId, you: true, pending: true }]);
     sendChat(client.current, groupId, body, clientId);
+    setTimeout(() => setLines((old) => old.map((l) => (l.pending && l.clientId === clientId ? { ...l, failed: true } : l))),
+      SEND_TIMEOUT_MS);
     setText("");
   }
 
@@ -108,7 +114,11 @@ export default function GroupChat({ groupId, onUpdated }: { groupId: string; onU
                 <strong>{l.you ? "You" : l.firstName}</strong>: {l.body}
               </>
             )}{" "}
-            <span className="text-xs text-gray-500">{l.pending ? "sending…" : formatIstTime(l.createdAt)}</span>
+            {l.failed ? (
+              <span className="text-xs text-red-600">not sent</span>
+            ) : (
+              <span className="text-xs text-gray-500">{l.pending ? "sending…" : formatIstTime(l.createdAt)}</span>
+            )}
           </li>
         ))}
       </ol>

@@ -94,6 +94,19 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 The full roadmap is in the design doc, section 7.
 
+## Known limits
+Deliberate shortcuts for launch, each marked `shortcut:` in the code with when it would change (Learning Notes 64):
+- **One API server.** The chat broker and the message flood limit live in that server's memory; a second server needs a shared broker (RabbitMQ or Redis).
+- **Women-only groups** are switched off until ID verification exists.
+- **Distances** are straight-line × 1.4, not real road distance; matching only looks at destinations within 15 km of yours.
+- **Chat catch-up** after a reconnect stops at 200 missed messages.
+- **Chat pushes** skip anyone with the app open, even in a background tab the phone hasn't closed yet.
+- **A blocked person's request** to another member of your group stays visible until someone declines it.
+- **Push keys** must never change: new VAPID keys break every existing subscription.
+- **Reports** are reviewed with SQL (admins get a push for each one); there's no admin panel yet.
+
+Before real users, the team also needs an SMS provider, the real pickup points, a map provider and an uptime monitor: see the checklist in [infra/README.md](infra/README.md).
+
 ## Docs
 - [Design v0.0.2](Docs%20Text/Design%20v0.0.2.md): product scope, architecture, data model, API and roadmap
 - [Learning Notes](Docs%20Text/Learning%20Notes.md): every concept behind the code, explained from scratch, with code walkthroughs

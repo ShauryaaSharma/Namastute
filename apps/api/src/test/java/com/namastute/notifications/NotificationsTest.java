@@ -151,6 +151,27 @@ class NotificationsTest {
         assertThat(push).contains("New message in your cab group").doesNotContain("pillar");   // never the text
     }
 
+    // Learning Notes 64: every new report reaches the admins' phones, with the category only
+    @Test
+    void adminsArePushedForEveryNewReport() throws Exception {
+        UUID admin = user("Meera Admin"), asha = user("Asha Rao"), keshav = user("Keshav Dixit");
+        jdbc.update("update users set role = 'admin' where id = ?", admin);
+        try {
+            Browser adminPhone = new Browser();
+            subscribe(admin, adminPhone).andExpect(status().isNoContent());
+            pair(keshav, asha);
+
+            mvc.perform(post("/api/v1/reports").with(as(keshav)).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"tripId\":\"" + tripOf(asha) + "\",\"category\":\"no_show\",\"details\":\"Never came\"}"))
+                    .andExpect(status().isNoContent());
+
+            String push = adminPhone.decrypt(next(adminPhone).body());
+            assertThat(push).contains("New report: no show").doesNotContain("Asha").doesNotContain("Keshav").doesNotContain("Never came");
+        } finally {
+            jdbc.update("update users set role = 'user' where id = ?", admin);   // later runs' reports mustn't push to this test phone
+        }
+    }
+
     @Test
     void deadSubscriptionsAreDeleted() throws Exception {
         UUID asha = user("Asha Rao"), ravi = user("Ravi Kumar");
@@ -347,6 +368,10 @@ class NotificationsTest {
     }
 
     // Keshav asks Asha, Asha accepts; returns the group id
+    private String tripOf(UUID user) throws Exception {
+        return JsonPath.read(mvc.perform(get("/api/v1/trips/current").with(as(user))).andReturn().getResponse().getContentAsString(), "$.id");
+    }
+
     private String pair(UUID keshav, UUID asha) throws Exception {
         trip(keshav);
         ask(keshav, trip(asha));

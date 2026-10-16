@@ -5,6 +5,13 @@
 
 ⚠️ Production can't send real login codes until an SMS provider is chosen and an `SmsSender` is written for it. Without one, the API refuses to start with the `prod` profile (on purpose).
 
+## Before real users: team checklist
+These need a decision, an account or a site visit, not code (Learning Notes 64):
+1. **SMS provider + DLT:** choose MSG91 or Firebase and register the sender ID and message template on DLT (required for SMS in India). Then a developer writes the `SmsSender` for it; until then the production API refuses to start.
+2. **Pickup points:** the terminal pickup locations in the database are approximate. Someone visits each terminal, notes the real app-cab pickup spot (latitude and longitude), and a developer ships them as a new migration (never by editing `V3__seed_terminals.sql`).
+3. **Map search:** OpenStreetMap's Nominatim only allows light use (about 1 search a second). Fine for a small pilot; before growing, choose Ola Maps or Google. Only `apps/web/lib/geocode.ts` changes.
+4. **Uptime monitor:** a free monitor (for example UptimeRobot) that opens `https://<your domain>/` every 5 minutes and emails the team when it fails. Without one, nobody knows the site is down.
+
 ## First-time server setup (AWS, region ap-south-1 Mumbai)
 1. **Server:** EC2 **t3.small** (Intel/AMD, 2 GB; the PostGIS image is amd64-only), Ubuntu LTS, 20 GB disk. Attach an **Elastic IP** so the address never changes.
 2. **Firewall (security group):** allow **80** and **443** from anywhere, **22** (SSH) only from your own IP. Nothing else: Postgres and Redis are never public.
@@ -48,6 +55,14 @@ docker compose -f infra/docker-compose.prod.yml --env-file infra/.env stop api
 docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T postgres pg_restore -U namastute -d namastute --clean < ~/backups/namastute-YYYY-MM-DD.dump
 docker compose -f infra/docker-compose.prod.yml --env-file infra/.env start api
 ```
+
+## Admins
+Admins get a push notification for every new report (category only, never names), so a safety report never waits unseen.
+```bash
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T postgres psql -U namastute -d namastute -c \
+  "update users set role = 'admin' where phone = '+91XXXXXXXXXX'"
+```
+Then, on the admin's phone: log in, open **Edit profile**, tap **Notify me** (on iPhone, add Namastute to the Home Screen first).
 
 ## Reviewing reports (until there's an admin panel)
 Open reports, newest first (only admins should ever see these: they can contain personal details):

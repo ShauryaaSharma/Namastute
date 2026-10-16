@@ -36,7 +36,7 @@ class ChatController {
     }
 
     // STOMP: SEND /app/groups/{groupId}/chat  {"body": "...", "clientId": "..."}. The user was set at CONNECT (StompAuth).
-    // shortcut: a refused message (not a member, empty text) is only logged; the browser checks text length itself
+    // A refused or dropped message is only logged here; the browser shows "not sent" when no copy comes back (Learning Notes 64)
     @MessageMapping("/groups/{groupId}/chat")
     void send(@DestinationVariable UUID groupId, Outgoing message, Principal user) {
         chat.post(UUID.fromString(user.getName()), groupId, message.body(), message.clientId());
