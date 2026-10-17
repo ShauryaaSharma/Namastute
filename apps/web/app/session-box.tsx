@@ -19,7 +19,7 @@ export default function SessionBox() {
 
   if (user === null) {
     return (
-      <Link href="/login" className="mt-6 inline-block rounded bg-black px-4 py-2 text-white">
+      <Link href="/login" className="mt-6 inline-block rounded bg-accent px-4 py-2 text-on-accent">
         Log in
       </Link>
     );

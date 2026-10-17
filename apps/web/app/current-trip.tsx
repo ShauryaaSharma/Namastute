@@ -57,7 +57,7 @@ export default function CurrentTrip() {
 
   if (trip === null) {
     return (
-      <Link href="/trip/new" className="mt-4 inline-block rounded bg-black px-4 py-2 text-white">
+      <Link href="/trip/new" className="mt-4 inline-block rounded bg-accent px-4 py-2 text-on-accent">
         Plan a trip
       </Link>
     );
@@ -74,7 +74,7 @@ export default function CurrentTrip() {
         {plural(trip.seats, "seat")}, {plural(trip.bags, "bag")}
         {trip.flightNo ? `, flight ${trip.flightNo}` : ""} · about {trip.soloKm} km
       </p>
-      <PushPrompt />
+      <PushPrompt className="mt-3" />
       {trip.status === "grouped" ? (
         <GroupCard version={version} onChange={reload} />
       ) : (
@@ -97,7 +97,7 @@ export default function CurrentTrip() {
           {busy ? "Cancelling…" : "Cancel trip"}
         </button>
       )}
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </section>
   );
 }
@@ -121,7 +121,7 @@ function Matches(props: { version: number; tripId: string; asked: string[]; aske
       .catch(() => setFailed(true));
   }, [tripId, version]);
 
-  if (failed && matches === null) return <p className="mt-1 text-sm text-red-600">Couldn&apos;t load matches. Reload the page to try again.</p>;
+  if (failed && matches === null) return <p className="mt-1 text-sm text-danger">Couldn&apos;t load matches. Reload the page to try again.</p>;
   if (matches === null) return <p className="mt-1 text-sm">Looking for co-travellers…</p>;
   if (matches.length === 0) {
     return <p className="mt-1 text-sm">No one heading your way yet. Check back closer to your exit time.</p>;
@@ -177,7 +177,7 @@ function Matches(props: { version: number; tripId: string; asked: string[]; aske
           );
         })}
       </ul>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </div>
   );
 }
@@ -206,7 +206,7 @@ function Received({ requests, onChange }: { requests: ReceivedRequest[]; onChang
           </li>
         ))}
       </ul>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </div>
   );
 }

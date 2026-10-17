@@ -167,7 +167,7 @@ export default function NewTripPage() {
               ))}
             </ul>
           )}
-          <p role="alert" aria-live="polite" className="text-red-600">{search.error}</p>
+          <p role="alert" aria-live="polite" className="text-danger">{search.error}</p>
 
           <DestinationMap pickup={pickup} destination={destination} onPick={pickOnMap} />
 
@@ -187,10 +187,10 @@ export default function NewTripPage() {
           <input type="checkbox" disabled /> Women-only group (needs ID verification, coming soon)
         </label>
 
-        <button type="submit" disabled={submit.busy} className="rounded bg-black px-4 py-2 text-white disabled:opacity-50">
+        <button type="submit" disabled={submit.busy} className="rounded bg-accent px-4 py-2 text-on-accent disabled:opacity-50">
           {submit.busy ? "Saving…" : "Find co-travellers"}
         </button>
-        <p role="alert" aria-live="polite" className="text-red-600">{submit.error}</p>
+        <p role="alert" aria-live="polite" className="text-danger">{submit.error}</p>
       </form>
     </main>
   );

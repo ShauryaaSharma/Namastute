@@ -1,19 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { type FormEvent, useEffect, useState } from "react";
+import { Lockup } from "@/components/ui/brand";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/display";
+import { OtpInput, PhoneInput } from "@/components/ui/field";
+import { BottomBar } from "@/components/ui/layout";
 import { getMe, requestOtp, verifyOtp } from "@/lib/api";
 import { useAction } from "@/lib/use-action";
+import { AuthShell, Headline, LoginAside, PITCH } from "../auth-shell";
 
 const RESEND_SECONDS = 30; // matches the API's resend cooldown
+const NOT_A_NUMBER = "Enter a 10-digit Indian mobile number.";
 
 export default function LoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [digits, setDigits] = useState(""); // the 10 digits after +91
   const [code, setCode] = useState("");
-  const { busy, error, setError, run } = useAction();
+  const [phoneError, setPhoneError] = useState("");
   const [resendIn, setResendIn] = useState(0);
+  const { busy, error, setError, run } = useAction();
 
   const phone = `+91${digits}`;
 
@@ -27,9 +35,10 @@ export default function LoginPage() {
   function sendCode(e?: FormEvent) {
     e?.preventDefault();
     if (!/^[6-9]\d{9}$/.test(digits)) {
-      setError("Enter a 10-digit Indian mobile number.");
+      setPhoneError(NOT_A_NUMBER);
       return;
     }
+    setPhoneError("");
     run(async () => {
       await requestOtp(phone);
       setStep("code");
@@ -38,79 +47,112 @@ export default function LoginPage() {
     });
   }
 
-  function checkCode(e: FormEvent) {
-    e.preventDefault();
+  function verify(value: string) {
+    if (value.length !== 6 || busy) return;
     run(async () => {
-      await verifyOtp(phone, code);
+      await verifyOtp(phone, value);
       const me = await getMe();
       router.replace(me.name ? "/" : "/profile"); // first login: ask for a name before anything else
     });
   }
 
-  return (
-    <main className="mx-auto w-full max-w-sm p-6">
-      <h1 className="text-2xl font-bold">Log in</h1>
+  // Typing (or SMS autofill) the 6th digit submits by itself
+  function onCode(value: string) {
+    setCode(value);
+    if (value.length === 6) verify(value);
+  }
 
+  // Wide screens: paste the code anywhere on the page and it fills in by itself
+  useEffect(() => {
+    if (step !== "code") return;
+    function onPaste(e: ClipboardEvent) {
+      if (e.target instanceof HTMLInputElement) return; // the code box handles its own paste
+      const found = e.clipboardData?.getData("text").match(/\d{6}/)?.[0];
+      if (found) onCode(found);
+    }
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  });
+
+  function change() {
+    setStep("phone"); // the number stays filled in
+    setError("");
+  }
+
+  return (
+    <AuthShell aside={<LoginAside withTrust={step === "phone"} />}>
       {step === "phone" ? (
-        <form onSubmit={sendCode} className="mt-6 flex flex-col gap-3">
-          <label htmlFor="phone" className="font-medium">
-            Mobile number
-          </label>
-          <div className="flex items-center gap-2">
-            <span>+91</span>
-            <input
-              id="phone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              maxLength={10}
-              value={digits}
-              onChange={(e) => setDigits(e.target.value.replace(/\D/g, ""))}
-              className="flex-1 rounded border px-3 py-2"
-              required
-            />
+        <form onSubmit={sendCode} noValidate className="flex flex-1 flex-col lg:flex-none">
+          <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">
+            <div className="flex flex-col gap-14 lg:hidden">
+              <Lockup />
+              <div className="flex flex-col gap-3">
+                <Headline />
+                <p className="text-[1.0625rem] text-fg-muted">{PITCH}</p>
+              </div>
+            </div>
+            <div className="hidden flex-col gap-2 lg:flex">
+              <h2 className="font-display text-h1 stretch-110">Log in</h2>
+              <p className="text-fg-muted">New here? Same thing. We&apos;ll set you up.</p>
+            </div>
+            <PhoneInput id="phone" value={digits} onChange={(d) => { setDigits(d); setPhoneError(""); }} error={phoneError} />
+            <Alert variant="info">Your number is never shown to other travellers.</Alert>
+            {error && <Alert variant="error">{error}</Alert>}
           </div>
-          <button type="submit" disabled={busy} className="rounded bg-black px-4 py-2 text-white disabled:opacity-50">
-            {busy ? "Sending…" : "Send code"}
-          </button>
+          <BottomBar>
+            <Button type="submit" loading={busy} loadingLabel="Sending code…" className="w-full">Send code</Button>
+            <p className="text-center text-[0.8125rem] text-fg-muted lg:text-left lg:text-small">
+              We only connect people. We never book rides or handle money.
+            </p>
+          </BottomBar>
         </form>
       ) : (
-        <form onSubmit={checkCode} className="mt-6 flex flex-col gap-3">
-          <p>
-            We sent a 6-digit code to <strong>{phone}</strong>.{" "}
-            <button type="button" onClick={() => setStep("phone")} className="underline">
-              Change
-            </button>
-          </p>
-          <label htmlFor="code" className="font-medium">
-            Code
-          </label>
-          <input
-            id="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            className="rounded border px-3 py-2 tracking-widest"
-            required
-          />
-          <button
-            type="submit"
-            disabled={busy || code.length !== 6}
-            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-          >
-            {busy ? "Checking…" : "Log in"}
-          </button>
-          <button type="button" onClick={() => sendCode()} disabled={busy || resendIn > 0} className="underline disabled:no-underline disabled:opacity-50">
-            {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
-          </button>
+        <form onSubmit={(e) => { e.preventDefault(); verify(code); }} className="flex flex-1 flex-col lg:flex-none">
+          <div className="flex flex-col gap-5 px-5 pt-3 lg:gap-[1.375rem] lg:p-0">
+            <button type="button" onClick={change} className="min-h-tap self-start pr-3 font-semibold">‹ Back</button>
+            <div className="flex flex-col gap-2">
+              <h1 className="font-display text-h1 stretch-110">Enter the 6-digit code</h1>
+              <p className="flex flex-wrap items-center gap-x-2 text-[1.0625rem] text-fg-muted">
+                Sent to <b className="tnum tracking-[0.03em] text-fg">+91 {digits.slice(0, 5)} {digits.slice(5)}</b>
+                <Button variant="link" size="tap" onClick={change}>Change</Button>
+              </p>
+            </div>
+            <OtpInput id="code" value={code} onChange={onCode} error={!!error} autoFocus />
+            {error && <Alert variant="error">{error}</Alert>}
+            <ResendRow seconds={resendIn} onResend={() => sendCode()} disabled={busy} />
+          </div>
+          <BottomBar>
+            <Button type="submit" disabled={code.length !== 6} loading={busy} loadingLabel="Checking…" className="w-full">Verify</Button>
+            <p className="hidden text-small text-fg-muted lg:block">Tip: paste the code anywhere. It fills in by itself.</p>
+          </BottomBar>
         </form>
       )}
+    </AuthShell>
+  );
+}
 
-      <p role="alert" aria-live="polite" className="mt-4 text-red-600">
-        {error}
-      </p>
-    </main>
+// "Resend code in 29s" with a ring that empties as time passes; at 0 it becomes a button
+function ResendRow({ seconds, onResend, disabled }: { seconds: number; onResend: () => void; disabled: boolean }) {
+  if (seconds <= 0) {
+    return (
+      <Button variant="link" size="tap" onClick={onResend} disabled={disabled} className="self-start px-0!">
+        Resend code
+      </Button>
+    );
+  }
+  const circumference = 2 * Math.PI * 11.5;
+  return (
+    <p className="flex min-h-tap items-center gap-2.5 font-medium text-fg-muted" aria-live="off">
+      <svg aria-hidden viewBox="0 0 28 28" className="size-7 shrink-0 -rotate-90">
+        <circle cx="14" cy="14" r="11.5" fill="none" strokeWidth="3" className="stroke-line" />
+        <circle
+          cx="14" cy="14" r="11.5" fill="none" strokeWidth="3" strokeLinecap="round"
+          className="stroke-accent transition-[stroke-dashoffset] duration-1000 ease-linear"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - seconds / RESEND_SECONDS)}
+        />
+      </svg>
+      Resend code in <b className="tnum text-fg">{seconds}s</b>
+    </p>
   );
 }

@@ -2,7 +2,7 @@
 
 How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.
 
-Last updated: 2026-10-16.
+Last updated: 2026-10-17.
 
 ---
 
@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 71) defines every term in the book, A to Z. The **Command cheat sheet** (70) and **Interview questions** (72) are for revision.
+- The **Glossary** (chapter 73) defines every term in the book, A to Z. The **Command cheat sheet** (72) and **Interview questions** (74) are for revision.
 
 ---
 
@@ -213,11 +213,16 @@ flowchart LR
 68. [Indexes and rate limits](#68-indexes-and-rate-limits)
 69. [Code walkthrough: indexes and rate limits](#69-code-walkthrough-indexes-and-rate-limits)
 
+**[Part IX. The new look](#part-ix-the-new-look)**
+
+70. [From a design handoff to a real frontend](#70-from-a-design-handoff-to-a-real-frontend)
+71. [Code walkthrough: the foundation, log in and profile (slice A)](#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a)
+
 **[Reference](#reference)**
 
-70. [Command cheat sheet](#70-command-cheat-sheet)
-71. [Glossary](#71-glossary)
-72. [Interview questions to practise](#72-interview-questions-to-practise)
+72. [Command cheat sheet](#72-command-cheat-sheet)
+73. [Glossary](#73-glossary)
+74. [Interview questions to practise](#74-interview-questions-to-practise)
 
 ---
 
@@ -4857,13 +4862,125 @@ History: ~105,000 trips (33k done, 38k cancelled, 33k expired, 300 searching), 3
 
 ---
 
+## Part IX. The new look
+
+Everything so far worked, but looked like a plain web page. A designer then delivered a complete design: colours, fonts, every component and every screen, for phones and laptops. This part turns that design into the real app, one slice at a time, without breaking a single feature.
+
+---
+
+## 70. From a design handoff to a real frontend
+
+### 70.0 Words first
+- **Design handoff:** the package a designer gives developers: mock pages of every screen, the rules behind them, and the exact colours and sizes.
+- **High fidelity:** the design is final down to the pixel; colours, fonts, spacing and wording must match closely.
+- **Design system:** a set of reusable rules and pieces (colours, type sizes, buttons, cards…) that every screen is built from.
+- **Design token:** one named design value, like `accent = #FFA630` or `radius-btn = 14px`. Code uses the *name*, never the raw value.
+- **CSS variable:** a named value in CSS (`--accent: 255 166 48`) that can change while the page runs, for example when switching dark to light.
+- **Component library:** the reusable pieces in code (Button, Input, Card…), built once and used everywhere. **Primitive:** a small basic one that bigger ones are made of.
+- **Responsive design:** one app whose layout adapts to the screen size. A **breakpoint** is the width where the layout changes. **Mobile-first:** build for the phone first, then add the larger layouts.
+- **Pane:** one independently scrolling column of a desktop layout.
+- **Accessibility (a11y):** making the app usable by everyone, including keyboard-only and screen-reader users and people who enlarge text. **WCAG AA** is the usual standard; **contrast ratio** measures how readable text is on its background (4.5:1 minimum for normal text).
+- **Layout shift:** content jumping while a page loads, for example when a font arrives late.
+
+### 70.1 The problem
+The handoff had 3 mock pages, 2 token files and a 240-line spec covering 14 phone screens and 7 desktop layouts. The existing frontend worked but was nearly unstyled. Goal: look and behave like the design, keep every feature, and stay maintainable.
+
+### 70.2 The naive ways, and why they hurt
+- **Copy the mock HTML:** it uses inline styles and hard-coded colours, and has no real behaviour (no API, no errors, no reconnecting). The handoff itself says "not production code".
+- **Style each screen separately:** screens slowly disagree (three slightly different buttons, four greys), and a colour change means editing hundreds of places.
+- **Hard-coded colours:** dark/light switching becomes impossible.
+- **One huge change:** impossible to review or test properly.
+
+### 70.3 The tools
+1. **Tokens as CSS variables, mapped by Tailwind's `@theme`.** The handoff's tokens were written for **Tailwind v3** (a `tailwind.config.ts`), but the app uses **Tailwind v4**, which has no config file: the theme is declared inside the CSS. So the tokens were *translated*, not copied. Screens use names like `bg-surface`, `text-fg-muted`, `rounded-btn`, `h-cta`, never a hex value.
+2. **Dark mode by class:** `class="dark"` on `<html>` swaps every variable at once. A tiny script runs **before the page is drawn**, so there's no flash of the wrong theme.
+3. **Fonts with `next/font/google`:** downloaded at build time and served from our own domain: faster, private (no request to Google from users' phones), and sized to avoid layout shift.
+4. **A component library first** (`components/ui/`), each piece built once with the design's sizes and accessibility rules.
+5. **Mobile-first, then panes** with Tailwind's breakpoint prefixes (`lg:grid-cols-[…]`). The design is explicit: desktop is a multi-pane console, not a stretched phone screen.
+6. **Real data, not the handoff's mock data:** every screen keeps using `lib/api.ts`.
+7. **Slices,** each browser-checked at phone and laptop sizes, in dark and light.
+
+### 70.4 Decisions (2026-10-16)
+| Decision | Choice |
+|---|---|
+| Slices | (A) foundation + log in + profile; (B) plan trip + home; (C) group, chat, pickup; (D) fare, pay, ratings + light-mode polish |
+| Tokens | Translated to Tailwind v4 `@theme`; no hex values in screens |
+| Theme | Dark by default, following the phone's setting until the user picks; a switch on the profile page; remembered on that device |
+| Data | The real API; every existing feature kept |
+| Features the design doesn't show (report/block, "Call 112", "Notify me", live location, ratings, blocked people, "not sent") | Placed in the design's style, using its components and reserved spaces, and pointed out for review |
+| Map | OpenStreetMap darkened with a CSS filter in dark mode (no new provider) |
+| Icons | The design's own text glyphs (→ ‹ ↑ ✓ ⚠), no icon library |
+| Checking | Browser at 375 px and 1280 px, dark and light, plus lint and build |
+
+---
+
+## 71. Code walkthrough: the foundation, log in and profile (slice A)
+
+### 71.0 Before you read
+This slice builds everything later screens stand on (tokens, fonts, theme, brand, components) and redesigns the first two screens: log in and profile, on phones and as a split screen on laptops. It applies chapter 70.
+
+### 71.1 `app/globals.css`: the tokens
+- `:root` holds the **light** colours and `.dark` the **dark** ones, as `r g b` numbers (`--accent: 255 166 48`).
+- `@custom-variant dark (&:where(.dark, .dark *))` makes Tailwind's `dark:` prefix follow the class on `<html>`, not the phone's setting directly (the theme script decides).
+- `@theme inline { --color-accent: rgb(var(--accent)); … }` creates the utilities `bg-accent`, `text-accent`, `border-accent`… `inline` means the variable is looked up where it's used, so `.dark` can change it.
+- The type scale (`--text-h1: 2rem` with its line height and weight), radii (`--radius-btn: 14px`), touch sizes (`--spacing-tap: 3rem` gives `h-tap`, `min-h-cta`…), the pulse and sheet animations and a `scrim` colour for behind dialogs.
+- `@utility stretch-112 { font-stretch: 112% }`: Anek Devanagari is a **variable font** whose width can be stretched; headlines use 108–115%.
+- Base styles: the page colours, the **focus ring** on every interactive element (a 2px gap in the page colour, then 2px of `ring`), and `prefers-reduced-motion` turning animations off.
+- Everything is in `rem`, so the layout survives 200% text size.
+
+### 71.2 `app/layout.tsx`: fonts and the no-flash theme
+- `Anek_Devanagari({ subsets: ["latin", "devanagari"], axes: ["wdth"], variable: "--font-anek" })`, plus Mukta and IBM Plex Mono, each exposed as a CSS variable that `@theme` turns into `font-display`, `font-sans` and `font-mono`.
+- `<Script id="theme" strategy="beforeInteractive">`: runs before any page code. It reads the saved choice (`localStorage`), otherwise the phone's setting, otherwise dark, and sets the class on `<html>`. `suppressHydrationWarning` tells React that this class was changed on purpose before it took over.
+- `viewport.themeColor`: the browser's toolbar colour for dark and light.
+- `lib/theme.ts`: `themeChoice()` and `setThemeChoice()` for the profile page's switch; both survive blocked storage (private mode).
+
+### 71.3 `components/ui/`: the library
+| File | Pieces |
+|---|---|
+| `button.tsx` | `Button` (primary, secondary, tonal, ink, danger, danger-text, link; sizes 56/48/64 px; `loading` with a spinner and label) and `Spinner` |
+| `field.tsx` | `TextField` (label above, helper or error below, linked with `aria-describedby`), `PhoneInput` (the "+91" segment; shows "98100 43215"; keeps the last 10 digits from autofill), `OtpInput` (six boxes driven by one invisible real input) |
+| `display.tsx` | `Alert` (error/success/info/warning with a glyph; errors use `role="alert"`), `Avatar` (first *grapheme* of the first name, so "नेहा" → "ने"), `Card`, `Chip`, `StatusBadge`, `Eyebrow`, `EmptyState`, `Skeleton` |
+| `controls.tsx` | `Segmented` (a radio group; arrow keys move the choice), `Stepper` (− value +, with aria-labels like "Fewer seats"), `Toggle` (a switch; the unavailable women-only row is a dashed box) |
+| `layout.tsx` | `BottomBar` (the sticky thumb-zone bar on phones; a normal block on wide screens) and `Sheet` |
+| `brand.tsx` | `AppIcon` (न on the orange tile), `Wordmark` ("ast" lit), `Lockup` |
+- **`Sheet` uses the browser's own `<dialog>`** with `showModal()`: it traps focus, makes the page behind inert and closes on Esc by itself, so no focus-trap code was needed. On phones it's a bottom sheet that slides up; from 1024 px it's a centred dialog.
+- **A Tailwind trap found while building:** two classes setting the same property (`bg-accent` *and* `bg-surface-2` on a disabled button) don't follow the class order; the stylesheet's order decides. So every component picks **one** colour set (normal *or* disabled, normal border *or* error border), never both. It caught three real bugs (disabled buttons, active code boxes, round skeletons).
+- **`OtpInput`:** one `<input autocomplete="one-time-code" inputmode="numeric" maxlength=6>` lies invisibly over six boxes. SMS autofill, paste and screen readers all work with the real input; the boxes only show digits and a caret in the active one.
+
+### 71.4 The screens
+- **`app/auth-shell.tsx`:** phones get one column up to 480 px; from 1024 px a split screen `grid-cols-[minmax(0,1fr)_35rem]`: the brand pane (lockup, the big headline, three promises) and the form on a `surface` pane. `Headline` scales with `clamp()` so the 96 px headline fits narrower laptops.
+- **`app/login/page.tsx`:** the same logic as before (validation, `requestOtp`, `verifyOtp`, then profile or home), plus the design's behaviour:
+  - the number is shown grouped and validated inline ("Enter a 10-digit Indian mobile number.");
+  - **the 6th digit submits by itself**;
+  - **paste anywhere** on the code screen fills and submits the code: a `paste` listener on the page pulls the first 6 digits out of whatever was pasted, even the whole SMS;
+  - "Change" goes back with the number still filled in;
+  - a countdown **ring** (an SVG circle whose `stroke-dashoffset` empties over 30 s) becomes "Resend code" at 0.
+- **`app/profile/page.tsx`:** first login shows "Namaste · one last thing" and "Save and continue"; later visits show "Your profile" with sections the design doesn't have (**Notifications**, **Appearance**: Phone / Dark / Light, **Blocked people**, **Log out**). Errors appear under the field they belong to. On laptops the left pane is a live **"What your group will see"** card that updates as you type, showing only the first name.
+- **`app/push-prompt.tsx`:** restyled with `Button` and `Alert`.
+- **The other screens** (home, trip, group, fare) are redesigned in later slices; their hard-coded colours (`bg-black`, `text-red-600`…) were swapped for tokens so they stay readable in dark mode meanwhile.
+
+### 71.5 Icons, made with the real font
+- The app icon is the letter न, so PNG icons had to be drawn with Anek Devanagari. Instead of installing an image library, a temporary page drew them on a browser **canvas** with the loaded web font and saved them through a temporary local-only route; both were deleted before committing.
+- The letter is centred on its **measured ink** (`measureText().actualBoundingBox…`), because Devanagari fonts reserve room below letters for vowel signs, and the first attempt sat too high.
+- Files: `public/icon-192.png`, `icon-512.png` (rounded tile), `icon-maskable-512.png` (full-bleed, extra margin for phones' own shapes), `app/apple-icon.png` (iPhone home screen), `app/icon.png` (browser tab; the template's `favicon.ico` was removed). The manifest's colours became the dark background.
+
+### 71.6 Verified in a real browser
+- **Gallery** (a temporary page, deleted): every component in dark and light; the sheet slides up, moves focus inside and closes on Esc.
+- **Phone (420 px):** login → invalid number error (linked for screen readers) → valid number shown as "98765 00031" → code screen → a wrong code submitted itself and showed the error with red boxes → the right code → "Complete your profile" → an invalid UPI ID error under its field → a Hindi name saved ("नेहा" in the database) → home.
+- **Profile edit:** the theme switch works by click and arrow keys, a light choice survives a reload with no flash, and "Phone" clears the saved choice.
+- **Laptop (1280×800):** W1 split screen with the three promises; W2 with the paste tip; pasting a whole SMS text on the page logged in; W3's preview card updated live ("Asha Rao" → "Asha").
+- **Screenshot gotcha:** the browser sometimes captured a frame mid-transition (a disabled button still fading from orange). Computed styles (`getComputedStyle`) confirmed the real colours.
+- **Not checked:** a real phone, screen readers, and 200% text across every screen.
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 70. Command cheat sheet
+## 72. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -4949,17 +5066,20 @@ git fetch --prune
 
 ---
 
-## 71. Glossary
+## 73. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
 | Term | Meaning |
 |---|---|
 | 429 / Retry-After | "Too Many Requests" / the header saying how many seconds to wait |
+| @Scheduled | Spring annotation that runs a method on a timer (needs @EnableScheduling) |
+| @TransactionalEventListener | Runs a listener at a transaction phase, by default after commit |
 | Abstraction | A description of what is needed, without saying how it's done |
 | Abuse case | A specific way a bad actor could misuse a feature |
 | Accepted risk | A known limit you decided to live with for now, written down with when you'd change it |
 | Access token | Short-lived JWT sent with every request |
+| Accessibility (a11y) | Making the app usable by everyone: keyboard-only and screen-reader users, people who enlarge text |
 | Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
 | ACID | Atomic, Consistent, Isolated, Durable: what a transaction guarantees |
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
@@ -4987,6 +5107,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | BOM | (1) Bill of Materials: a list of library versions tested together; (2) Byte-order mark: invisible bytes at a file's start that some tools reject |
 | Bounding box | Smallest rectangle containing a shape or a group of shapes |
 | Branch | A separate line of work in Git, merged back when finished |
+| Breakpoint | The screen width where a responsive layout changes, e.g. Tailwind's `lg:` at 1024 px |
 | Browser | The program used to open websites (Chrome, Safari); a client |
 | Brute force | Trying every possibility (e.g. all 24 orders of 4 drops) |
 | Build | Turning source code into something that runs (compile, bundle, package) |
@@ -5018,11 +5139,13 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Consent | Agreement; in Namastute, both sides say yes before sharing a cab |
 | Constructor | The special method that runs when an object is created |
 | Container (Docker) | A running, isolated copy of an image |
+| Contrast ratio | How readable text is on its background; WCAG AA asks for at least 4.5:1 for normal text |
 | Cookie | Data the browser stores and sends back automatically |
 | CORS | Server headers allowing another origin to read responses |
 | CountDownLatch | A gate that makes threads wait until it's opened |
 | CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
 | CSRF | Another site making the user's browser send requests to us |
+| CSS variable | A named CSS value (`--accent`) that can change while the page runs, e.g. on a dark/light switch |
 | CSWSH | Cross-site WebSocket hijacking: another site opening a socket with your cookies |
 | Cursor (pagination) | A bookmark like "older than message 1234" marking where the next page starts |
 | Cursor pagination | "Items older than id X": stable and index-friendly, unlike OFFSET |
@@ -5037,6 +5160,9 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Dependency cycle | Module A depends on B and B on A; neither stands alone |
 | Dependency Inversion | Depend on an interface you own; others implement it (the D in SOLID) |
 | Deploy | Put a new version of a program where users reach it |
+| Design handoff | The package a designer gives developers: mock screens, rules and exact values |
+| Design system | Reusable rules and pieces (colours, type, buttons, cards) every screen is built from |
+| Design token | One named design value (`accent`, `radius-btn`); code uses the name, never the raw value |
 | Deterministic | Same input always gives byte-identical output |
 | Detour | The extra distance sharing adds compared with riding alone |
 | DI | Dependency Injection: dependencies handed in from outside |
@@ -5084,6 +5210,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Healthcheck | A test of whether a service is really ready |
 | Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
 | Heuristic | A quick rule giving a good (not guaranteed best) answer |
+| High fidelity | A design that is final down to the pixel: colours, fonts, spacing and wording |
 | HKDF | HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need |
 | HMAC | A hash mixed with a secret key |
 | Hook | React function starting with `use` that gives components abilities |
@@ -5111,6 +5238,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Latency | The delay between something happening and you seeing it |
 | Latitude / longitude | North–south / east–west position in degrees |
 | Launch blocker | Something that must be done before real users |
+| Layout shift | Content jumping while the page loads, e.g. when a font arrives late |
 | Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
 | Library | A package of ready-made code a project uses (a jar in Java, a package in JavaScript) |
 | Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
@@ -5126,6 +5254,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Minimum sample | Only show an aggregate once there is enough data for it to mean something |
 | Minor units | Money stored as an integer count of the smallest unit (paise) |
 | Mitigation | A change that makes the harm smaller without removing the cause |
+| Mobile-first | Build for the phone first, then add the larger layouts with breakpoints |
 | Moderation | People reviewing reports and deciding what to do |
 | Module | A self-contained part of a program with its own job |
 | Monorepo | One repository holding several related projects |
@@ -5148,6 +5277,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | OTP | One-time password |
 | Outbox | Saving events in the same transaction as the change, then delivering them reliably |
 | Pagination | Sending a long list one page at a time |
+| Pane | One independently scrolling column of a desktop layout |
 | Partial index | Index holding only rows matching a `where` |
 | PATCH | HTTP method for changing part of a resource |
 | Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
@@ -5161,6 +5291,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Prefilter | A cheap first pass that throws away obviously wrong rows |
 | Preflight | Browser's automatic `OPTIONS` permission check before a cross-origin request |
 | Prerendering | Building a page ahead of time instead of per visitor |
+| Primitive | A small basic component bigger ones are built from (Button, Chip) |
 | Principal | The authenticated caller of a request |
 | Process | One running program |
 | Production | The real environment real users use |
@@ -5198,6 +5329,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Reputation system | A way for strangers to judge trust from others' experience (stars, reviews, thumbs) |
 | Request / response | The message a client sends / the server's reply |
 | REQUIRES_NEW | Start a brand-new transaction, separate from any current one |
+| Responsive design | One app whose layout adapts to the screen size |
 | REST | API style: URLs name things, methods say what to do |
 | Retaliation | Rating someone down because they rated you down |
 | RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
@@ -5212,7 +5344,6 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Same-Origin Policy | Browser rule: scripts can't read other origins' responses by default |
 | Saturation | A resource is fully used, so work queues and latency climbs |
 | Scaling | Handling more users, with more copies or bigger machines |
-| @Scheduled | Spring annotation that runs a method on a timer (needs @EnableScheduling) |
 | Schema (data shape) | A description of the fields a piece of data has |
 | Schema (DB) | A namespace for tables inside a database |
 | Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
@@ -5272,7 +5403,6 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Token | Text the browser sends to prove who it is, like a ticket |
 | TOTP | Time-based one-time password (authenticator apps) |
 | Transaction | Database changes that all happen or none do |
-| @TransactionalEventListener | Runs a listener at a transaction phase, by default after commit |
 | TransactionSynchronization | Spring hook to run code at a transaction moment, e.g. afterCommit |
 | Transition | One allowed move between states, e.g. `open → locked` |
 | Travelling salesman problem | Finding the shortest route through all stops; orders grow as n! |
@@ -5286,10 +5416,12 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | URL | A web address, like https://namastute.in/login |
 | Validation | Checking input is acceptable before using it |
 | VAPID | Our server's key pair; pushes are signed with it so only we can push to our subscribers |
+| Variable font | One font file whose weight or width can be set to any value (`font-stretch: 112%`) |
 | Version | A label like 4.1.1 identifying one release |
 | Version control | Recording every change to code, so history can be seen and undone |
 | Virtual user (VU) | One simulated person in a load test |
 | Volume | Docker storage that outlives containers |
+| WCAG AA | The usual accessibility standard for the web (contrast, keyboard use, labels) |
 | Weaponised reporting | Using a report button to harass or get someone banned unfairly |
 | Web Locks API | Browser-wide lock shared by all tabs (`navigator.locks`) |
 | WebSocket | A long-lived two-way connection between browser and server |
@@ -5301,7 +5433,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 72. Interview questions to practise
+## 74. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -5440,3 +5572,9 @@ Questions an interviewer could ask about this project, roughly in the order the 
 133. When is a partial index better than a normal one?
 134. Why do the new rate limits fail open while OTP fails closed?
 135. Why must you never edit a Flyway migration that has already run, even a comment?
+136. Why translate a design's tokens instead of copying its hex colours into each screen?
+137. How do you switch a whole app between dark and light without a flash of the wrong theme?
+138. Two Tailwind classes set the same property on one element. Which one wins, and how did that cause bugs?
+139. Why build the six-box code input on one hidden real input instead of six inputs?
+140. What does the browser's `<dialog>` with `showModal()` give you for free?
+141. Why is a desktop layout not just the phone screen made wider?

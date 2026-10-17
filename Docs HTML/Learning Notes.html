@@ -121,15 +121,18 @@
 <details><summary><a href="#67-code-walkthrough-load-tests-and-results">67. Code walkthrough: load tests and results</a></summary><a class="sub" href="#670-before-you-read">67.0 Before you read</a><a class="sub" href="#671-loadcomposelimitsyml-and-setuppy">67.1 load/compose.limits.yml and setup.py</a><a class="sub" href="#672-arrival-rushjs">67.2 arrival-rush.js</a><a class="sub" href="#673-pickup-chatterjs">67.3 pickup-chatter.js</a><a class="sub" href="#674-results">67.4 Results</a><a class="sub" href="#675-what-went-wrong-and-what-it-taught">67.5 What went wrong, and what it taught</a></details>
 <details><summary><a href="#68-indexes-and-rate-limits">68. Indexes and rate limits</a></summary><a class="sub" href="#680-before-you-read">68.0 Before you read</a><a class="sub" href="#681-terms">68.1 Terms</a><a class="sub" href="#682-the-problem">68.2 The problem</a><a class="sub" href="#683-naive-ways-and-why-they-hurt">68.3 Naive ways, and why they hurt</a><a class="sub" href="#684-the-plan">68.4 The plan</a><a class="sub" href="#685-decisions-2026-10-16">68.5 Decisions (2026-10-16)</a></details>
 <details><summary><a href="#69-code-walkthrough-indexes-and-rate-limits">69. Code walkthrough: indexes and rate limits</a></summary><a class="sub" href="#690-before-you-read">69.0 Before you read</a><a class="sub" href="#691-v8__indexessql">69.1 V8__indexes.sql</a><a class="sub" href="#692-measured-local-production-database-06-cores-for-postgres">69.2 Measured (local production database, 0.6 cores for Postgres)</a><a class="sub" href="#693-sharedratelimiter">69.3 shared/RateLimiter</a><a class="sub" href="#694-tests">69.4 Tests</a><a class="sub" href="#695-a-flyway-lesson-learned-live">69.5 A Flyway lesson, learned live</a><a class="sub" href="#696-web">69.6 Web</a></details>
+<a class="topic" href="#part-ix-the-new-look">Part IX. The new look</a>
+<details><summary><a href="#70-from-a-design-handoff-to-a-real-frontend">70. From a design handoff to a real frontend</a></summary><a class="sub" href="#700-words-first">70.0 Words first</a><a class="sub" href="#701-the-problem">70.1 The problem</a><a class="sub" href="#702-the-naive-ways-and-why-they-hurt">70.2 The naive ways, and why they hurt</a><a class="sub" href="#703-the-tools">70.3 The tools</a><a class="sub" href="#704-decisions-2026-10-16">70.4 Decisions (2026-10-16)</a></details>
+<details><summary><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">71. Code walkthrough: the foundation, log in and profile (slice A)</a></summary><a class="sub" href="#710-before-you-read">71.0 Before you read</a><a class="sub" href="#711-appglobalscss-the-tokens">71.1 app/globals.css: the tokens</a><a class="sub" href="#712-applayouttsx-fonts-and-the-no-flash-theme">71.2 app/layout.tsx: fonts and the no-flash theme</a><a class="sub" href="#713-componentsui-the-library">71.3 components/ui/: the library</a><a class="sub" href="#714-the-screens">71.4 The screens</a><a class="sub" href="#715-icons-made-with-the-real-font">71.5 Icons, made with the real font</a><a class="sub" href="#716-verified-in-a-real-browser">71.6 Verified in a real browser</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#70-command-cheat-sheet">70. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#71-glossary">71. Glossary</a>
-<a class="topic" href="#72-interview-questions-to-practise">72. Interview questions to practise</a>
+<details><summary><a href="#72-command-cheat-sheet">72. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#73-glossary">73. Glossary</a>
+<a class="topic" href="#74-interview-questions-to-practise">74. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
 <p>How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.</p>
-<p>Last updated: 2026-10-16.</p>
+<p>Last updated: 2026-10-17.</p>
 <hr>
 <h2 id="about-this-book">About this book</h2>
 <h3 id="who-its-for">Who it&#39;s for</h3>
@@ -157,7 +160,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 71) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (70) and <strong>Interview questions</strong> (72) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 73) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (72) and <strong>Interview questions</strong> (74) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -378,11 +381,16 @@
 <li><a href="#68-indexes-and-rate-limits">Indexes and rate limits</a></li>
 <li><a href="#69-code-walkthrough-indexes-and-rate-limits">Code walkthrough: indexes and rate limits</a></li>
 </ol>
-<p><strong><a href="#reference">Reference</a></strong></p>
+<p><strong><a href="#part-ix-the-new-look">Part IX. The new look</a></strong></p>
 <ol start="70">
-<li><a href="#70-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#71-glossary">Glossary</a></li>
-<li><a href="#72-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#70-from-a-design-handoff-to-a-real-frontend">From a design handoff to a real frontend</a></li>
+<li><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">Code walkthrough: the foundation, log in and profile (slice A)</a></li>
+</ol>
+<p><strong><a href="#reference">Reference</a></strong></p>
+<ol start="72">
+<li><a href="#72-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#73-glossary">Glossary</a></li>
+<li><a href="#74-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -6557,10 +6565,177 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li>Not checked in the browser: hitting a limit through the UI (it takes 30 match loads in a minute); the API side is tested.</li>
 </ul>
 <hr>
+<h2 id="part-ix-the-new-look">Part IX. The new look</h2>
+<p>Everything so far worked, but looked like a plain web page. A designer then delivered a complete design: colours, fonts, every component and every screen, for phones and laptops. This part turns that design into the real app, one slice at a time, without breaking a single feature.</p>
+<hr>
+<h2 id="70-from-a-design-handoff-to-a-real-frontend">70. From a design handoff to a real frontend</h2>
+<h3 id="700-words-first">70.0 Words first</h3>
+<ul>
+<li><strong>Design handoff:</strong> the package a designer gives developers: mock pages of every screen, the rules behind them, and the exact colours and sizes.</li>
+<li><strong>High fidelity:</strong> the design is final down to the pixel; colours, fonts, spacing and wording must match closely.</li>
+<li><strong>Design system:</strong> a set of reusable rules and pieces (colours, type sizes, buttons, cards…) that every screen is built from.</li>
+<li><strong>Design token:</strong> one named design value, like <code>accent = #FFA630</code> or <code>radius-btn = 14px</code>. Code uses the <em>name</em>, never the raw value.</li>
+<li><strong>CSS variable:</strong> a named value in CSS (<code>--accent: 255 166 48</code>) that can change while the page runs, for example when switching dark to light.</li>
+<li><strong>Component library:</strong> the reusable pieces in code (Button, Input, Card…), built once and used everywhere. <strong>Primitive:</strong> a small basic one that bigger ones are made of.</li>
+<li><strong>Responsive design:</strong> one app whose layout adapts to the screen size. A <strong>breakpoint</strong> is the width where the layout changes. <strong>Mobile-first:</strong> build for the phone first, then add the larger layouts.</li>
+<li><strong>Pane:</strong> one independently scrolling column of a desktop layout.</li>
+<li><strong>Accessibility (a11y):</strong> making the app usable by everyone, including keyboard-only and screen-reader users and people who enlarge text. <strong>WCAG AA</strong> is the usual standard; <strong>contrast ratio</strong> measures how readable text is on its background (4.5:1 minimum for normal text).</li>
+<li><strong>Layout shift:</strong> content jumping while a page loads, for example when a font arrives late.</li>
+</ul>
+<h3 id="701-the-problem">70.1 The problem</h3>
+<p>The handoff had 3 mock pages, 2 token files and a 240-line spec covering 14 phone screens and 7 desktop layouts. The existing frontend worked but was nearly unstyled. Goal: look and behave like the design, keep every feature, and stay maintainable.</p>
+<h3 id="702-the-naive-ways-and-why-they-hurt">70.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Copy the mock HTML:</strong> it uses inline styles and hard-coded colours, and has no real behaviour (no API, no errors, no reconnecting). The handoff itself says &quot;not production code&quot;.</li>
+<li><strong>Style each screen separately:</strong> screens slowly disagree (three slightly different buttons, four greys), and a colour change means editing hundreds of places.</li>
+<li><strong>Hard-coded colours:</strong> dark/light switching becomes impossible.</li>
+<li><strong>One huge change:</strong> impossible to review or test properly.</li>
+</ul>
+<h3 id="703-the-tools">70.3 The tools</h3>
+<ol>
+<li><strong>Tokens as CSS variables, mapped by Tailwind&#39;s <code>@theme</code>.</strong> The handoff&#39;s tokens were written for <strong>Tailwind v3</strong> (a <code>tailwind.config.ts</code>), but the app uses <strong>Tailwind v4</strong>, which has no config file: the theme is declared inside the CSS. So the tokens were <em>translated</em>, not copied. Screens use names like <code>bg-surface</code>, <code>text-fg-muted</code>, <code>rounded-btn</code>, <code>h-cta</code>, never a hex value.</li>
+<li><strong>Dark mode by class:</strong> <code>class=&quot;dark&quot;</code> on <code>&lt;html&gt;</code> swaps every variable at once. A tiny script runs <strong>before the page is drawn</strong>, so there&#39;s no flash of the wrong theme.</li>
+<li><strong>Fonts with <code>next/font/google</code>:</strong> downloaded at build time and served from our own domain: faster, private (no request to Google from users&#39; phones), and sized to avoid layout shift.</li>
+<li><strong>A component library first</strong> (<code>components/ui/</code>), each piece built once with the design&#39;s sizes and accessibility rules.</li>
+<li><strong>Mobile-first, then panes</strong> with Tailwind&#39;s breakpoint prefixes (<code>lg:grid-cols-[…]</code>). The design is explicit: desktop is a multi-pane console, not a stretched phone screen.</li>
+<li><strong>Real data, not the handoff&#39;s mock data:</strong> every screen keeps using <code>lib/api.ts</code>.</li>
+<li><strong>Slices,</strong> each browser-checked at phone and laptop sizes, in dark and light.</li>
+</ol>
+<h3 id="704-decisions-2026-10-16">70.4 Decisions (2026-10-16)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Slices</td>
+<td>(A) foundation + log in + profile; (B) plan trip + home; (C) group, chat, pickup; (D) fare, pay, ratings + light-mode polish</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td>Translated to Tailwind v4 <code>@theme</code>; no hex values in screens</td>
+</tr>
+<tr>
+<td>Theme</td>
+<td>Dark by default, following the phone&#39;s setting until the user picks; a switch on the profile page; remembered on that device</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>The real API; every existing feature kept</td>
+</tr>
+<tr>
+<td>Features the design doesn&#39;t show (report/block, &quot;Call 112&quot;, &quot;Notify me&quot;, live location, ratings, blocked people, &quot;not sent&quot;)</td>
+<td>Placed in the design&#39;s style, using its components and reserved spaces, and pointed out for review</td>
+</tr>
+<tr>
+<td>Map</td>
+<td>OpenStreetMap darkened with a CSS filter in dark mode (no new provider)</td>
+</tr>
+<tr>
+<td>Icons</td>
+<td>The design&#39;s own text glyphs (→ ‹ ↑ ✓ ⚠), no icon library</td>
+</tr>
+<tr>
+<td>Checking</td>
+<td>Browser at 375 px and 1280 px, dark and light, plus lint and build</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">71. Code walkthrough: the foundation, log in and profile (slice A)</h2>
+<h3 id="710-before-you-read">71.0 Before you read</h3>
+<p>This slice builds everything later screens stand on (tokens, fonts, theme, brand, components) and redesigns the first two screens: log in and profile, on phones and as a split screen on laptops. It applies chapter 70.</p>
+<h3 id="711-appglobalscss-the-tokens">71.1 <code>app/globals.css</code>: the tokens</h3>
+<ul>
+<li><code>:root</code> holds the <strong>light</strong> colours and <code>.dark</code> the <strong>dark</strong> ones, as <code>r g b</code> numbers (<code>--accent: 255 166 48</code>).</li>
+<li><code>@custom-variant dark (&amp;:where(.dark, .dark *))</code> makes Tailwind&#39;s <code>dark:</code> prefix follow the class on <code>&lt;html&gt;</code>, not the phone&#39;s setting directly (the theme script decides).</li>
+<li><code>@theme inline { --color-accent: rgb(var(--accent)); … }</code> creates the utilities <code>bg-accent</code>, <code>text-accent</code>, <code>border-accent</code>… <code>inline</code> means the variable is looked up where it&#39;s used, so <code>.dark</code> can change it.</li>
+<li>The type scale (<code>--text-h1: 2rem</code> with its line height and weight), radii (<code>--radius-btn: 14px</code>), touch sizes (<code>--spacing-tap: 3rem</code> gives <code>h-tap</code>, <code>min-h-cta</code>…), the pulse and sheet animations and a <code>scrim</code> colour for behind dialogs.</li>
+<li><code>@utility stretch-112 { font-stretch: 112% }</code>: Anek Devanagari is a <strong>variable font</strong> whose width can be stretched; headlines use 108–115%.</li>
+<li>Base styles: the page colours, the <strong>focus ring</strong> on every interactive element (a 2px gap in the page colour, then 2px of <code>ring</code>), and <code>prefers-reduced-motion</code> turning animations off.</li>
+<li>Everything is in <code>rem</code>, so the layout survives 200% text size.</li>
+</ul>
+<h3 id="712-applayouttsx-fonts-and-the-no-flash-theme">71.2 <code>app/layout.tsx</code>: fonts and the no-flash theme</h3>
+<ul>
+<li><code>Anek_Devanagari({ subsets: [&quot;latin&quot;, &quot;devanagari&quot;], axes: [&quot;wdth&quot;], variable: &quot;--font-anek&quot; })</code>, plus Mukta and IBM Plex Mono, each exposed as a CSS variable that <code>@theme</code> turns into <code>font-display</code>, <code>font-sans</code> and <code>font-mono</code>.</li>
+<li><code>&lt;Script id=&quot;theme&quot; strategy=&quot;beforeInteractive&quot;&gt;</code>: runs before any page code. It reads the saved choice (<code>localStorage</code>), otherwise the phone&#39;s setting, otherwise dark, and sets the class on <code>&lt;html&gt;</code>. <code>suppressHydrationWarning</code> tells React that this class was changed on purpose before it took over.</li>
+<li><code>viewport.themeColor</code>: the browser&#39;s toolbar colour for dark and light.</li>
+<li><code>lib/theme.ts</code>: <code>themeChoice()</code> and <code>setThemeChoice()</code> for the profile page&#39;s switch; both survive blocked storage (private mode).</li>
+</ul>
+<h3 id="713-componentsui-the-library">71.3 <code>components/ui/</code>: the library</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Pieces</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>button.tsx</code></td>
+<td><code>Button</code> (primary, secondary, tonal, ink, danger, danger-text, link; sizes 56/48/64 px; <code>loading</code> with a spinner and label) and <code>Spinner</code></td>
+</tr>
+<tr>
+<td><code>field.tsx</code></td>
+<td><code>TextField</code> (label above, helper or error below, linked with <code>aria-describedby</code>), <code>PhoneInput</code> (the &quot;+91&quot; segment; shows &quot;98100 43215&quot;; keeps the last 10 digits from autofill), <code>OtpInput</code> (six boxes driven by one invisible real input)</td>
+</tr>
+<tr>
+<td><code>display.tsx</code></td>
+<td><code>Alert</code> (error/success/info/warning with a glyph; errors use <code>role=&quot;alert&quot;</code>), <code>Avatar</code> (first <em>grapheme</em> of the first name, so &quot;नेहा&quot; → &quot;ने&quot;), <code>Card</code>, <code>Chip</code>, <code>StatusBadge</code>, <code>Eyebrow</code>, <code>EmptyState</code>, <code>Skeleton</code></td>
+</tr>
+<tr>
+<td><code>controls.tsx</code></td>
+<td><code>Segmented</code> (a radio group; arrow keys move the choice), <code>Stepper</code> (− value +, with aria-labels like &quot;Fewer seats&quot;), <code>Toggle</code> (a switch; the unavailable women-only row is a dashed box)</td>
+</tr>
+<tr>
+<td><code>layout.tsx</code></td>
+<td><code>BottomBar</code> (the sticky thumb-zone bar on phones; a normal block on wide screens) and <code>Sheet</code></td>
+</tr>
+<tr>
+<td><code>brand.tsx</code></td>
+<td><code>AppIcon</code> (न on the orange tile), <code>Wordmark</code> (&quot;ast&quot; lit), <code>Lockup</code></td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong><code>Sheet</code> uses the browser&#39;s own <code>&lt;dialog&gt;</code></strong> with <code>showModal()</code>: it traps focus, makes the page behind inert and closes on Esc by itself, so no focus-trap code was needed. On phones it&#39;s a bottom sheet that slides up; from 1024 px it&#39;s a centred dialog.</li>
+<li><strong>A Tailwind trap found while building:</strong> two classes setting the same property (<code>bg-accent</code> <em>and</em> <code>bg-surface-2</code> on a disabled button) don&#39;t follow the class order; the stylesheet&#39;s order decides. So every component picks <strong>one</strong> colour set (normal <em>or</em> disabled, normal border <em>or</em> error border), never both. It caught three real bugs (disabled buttons, active code boxes, round skeletons).</li>
+<li><strong><code>OtpInput</code>:</strong> one <code>&lt;input autocomplete=&quot;one-time-code&quot; inputmode=&quot;numeric&quot; maxlength=6&gt;</code> lies invisibly over six boxes. SMS autofill, paste and screen readers all work with the real input; the boxes only show digits and a caret in the active one.</li>
+</ul>
+<h3 id="714-the-screens">71.4 The screens</h3>
+<ul>
+<li><strong><code>app/auth-shell.tsx</code>:</strong> phones get one column up to 480 px; from 1024 px a split screen <code>grid-cols-[minmax(0,1fr)_35rem]</code>: the brand pane (lockup, the big headline, three promises) and the form on a <code>surface</code> pane. <code>Headline</code> scales with <code>clamp()</code> so the 96 px headline fits narrower laptops.</li>
+<li><strong><code>app/login/page.tsx</code>:</strong> the same logic as before (validation, <code>requestOtp</code>, <code>verifyOtp</code>, then profile or home), plus the design&#39;s behaviour:<ul>
+<li>the number is shown grouped and validated inline (&quot;Enter a 10-digit Indian mobile number.&quot;);</li>
+<li><strong>the 6th digit submits by itself</strong>;</li>
+<li><strong>paste anywhere</strong> on the code screen fills and submits the code: a <code>paste</code> listener on the page pulls the first 6 digits out of whatever was pasted, even the whole SMS;</li>
+<li>&quot;Change&quot; goes back with the number still filled in;</li>
+<li>a countdown <strong>ring</strong> (an SVG circle whose <code>stroke-dashoffset</code> empties over 30 s) becomes &quot;Resend code&quot; at 0.</li>
+</ul>
+</li>
+<li><strong><code>app/profile/page.tsx</code>:</strong> first login shows &quot;Namaste · one last thing&quot; and &quot;Save and continue&quot;; later visits show &quot;Your profile&quot; with sections the design doesn&#39;t have (<strong>Notifications</strong>, <strong>Appearance</strong>: Phone / Dark / Light, <strong>Blocked people</strong>, <strong>Log out</strong>). Errors appear under the field they belong to. On laptops the left pane is a live <strong>&quot;What your group will see&quot;</strong> card that updates as you type, showing only the first name.</li>
+<li><strong><code>app/push-prompt.tsx</code>:</strong> restyled with <code>Button</code> and <code>Alert</code>.</li>
+<li><strong>The other screens</strong> (home, trip, group, fare) are redesigned in later slices; their hard-coded colours (<code>bg-black</code>, <code>text-red-600</code>…) were swapped for tokens so they stay readable in dark mode meanwhile.</li>
+</ul>
+<h3 id="715-icons-made-with-the-real-font">71.5 Icons, made with the real font</h3>
+<ul>
+<li>The app icon is the letter न, so PNG icons had to be drawn with Anek Devanagari. Instead of installing an image library, a temporary page drew them on a browser <strong>canvas</strong> with the loaded web font and saved them through a temporary local-only route; both were deleted before committing.</li>
+<li>The letter is centred on its <strong>measured ink</strong> (<code>measureText().actualBoundingBox…</code>), because Devanagari fonts reserve room below letters for vowel signs, and the first attempt sat too high.</li>
+<li>Files: <code>public/icon-192.png</code>, <code>icon-512.png</code> (rounded tile), <code>icon-maskable-512.png</code> (full-bleed, extra margin for phones&#39; own shapes), <code>app/apple-icon.png</code> (iPhone home screen), <code>app/icon.png</code> (browser tab; the template&#39;s <code>favicon.ico</code> was removed). The manifest&#39;s colours became the dark background.</li>
+</ul>
+<h3 id="716-verified-in-a-real-browser">71.6 Verified in a real browser</h3>
+<ul>
+<li><strong>Gallery</strong> (a temporary page, deleted): every component in dark and light; the sheet slides up, moves focus inside and closes on Esc.</li>
+<li><strong>Phone (420 px):</strong> login → invalid number error (linked for screen readers) → valid number shown as &quot;98765 00031&quot; → code screen → a wrong code submitted itself and showed the error with red boxes → the right code → &quot;Complete your profile&quot; → an invalid UPI ID error under its field → a Hindi name saved (&quot;नेहा&quot; in the database) → home.</li>
+<li><strong>Profile edit:</strong> the theme switch works by click and arrow keys, a light choice survives a reload with no flash, and &quot;Phone&quot; clears the saved choice.</li>
+<li><strong>Laptop (1280×800):</strong> W1 split screen with the three promises; W2 with the paste tip; pasting a whole SMS text on the page logged in; W3&#39;s preview card updated live (&quot;Asha Rao&quot; → &quot;Asha&quot;).</li>
+<li><strong>Screenshot gotcha:</strong> the browser sometimes captured a frame mid-transition (a disabled button still fading from orange). Computed styles (<code>getComputedStyle</code>) confirmed the real colours.</li>
+<li><strong>Not checked:</strong> a real phone, screen readers, and 200% text across every screen.</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="70-command-cheat-sheet">70. Command cheat sheet</h2>
+<h2 id="72-command-cheat-sheet">72. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -6625,7 +6800,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="71-glossary">71. Glossary</h2>
+<h2 id="73-glossary">73. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -6637,6 +6812,14 @@ git fetch --prune
 <tbody><tr>
 <td>429 / Retry-After</td>
 <td>&quot;Too Many Requests&quot; / the header saying how many seconds to wait</td>
+</tr>
+<tr>
+<td>@Scheduled</td>
+<td>Spring annotation that runs a method on a timer (needs @EnableScheduling)</td>
+</tr>
+<tr>
+<td>@TransactionalEventListener</td>
+<td>Runs a listener at a transaction phase, by default after commit</td>
 </tr>
 <tr>
 <td>Abstraction</td>
@@ -6653,6 +6836,10 @@ git fetch --prune
 <tr>
 <td>Access token</td>
 <td>Short-lived JWT sent with every request</td>
+</tr>
+<tr>
+<td>Accessibility (a11y)</td>
+<td>Making the app usable by everyone: keyboard-only and screen-reader users, people who enlarge text</td>
 </tr>
 <tr>
 <td>Accuracy radius</td>
@@ -6761,6 +6948,10 @@ git fetch --prune
 <tr>
 <td>Branch</td>
 <td>A separate line of work in Git, merged back when finished</td>
+</tr>
+<tr>
+<td>Breakpoint</td>
+<td>The screen width where a responsive layout changes, e.g. Tailwind&#39;s <code>lg:</code> at 1024 px</td>
 </tr>
 <tr>
 <td>Browser</td>
@@ -6887,6 +7078,10 @@ git fetch --prune
 <td>A running, isolated copy of an image</td>
 </tr>
 <tr>
+<td>Contrast ratio</td>
+<td>How readable text is on its background; WCAG AA asks for at least 4.5:1 for normal text</td>
+</tr>
+<tr>
 <td>Cookie</td>
 <td>Data the browser stores and sends back automatically</td>
 </tr>
@@ -6905,6 +7100,10 @@ git fetch --prune
 <tr>
 <td>CSRF</td>
 <td>Another site making the user&#39;s browser send requests to us</td>
+</tr>
+<tr>
+<td>CSS variable</td>
+<td>A named CSS value (<code>--accent</code>) that can change while the page runs, e.g. on a dark/light switch</td>
 </tr>
 <tr>
 <td>CSWSH</td>
@@ -6961,6 +7160,18 @@ git fetch --prune
 <tr>
 <td>Deploy</td>
 <td>Put a new version of a program where users reach it</td>
+</tr>
+<tr>
+<td>Design handoff</td>
+<td>The package a designer gives developers: mock screens, rules and exact values</td>
+</tr>
+<tr>
+<td>Design system</td>
+<td>Reusable rules and pieces (colours, type, buttons, cards) every screen is built from</td>
+</tr>
+<tr>
+<td>Design token</td>
+<td>One named design value (<code>accent</code>, <code>radius-btn</code>); code uses the name, never the raw value</td>
 </tr>
 <tr>
 <td>Deterministic</td>
@@ -7151,6 +7362,10 @@ git fetch --prune
 <td>A quick rule giving a good (not guaranteed best) answer</td>
 </tr>
 <tr>
+<td>High fidelity</td>
+<td>A design that is final down to the pixel: colours, fonts, spacing and wording</td>
+</tr>
+<tr>
 <td>HKDF</td>
 <td>HMAC-based Key Derivation Function: turns a shared secret into the exact keys you need</td>
 </tr>
@@ -7259,6 +7474,10 @@ git fetch --prune
 <td>Something that must be done before real users</td>
 </tr>
 <tr>
+<td>Layout shift</td>
+<td>Content jumping while the page loads, e.g. when a font arrives late</td>
+</tr>
+<tr>
 <td>Let&#39;s Encrypt / ACME</td>
 <td>Free certificate authority / the protocol for proving you own a domain</td>
 </tr>
@@ -7317,6 +7536,10 @@ git fetch --prune
 <tr>
 <td>Mitigation</td>
 <td>A change that makes the harm smaller without removing the cause</td>
+</tr>
+<tr>
+<td>Mobile-first</td>
+<td>Build for the phone first, then add the larger layouts with breakpoints</td>
 </tr>
 <tr>
 <td>Moderation</td>
@@ -7407,6 +7630,10 @@ git fetch --prune
 <td>Sending a long list one page at a time</td>
 </tr>
 <tr>
+<td>Pane</td>
+<td>One independently scrolling column of a desktop layout</td>
+</tr>
+<tr>
 <td>Partial index</td>
 <td>Index holding only rows matching a <code>where</code></td>
 </tr>
@@ -7457,6 +7684,10 @@ git fetch --prune
 <tr>
 <td>Prerendering</td>
 <td>Building a page ahead of time instead of per visitor</td>
+</tr>
+<tr>
+<td>Primitive</td>
+<td>A small basic component bigger ones are built from (Button, Chip)</td>
 </tr>
 <tr>
 <td>Principal</td>
@@ -7607,6 +7838,10 @@ git fetch --prune
 <td>Start a brand-new transaction, separate from any current one</td>
 </tr>
 <tr>
+<td>Responsive design</td>
+<td>One app whose layout adapts to the screen size</td>
+</tr>
+<tr>
 <td>REST</td>
 <td>API style: URLs name things, methods say what to do</td>
 </tr>
@@ -7661,10 +7896,6 @@ git fetch --prune
 <tr>
 <td>Scaling</td>
 <td>Handling more users, with more copies or bigger machines</td>
-</tr>
-<tr>
-<td>@Scheduled</td>
-<td>Spring annotation that runs a method on a timer (needs @EnableScheduling)</td>
 </tr>
 <tr>
 <td>Schema (data shape)</td>
@@ -7903,10 +8134,6 @@ git fetch --prune
 <td>Database changes that all happen or none do</td>
 </tr>
 <tr>
-<td>@TransactionalEventListener</td>
-<td>Runs a listener at a transaction phase, by default after commit</td>
-</tr>
-<tr>
 <td>TransactionSynchronization</td>
 <td>Spring hook to run code at a transaction moment, e.g. afterCommit</td>
 </tr>
@@ -7959,6 +8186,10 @@ git fetch --prune
 <td>Our server&#39;s key pair; pushes are signed with it so only we can push to our subscribers</td>
 </tr>
 <tr>
+<td>Variable font</td>
+<td>One font file whose weight or width can be set to any value (<code>font-stretch: 112%</code>)</td>
+</tr>
+<tr>
 <td>Version</td>
 <td>A label like 4.1.1 identifying one release</td>
 </tr>
@@ -7973,6 +8204,10 @@ git fetch --prune
 <tr>
 <td>Volume</td>
 <td>Docker storage that outlives containers</td>
+</tr>
+<tr>
+<td>WCAG AA</td>
+<td>The usual accessibility standard for the web (contrast, keyboard use, labels)</td>
 </tr>
 <tr>
 <td>Weaponised reporting</td>
@@ -8008,7 +8243,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="72-interview-questions-to-practise">72. Interview questions to practise</h2>
+<h2 id="74-interview-questions-to-practise">74. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -8146,6 +8381,12 @@ git fetch --prune
 <li>When is a partial index better than a normal one?</li>
 <li>Why do the new rate limits fail open while OTP fails closed?</li>
 <li>Why must you never edit a Flyway migration that has already run, even a comment?</li>
+<li>Why translate a design&#39;s tokens instead of copying its hex colours into each screen?</li>
+<li>How do you switch a whole app between dark and light without a flash of the wrong theme?</li>
+<li>Two Tailwind classes set the same property on one element. Which one wins, and how did that cause bugs?</li>
+<li>Why build the six-box code input on one hidden real input instead of six inputs?</li>
+<li>What does the browser&#39;s <code>&lt;dialog&gt;</code> with <code>showModal()</code> give you for free?</li>
+<li>Why is a desktop layout not just the phone screen made wider?</li>
 </ol>
 
 

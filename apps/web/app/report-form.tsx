@@ -38,7 +38,7 @@ export default function ReportForm({ tripId, firstName, onClose }: { tripId: str
 
   return (
     <form onSubmit={send} className="mt-1 rounded border p-2" aria-label={`Report ${firstName}`}>
-      <p className="font-semibold text-red-700">
+      <p className="font-semibold text-danger">
         In danger right now? Call <a href="tel:112" className="underline">112</a>.
       </p>
       <label htmlFor={`report-category-${tripId}`} className="mt-1 block">What happened?</label>
@@ -60,11 +60,11 @@ export default function ReportForm({ tripId, firstName, onClose }: { tripId: str
         maxLength={500}
         className="block w-full rounded border p-1"
       />
-      <button type="submit" disabled={busy} className="mt-1 rounded bg-black px-3 py-1 text-white disabled:opacity-50">
+      <button type="submit" disabled={busy} className="mt-1 rounded bg-accent px-3 py-1 text-on-accent disabled:opacity-50">
         Send report
       </button>
       <button type="button" onClick={onClose} className="ml-3 underline">Cancel</button>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </form>
   );
 }
