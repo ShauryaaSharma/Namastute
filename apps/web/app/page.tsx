@@ -1,12 +1,31 @@
-import SessionBox from "./session-box";
+"use client";
 
-// Server Component: the static text is rendered on the server; SessionBox runs in the browser
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { AppBar } from "@/components/app-bar";
+import { restoreSession, type Profile } from "@/lib/api";
+import CurrentTrip from "./current-trip";
+
+// Home: your trip, people heading your way and requests. Logged out → log in; no name yet → profile first.
 export default function Home() {
+  const router = useRouter();
+  const [me, setMe] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    restoreSession()
+      .then((profile) => {
+        if (!profile) return router.replace("/login");
+        if (!profile.name) return router.replace("/profile");
+        setMe(profile);
+      })
+      .catch(() => router.replace("/login"));
+  }, [router]);
+
+  if (!me?.name) return <p role="status" className="p-6 text-fg-muted">Checking your session…</p>;
   return (
-    <main className="p-8">
-      <h1 className="text-3xl font-bold">Namastute</h1>
-      <p className="mt-2">Share a cab with people from your flight.</p>
-      <SessionBox />
-    </main>
+    <>
+      <AppBar name={me.name} />
+      <CurrentTrip />
+    </>
   );
 }

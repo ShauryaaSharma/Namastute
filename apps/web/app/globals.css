@@ -160,3 +160,15 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Maps (Leaflet). OpenStreetMap only offers light tiles, so dark mode inverts them and turns the hues back:
+   roads and water keep their colours, the land goes dark. Specific enough to beat leaflet.css. */
+.dark .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+.leaflet-container .leaflet-control-zoom.leaflet-bar { border: 0; box-shadow: none; display: flex; flex-direction: column; gap: 6px; }
+.leaflet-container .leaflet-control-zoom.leaflet-bar a {
+  width: 2.75rem; height: 2.75rem; line-height: 2.75rem; border: 0; border-radius: 12px;
+  background: rgb(var(--surface-2)); color: rgb(var(--fg)); font: 600 1.375rem var(--font-sans);
+}
+.leaflet-container .leaflet-control-zoom.leaflet-bar a.leaflet-disabled { color: rgb(var(--fg-disabled)); }
+.leaflet-container .leaflet-control-attribution { background: rgb(var(--bg) / 0.8); color: rgb(var(--fg-muted)); }
+.leaflet-container .leaflet-control-attribution a { color: inherit; }

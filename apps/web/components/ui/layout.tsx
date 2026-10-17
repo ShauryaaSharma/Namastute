@@ -4,14 +4,14 @@ import { type ReactNode, useEffect, useId, useRef } from "react";
 import { cx } from "./cx";
 
 // ---- The sticky bottom bar on phones: the screen's one primary action, in the thumb zone.
-// On wide screens it becomes a normal block at the bottom of its pane. ----
-export function BottomBar({ children, bordered, className }: { children: ReactNode; bordered?: boolean; className?: string }) {
+// On wide screens it becomes a normal block at the bottom of its pane, or (pane) the pane's own footer bar. ----
+export function BottomBar({ children, bordered, pane, className }: { children: ReactNode; bordered?: boolean; pane?: boolean; className?: string }) {
   return (
     <div
       className={cx(
         "sticky bottom-0 z-10 mt-auto flex flex-col gap-2.5 bg-bg px-5 pt-4 pb-[calc(1.75rem+env(safe-area-inset-bottom))]",
         bordered && "border-t border-line",
-        "lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0",
+        pane ? "lg:px-8 lg:pb-5" : "lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0",
         className,
       )}
     >

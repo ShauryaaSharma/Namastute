@@ -25,3 +25,20 @@ export function formatIst(iso: string): string {
 export function formatIstTime(iso: string): string {
   return new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short" }).format(new Date(iso));
 }
+
+// "2026-10-14T20:00:00Z" → "2026-10-15" (the date in India at that moment)
+export function istDate(iso: string): string {
+  return new Date(Date.parse(iso) + IST_OFFSET_MINUTES * 60_000).toISOString().slice(0, 10);
+}
+
+// "2026-10-14" → "14 Oct"
+export function shortDate(date: string): string {
+  return new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", day: "numeric", month: "short" }).format(new Date(date));
+}
+
+// An India date → "Today", "Tomorrow" or "16 Oct"
+export function istDayName(date: string): string {
+  if (date === istInputValue(0).slice(0, 10)) return "Today";
+  if (date === istInputValue(24 * 60).slice(0, 10)) return "Tomorrow";
+  return shortDate(date);
+}

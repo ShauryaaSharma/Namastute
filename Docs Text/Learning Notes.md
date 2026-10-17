@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 73) defines every term in the book, A to Z. The **Command cheat sheet** (72) and **Interview questions** (74) are for revision.
+- The **Glossary** (chapter 75) defines every term in the book, A to Z. The **Command cheat sheet** (74) and **Interview questions** (76) are for revision.
 
 ---
 
@@ -217,12 +217,14 @@ flowchart LR
 
 70. [From a design handoff to a real frontend](#70-from-a-design-handoff-to-a-real-frontend)
 71. [Code walkthrough: the foundation, log in and profile (slice A)](#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a)
+72. [Home and planning a trip: panes, sheets and instant feedback](#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback)
+73. [Code walkthrough: home and plan trip (slice B)](#73-code-walkthrough-home-and-plan-trip-slice-b)
 
 **[Reference](#reference)**
 
-72. [Command cheat sheet](#72-command-cheat-sheet)
-73. [Glossary](#73-glossary)
-74. [Interview questions to practise](#74-interview-questions-to-practise)
+74. [Command cheat sheet](#74-command-cheat-sheet)
+75. [Glossary](#75-glossary)
+76. [Interview questions to practise](#76-interview-questions-to-practise)
 
 ---
 
@@ -4974,13 +4976,110 @@ This slice builds everything later screens stand on (tokens, fonts, theme, brand
 
 ---
 
+## 72. Home and planning a trip: panes, sheets and instant feedback
+
+### 72.0 Words first
+- **App shell:** the frame that stays the same on every signed-in screen (logo, your avatar), built once and reused.
+- **Route guard:** a check at the top of a page that sends you elsewhere: not logged in → `/login`, no name yet → `/profile`.
+- **CSS Grid:** a way to lay out a page in rows and columns. `grid-cols-[400px_1fr]` means a 400 px column, then the rest (**`fr`** = one share of the free space).
+- **Independent scrolling:** each pane scrolls on its own and the page doesn't. It needs a page exactly the screen's height, `overflow-y-auto` on each pane, and **`min-h-0`**: grid and flex children refuse to shrink below their content unless told to, so without it the pane grows instead of scrolling.
+- **Native input:** a control the browser draws itself, like `<input type="time">`; phones show their own wheel picker, and keyboards and screen readers work with it for free.
+- **Confirm sheet:** a styled "Are you sure?" sheet before a destructive action, instead of the browser's grey `window.confirm()` box.
+- **Optimistic UI:** show the result of a tap at once ("Asked ✓"), before the server answers, and undo it if the server says no.
+- **Skeleton:** grey pulsing shapes standing in for content that's loading.
+- **CSS filter:** an effect applied to pixels after they're drawn, like `invert(1)`.
+- **divIcon:** a Leaflet map marker made of our own HTML instead of an image.
+- **Media query:** a CSS (or JavaScript) question about the screen, like "is it at least 1024 px wide?".
+
+### 72.1 The problem
+After slice A, home was still a heading, two links and an orange bar, and planning a trip was a plain form with dropdowns. These are the screens people use most: at the airport on a phone, in a hurry, and at home on a laptop the night before. The design has four phone states for home (matches, empty, loading, and the group view), the plan-trip screen, and laptop layouts for both (W4, W5).
+
+### 72.2 The naive ways, and why they hurt
+- **Restyle the old files:** home was a list of sentences ("Asha (92% 👍) · out 10 min after you · …"). The design needs cards with avatars, chips and a big button: a new shape, not new colours.
+- **Stretch the phone layout on laptops:** the design forbids it. Laptops get panes: your trip and requests on the left, matches on the right; the plan form beside a full-height map.
+- **Keep `window.confirm` for "Cancel trip" and "Block":** a grey browser box in a dark app, which can't be styled or explain kindly.
+- **Wait for the server after "Ask to share":** on airport Wi-Fi that's one to three seconds of "did it work?".
+
+### 72.3 The tools
+1. **`AppBar`**, one header for every signed-in screen: the wordmark (a link home) and your avatar (a link to the profile, where log out lives). Laptops add the airport clock, "Delhi IGI · 1:57 pm IST", because every time in the app is India time.
+2. **Panes with CSS Grid, placed explicitly.** Phones read top to bottom: trip, matches, requests. Laptops put requests under the trip on the left and matches on the right. The same three blocks are placed into grid cells (`lg:col-start-2 lg:row-span-2`), so the page's order (what keyboards and screen readers follow) stays the phone's order and no block is written twice.
+3. **The slice A pieces:** `Segmented` for the terminal, `Stepper` for seats and bags, the unavailable `Toggle` for women-only, `Card`, `Chip`, `Avatar`, `EmptyState`, `Skeleton`, `BottomBar`, and `Sheet` for every confirmation. Most of this slice is arranging pieces that already existed.
+4. **Two native inputs for the time:** the API accepts only the next 24 hours, so the date is a choice of "Today, 17 Oct" or "Tomorrow, 18 Oct", next to `<input type="time">`.
+5. **The map, dressed in the theme:** OpenStreetMap only draws light tiles, so in dark mode `filter: invert(1) hue-rotate(180deg)` turns them dark: inverting makes the land black but turns water orange, and rotating the hues by half a circle turns it blue again. The pins are divIcons in our colours, joined by a dashed orange line.
+6. **One media query in JavaScript:** a map can't be in two places, and CSS can only hide things, not move them. On phones the map sits inside the form; on laptops it fills its own pane. A tiny `useWide()` hook asks "at least 1024 px?" and the page puts the one map where it belongs.
+7. **Optimistic "Ask to share":** the card turns into "Asked ✓" instantly; if the server refuses, it turns back and shows why.
+
+### 72.4 Decisions (2026-10-17)
+| Decision | Choice |
+|---|---|
+| Header | `AppBar` on home and plan trip (group and fare later); avatar opens the profile |
+| Clock in the top bar | "Delhi IGI · 1:57 pm IST", no "Live" dot until a screen really has a live connection (slice C) |
+| Home when logged out / no name | Redirect to `/login` / `/profile`, like plan trip |
+| Home with no trip (not in the design) | A "Where are you headed?" card and "Plan your trip →" in the bottom bar |
+| "Edit trip" (W5) | Skipped: the API has no edit; cancel and plan again |
+| Map of match areas on laptop home (W5) | Skipped: the API never sends where matches are going, only area names, on purpose |
+| "Block" on a person card (not in the design) | A small text button at the card's top-right, away from "Ask to share", behind a confirm sheet |
+| Cancel trip, Block | Confirm sheets |
+| Ask to share | Optimistic, undone on error |
+| Date and time | Today/Tomorrow + native time input |
+| Destination area | A card with "Edit name", because map lookups sometimes give odd names |
+| Tab title | "(1) Namastute" while requests wait for your answer |
+| Rating | A chip after the name ("92% 👍 · 12 ratings" or "New"), in the space the design reserves for one badge |
+
+> **Later change:** Group, chat and pickup still use their old layout inside the new home; slice C redesigns them.
+
+---
+
+## 73. Code walkthrough: home and plan trip (slice B)
+
+### 73.0 Before you read
+This slice redesigns the two busiest screens on top of slice A's components (chapter 71), applying chapter 72. There are no API changes: everything uses the same calls as before.
+
+### 73.1 Small shared changes
+- **`components/ui/button.tsx`:** the look is now `buttonClass()`, used by `Button` and by links that act as a screen's main action (`<Link href="/trip/new" className={buttonClass()}>`). A link that looks like a button is still a link: it can open in a new tab.
+- **`components/ui/layout.tsx`:** `BottomBar pane` keeps the bar look on laptops, as the footer of the plan-trip form's pane.
+- **`lib/time.ts`:** `istDate(iso)` (the India date at that moment), `shortDate("2026-10-17")` → "17 Oct", `istDayName(date)` → "Today", "Tomorrow" or "19 Oct".
+- **`lib/use-wide.ts`:** `useWide()` built on React's `useSyncExternalStore`, which subscribes to something outside React (here `matchMedia("(min-width: 1024px)")`) and re-renders when it changes. During server rendering it answers `false`.
+- **`components/app-bar.tsx`:** wordmark link, clock (updated every 15 s), avatar link. **A slice A trap again:** `hidden lg:inline-flex` on `AppIcon` didn't hide it, because the icon's own `inline-flex` also sets `display`, and stylesheet order decided (71.3). The icon is now wrapped in `<span class="hidden lg:contents">`, where nothing fights.
+
+### 73.2 `app/page.tsx` and `app/current-trip.tsx`: home
+- `page.tsx` became a client page with a route guard; the old `session-box.tsx` is gone (log out lives on the profile).
+- `CurrentTrip` keeps its data logic unchanged (load trip and requests, refresh every 60 s and when the tab comes back, `version` to reload after actions), and is now split into small parts:
+  - **`TripCard`:** the orange card (an ink card in light mode, as the design asks), with "Your trip · Today", the title, "Outside at 2:25 pm · 1 seat, 1 bag · about 9.7 km", and "Cancel trip", which opens a `Sheet`.
+  - **`Matches`:** loading skeletons, an error alert, the empty state, or a grid of **`MatchCard`** (one person or an open group, with chips and "Ask to share") and **`CompactRow`** ("Asked ✓", or an orange border and "Asked you · answer below ↓", "Asked you ←" on laptops where requests sit on the left).
+  - **`Received`:** request cards with Decline / Accept and a count badge. **`Sent`:** "waiting for an answer" with a pulsing dot, or a "declined" chip.
+- **The page grid** (`PAGE`): on laptops `grid-cols-[360px_1fr]` (400 px from 1280), two rows; the trip card sits top-left, requests bottom-left, and matches (or your group) span both rows on the right. The two lower cells scroll on their own (`min-h-0 overflow-y-auto`) and have 4 px of padding, because a scroll box clips anything drawn outside it, including focus rings.
+- **Optimistic asking:** `asking` lists trips asked on this screen; a card counts as asked if the server says so *or* it's in `asking`. On an error the id is removed and the error is re-thrown, so `useAction` still shows the message.
+- **Tab title:** an effect sets `document.title` to "(n) Namastute" while requests wait, and puts it back when you leave the page.
+- Match grid items use `items-start`: a grid row is as tall as its tallest card, and without it a short "Asked ✓" row stretched to match the card beside it.
+
+### 73.3 `app/trip/new/page.tsx` and `destination-map.tsx`: planning a trip
+- Same rules and API call as before; new controls: terminal `Segmented` (T1/T2/T3 from the API's terminal ids), flight number in the mono font (upper-cased as you type), Today/Tomorrow `<select>` + `<input type="time">` combined into the old `istInputToIso("2026-10-17T14:25")`, `Stepper`s, search with results as tappable rows, the women-only `Toggle`.
+- **`AreaCard`:** "Destination area", the name, "Edit name" (a text field; Enter or "Done" closes it) and the privacy line. On laptops it floats over the bottom of the map.
+- **Laptop layout:** `grid-cols-[520px_1fr]`: the form scrolls in its pane with "Find co-travellers →" in the pane's footer; the map fills the right.
+- **Pins:** `pin()` builds a divIcon from an HTML template. The label is set with `textContent`, never inside the HTML string, because the area name can be typed by the user: inserting it as HTML would let a name like `<img onerror=…>` run code (the same rule as chat in chapter 46).
+- **Stable props:** the page passes `pickupPin` and `destinationPin` through `useMemo`, so the map only redraws and re-fits the view when a pin really changed, not on every keystroke elsewhere.
+- **`fitBounds`** shows both pins, with extra space at the bottom on laptops (`padBottom`) so the floating card doesn't cover the destination. A `ResizeObserver` tells Leaflet when its pane changes size.
+- **`globals.css`:** the dark tile filter, and the zoom buttons and attribution in theme colours. These rules sit outside Tailwind's layers on purpose: `leaflet.css` isn't in a layer, and unlayered CSS always beats layered CSS, whatever the specificity.
+
+### 73.4 Verified in a real browser
+- **Data:** a small script (dev only) logged in five test travellers through the normal OTP flow, gave them T3 trips near Sector 25A, made Rahul and केशव an open group, and had अर्जुन ask our test user.
+- **Laptop (1280×800, dark):** plan trip W4 (search "DLF Phase 3" → pin and dashed line, "Edit name", submit → home); home W5 with the empty state, then with matches: the open group, an "Asked you ←" row, a person card, the request card with its count, and the tab title "(1) Namastute"; "Ask to share" turned into "Asked ✓" at once and appeared under "Your requests"; the Block sheet opened and closed with Esc; accepting अर्जुन switched the right pane to the group.
+- **Phone (375 px, dark and light):** home 4a in order; the light trip card in ink; plan trip with the map inline and the "Choose where you're going" error above the button.
+- **Two gotchas:**
+  - the dev server once missed an edit to `globals.css` made by appending from the shell, and kept serving the old CSS. A normal save fixed it. If a style "doesn't work", first check that the served CSS contains it.
+  - map tiles stayed invisible while the browser pane was hidden: Leaflet fades tiles in with animation frames, which a hidden page doesn't run. Not a bug in the app.
+- **Not checked:** a real phone, a screen reader, 200% text, and the 1024 px laptop size.
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 72. Command cheat sheet
+## 74. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5066,7 +5165,7 @@ git fetch --prune
 
 ---
 
-## 73. Glossary
+## 75. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5088,6 +5187,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
 | API | Application Programming Interface: the list of requests a program accepts from other programs |
 | API contract | The agreed shape of every request and response between two sides |
+| App shell | The frame (header, avatar) that stays the same on every signed-in screen |
 | Application event | A message one module publishes inside the app; listeners react without the publisher knowing them |
 | ApplicationContext | Spring's IoC container |
 | Architecture | The overall shape of a software system: its big parts and how they talk |
@@ -5134,6 +5234,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Component | A reusable piece of a screen (React) |
 | Composite index | One index over several columns, sorted by the first, then the next |
 | Concurrency | Several pieces of work running at the same time on shared data |
+| Confirm sheet | A styled "Are you sure?" sheet shown before a destructive action |
 | Connection pool | Reusable, ready-made database connections |
 | Connection pool (HikariCP) | A fixed set of reusable database connections (10 by default) |
 | Consent | Agreement; in Namastute, both sides say yes before sharing a cab |
@@ -5145,6 +5246,8 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | CountDownLatch | A gate that makes threads wait until it's opened |
 | CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
 | CSRF | Another site making the user's browser send requests to us |
+| CSS filter | An effect applied to drawn pixels, e.g. `invert(1)` to darken light map tiles |
+| CSS Grid | Laying out a page in rows and columns; `1fr` is one share of the free space |
 | CSS variable | A named CSS value (`--accent`) that can change while the page runs, e.g. on a dark/light switch |
 | CSWSH | Cross-site WebSocket hijacking: another site opening a socket with your cookies |
 | Cursor (pagination) | A bookmark like "older than message 1234" marking where the next page starts |
@@ -5168,6 +5271,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | DI | Dependency Injection: dependencies handed in from outside |
 | Directory | Another word for folder |
 | Dirty checking | Hibernate detects changed fields and writes them at commit |
+| divIcon | A Leaflet map marker made of our own HTML instead of an image |
 | Dockerfile | Recipe for building your own image |
 | Domain | A human-readable address like namastute.in |
 | Drift | Two copies of the same truth slowly stop matching |
@@ -5219,6 +5323,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | HTTP | Request/response protocol between browser and server |
 | Idempotent | Running it twice has the same effect as running it once |
 | Image (Docker) | Packaged, read-only snapshot of a program and its environment |
+| Independent scrolling | Each pane scrolls on its own; needs `overflow-y-auto` and `min-h-0` |
 | Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
 | Interceptor | Code that inspects every incoming message before it's handled |
 | Interface (Java) | A list of methods a class promises to provide, without saying how |
@@ -5247,6 +5352,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Lock (database) | A temporary claim on a row that makes others wait |
 | Lockfile | Exact versions of all installed packages |
 | Lost update | Two writers start from the same old value; one overwrites the other |
+| Media query | A question about the screen, like "at least 1024 px wide?", in CSS or JavaScript |
 | Merge | Combining the changes from one branch into another |
 | Message broker | The part that delivers published messages to subscribers |
 | Migration | A versioned SQL change to the database structure |
@@ -5261,6 +5367,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Multi-stage build | A Dockerfile that builds in a big image and ships only the result in a small one |
 | N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
 | Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
+| Native input | A control the browser draws itself (`<input type="time">`), accessible for free |
 | Native query | Plain SQL in a repository (`nativeQuery = true`) |
 | Network call | A request to another program over a network; slower and can fail |
 | Notification tag | A label on a notification; a new one with the same tag replaces the old one |
@@ -5338,6 +5445,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Rotation | Replacing a token every time it's used |
 | Rounding mode | The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING |
 | Route | The order in which a cab drops its riders |
+| Route guard | A check at the top of a page that sends you elsewhere (e.g. to log in) |
 | Row lock | Postgres's hold on a row being changed; other writers wait |
 | Runbook | Step-by-step instructions for operating a system |
 | Runner | The VM that runs a CI job |
@@ -5364,6 +5472,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Single source of truth | Writing something once and deriving every other copy from it |
 | Singleton | One shared instance of a bean |
 | Site | Registrable domain, ignoring port and subdomains |
+| Skeleton | Grey pulsing shapes standing in for content that's loading |
 | Slice | A small piece of the product built end to end, then merged |
 | SLO / threshold | A pass line set in advance, e.g. p95 under 500 ms |
 | SNAPSHOT | A Maven version still in development |
@@ -5433,7 +5542,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 74. Interview questions to practise
+## 76. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -5578,3 +5687,9 @@ Questions an interviewer could ask about this project, roughly in the order the 
 139. Why build the six-box code input on one hidden real input instead of six inputs?
 140. What does the browser's `<dialog>` with `showModal()` give you for free?
 141. Why is a desktop layout not just the phone screen made wider?
+142. How do you make two panes scroll independently, and why is `min-h-0` needed?
+143. Phones and laptops show the same blocks in a different order. How did you avoid writing a block twice or confusing keyboard order?
+144. What is optimistic UI, and what must happen when the server says no?
+145. Why must text put inside a map marker's HTML be set with textContent?
+146. Why did the dark map filter use hue-rotate(180deg) after invert(1)?
+147. When did the app need a media query in JavaScript instead of CSS, and why?
