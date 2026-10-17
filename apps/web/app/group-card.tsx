@@ -85,7 +85,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
         <button
           onClick={() => run(async () => { await imHere(g.id); onChange(); })}
           disabled={busy}
-          className="mt-2 mr-4 rounded bg-black px-3 py-1 text-white disabled:opacity-50"
+          className="mt-2 mr-4 rounded bg-accent px-3 py-1 text-on-accent disabled:opacity-50"
         >
           I&apos;m here at the pickup
         </button>
@@ -97,7 +97,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
         <button
           onClick={() => run(async () => { await lockGroup(g.id); onChange(); })}
           disabled={busy}
-          className="mt-2 mr-4 rounded bg-black px-3 py-1 text-white disabled:opacity-50"
+          className="mt-2 mr-4 rounded bg-accent px-3 py-1 text-on-accent disabled:opacity-50"
         >
           Lock group: I&apos;m booking the cab
         </button>
@@ -120,7 +120,7 @@ export default function GroupCard({ version, onChange }: { version: number; onCh
         </button>
       )}
       <p role="status" aria-live="polite" className="text-sm">{notice}</p>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
       <GroupChat key={g.id} groupId={g.id} onUpdated={onChange} />
     </div>
   );

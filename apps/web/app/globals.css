@@ -1,26 +1,162 @@
 @import "tailwindcss";
 
+/* Namastute design tokens (design handoff v0.1, Learning Notes 70). Tailwind v4 has no tailwind.config.ts:
+   the theme lives here. Colours are CSS variables (r g b) so `.dark` on <html> swaps every one at once. */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: 251 247 241;
+  --surface: 255 255 255;
+  --surface-2: 243 237 228;
+  --line: 224 214 199;
+  --line-strong: 26 22 18;
+  --fg: 26 22 18;
+  --fg-muted: 92 83 72;
+  --fg-disabled: 143 133 119;
+  --accent: 255 166 48; /* a fill only on light: orange words use accent-text */
+  --on-accent: 26 18 6;
+  --accent-text: 138 69 0;
+  --accent-soft: 255 240 219;
+  --brand-mark: 194 98 0;
+  --success: 23 102 56;
+  --success-soft: 227 244 234;
+  --danger: 163 36 26;
+  --danger-soft: 253 232 229;
+  --on-danger: 255 255 255;
+  --info: 29 79 140;
+  --info-soft: 228 239 252;
+  --ring: 26 22 18;
+}
+
+/* Dark: the default (a script in layout.tsx adds the class before the first paint) */
+.dark {
+  --bg: 17 15 13;
+  --surface: 27 24 20;
+  --surface-2: 37 33 28;
+  --line: 59 53 45;
+  --line-strong: 90 81 70;
+  --fg: 246 240 231;
+  --fg-muted: 184 174 159;
+  --fg-disabled: 143 133 119;
+  --accent: 255 166 48;
+  --on-accent: 26 18 6;
+  --accent-text: 255 192 116;
+  --accent-soft: 58 39 16;
+  --brand-mark: 255 166 48;
+  --success: 111 220 156;
+  --success-soft: 18 48 31;
+  --danger: 255 154 139;
+  --danger-soft: 58 23 20;
+  --on-danger: 42 13 9;
+  --info: 156 203 255;
+  --info-soft: 21 37 54;
+  --ring: 246 240 231;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: rgb(var(--bg));
+  --color-surface: rgb(var(--surface));
+  --color-surface-2: rgb(var(--surface-2));
+  --color-line: rgb(var(--line));
+  --color-line-strong: rgb(var(--line-strong));
+  --color-fg: rgb(var(--fg));
+  --color-fg-muted: rgb(var(--fg-muted));
+  --color-fg-disabled: rgb(var(--fg-disabled));
+  --color-accent: rgb(var(--accent));
+  --color-on-accent: rgb(var(--on-accent));
+  --color-accent-text: rgb(var(--accent-text));
+  --color-accent-soft: rgb(var(--accent-soft));
+  --color-brand-mark: rgb(var(--brand-mark));
+  --color-success: rgb(var(--success));
+  --color-success-soft: rgb(var(--success-soft));
+  --color-danger: rgb(var(--danger));
+  --color-danger-soft: rgb(var(--danger-soft));
+  --color-on-danger: rgb(var(--on-danger));
+  --color-info: rgb(var(--info));
+  --color-info-soft: rgb(var(--info-soft));
+  --color-ring: rgb(var(--ring));
+
+  /* next/font sets the --font-* variables on <html> (layout.tsx) */
+  --font-display: var(--font-anek), "Mukta", sans-serif;
+  --font-sans: var(--font-mukta), "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* rem-based, so layouts survive 200% text. Never below 14px. */
+  --text-hero: 5.5rem;
+  --text-hero--line-height: 0.95;
+  --text-hero--font-weight: 800;
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.05;
+  --text-display--font-weight: 800;
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.1;
+  --text-h1--font-weight: 800;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 800;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.25;
+  --text-h3--font-weight: 700;
+  --text-title: 1.125rem;
+  --text-title--line-height: 1.35;
+  --text-title--font-weight: 700;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.45;
+  --text-eyebrow: 0.8125rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.08em;
+  --text-eyebrow--font-weight: 700;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-btn: 14px;
+  --radius-lg: 20px;
+  --radius-sheet: 28px;
+
+  /* h-tap, min-h-cta, size-tap… */
+  --spacing-tap: 3rem;
+  --spacing-cta: 3.5rem;
+  --spacing-pay: 4rem;
+
+  --color-scrim: rgb(8 7 6 / 0.7); /* behind sheets and dialogs */
+
+  --animate-pulse: nm-pulse 1.4s ease-in-out infinite;
+  @keyframes nm-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+  }
+  --animate-sheet-up: sheet-up 200ms ease-out;
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Anek Devanagari is variable in width: headlines are stretched 108–115% */
+@utility stretch-108 { font-stretch: 108%; }
+@utility stretch-110 { font-stretch: 110%; }
+@utility stretch-112 { font-stretch: 112%; }
+@utility stretch-115 { font-stretch: 115%; }
+@utility tnum { font-variant-numeric: tabular-nums; }
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  body { @apply bg-bg font-sans text-body text-fg antialiased; }
+  /* Every interactive element: a 2px gap in the page colour, then a 2px ring */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--bg)), 0 0 0 4px rgb(var(--ring));
+  }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }

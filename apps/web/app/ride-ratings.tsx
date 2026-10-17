@@ -49,7 +49,7 @@ export default function RideRatings({ group }: { group: Group }) {
           );
         })}
       </ul>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </section>
   );
 }

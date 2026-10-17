@@ -115,9 +115,9 @@ export default function GroupChat({ groupId, onUpdated }: { groupId: string; onU
               </>
             )}{" "}
             {l.failed ? (
-              <span className="text-xs text-red-600">not sent</span>
+              <span className="text-xs text-danger">not sent</span>
             ) : (
-              <span className="text-xs text-gray-500">{l.pending ? "sending…" : formatIstTime(l.createdAt)}</span>
+              <span className="text-xs text-fg-muted">{l.pending ? "sending…" : formatIstTime(l.createdAt)}</span>
             )}
           </li>
         ))}
@@ -134,11 +134,11 @@ export default function GroupChat({ groupId, onUpdated }: { groupId: string; onU
           placeholder="I'm at pillar 12…"
           className="flex-1 rounded border p-1"
         />
-        <button type="submit" className="rounded bg-black px-3 py-1 text-white">
+        <button type="submit" className="rounded bg-accent px-3 py-1 text-on-accent">
           Send
         </button>
       </form>
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </section>
   );
 }

@@ -8,12 +8,12 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Share a cab with people from your flight.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#000000",
+    background_color: "#110F0D", // the design's dark bg: the splash screen matches the app
+    theme_color: "#110F0D",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }, // extra margin: phones crop it to a circle or squircle
     ],
   };
 }

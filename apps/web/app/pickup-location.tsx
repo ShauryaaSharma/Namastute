@@ -127,14 +127,14 @@ export default function PickupLocation({ group }: { group: Group }) {
     <section className="mt-3 rounded border p-2 text-sm" aria-label="Live location">
       <h4 className="font-semibold">Find each other</h4>
       {sharing ? (
-        <p className="mt-1 rounded bg-blue-50 p-1 text-blue-900">
+        <p className="mt-1 rounded bg-info-soft p-1 text-info">
           Sharing your location with your group until {untilText}. Keep Namastute open.{" "}
           {mine ? `Accurate to about ${mine.accuracy} m.` : "Finding you…"}{" "}
           <button onClick={stop} className="underline">Stop</button>
         </p>
       ) : (
         <>
-          <button onClick={start} className="mt-1 rounded bg-black px-3 py-1 text-white">
+          <button onClick={start} className="mt-1 rounded bg-accent px-3 py-1 text-on-accent">
             Share my location
           </button>
           <span className="ml-2">Only your group sees it, only until {untilText}. Nothing is saved.</span>
@@ -153,7 +153,7 @@ export default function PickupLocation({ group }: { group: Group }) {
       {(mine || visible.length > 0) && (
         <PickupMap dots={[...(mine ? [{ name: "You", ...mine, you: true }] : []), ...visible.map((d) => ({ ...d, you: false }))]} />
       )}
-      <p role="alert" className="text-red-600">{error}</p>
+      <p role="alert" className="text-danger">{error}</p>
     </section>
   );
 }

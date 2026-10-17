@@ -62,13 +62,13 @@ export default function FareSection({ group, onChange }: { group: Group; onChang
               type="button"
               onClick={() => run(async () => { await enterFare(g.id, amount); onChange(); })}
               disabled={busy}
-              className="mt-1 rounded bg-black px-3 py-1 text-white disabled:opacity-50"
+              className="mt-1 rounded bg-accent px-3 py-1 text-on-accent disabled:opacity-50"
             >
               Confirm fare {rupees(amount)}
             </button>
           </div>
         )}
-        <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+        <p role="alert" aria-live="polite" className="text-danger">{error}</p>
       </form>
     );
   }
@@ -104,7 +104,7 @@ export default function FareSection({ group, onChange }: { group: Group; onChang
       </p>
       {link ? (
         <>
-          <a href={link} className="mt-1 inline-block rounded bg-black px-3 py-1 text-white">
+          <a href={link} className="mt-1 inline-block rounded bg-accent px-3 py-1 text-on-accent">
             Pay {booker.firstName} {rupees(share)} by UPI
           </a>
           <p className="mt-1 text-sm">
@@ -126,7 +126,7 @@ export default function FareSection({ group, onChange }: { group: Group; onChang
       ) : (
         <p className="text-sm">{booker.firstName} hasn&apos;t added a UPI ID yet: pay them directly.</p>
       )}
-      <p role="alert" aria-live="polite" className="text-red-600">{error}</p>
+      <p role="alert" aria-live="polite" className="text-danger">{error}</p>
     </div>
   );
 }
