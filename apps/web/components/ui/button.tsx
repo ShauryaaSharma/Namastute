@@ -42,22 +42,29 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   loadingLabel?: string;
 };
 
+// The button look, also for links that act as a screen's main action (<Link className={buttonClass()}>)
+export function buttonClass({ variant = "primary", size, disabled, loading, className }: {
+  variant?: Variant; size?: Size; disabled?: boolean; loading?: boolean; className?: string;
+} = {}) {
+  return cx(
+    "inline-flex items-center justify-center gap-2.5 rounded-btn py-2 text-center leading-tight transition",
+    TYPE[variant],
+    SIZES[size ?? (variant === "primary" || variant === "ink" ? "cta" : "tap")],
+    disabled && !loading ? DISABLED[variant] : COLOURS[variant],
+    loading && "opacity-85",
+    className,
+  );
+}
+
 // Buttons from the design system (Learning Notes 70): one primary action per screen, ≥ 48px targets
-export function Button({ variant = "primary", size, loading, loadingLabel, disabled, className, children, ...rest }: Props) {
+export function Button({ variant, size, loading, loadingLabel, disabled, className, children, ...rest }: Props) {
   return (
     <button
       type="button"
       {...rest}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cx(
-        "inline-flex items-center justify-center gap-2.5 rounded-btn py-2 text-center leading-tight transition",
-        TYPE[variant],
-        SIZES[size ?? (variant === "primary" || variant === "ink" ? "cta" : "tap")],
-        disabled && !loading ? DISABLED[variant] : COLOURS[variant],
-        loading && "opacity-85",
-        className,
-      )}
+      className={buttonClass({ variant, size, disabled, loading, className })}
     >
       {loading && <Spinner />}
       {loading && loadingLabel ? loadingLabel : children}

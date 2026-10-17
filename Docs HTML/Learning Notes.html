@@ -124,10 +124,12 @@
 <a class="topic" href="#part-ix-the-new-look">Part IX. The new look</a>
 <details><summary><a href="#70-from-a-design-handoff-to-a-real-frontend">70. From a design handoff to a real frontend</a></summary><a class="sub" href="#700-words-first">70.0 Words first</a><a class="sub" href="#701-the-problem">70.1 The problem</a><a class="sub" href="#702-the-naive-ways-and-why-they-hurt">70.2 The naive ways, and why they hurt</a><a class="sub" href="#703-the-tools">70.3 The tools</a><a class="sub" href="#704-decisions-2026-10-16">70.4 Decisions (2026-10-16)</a></details>
 <details><summary><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">71. Code walkthrough: the foundation, log in and profile (slice A)</a></summary><a class="sub" href="#710-before-you-read">71.0 Before you read</a><a class="sub" href="#711-appglobalscss-the-tokens">71.1 app/globals.css: the tokens</a><a class="sub" href="#712-applayouttsx-fonts-and-the-no-flash-theme">71.2 app/layout.tsx: fonts and the no-flash theme</a><a class="sub" href="#713-componentsui-the-library">71.3 components/ui/: the library</a><a class="sub" href="#714-the-screens">71.4 The screens</a><a class="sub" href="#715-icons-made-with-the-real-font">71.5 Icons, made with the real font</a><a class="sub" href="#716-verified-in-a-real-browser">71.6 Verified in a real browser</a></details>
+<details><summary><a href="#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">72. Home and planning a trip: panes, sheets and instant feedback</a></summary><a class="sub" href="#720-words-first">72.0 Words first</a><a class="sub" href="#721-the-problem">72.1 The problem</a><a class="sub" href="#722-the-naive-ways-and-why-they-hurt">72.2 The naive ways, and why they hurt</a><a class="sub" href="#723-the-tools">72.3 The tools</a><a class="sub" href="#724-decisions-2026-10-17">72.4 Decisions (2026-10-17)</a></details>
+<details><summary><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">73. Code walkthrough: home and plan trip (slice B)</a></summary><a class="sub" href="#730-before-you-read">73.0 Before you read</a><a class="sub" href="#731-small-shared-changes">73.1 Small shared changes</a><a class="sub" href="#732-apppagetsx-and-appcurrent-triptsx-home">73.2 app/page.tsx and app/current-trip.tsx: home</a><a class="sub" href="#733-apptripnewpagetsx-and-destination-maptsx-planning-a-trip">73.3 app/trip/new/page.tsx and destination-map.tsx: planning a trip</a><a class="sub" href="#734-verified-in-a-real-browser">73.4 Verified in a real browser</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#72-command-cheat-sheet">72. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#73-glossary">73. Glossary</a>
-<a class="topic" href="#74-interview-questions-to-practise">74. Interview questions to practise</a>
+<details><summary><a href="#74-command-cheat-sheet">74. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#75-glossary">75. Glossary</a>
+<a class="topic" href="#76-interview-questions-to-practise">76. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
@@ -160,7 +162,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 73) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (72) and <strong>Interview questions</strong> (74) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 75) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (74) and <strong>Interview questions</strong> (76) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -385,12 +387,14 @@
 <ol start="70">
 <li><a href="#70-from-a-design-handoff-to-a-real-frontend">From a design handoff to a real frontend</a></li>
 <li><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">Code walkthrough: the foundation, log in and profile (slice A)</a></li>
+<li><a href="#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">Home and planning a trip: panes, sheets and instant feedback</a></li>
+<li><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">Code walkthrough: home and plan trip (slice B)</a></li>
 </ol>
 <p><strong><a href="#reference">Reference</a></strong></p>
-<ol start="72">
-<li><a href="#72-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#73-glossary">Glossary</a></li>
-<li><a href="#74-interview-questions-to-practise">Interview questions to practise</a></li>
+<ol start="74">
+<li><a href="#74-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#75-glossary">Glossary</a></li>
+<li><a href="#76-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -6732,10 +6736,157 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked:</strong> a real phone, screen readers, and 200% text across every screen.</li>
 </ul>
 <hr>
+<h2 id="72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">72. Home and planning a trip: panes, sheets and instant feedback</h2>
+<h3 id="720-words-first">72.0 Words first</h3>
+<ul>
+<li><strong>App shell:</strong> the frame that stays the same on every signed-in screen (logo, your avatar), built once and reused.</li>
+<li><strong>Route guard:</strong> a check at the top of a page that sends you elsewhere: not logged in → <code>/login</code>, no name yet → <code>/profile</code>.</li>
+<li><strong>CSS Grid:</strong> a way to lay out a page in rows and columns. <code>grid-cols-[400px_1fr]</code> means a 400 px column, then the rest (<strong><code>fr</code></strong> = one share of the free space).</li>
+<li><strong>Independent scrolling:</strong> each pane scrolls on its own and the page doesn&#39;t. It needs a page exactly the screen&#39;s height, <code>overflow-y-auto</code> on each pane, and <strong><code>min-h-0</code></strong>: grid and flex children refuse to shrink below their content unless told to, so without it the pane grows instead of scrolling.</li>
+<li><strong>Native input:</strong> a control the browser draws itself, like <code>&lt;input type=&quot;time&quot;&gt;</code>; phones show their own wheel picker, and keyboards and screen readers work with it for free.</li>
+<li><strong>Confirm sheet:</strong> a styled &quot;Are you sure?&quot; sheet before a destructive action, instead of the browser&#39;s grey <code>window.confirm()</code> box.</li>
+<li><strong>Optimistic UI:</strong> show the result of a tap at once (&quot;Asked ✓&quot;), before the server answers, and undo it if the server says no.</li>
+<li><strong>Skeleton:</strong> grey pulsing shapes standing in for content that&#39;s loading.</li>
+<li><strong>CSS filter:</strong> an effect applied to pixels after they&#39;re drawn, like <code>invert(1)</code>.</li>
+<li><strong>divIcon:</strong> a Leaflet map marker made of our own HTML instead of an image.</li>
+<li><strong>Media query:</strong> a CSS (or JavaScript) question about the screen, like &quot;is it at least 1024 px wide?&quot;.</li>
+</ul>
+<h3 id="721-the-problem">72.1 The problem</h3>
+<p>After slice A, home was still a heading, two links and an orange bar, and planning a trip was a plain form with dropdowns. These are the screens people use most: at the airport on a phone, in a hurry, and at home on a laptop the night before. The design has four phone states for home (matches, empty, loading, and the group view), the plan-trip screen, and laptop layouts for both (W4, W5).</p>
+<h3 id="722-the-naive-ways-and-why-they-hurt">72.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Restyle the old files:</strong> home was a list of sentences (&quot;Asha (92% 👍) · out 10 min after you · …&quot;). The design needs cards with avatars, chips and a big button: a new shape, not new colours.</li>
+<li><strong>Stretch the phone layout on laptops:</strong> the design forbids it. Laptops get panes: your trip and requests on the left, matches on the right; the plan form beside a full-height map.</li>
+<li><strong>Keep <code>window.confirm</code> for &quot;Cancel trip&quot; and &quot;Block&quot;:</strong> a grey browser box in a dark app, which can&#39;t be styled or explain kindly.</li>
+<li><strong>Wait for the server after &quot;Ask to share&quot;:</strong> on airport Wi-Fi that&#39;s one to three seconds of &quot;did it work?&quot;.</li>
+</ul>
+<h3 id="723-the-tools">72.3 The tools</h3>
+<ol>
+<li><strong><code>AppBar</code></strong>, one header for every signed-in screen: the wordmark (a link home) and your avatar (a link to the profile, where log out lives). Laptops add the airport clock, &quot;Delhi IGI · 1:57 pm IST&quot;, because every time in the app is India time.</li>
+<li><strong>Panes with CSS Grid, placed explicitly.</strong> Phones read top to bottom: trip, matches, requests. Laptops put requests under the trip on the left and matches on the right. The same three blocks are placed into grid cells (<code>lg:col-start-2 lg:row-span-2</code>), so the page&#39;s order (what keyboards and screen readers follow) stays the phone&#39;s order and no block is written twice.</li>
+<li><strong>The slice A pieces:</strong> <code>Segmented</code> for the terminal, <code>Stepper</code> for seats and bags, the unavailable <code>Toggle</code> for women-only, <code>Card</code>, <code>Chip</code>, <code>Avatar</code>, <code>EmptyState</code>, <code>Skeleton</code>, <code>BottomBar</code>, and <code>Sheet</code> for every confirmation. Most of this slice is arranging pieces that already existed.</li>
+<li><strong>Two native inputs for the time:</strong> the API accepts only the next 24 hours, so the date is a choice of &quot;Today, 17 Oct&quot; or &quot;Tomorrow, 18 Oct&quot;, next to <code>&lt;input type=&quot;time&quot;&gt;</code>.</li>
+<li><strong>The map, dressed in the theme:</strong> OpenStreetMap only draws light tiles, so in dark mode <code>filter: invert(1) hue-rotate(180deg)</code> turns them dark: inverting makes the land black but turns water orange, and rotating the hues by half a circle turns it blue again. The pins are divIcons in our colours, joined by a dashed orange line.</li>
+<li><strong>One media query in JavaScript:</strong> a map can&#39;t be in two places, and CSS can only hide things, not move them. On phones the map sits inside the form; on laptops it fills its own pane. A tiny <code>useWide()</code> hook asks &quot;at least 1024 px?&quot; and the page puts the one map where it belongs.</li>
+<li><strong>Optimistic &quot;Ask to share&quot;:</strong> the card turns into &quot;Asked ✓&quot; instantly; if the server refuses, it turns back and shows why.</li>
+</ol>
+<h3 id="724-decisions-2026-10-17">72.4 Decisions (2026-10-17)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Header</td>
+<td><code>AppBar</code> on home and plan trip (group and fare later); avatar opens the profile</td>
+</tr>
+<tr>
+<td>Clock in the top bar</td>
+<td>&quot;Delhi IGI · 1:57 pm IST&quot;, no &quot;Live&quot; dot until a screen really has a live connection (slice C)</td>
+</tr>
+<tr>
+<td>Home when logged out / no name</td>
+<td>Redirect to <code>/login</code> / <code>/profile</code>, like plan trip</td>
+</tr>
+<tr>
+<td>Home with no trip (not in the design)</td>
+<td>A &quot;Where are you headed?&quot; card and &quot;Plan your trip →&quot; in the bottom bar</td>
+</tr>
+<tr>
+<td>&quot;Edit trip&quot; (W5)</td>
+<td>Skipped: the API has no edit; cancel and plan again</td>
+</tr>
+<tr>
+<td>Map of match areas on laptop home (W5)</td>
+<td>Skipped: the API never sends where matches are going, only area names, on purpose</td>
+</tr>
+<tr>
+<td>&quot;Block&quot; on a person card (not in the design)</td>
+<td>A small text button at the card&#39;s top-right, away from &quot;Ask to share&quot;, behind a confirm sheet</td>
+</tr>
+<tr>
+<td>Cancel trip, Block</td>
+<td>Confirm sheets</td>
+</tr>
+<tr>
+<td>Ask to share</td>
+<td>Optimistic, undone on error</td>
+</tr>
+<tr>
+<td>Date and time</td>
+<td>Today/Tomorrow + native time input</td>
+</tr>
+<tr>
+<td>Destination area</td>
+<td>A card with &quot;Edit name&quot;, because map lookups sometimes give odd names</td>
+</tr>
+<tr>
+<td>Tab title</td>
+<td>&quot;(1) Namastute&quot; while requests wait for your answer</td>
+</tr>
+<tr>
+<td>Rating</td>
+<td>A chip after the name (&quot;92% 👍 · 12 ratings&quot; or &quot;New&quot;), in the space the design reserves for one badge</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Later change:</strong> Group, chat and pickup still use their old layout inside the new home; slice C redesigns them.</p>
+</blockquote>
+<hr>
+<h2 id="73-code-walkthrough-home-and-plan-trip-slice-b">73. Code walkthrough: home and plan trip (slice B)</h2>
+<h3 id="730-before-you-read">73.0 Before you read</h3>
+<p>This slice redesigns the two busiest screens on top of slice A&#39;s components (chapter 71), applying chapter 72. There are no API changes: everything uses the same calls as before.</p>
+<h3 id="731-small-shared-changes">73.1 Small shared changes</h3>
+<ul>
+<li><strong><code>components/ui/button.tsx</code>:</strong> the look is now <code>buttonClass()</code>, used by <code>Button</code> and by links that act as a screen&#39;s main action (<code>&lt;Link href=&quot;/trip/new&quot; className={buttonClass()}&gt;</code>). A link that looks like a button is still a link: it can open in a new tab.</li>
+<li><strong><code>components/ui/layout.tsx</code>:</strong> <code>BottomBar pane</code> keeps the bar look on laptops, as the footer of the plan-trip form&#39;s pane.</li>
+<li><strong><code>lib/time.ts</code>:</strong> <code>istDate(iso)</code> (the India date at that moment), <code>shortDate(&quot;2026-10-17&quot;)</code> → &quot;17 Oct&quot;, <code>istDayName(date)</code> → &quot;Today&quot;, &quot;Tomorrow&quot; or &quot;19 Oct&quot;.</li>
+<li><strong><code>lib/use-wide.ts</code>:</strong> <code>useWide()</code> built on React&#39;s <code>useSyncExternalStore</code>, which subscribes to something outside React (here <code>matchMedia(&quot;(min-width: 1024px)&quot;)</code>) and re-renders when it changes. During server rendering it answers <code>false</code>.</li>
+<li><strong><code>components/app-bar.tsx</code>:</strong> wordmark link, clock (updated every 15 s), avatar link. <strong>A slice A trap again:</strong> <code>hidden lg:inline-flex</code> on <code>AppIcon</code> didn&#39;t hide it, because the icon&#39;s own <code>inline-flex</code> also sets <code>display</code>, and stylesheet order decided (71.3). The icon is now wrapped in <code>&lt;span class=&quot;hidden lg:contents&quot;&gt;</code>, where nothing fights.</li>
+</ul>
+<h3 id="732-apppagetsx-and-appcurrent-triptsx-home">73.2 <code>app/page.tsx</code> and <code>app/current-trip.tsx</code>: home</h3>
+<ul>
+<li><code>page.tsx</code> became a client page with a route guard; the old <code>session-box.tsx</code> is gone (log out lives on the profile).</li>
+<li><code>CurrentTrip</code> keeps its data logic unchanged (load trip and requests, refresh every 60 s and when the tab comes back, <code>version</code> to reload after actions), and is now split into small parts:<ul>
+<li><strong><code>TripCard</code>:</strong> the orange card (an ink card in light mode, as the design asks), with &quot;Your trip · Today&quot;, the title, &quot;Outside at 2:25 pm · 1 seat, 1 bag · about 9.7 km&quot;, and &quot;Cancel trip&quot;, which opens a <code>Sheet</code>.</li>
+<li><strong><code>Matches</code>:</strong> loading skeletons, an error alert, the empty state, or a grid of <strong><code>MatchCard</code></strong> (one person or an open group, with chips and &quot;Ask to share&quot;) and <strong><code>CompactRow</code></strong> (&quot;Asked ✓&quot;, or an orange border and &quot;Asked you · answer below ↓&quot;, &quot;Asked you ←&quot; on laptops where requests sit on the left).</li>
+<li><strong><code>Received</code>:</strong> request cards with Decline / Accept and a count badge. <strong><code>Sent</code>:</strong> &quot;waiting for an answer&quot; with a pulsing dot, or a &quot;declined&quot; chip.</li>
+</ul>
+</li>
+<li><strong>The page grid</strong> (<code>PAGE</code>): on laptops <code>grid-cols-[360px_1fr]</code> (400 px from 1280), two rows; the trip card sits top-left, requests bottom-left, and matches (or your group) span both rows on the right. The two lower cells scroll on their own (<code>min-h-0 overflow-y-auto</code>) and have 4 px of padding, because a scroll box clips anything drawn outside it, including focus rings.</li>
+<li><strong>Optimistic asking:</strong> <code>asking</code> lists trips asked on this screen; a card counts as asked if the server says so <em>or</em> it&#39;s in <code>asking</code>. On an error the id is removed and the error is re-thrown, so <code>useAction</code> still shows the message.</li>
+<li><strong>Tab title:</strong> an effect sets <code>document.title</code> to &quot;(n) Namastute&quot; while requests wait, and puts it back when you leave the page.</li>
+<li>Match grid items use <code>items-start</code>: a grid row is as tall as its tallest card, and without it a short &quot;Asked ✓&quot; row stretched to match the card beside it.</li>
+</ul>
+<h3 id="733-apptripnewpagetsx-and-destination-maptsx-planning-a-trip">73.3 <code>app/trip/new/page.tsx</code> and <code>destination-map.tsx</code>: planning a trip</h3>
+<ul>
+<li>Same rules and API call as before; new controls: terminal <code>Segmented</code> (T1/T2/T3 from the API&#39;s terminal ids), flight number in the mono font (upper-cased as you type), Today/Tomorrow <code>&lt;select&gt;</code> + <code>&lt;input type=&quot;time&quot;&gt;</code> combined into the old <code>istInputToIso(&quot;2026-10-17T14:25&quot;)</code>, <code>Stepper</code>s, search with results as tappable rows, the women-only <code>Toggle</code>.</li>
+<li><strong><code>AreaCard</code>:</strong> &quot;Destination area&quot;, the name, &quot;Edit name&quot; (a text field; Enter or &quot;Done&quot; closes it) and the privacy line. On laptops it floats over the bottom of the map.</li>
+<li><strong>Laptop layout:</strong> <code>grid-cols-[520px_1fr]</code>: the form scrolls in its pane with &quot;Find co-travellers →&quot; in the pane&#39;s footer; the map fills the right.</li>
+<li><strong>Pins:</strong> <code>pin()</code> builds a divIcon from an HTML template. The label is set with <code>textContent</code>, never inside the HTML string, because the area name can be typed by the user: inserting it as HTML would let a name like <code>&lt;img onerror=…&gt;</code> run code (the same rule as chat in chapter 46).</li>
+<li><strong>Stable props:</strong> the page passes <code>pickupPin</code> and <code>destinationPin</code> through <code>useMemo</code>, so the map only redraws and re-fits the view when a pin really changed, not on every keystroke elsewhere.</li>
+<li><strong><code>fitBounds</code></strong> shows both pins, with extra space at the bottom on laptops (<code>padBottom</code>) so the floating card doesn&#39;t cover the destination. A <code>ResizeObserver</code> tells Leaflet when its pane changes size.</li>
+<li><strong><code>globals.css</code>:</strong> the dark tile filter, and the zoom buttons and attribution in theme colours. These rules sit outside Tailwind&#39;s layers on purpose: <code>leaflet.css</code> isn&#39;t in a layer, and unlayered CSS always beats layered CSS, whatever the specificity.</li>
+</ul>
+<h3 id="734-verified-in-a-real-browser">73.4 Verified in a real browser</h3>
+<ul>
+<li><strong>Data:</strong> a small script (dev only) logged in five test travellers through the normal OTP flow, gave them T3 trips near Sector 25A, made Rahul and केशव an open group, and had अर्जुन ask our test user.</li>
+<li><strong>Laptop (1280×800, dark):</strong> plan trip W4 (search &quot;DLF Phase 3&quot; → pin and dashed line, &quot;Edit name&quot;, submit → home); home W5 with the empty state, then with matches: the open group, an &quot;Asked you ←&quot; row, a person card, the request card with its count, and the tab title &quot;(1) Namastute&quot;; &quot;Ask to share&quot; turned into &quot;Asked ✓&quot; at once and appeared under &quot;Your requests&quot;; the Block sheet opened and closed with Esc; accepting अर्जुन switched the right pane to the group.</li>
+<li><strong>Phone (375 px, dark and light):</strong> home 4a in order; the light trip card in ink; plan trip with the map inline and the &quot;Choose where you&#39;re going&quot; error above the button.</li>
+<li><strong>Two gotchas:</strong><ul>
+<li>the dev server once missed an edit to <code>globals.css</code> made by appending from the shell, and kept serving the old CSS. A normal save fixed it. If a style &quot;doesn&#39;t work&quot;, first check that the served CSS contains it.</li>
+<li>map tiles stayed invisible while the browser pane was hidden: Leaflet fades tiles in with animation frames, which a hidden page doesn&#39;t run. Not a bug in the app.</li>
+</ul>
+</li>
+<li><strong>Not checked:</strong> a real phone, a screen reader, 200% text, and the 1024 px laptop size.</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="72-command-cheat-sheet">72. Command cheat sheet</h2>
+<h2 id="74-command-cheat-sheet">74. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -6800,7 +6951,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="73-glossary">73. Glossary</h2>
+<h2 id="75-glossary">75. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -6872,6 +7023,10 @@ git fetch --prune
 <tr>
 <td>API contract</td>
 <td>The agreed shape of every request and response between two sides</td>
+</tr>
+<tr>
+<td>App shell</td>
+<td>The frame (header, avatar) that stays the same on every signed-in screen</td>
 </tr>
 <tr>
 <td>Application event</td>
@@ -7058,6 +7213,10 @@ git fetch --prune
 <td>Several pieces of work running at the same time on shared data</td>
 </tr>
 <tr>
+<td>Confirm sheet</td>
+<td>A styled &quot;Are you sure?&quot; sheet shown before a destructive action</td>
+</tr>
+<tr>
 <td>Connection pool</td>
 <td>Reusable, ready-made database connections</td>
 </tr>
@@ -7100,6 +7259,14 @@ git fetch --prune
 <tr>
 <td>CSRF</td>
 <td>Another site making the user&#39;s browser send requests to us</td>
+</tr>
+<tr>
+<td>CSS filter</td>
+<td>An effect applied to drawn pixels, e.g. <code>invert(1)</code> to darken light map tiles</td>
+</tr>
+<tr>
+<td>CSS Grid</td>
+<td>Laying out a page in rows and columns; <code>1fr</code> is one share of the free space</td>
 </tr>
 <tr>
 <td>CSS variable</td>
@@ -7192,6 +7359,10 @@ git fetch --prune
 <tr>
 <td>Dirty checking</td>
 <td>Hibernate detects changed fields and writes them at commit</td>
+</tr>
+<tr>
+<td>divIcon</td>
+<td>A Leaflet map marker made of our own HTML instead of an image</td>
 </tr>
 <tr>
 <td>Dockerfile</td>
@@ -7398,6 +7569,10 @@ git fetch --prune
 <td>Packaged, read-only snapshot of a program and its environment</td>
 </tr>
 <tr>
+<td>Independent scrolling</td>
+<td>Each pane scrolls on its own; needs <code>overflow-y-auto</code> and <code>min-h-0</code></td>
+</tr>
+<tr>
 <td>Index scan / B-tree</td>
 <td>Finding rows through an index / the default index type, a sorted tree</td>
 </tr>
@@ -7510,6 +7685,10 @@ git fetch --prune
 <td>Two writers start from the same old value; one overwrites the other</td>
 </tr>
 <tr>
+<td>Media query</td>
+<td>A question about the screen, like &quot;at least 1024 px wide?&quot;, in CSS or JavaScript</td>
+</tr>
+<tr>
 <td>Merge</td>
 <td>Combining the changes from one branch into another</td>
 </tr>
@@ -7564,6 +7743,10 @@ git fetch --prune
 <tr>
 <td>Named matcher (Caddy)</td>
 <td>A reusable request condition, e.g. @api path /api/* /ws</td>
+</tr>
+<tr>
+<td>Native input</td>
+<td>A control the browser draws itself (<code>&lt;input type=&quot;time&quot;&gt;</code>), accessible for free</td>
 </tr>
 <tr>
 <td>Native query</td>
@@ -7874,6 +8057,10 @@ git fetch --prune
 <td>The order in which a cab drops its riders</td>
 </tr>
 <tr>
+<td>Route guard</td>
+<td>A check at the top of a page that sends you elsewhere (e.g. to log in)</td>
+</tr>
+<tr>
 <td>Row lock</td>
 <td>Postgres&#39;s hold on a row being changed; other writers wait</td>
 </tr>
@@ -7976,6 +8163,10 @@ git fetch --prune
 <tr>
 <td>Site</td>
 <td>Registrable domain, ignoring port and subdomains</td>
+</tr>
+<tr>
+<td>Skeleton</td>
+<td>Grey pulsing shapes standing in for content that&#39;s loading</td>
 </tr>
 <tr>
 <td>Slice</td>
@@ -8243,7 +8434,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="74-interview-questions-to-practise">74. Interview questions to practise</h2>
+<h2 id="76-interview-questions-to-practise">76. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -8387,6 +8578,12 @@ git fetch --prune
 <li>Why build the six-box code input on one hidden real input instead of six inputs?</li>
 <li>What does the browser&#39;s <code>&lt;dialog&gt;</code> with <code>showModal()</code> give you for free?</li>
 <li>Why is a desktop layout not just the phone screen made wider?</li>
+<li>How do you make two panes scroll independently, and why is <code>min-h-0</code> needed?</li>
+<li>Phones and laptops show the same blocks in a different order. How did you avoid writing a block twice or confusing keyboard order?</li>
+<li>What is optimistic UI, and what must happen when the server says no?</li>
+<li>Why must text put inside a map marker&#39;s HTML be set with textContent?</li>
+<li>Why did the dark map filter use hue-rotate(180deg) after invert(1)?</li>
+<li>When did the app need a media query in JavaScript instead of CSS, and why?</li>
 </ol>
 
 

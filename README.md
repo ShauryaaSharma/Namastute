@@ -161,7 +161,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
 - **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups.
-- **The redesign:** in progress, in four slices. Done: the design system (tokens, fonts, dark/light theme, components) and the log-in and profile screens. Next: plan trip and home, then the group screens, then fare and ratings.
+- **The redesign:** in progress, in four slices. Done: the design system (tokens, fonts, dark/light theme, components), log in, profile, home and plan trip. Next: the group screens (group, chat, pickup), then fare and ratings.
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 
 The full roadmap is in the design doc, section 7.
