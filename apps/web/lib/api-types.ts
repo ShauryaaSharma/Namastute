@@ -481,6 +481,8 @@ export interface components {
             fareTotal: number | null;
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            meetAt: string;
             members: components["schemas"]["MemberView"][];
             /** Format: date-time */
             sharingFrom: string;

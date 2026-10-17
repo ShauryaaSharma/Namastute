@@ -71,7 +71,7 @@ const BADGE_TEXT = { open: "Open", locked: "Locked", met: "Met up" };
 
 export function StatusBadge({ status }: { status: keyof typeof BADGES }) {
   return (
-    <span className={cx("inline-flex rounded-sm px-3 py-1.5 font-display text-eyebrow uppercase tracking-[0.06em]", BADGES[status])}>
+    <span className={cx("inline-flex shrink-0 whitespace-nowrap rounded-sm px-3 py-1.5 font-display text-eyebrow uppercase tracking-[0.06em]", BADGES[status])}>
       {BADGE_TEXT[status]}
     </span>
   );

@@ -866,6 +866,10 @@
             "type" : "string",
             "format" : "uuid"
           },
+          "meetAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "members" : {
             "type" : "array",
             "items" : {

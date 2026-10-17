@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 75) defines every term in the book, A to Z. The **Command cheat sheet** (74) and **Interview questions** (76) are for revision.
+- The **Glossary** (chapter 77) defines every term in the book, A to Z. The **Command cheat sheet** (76) and **Interview questions** (78) are for revision.
 
 ---
 
@@ -219,12 +219,14 @@ flowchart LR
 71. [Code walkthrough: the foundation, log in and profile (slice A)](#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a)
 72. [Home and planning a trip: panes, sheets and instant feedback](#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback)
 73. [Code walkthrough: home and plan trip (slice B)](#73-code-walkthrough-home-and-plan-trip-slice-b)
+74. [The group screen: chat that behaves, honest connection status, safety one tap away](#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away)
+75. [Code walkthrough: the group screen (slice C)](#75-code-walkthrough-the-group-screen-slice-c)
 
 **[Reference](#reference)**
 
-74. [Command cheat sheet](#74-command-cheat-sheet)
-75. [Glossary](#75-glossary)
-76. [Interview questions to practise](#76-interview-questions-to-practise)
+76. [Command cheat sheet](#76-command-cheat-sheet)
+77. [Glossary](#77-glossary)
+78. [Interview questions to practise](#78-interview-questions-to-practise)
 
 ---
 
@@ -5073,13 +5075,132 @@ This slice redesigns the two busiest screens on top of slice A's components (cha
 
 ---
 
+## 74. The group screen: chat that behaves, honest connection status, safety one tap away
+
+### 74.0 Words first
+- **Group screen:** what home turns into once you're in a group (design 5 on phones; W6 on laptops: group | chat | pickup).
+- **Chat bubble:** one message drawn as a rounded box: others on the left in grey, yours on the right in orange. **Asymmetric corners** (`4px 18px 18px 18px`) make a bubble "point" to its sender's side.
+- **System message:** a line the app writes into the chat ("Asha joined", "Locked automatically"), centred and in italics so nobody mistakes it for a person.
+- **`role="log"`:** tells screen readers that new lines are added at the end and should be read out as they arrive.
+- **Stick to bottom:** a chat follows new messages only if you were already at the bottom; if you scrolled up to read, it leaves you there.
+- **Scroll anchoring:** keeping what you were reading in the same place when content is added *above* it ("Show older messages").
+- **IME (Input Method Editor):** the system that turns key presses into Hindi ("namaste" → "नमस्ते"). While it's composing, Enter means "pick this word", not "send".
+- **Lifting state up:** when two components need the same fact, it moves to their nearest common parent, which passes it down to both.
+- **Action sheet:** a sheet listing the less common actions for one thing (here: one person), instead of buttons on every row.
+- **Clipboard API:** `navigator.clipboard.writeText(text)`, the browser's way to copy text for the user.
+- **`display: contents`:** an element that draws no box of its own; its children are laid out as if they were its parent's children.
+
+### 74.1 The problem
+The group is where strangers coordinate at a loud airport, often on weak Wi-Fi. The old screen was a bulleted list with a 256 px chat box, tiny "Report" and "Block" links beside every name, a grey `window.confirm`, a "why are you leaving" box always on screen once locked, and a second map that appeared only once someone shared their location. The design gives every state one message and one next step: open ("Lock group: I'm booking the cab"), locked ("Asha is booking the cab. Head to the pickup."), met ("You've met up. Have a good ride!").
+
+### 74.2 The naive ways, and why they hurt
+- **Scroll to the bottom on every message:** someone reading "pillar 12, near the coffee shop" is thrown down each time anyone types.
+- **Enter always sends:** Hindi typists send half-finished words.
+- **Two maps** (pickup and live location): two things to understand and twice the map downloads, when the design has one pickup map with room reserved for live location.
+- **Report and Block on every row:** loud, and it makes a fellow traveller feel accused. Safety must be *reachable*, not shouted.
+- **"Live" shown all the time:** a promise the app can't keep on airport Wi-Fi. When the connection drops, the screen must say so.
+
+### 74.3 The tools
+1. **One group screen, three layouts.** Phones: one column, with the chat's composer and the actions in a bar stuck to the bottom of the screen. From 1280 px: group | chat | pickup. From 1024 to 1279 px there's no room for three, so the pickup goes under the group. The chat (one live connection) and the map (one Leaflet map) must each exist once, so the page chooses the layout in JavaScript with `useWide()`, now taking a width.
+2. **A chat that respects the reader:** before each update, "were you within 80 px of the bottom?" decides whether to follow; when older messages load, the distance from the bottom is measured before and restored after, so the message you were reading doesn't move. Enter sends, Shift+Enter adds a line, and nothing is sent while `isComposing`.
+3. **Lifting the connection state up:** the chat knows when its socket connects or drops; it reports that through `onLive`, the home page keeps it, and the top bar shows "● Live · 2:19 pm IST", or a "Reconnecting… airport Wi-Fi, hang on" pill (`role="status"`) while it's down.
+4. **One pickup map:** a "Meet here · T3" pin at the terminal, its pickup note, and the live-location dots on the same map.
+5. **Sheets for everything serious:** leaving an open group is a simple confirm; leaving a locked one needs a reason, and the red button stays disabled until there is one. "⋯" on a person opens an action sheet: "In danger right now? Call 112" first, then Report (the form opens inside the sheet) and Block.
+6. **A small API addition:** the header says "meet 2:25 pm", so `GroupView` now sends `meetAt`. The server already loaded it to work out the live-location window; guessing it in the browser as `sharingFrom + 20 min` would quietly break the day someone changes that 20.
+
+### 74.4 Decisions (2026-10-17)
+| Decision | Choice |
+|---|---|
+| Screen when grouped | The group screen replaces home's layout; the trip's facts move into its header line |
+| Meeting time | `meetAt` added to `GroupView` |
+| Report / Block (not in the design) | "⋯" per person → action sheet: Call 112, Report, Block |
+| Live location (the design reserves a space) | On the one pickup map, with its controls underneath |
+| Pickup on phones (not in design 5) | A Pickup section before the chat |
+| Pickup at 1024–1279 px | Under the group, in the left pane |
+| Live / Reconnecting | Chat's connection state lifted to the page and shown in the top bar |
+| Enter | Sends; Shift+Enter is a new line; never while the IME is composing |
+| Chat scrolling | Follow only when at the bottom; keep your place when older messages load |
+| "I'm here at the pickup" | Shown when locked (and met, if you haven't tapped): the API refuses it while open |
+| Leave group | Open: confirm. Locked: a required reason. Met: hidden (the API refuses it) |
+| Ratings | In the met state's reserved space |
+| Fare | Unchanged until slice D |
+| Requests to join your group | Kept, under the members |
+| Booker's UPI | A card with Copy ("Copied ✓" for 2 s, announced); the booker without one gets a link to the profile |
+
+> **Later change:** the fare is still in its old style inside the met state; slice D redesigns it (W7).
+
+---
+
+## 75. Code walkthrough: the group screen (slice C)
+
+### 75.0 Before you read
+This slice redesigns everything you see once you're in a group, applying chapter 74, on top of slice A's components (71) and slice B's top bar and map (73).
+
+### 75.1 API: `meetAt`
+- `GroupService.GroupView` gained `OffsetDateTime meetAt`; the view already read `meet_at` from the database to compute `sharingFrom/Until`, so it's one more argument.
+- `ChatTest` also checks that `$.meetAt` is in the response. All API tests pass; `pnpm api:types` regenerated `openapi.json` and `lib/api-types.ts` (the routine from chapter 53).
+
+### 75.2 `app/group-screen.tsx`
+- **Data:** the group (reloaded on every `version` bump, like before) and the trip's terminal (for the "Meet here" pin and its pickup note). A failed refresh keeps what's on screen.
+- **Pieces, built once and placed per layout:**
+  - `header`: "T3 → Sector 25A, Gurgaon · meet 2:25 pm", "Your cab group", `StatusBadge`;
+  - `members`: avatar, name ("You", "(booker)"), rating chip, area, seats and bags, "here ✓", the "⋯" button; then "2 of 4 seats taken · 3 bags";
+  - `status` (locked), `metPanel` (met; the text changes once the fare is in);
+  - `upi`: `UpiCard` with Copy for members, a profile link for a booker without a UPI ID;
+  - `joinRequests` (the `Received` / `Sent` lists, moved into `app/requests.tsx` so home and group share them);
+  - `next` (met: the fare section and `RideRatings`), `pickup`, `actions` (lock, I'm here, leave), `chat`.
+- **Layouts:** phones get one column in that order, with `actions` passed into the chat's bottom bar. Laptops get a grid: the left pane scrolls with the actions pinned under it; the chat fills the middle (the met banner above it); from 1280 px the right pane holds `next` and `pickup`. The actions bar is only drawn when there's an action in it.
+- **`LeaveSheet`:** different text for open, locked and booker-in-a-locked-group; the reason box is `required` and the button `disabled={locked && !reason.trim()}`; the server checks too.
+- **`PersonSheet`:** one sheet with views `menu → report | block → reported | blocked`. The 112 alert sits above every view. Closing returns focus to the "⋯" button that opened it (the browser's `<dialog>` does that).
+
+### 75.3 `app/group-chat.tsx`
+- Same live logic as chapter 47 (subscribe first, then fetch; `clientId` de-duplication; catch up after reconnecting; "not sent" after 10 s), plus:
+  - `onLive(true/false/null)` on connect, drop and unmount, through a ref so a new callback never reconnects;
+  - **stick to bottom:** `onScroll` records whether you're within 80 px of the end; a `useLayoutEffect` after every change scrolls to the end only if you were. Sending your own message always scrolls down;
+  - **anchoring:** before older messages are merged in, `fromBottom = scrollHeight - scrollTop` is saved; after the render, `scrollTop = scrollHeight - fromBottom`. `useLayoutEffect` runs before the browser paints, so the jump is never visible. The chat header got a fixed height on laptops, because the "Show older messages" button disappearing changed it by 17 px and moved the messages;
+  - **the composer:** a one-row `<textarea>` that grows with its text (`field-sizing: content`, up to 8 rem); Enter sends unless Shift is held or `e.nativeEvent.isComposing`;
+  - **bubbles:** `Bubble` draws system lines, others' grey bubbles with "Name · time", your orange ones, dashed "sending…" and red "not sent";
+  - **few messages sit at the bottom** with `mt-auto` on the list inside the scroll box. `justify-content: flex-end` would do the same, but then the oldest messages can't be scrolled to.
+- **The sticky composer on phones:** `position: sticky` only sticks inside its parent. Inside the chat section the bar stuck only while the chat was on screen, so on phones the section is `display: contents`: its children join the page's column, and the bar sticks to the bottom of the whole screen.
+
+### 75.4 Pickup, report, ratings, top bar
+- **`app/map-parts.ts`:** `addTiles`, `pin` (labels set with `textContent`) and `DOT_PIN`, now shared by both maps.
+- **`pickup-map.tsx`:** the accent "Meet here" pin; each person sharing is a dot with their name and an accuracy circle coloured through CSS classes (`fill-info stroke-info`); the view fits everyone once, when the first dots arrive.
+- **`pickup-location.tsx`:** same window, throttle and heartbeat logic as chapter 61; now it always shows the map and note, with the live controls underneath only inside the window.
+- **`report-form.tsx`:** the same categories and API call, laid out for the sheet, with "A person at Namastute reads every report".
+- **`ride-ratings.tsx`:** a card with one row per person: tonal 👍 / 👎, then "You gave 👍".
+- **`components/app-bar.tsx`:** `live` prop: `null` → "Delhi IGI · time IST", `true` → "● Live · time IST", `false` → the pill (centred on laptops, a full row under the header on phones). `app/page.tsx` holds the state.
+- **`StatusBadge`** got `whitespace-nowrap`: "MET UP" was wrapping onto two lines next to a long title.
+
+### 75.5 Verified in a real browser
+- **Data:** our test user (नेहा) was already in a group with अर्जुन from chapter 73; a small dev script (`arjun.mjs`) played अर्जुन: logging in through OTP, sending chat messages over STOMP, locking, "I'm here". His UPI ID was set through the normal profile API.
+- **Laptop (1280×800):**
+  - open: three panes, "● Live", UPI card with Copy, Hindi messages in bubbles;
+  - sending: a two-line message with Shift+Enter, sent with Enter and confirmed;
+  - lock: अर्जुन's lock arrived live (LOCKED, "अर्जुन is booking the cab…");
+  - leave dialog: side-by-side Stay / Leave, Leave disabled until a reason, focus in the reason box;
+  - "⋯" → Report: 112 first, the form inside the sheet, focus back on "⋯" after Esc;
+  - live location (position stubbed, as in chapter 61): a "You" dot beside "Meet here · T3";
+  - both "I'm here" → MET UP, the green banner, ratings ("You gave 👍").
+- **Chat scrolling:** 60 extra messages (added to this test group and deleted afterwards): the newest 50 load scrolled to the bottom; "Show older" kept the message being read at exactly the same height; a message arriving while scrolled up didn't move the view; at the bottom, the view followed.
+- **Reconnecting:** stopping the API showed the pill; starting it again removed it by itself.
+- **Phone (375 px):** one column in order; the composer bar stays at the bottom of the screen at every scroll position; nothing wider than the screen.
+- **1024 px:** two panes, with the pickup and ratings under the group, and still one map.
+- **Light mode:** the colours come from the tokens (orange bubbles, grey bubbles on cream).
+- **Testing gotchas:**
+  - a browser pane that isn't being drawn doesn't deliver scroll or media-query change events (both are delivered while the page is drawn), so scripted tests had to send the scroll event themselves and reload after resizing;
+  - the dev server once more served a stylesheet without the map rule; saving `globals.css` again fixed it (cause not found; a production build was fine).
+- **Not checked:** typing with a real Hindi keyboard (the IME rule is in the code, untested), a real phone, a screen reader, 200% text.
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 74. Command cheat sheet
+## 76. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5165,7 +5286,7 @@ git fetch --prune
 
 ---
 
-## 75. Glossary
+## 77. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5181,6 +5302,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Accessibility (a11y) | Making the app usable by everyone: keyboard-only and screen-reader users, people who enlarge text |
 | Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
 | ACID | Atomic, Consistent, Isolated, Durable: what a transaction guarantees |
+| Action sheet | A sheet listing the less common actions for one thing (e.g. Report, Block for one person) |
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
 | Allowlist | A list of the only values accepted; everything else is refused |
 | Annotation | `@Something` tag adding information to code without changing it |
@@ -5215,6 +5337,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Bytecode | Compiled `.class` instructions run by the JVM |
 | Candidate | A row that survived the cheap first stage of a search |
 | ChannelInterceptor | Spring checkpoint that every incoming STOMP frame passes through |
+| Chat bubble | One chat message drawn as a rounded box; yours on the right, others on the left |
 | Check-then-act (TOCTOU) | Bug where the fact you checked is stale by the time you act on it |
 | Checksum | A fingerprint of a file's contents; changes if the file changes |
 | CI | Continuous Integration: automatic build + test on every change |
@@ -5224,6 +5347,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Classpath | All libraries available to the app at runtime |
 | Client | The program that sends requests: a browser or phone app |
 | Client Component | React component that runs in the browser (`"use client"`) |
+| Clipboard API | `navigator.clipboard.writeText()`: copying text for the user |
 | Clock skew | Small differences between the clocks of different machines |
 | Cloud | Computers rented over the internet instead of owned |
 | Code generation | A program writing source code from a description |
@@ -5271,6 +5395,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | DI | Dependency Injection: dependencies handed in from outside |
 | Directory | Another word for folder |
 | Dirty checking | Hibernate detects changed fields and writes them at commit |
+| display: contents | An element that draws no box; its children are laid out as its parent's children |
 | divIcon | A Leaflet map marker made of our own HTML instead of an image |
 | Dockerfile | Recipe for building your own image |
 | Domain | A human-readable address like namastute.in |
@@ -5323,6 +5448,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | HTTP | Request/response protocol between browser and server |
 | Idempotent | Running it twice has the same effect as running it once |
 | Image (Docker) | Packaged, read-only snapshot of a program and its environment |
+| IME (Input Method Editor) | The system that turns key presses into another script, e.g. Hindi; Enter picks a word while composing |
 | Independent scrolling | Each pane scrolls on its own; needs `overflow-y-auto` and `min-h-0` |
 | Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
 | Interceptor | Code that inspects every incoming message before it's handled |
@@ -5347,6 +5473,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
 | Library | A package of ready-made code a project uses (a jar in Java, a package in JavaScript) |
 | Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
+| Lifting state up | Moving shared state to the nearest common parent, which passes it to the components that need it |
 | Linter | Tool that flags likely bugs without running code |
 | Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
 | Lock (database) | A temporary claim on a row that makes others wait |
@@ -5442,6 +5569,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
 | Reverse proxy | A server in front of your apps that receives requests and forwards them |
 | Revoke | Cancel something before it would expire by itself |
+| role="log" | Marks a list where new lines arrive at the end, read out by screen readers as they come |
 | Rotation | Replacing a token every time it's used |
 | Rounding mode | The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING |
 | Route | The order in which a cab drops its riders |
@@ -5454,6 +5582,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Scaling | Handling more users, with more copies or bigger machines |
 | Schema (data shape) | A description of the fields a piece of data has |
 | Schema (DB) | A namespace for tables inside a database |
+| Scroll anchoring | Keeping what you're reading in place when content is added above it |
 | Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
 | Self-invocation | A method calling another in the same class, bypassing the proxy |
 | Self-join | A table joined with itself under two names (`me` and `t`) |
@@ -5490,11 +5619,13 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | State machine | A fixed set of states plus the allowed transitions between them |
 | Stateless | Each request stands alone; the server remembers nothing between them |
 | Status code | 3-digit result of an HTTP request (2xx/4xx/5xx) |
+| Stick to bottom | A chat following new messages only if you were already at the bottom |
 | STOMP | Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE) |
 | StrictMode | React dev mode that runs effects twice to expose unsafe ones |
 | Supply-chain risk | Danger of a malicious or broken release of a library you depend on |
 | Sweep | A periodic job that handles everything that's due in one go |
 | Sybil attack | One person running many fake identities to sway a system |
+| System message | A line the app writes into a chat ("Asha joined"), styled differently from people's messages |
 | Table | Data arranged in rows and columns |
 | Technical debt | A shortcut taken on purpose to ship sooner, to be paid back later |
 | Terminal | A text window for typing commands |
@@ -5542,7 +5673,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 76. Interview questions to practise
+## 78. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -5693,3 +5824,9 @@ Questions an interviewer could ask about this project, roughly in the order the 
 145. Why must text put inside a map marker's HTML be set with textContent?
 146. Why did the dark map filter use hue-rotate(180deg) after invert(1)?
 147. When did the app need a media query in JavaScript instead of CSS, and why?
+148. A chat must follow new messages, but not while someone reads older ones. How did you decide, and where in React does the scroll happen?
+149. How do you keep someone's place when older messages are added above?
+150. Why must Enter not send while an input method is composing, and how do you check it?
+151. The top bar shows "Live", but the chat owns the connection. How does the information get there?
+152. Why is a sticky bar inside a section not sticky for the whole page, and how did you fix it?
+153. Where would you put Report and Block in a group screen, and why not on every row?

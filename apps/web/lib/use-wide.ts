@@ -1,17 +1,13 @@
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
-const WIDE = "(min-width: 1024px)"; // Tailwind's lg: the width where screens switch to panes
-
-// true on laptop-sized screens, updated live when the window is resized. For layouts CSS alone can't do,
-// like moving the one map between the form (phones) and its own pane (laptops).
-export function useWide(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = matchMedia(WIDE);
-      query.addEventListener("change", onChange);
-      return () => query.removeEventListener("change", onChange);
-    },
-    () => matchMedia(WIDE).matches,
-    () => false,
-  );
+// true on screens at least `px` wide (1024 = Tailwind's lg, 1280 = xl), updated live when the window is resized.
+// For layouts CSS alone can't do, like moving the one map (or the one chat) between places.
+export function useWide(px = 1024): boolean {
+  const query = `(min-width: ${px}px)`;
+  const subscribe = useCallback((onChange: () => void) => {
+    const list = matchMedia(query);
+    list.addEventListener("change", onChange);
+    return () => list.removeEventListener("change", onChange);
+  }, [query]);
+  return useSyncExternalStore(subscribe, () => matchMedia(query).matches, () => false);
 }

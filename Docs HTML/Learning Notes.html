@@ -126,10 +126,12 @@
 <details><summary><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">71. Code walkthrough: the foundation, log in and profile (slice A)</a></summary><a class="sub" href="#710-before-you-read">71.0 Before you read</a><a class="sub" href="#711-appglobalscss-the-tokens">71.1 app/globals.css: the tokens</a><a class="sub" href="#712-applayouttsx-fonts-and-the-no-flash-theme">71.2 app/layout.tsx: fonts and the no-flash theme</a><a class="sub" href="#713-componentsui-the-library">71.3 components/ui/: the library</a><a class="sub" href="#714-the-screens">71.4 The screens</a><a class="sub" href="#715-icons-made-with-the-real-font">71.5 Icons, made with the real font</a><a class="sub" href="#716-verified-in-a-real-browser">71.6 Verified in a real browser</a></details>
 <details><summary><a href="#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">72. Home and planning a trip: panes, sheets and instant feedback</a></summary><a class="sub" href="#720-words-first">72.0 Words first</a><a class="sub" href="#721-the-problem">72.1 The problem</a><a class="sub" href="#722-the-naive-ways-and-why-they-hurt">72.2 The naive ways, and why they hurt</a><a class="sub" href="#723-the-tools">72.3 The tools</a><a class="sub" href="#724-decisions-2026-10-17">72.4 Decisions (2026-10-17)</a></details>
 <details><summary><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">73. Code walkthrough: home and plan trip (slice B)</a></summary><a class="sub" href="#730-before-you-read">73.0 Before you read</a><a class="sub" href="#731-small-shared-changes">73.1 Small shared changes</a><a class="sub" href="#732-apppagetsx-and-appcurrent-triptsx-home">73.2 app/page.tsx and app/current-trip.tsx: home</a><a class="sub" href="#733-apptripnewpagetsx-and-destination-maptsx-planning-a-trip">73.3 app/trip/new/page.tsx and destination-map.tsx: planning a trip</a><a class="sub" href="#734-verified-in-a-real-browser">73.4 Verified in a real browser</a></details>
+<details><summary><a href="#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away">74. The group screen: chat that behaves, honest connection status, safety one tap away</a></summary><a class="sub" href="#740-words-first">74.0 Words first</a><a class="sub" href="#741-the-problem">74.1 The problem</a><a class="sub" href="#742-the-naive-ways-and-why-they-hurt">74.2 The naive ways, and why they hurt</a><a class="sub" href="#743-the-tools">74.3 The tools</a><a class="sub" href="#744-decisions-2026-10-17">74.4 Decisions (2026-10-17)</a></details>
+<details><summary><a href="#75-code-walkthrough-the-group-screen-slice-c">75. Code walkthrough: the group screen (slice C)</a></summary><a class="sub" href="#750-before-you-read">75.0 Before you read</a><a class="sub" href="#751-api-meetat">75.1 API: meetAt</a><a class="sub" href="#752-appgroup-screentsx">75.2 app/group-screen.tsx</a><a class="sub" href="#753-appgroup-chattsx">75.3 app/group-chat.tsx</a><a class="sub" href="#754-pickup-report-ratings-top-bar">75.4 Pickup, report, ratings, top bar</a><a class="sub" href="#755-verified-in-a-real-browser">75.5 Verified in a real browser</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#74-command-cheat-sheet">74. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#75-glossary">75. Glossary</a>
-<a class="topic" href="#76-interview-questions-to-practise">76. Interview questions to practise</a>
+<details><summary><a href="#76-command-cheat-sheet">76. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#77-glossary">77. Glossary</a>
+<a class="topic" href="#78-interview-questions-to-practise">78. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
@@ -162,7 +164,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 75) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (74) and <strong>Interview questions</strong> (76) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 77) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (76) and <strong>Interview questions</strong> (78) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -389,12 +391,14 @@
 <li><a href="#71-code-walkthrough-the-foundation-log-in-and-profile-slice-a">Code walkthrough: the foundation, log in and profile (slice A)</a></li>
 <li><a href="#72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">Home and planning a trip: panes, sheets and instant feedback</a></li>
 <li><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">Code walkthrough: home and plan trip (slice B)</a></li>
+<li><a href="#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away">The group screen: chat that behaves, honest connection status, safety one tap away</a></li>
+<li><a href="#75-code-walkthrough-the-group-screen-slice-c">Code walkthrough: the group screen (slice C)</a></li>
 </ol>
 <p><strong><a href="#reference">Reference</a></strong></p>
-<ol start="74">
-<li><a href="#74-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#75-glossary">Glossary</a></li>
-<li><a href="#76-interview-questions-to-practise">Interview questions to practise</a></li>
+<ol start="76">
+<li><a href="#76-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#77-glossary">Glossary</a></li>
+<li><a href="#78-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -6883,10 +6887,190 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked:</strong> a real phone, a screen reader, 200% text, and the 1024 px laptop size.</li>
 </ul>
 <hr>
+<h2 id="74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away">74. The group screen: chat that behaves, honest connection status, safety one tap away</h2>
+<h3 id="740-words-first">74.0 Words first</h3>
+<ul>
+<li><strong>Group screen:</strong> what home turns into once you&#39;re in a group (design 5 on phones; W6 on laptops: group | chat | pickup).</li>
+<li><strong>Chat bubble:</strong> one message drawn as a rounded box: others on the left in grey, yours on the right in orange. <strong>Asymmetric corners</strong> (<code>4px 18px 18px 18px</code>) make a bubble &quot;point&quot; to its sender&#39;s side.</li>
+<li><strong>System message:</strong> a line the app writes into the chat (&quot;Asha joined&quot;, &quot;Locked automatically&quot;), centred and in italics so nobody mistakes it for a person.</li>
+<li><strong><code>role=&quot;log&quot;</code>:</strong> tells screen readers that new lines are added at the end and should be read out as they arrive.</li>
+<li><strong>Stick to bottom:</strong> a chat follows new messages only if you were already at the bottom; if you scrolled up to read, it leaves you there.</li>
+<li><strong>Scroll anchoring:</strong> keeping what you were reading in the same place when content is added <em>above</em> it (&quot;Show older messages&quot;).</li>
+<li><strong>IME (Input Method Editor):</strong> the system that turns key presses into Hindi (&quot;namaste&quot; → &quot;नमस्ते&quot;). While it&#39;s composing, Enter means &quot;pick this word&quot;, not &quot;send&quot;.</li>
+<li><strong>Lifting state up:</strong> when two components need the same fact, it moves to their nearest common parent, which passes it down to both.</li>
+<li><strong>Action sheet:</strong> a sheet listing the less common actions for one thing (here: one person), instead of buttons on every row.</li>
+<li><strong>Clipboard API:</strong> <code>navigator.clipboard.writeText(text)</code>, the browser&#39;s way to copy text for the user.</li>
+<li><strong><code>display: contents</code>:</strong> an element that draws no box of its own; its children are laid out as if they were its parent&#39;s children.</li>
+</ul>
+<h3 id="741-the-problem">74.1 The problem</h3>
+<p>The group is where strangers coordinate at a loud airport, often on weak Wi-Fi. The old screen was a bulleted list with a 256 px chat box, tiny &quot;Report&quot; and &quot;Block&quot; links beside every name, a grey <code>window.confirm</code>, a &quot;why are you leaving&quot; box always on screen once locked, and a second map that appeared only once someone shared their location. The design gives every state one message and one next step: open (&quot;Lock group: I&#39;m booking the cab&quot;), locked (&quot;Asha is booking the cab. Head to the pickup.&quot;), met (&quot;You&#39;ve met up. Have a good ride!&quot;).</p>
+<h3 id="742-the-naive-ways-and-why-they-hurt">74.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Scroll to the bottom on every message:</strong> someone reading &quot;pillar 12, near the coffee shop&quot; is thrown down each time anyone types.</li>
+<li><strong>Enter always sends:</strong> Hindi typists send half-finished words.</li>
+<li><strong>Two maps</strong> (pickup and live location): two things to understand and twice the map downloads, when the design has one pickup map with room reserved for live location.</li>
+<li><strong>Report and Block on every row:</strong> loud, and it makes a fellow traveller feel accused. Safety must be <em>reachable</em>, not shouted.</li>
+<li><strong>&quot;Live&quot; shown all the time:</strong> a promise the app can&#39;t keep on airport Wi-Fi. When the connection drops, the screen must say so.</li>
+</ul>
+<h3 id="743-the-tools">74.3 The tools</h3>
+<ol>
+<li><strong>One group screen, three layouts.</strong> Phones: one column, with the chat&#39;s composer and the actions in a bar stuck to the bottom of the screen. From 1280 px: group | chat | pickup. From 1024 to 1279 px there&#39;s no room for three, so the pickup goes under the group. The chat (one live connection) and the map (one Leaflet map) must each exist once, so the page chooses the layout in JavaScript with <code>useWide()</code>, now taking a width.</li>
+<li><strong>A chat that respects the reader:</strong> before each update, &quot;were you within 80 px of the bottom?&quot; decides whether to follow; when older messages load, the distance from the bottom is measured before and restored after, so the message you were reading doesn&#39;t move. Enter sends, Shift+Enter adds a line, and nothing is sent while <code>isComposing</code>.</li>
+<li><strong>Lifting the connection state up:</strong> the chat knows when its socket connects or drops; it reports that through <code>onLive</code>, the home page keeps it, and the top bar shows &quot;● Live · 2:19 pm IST&quot;, or a &quot;Reconnecting… airport Wi-Fi, hang on&quot; pill (<code>role=&quot;status&quot;</code>) while it&#39;s down.</li>
+<li><strong>One pickup map:</strong> a &quot;Meet here · T3&quot; pin at the terminal, its pickup note, and the live-location dots on the same map.</li>
+<li><strong>Sheets for everything serious:</strong> leaving an open group is a simple confirm; leaving a locked one needs a reason, and the red button stays disabled until there is one. &quot;⋯&quot; on a person opens an action sheet: &quot;In danger right now? Call 112&quot; first, then Report (the form opens inside the sheet) and Block.</li>
+<li><strong>A small API addition:</strong> the header says &quot;meet 2:25 pm&quot;, so <code>GroupView</code> now sends <code>meetAt</code>. The server already loaded it to work out the live-location window; guessing it in the browser as <code>sharingFrom + 20 min</code> would quietly break the day someone changes that 20.</li>
+</ol>
+<h3 id="744-decisions-2026-10-17">74.4 Decisions (2026-10-17)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Screen when grouped</td>
+<td>The group screen replaces home&#39;s layout; the trip&#39;s facts move into its header line</td>
+</tr>
+<tr>
+<td>Meeting time</td>
+<td><code>meetAt</code> added to <code>GroupView</code></td>
+</tr>
+<tr>
+<td>Report / Block (not in the design)</td>
+<td>&quot;⋯&quot; per person → action sheet: Call 112, Report, Block</td>
+</tr>
+<tr>
+<td>Live location (the design reserves a space)</td>
+<td>On the one pickup map, with its controls underneath</td>
+</tr>
+<tr>
+<td>Pickup on phones (not in design 5)</td>
+<td>A Pickup section before the chat</td>
+</tr>
+<tr>
+<td>Pickup at 1024–1279 px</td>
+<td>Under the group, in the left pane</td>
+</tr>
+<tr>
+<td>Live / Reconnecting</td>
+<td>Chat&#39;s connection state lifted to the page and shown in the top bar</td>
+</tr>
+<tr>
+<td>Enter</td>
+<td>Sends; Shift+Enter is a new line; never while the IME is composing</td>
+</tr>
+<tr>
+<td>Chat scrolling</td>
+<td>Follow only when at the bottom; keep your place when older messages load</td>
+</tr>
+<tr>
+<td>&quot;I&#39;m here at the pickup&quot;</td>
+<td>Shown when locked (and met, if you haven&#39;t tapped): the API refuses it while open</td>
+</tr>
+<tr>
+<td>Leave group</td>
+<td>Open: confirm. Locked: a required reason. Met: hidden (the API refuses it)</td>
+</tr>
+<tr>
+<td>Ratings</td>
+<td>In the met state&#39;s reserved space</td>
+</tr>
+<tr>
+<td>Fare</td>
+<td>Unchanged until slice D</td>
+</tr>
+<tr>
+<td>Requests to join your group</td>
+<td>Kept, under the members</td>
+</tr>
+<tr>
+<td>Booker&#39;s UPI</td>
+<td>A card with Copy (&quot;Copied ✓&quot; for 2 s, announced); the booker without one gets a link to the profile</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Later change:</strong> the fare is still in its old style inside the met state; slice D redesigns it (W7).</p>
+</blockquote>
+<hr>
+<h2 id="75-code-walkthrough-the-group-screen-slice-c">75. Code walkthrough: the group screen (slice C)</h2>
+<h3 id="750-before-you-read">75.0 Before you read</h3>
+<p>This slice redesigns everything you see once you&#39;re in a group, applying chapter 74, on top of slice A&#39;s components (71) and slice B&#39;s top bar and map (73).</p>
+<h3 id="751-api-meetat">75.1 API: <code>meetAt</code></h3>
+<ul>
+<li><code>GroupService.GroupView</code> gained <code>OffsetDateTime meetAt</code>; the view already read <code>meet_at</code> from the database to compute <code>sharingFrom/Until</code>, so it&#39;s one more argument.</li>
+<li><code>ChatTest</code> also checks that <code>$.meetAt</code> is in the response. All API tests pass; <code>pnpm api:types</code> regenerated <code>openapi.json</code> and <code>lib/api-types.ts</code> (the routine from chapter 53).</li>
+</ul>
+<h3 id="752-appgroup-screentsx">75.2 <code>app/group-screen.tsx</code></h3>
+<ul>
+<li><strong>Data:</strong> the group (reloaded on every <code>version</code> bump, like before) and the trip&#39;s terminal (for the &quot;Meet here&quot; pin and its pickup note). A failed refresh keeps what&#39;s on screen.</li>
+<li><strong>Pieces, built once and placed per layout:</strong><ul>
+<li><code>header</code>: &quot;T3 → Sector 25A, Gurgaon · meet 2:25 pm&quot;, &quot;Your cab group&quot;, <code>StatusBadge</code>;</li>
+<li><code>members</code>: avatar, name (&quot;You&quot;, &quot;(booker)&quot;), rating chip, area, seats and bags, &quot;here ✓&quot;, the &quot;⋯&quot; button; then &quot;2 of 4 seats taken · 3 bags&quot;;</li>
+<li><code>status</code> (locked), <code>metPanel</code> (met; the text changes once the fare is in);</li>
+<li><code>upi</code>: <code>UpiCard</code> with Copy for members, a profile link for a booker without a UPI ID;</li>
+<li><code>joinRequests</code> (the <code>Received</code> / <code>Sent</code> lists, moved into <code>app/requests.tsx</code> so home and group share them);</li>
+<li><code>next</code> (met: the fare section and <code>RideRatings</code>), <code>pickup</code>, <code>actions</code> (lock, I&#39;m here, leave), <code>chat</code>.</li>
+</ul>
+</li>
+<li><strong>Layouts:</strong> phones get one column in that order, with <code>actions</code> passed into the chat&#39;s bottom bar. Laptops get a grid: the left pane scrolls with the actions pinned under it; the chat fills the middle (the met banner above it); from 1280 px the right pane holds <code>next</code> and <code>pickup</code>. The actions bar is only drawn when there&#39;s an action in it.</li>
+<li><strong><code>LeaveSheet</code>:</strong> different text for open, locked and booker-in-a-locked-group; the reason box is <code>required</code> and the button <code>disabled={locked &amp;&amp; !reason.trim()}</code>; the server checks too.</li>
+<li><strong><code>PersonSheet</code>:</strong> one sheet with views <code>menu → report | block → reported | blocked</code>. The 112 alert sits above every view. Closing returns focus to the &quot;⋯&quot; button that opened it (the browser&#39;s <code>&lt;dialog&gt;</code> does that).</li>
+</ul>
+<h3 id="753-appgroup-chattsx">75.3 <code>app/group-chat.tsx</code></h3>
+<ul>
+<li>Same live logic as chapter 47 (subscribe first, then fetch; <code>clientId</code> de-duplication; catch up after reconnecting; &quot;not sent&quot; after 10 s), plus:<ul>
+<li><code>onLive(true/false/null)</code> on connect, drop and unmount, through a ref so a new callback never reconnects;</li>
+<li><strong>stick to bottom:</strong> <code>onScroll</code> records whether you&#39;re within 80 px of the end; a <code>useLayoutEffect</code> after every change scrolls to the end only if you were. Sending your own message always scrolls down;</li>
+<li><strong>anchoring:</strong> before older messages are merged in, <code>fromBottom = scrollHeight - scrollTop</code> is saved; after the render, <code>scrollTop = scrollHeight - fromBottom</code>. <code>useLayoutEffect</code> runs before the browser paints, so the jump is never visible. The chat header got a fixed height on laptops, because the &quot;Show older messages&quot; button disappearing changed it by 17 px and moved the messages;</li>
+<li><strong>the composer:</strong> a one-row <code>&lt;textarea&gt;</code> that grows with its text (<code>field-sizing: content</code>, up to 8 rem); Enter sends unless Shift is held or <code>e.nativeEvent.isComposing</code>;</li>
+<li><strong>bubbles:</strong> <code>Bubble</code> draws system lines, others&#39; grey bubbles with &quot;Name · time&quot;, your orange ones, dashed &quot;sending…&quot; and red &quot;not sent&quot;;</li>
+<li><strong>few messages sit at the bottom</strong> with <code>mt-auto</code> on the list inside the scroll box. <code>justify-content: flex-end</code> would do the same, but then the oldest messages can&#39;t be scrolled to.</li>
+</ul>
+</li>
+<li><strong>The sticky composer on phones:</strong> <code>position: sticky</code> only sticks inside its parent. Inside the chat section the bar stuck only while the chat was on screen, so on phones the section is <code>display: contents</code>: its children join the page&#39;s column, and the bar sticks to the bottom of the whole screen.</li>
+</ul>
+<h3 id="754-pickup-report-ratings-top-bar">75.4 Pickup, report, ratings, top bar</h3>
+<ul>
+<li><strong><code>app/map-parts.ts</code>:</strong> <code>addTiles</code>, <code>pin</code> (labels set with <code>textContent</code>) and <code>DOT_PIN</code>, now shared by both maps.</li>
+<li><strong><code>pickup-map.tsx</code>:</strong> the accent &quot;Meet here&quot; pin; each person sharing is a dot with their name and an accuracy circle coloured through CSS classes (<code>fill-info stroke-info</code>); the view fits everyone once, when the first dots arrive.</li>
+<li><strong><code>pickup-location.tsx</code>:</strong> same window, throttle and heartbeat logic as chapter 61; now it always shows the map and note, with the live controls underneath only inside the window.</li>
+<li><strong><code>report-form.tsx</code>:</strong> the same categories and API call, laid out for the sheet, with &quot;A person at Namastute reads every report&quot;.</li>
+<li><strong><code>ride-ratings.tsx</code>:</strong> a card with one row per person: tonal 👍 / 👎, then &quot;You gave 👍&quot;.</li>
+<li><strong><code>components/app-bar.tsx</code>:</strong> <code>live</code> prop: <code>null</code> → &quot;Delhi IGI · time IST&quot;, <code>true</code> → &quot;● Live · time IST&quot;, <code>false</code> → the pill (centred on laptops, a full row under the header on phones). <code>app/page.tsx</code> holds the state.</li>
+<li><strong><code>StatusBadge</code></strong> got <code>whitespace-nowrap</code>: &quot;MET UP&quot; was wrapping onto two lines next to a long title.</li>
+</ul>
+<h3 id="755-verified-in-a-real-browser">75.5 Verified in a real browser</h3>
+<ul>
+<li><strong>Data:</strong> our test user (नेहा) was already in a group with अर्जुन from chapter 73; a small dev script (<code>arjun.mjs</code>) played अर्जुन: logging in through OTP, sending chat messages over STOMP, locking, &quot;I&#39;m here&quot;. His UPI ID was set through the normal profile API.</li>
+<li><strong>Laptop (1280×800):</strong><ul>
+<li>open: three panes, &quot;● Live&quot;, UPI card with Copy, Hindi messages in bubbles;</li>
+<li>sending: a two-line message with Shift+Enter, sent with Enter and confirmed;</li>
+<li>lock: अर्जुन&#39;s lock arrived live (LOCKED, &quot;अर्जुन is booking the cab…&quot;);</li>
+<li>leave dialog: side-by-side Stay / Leave, Leave disabled until a reason, focus in the reason box;</li>
+<li>&quot;⋯&quot; → Report: 112 first, the form inside the sheet, focus back on &quot;⋯&quot; after Esc;</li>
+<li>live location (position stubbed, as in chapter 61): a &quot;You&quot; dot beside &quot;Meet here · T3&quot;;</li>
+<li>both &quot;I&#39;m here&quot; → MET UP, the green banner, ratings (&quot;You gave 👍&quot;).</li>
+</ul>
+</li>
+<li><strong>Chat scrolling:</strong> 60 extra messages (added to this test group and deleted afterwards): the newest 50 load scrolled to the bottom; &quot;Show older&quot; kept the message being read at exactly the same height; a message arriving while scrolled up didn&#39;t move the view; at the bottom, the view followed.</li>
+<li><strong>Reconnecting:</strong> stopping the API showed the pill; starting it again removed it by itself.</li>
+<li><strong>Phone (375 px):</strong> one column in order; the composer bar stays at the bottom of the screen at every scroll position; nothing wider than the screen.</li>
+<li><strong>1024 px:</strong> two panes, with the pickup and ratings under the group, and still one map.</li>
+<li><strong>Light mode:</strong> the colours come from the tokens (orange bubbles, grey bubbles on cream).</li>
+<li><strong>Testing gotchas:</strong><ul>
+<li>a browser pane that isn&#39;t being drawn doesn&#39;t deliver scroll or media-query change events (both are delivered while the page is drawn), so scripted tests had to send the scroll event themselves and reload after resizing;</li>
+<li>the dev server once more served a stylesheet without the map rule; saving <code>globals.css</code> again fixed it (cause not found; a production build was fine).</li>
+</ul>
+</li>
+<li><strong>Not checked:</strong> typing with a real Hindi keyboard (the IME rule is in the code, untested), a real phone, a screen reader, 200% text.</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="74-command-cheat-sheet">74. Command cheat sheet</h2>
+<h2 id="76-command-cheat-sheet">76. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -6951,7 +7135,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="75-glossary">75. Glossary</h2>
+<h2 id="77-glossary">77. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -6999,6 +7183,10 @@ git fetch --prune
 <tr>
 <td>ACID</td>
 <td>Atomic, Consistent, Isolated, Durable: what a transaction guarantees</td>
+</tr>
+<tr>
+<td>Action sheet</td>
+<td>A sheet listing the less common actions for one thing (e.g. Report, Block for one person)</td>
 </tr>
 <tr>
 <td>Aggregate</td>
@@ -7137,6 +7325,10 @@ git fetch --prune
 <td>Spring checkpoint that every incoming STOMP frame passes through</td>
 </tr>
 <tr>
+<td>Chat bubble</td>
+<td>One chat message drawn as a rounded box; yours on the right, others on the left</td>
+</tr>
+<tr>
 <td>Check-then-act (TOCTOU)</td>
 <td>Bug where the fact you checked is stale by the time you act on it</td>
 </tr>
@@ -7171,6 +7363,10 @@ git fetch --prune
 <tr>
 <td>Client Component</td>
 <td>React component that runs in the browser (<code>&quot;use client&quot;</code>)</td>
+</tr>
+<tr>
+<td>Clipboard API</td>
+<td><code>navigator.clipboard.writeText()</code>: copying text for the user</td>
 </tr>
 <tr>
 <td>Clock skew</td>
@@ -7359,6 +7555,10 @@ git fetch --prune
 <tr>
 <td>Dirty checking</td>
 <td>Hibernate detects changed fields and writes them at commit</td>
+</tr>
+<tr>
+<td>display: contents</td>
+<td>An element that draws no box; its children are laid out as its parent&#39;s children</td>
 </tr>
 <tr>
 <td>divIcon</td>
@@ -7569,6 +7769,10 @@ git fetch --prune
 <td>Packaged, read-only snapshot of a program and its environment</td>
 </tr>
 <tr>
+<td>IME (Input Method Editor)</td>
+<td>The system that turns key presses into another script, e.g. Hindi; Enter picks a word while composing</td>
+</tr>
+<tr>
 <td>Independent scrolling</td>
 <td>Each pane scrolls on its own; needs <code>overflow-y-auto</code> and <code>min-h-0</code></td>
 </tr>
@@ -7663,6 +7867,10 @@ git fetch --prune
 <tr>
 <td>Lifecycle (Maven)</td>
 <td>Ordered build phases: compile → test → package → verify</td>
+</tr>
+<tr>
+<td>Lifting state up</td>
+<td>Moving shared state to the nearest common parent, which passes it to the components that need it</td>
 </tr>
 <tr>
 <td>Linter</td>
@@ -8045,6 +8253,10 @@ git fetch --prune
 <td>Cancel something before it would expire by itself</td>
 </tr>
 <tr>
+<td>role=&quot;log&quot;</td>
+<td>Marks a list where new lines arrive at the end, read out by screen readers as they come</td>
+</tr>
+<tr>
 <td>Rotation</td>
 <td>Replacing a token every time it&#39;s used</td>
 </tr>
@@ -8091,6 +8303,10 @@ git fetch --prune
 <tr>
 <td>Schema (DB)</td>
 <td>A namespace for tables inside a database</td>
+</tr>
+<tr>
+<td>Scroll anchoring</td>
+<td>Keeping what you&#39;re reading in place when content is added above it</td>
 </tr>
 <tr>
 <td>Secure context</td>
@@ -8237,6 +8453,10 @@ git fetch --prune
 <td>3-digit result of an HTTP request (2xx/4xx/5xx)</td>
 </tr>
 <tr>
+<td>Stick to bottom</td>
+<td>A chat following new messages only if you were already at the bottom</td>
+</tr>
+<tr>
 <td>STOMP</td>
 <td>Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE)</td>
 </tr>
@@ -8255,6 +8475,10 @@ git fetch --prune
 <tr>
 <td>Sybil attack</td>
 <td>One person running many fake identities to sway a system</td>
+</tr>
+<tr>
+<td>System message</td>
+<td>A line the app writes into a chat (&quot;Asha joined&quot;), styled differently from people&#39;s messages</td>
 </tr>
 <tr>
 <td>Table</td>
@@ -8434,7 +8658,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="76-interview-questions-to-practise">76. Interview questions to practise</h2>
+<h2 id="78-interview-questions-to-practise">78. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -8584,6 +8808,12 @@ git fetch --prune
 <li>Why must text put inside a map marker&#39;s HTML be set with textContent?</li>
 <li>Why did the dark map filter use hue-rotate(180deg) after invert(1)?</li>
 <li>When did the app need a media query in JavaScript instead of CSS, and why?</li>
+<li>A chat must follow new messages, but not while someone reads older ones. How did you decide, and where in React does the scroll happen?</li>
+<li>How do you keep someone&#39;s place when older messages are added above?</li>
+<li>Why must Enter not send while an input method is composing, and how do you check it?</li>
+<li>The top bar shows &quot;Live&quot;, but the chat owns the connection. How does the information get there?</li>
+<li>Why is a sticky bar inside a section not sticky for the whole page, and how did you fix it?</li>
+<li>Where would you put Report and Block in a group screen, and why not on every row?</li>
 </ol>
 
 
