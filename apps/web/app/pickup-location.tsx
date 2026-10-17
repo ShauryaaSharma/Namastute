@@ -3,10 +3,13 @@
 import type { Client } from "@stomp/stompjs";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/display";
 import { connectLocation, type Group, type Position, sendLocation } from "@/lib/api";
 import { formatIstTime } from "@/lib/time";
+import type { MeetPoint } from "./pickup-map";
 
-const PickupMap = dynamic(() => import("./pickup-map"), { ssr: false });
+const PickupMap = dynamic(() => import("./pickup-map"), { ssr: false, loading: () => <div className="size-full animate-pulse bg-surface-2" /> });
 
 const MOVED_M = 10; // send when you've moved this far...
 const RESEND_MS = 15_000; // ...or this often anyway, so late arrivals see you
@@ -22,9 +25,10 @@ function metres(a: Position, b: Position): number {
   return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
 }
 
-// Live location at the pickup (Learning Notes 60): only in a locked or met group, only inside the window the API
-// gives, only after your own tap. Positions go to your group and are never saved.
-export default function PickupLocation({ group }: { group: Group }) {
+// The pickup: where to meet (the map's "Meet here" pin and the terminal's note), and live location
+// (Learning Notes 60): only in a locked or met group, only inside the window the API gives, only after your own tap.
+// Positions go to your group and are never saved. meet must be a stable object (the map redraws when it changes).
+export default function PickupLocation({ group, meet, note }: { group: Group; meet: MeetPoint; note: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [others, setOthers] = useState<Record<string, Dot>>({}); // by tripId
   const [mine, setMine] = useState<Dot | null>(null);
@@ -113,47 +117,53 @@ export default function PickupLocation({ group }: { group: Group }) {
     if (client.current?.connected) sendLocation(client.current, group.id, null);
   }
 
-  if (!active || now >= until) return null;
-  if (now < from) {
-    return <p className="mt-2 text-sm">You can share your live location from {formatIstTime(group.sharingFrom)}, to find each other at the pickup.</p>;
-  }
-
   const untilText = formatIstTime(group.sharingUntil);
   const visible = group.members
     .filter((m) => !m.you && others[m.tripId] && now - others[m.tripId].at < STALE_MS)
     .map((m) => ({ tripId: m.tripId, name: m.firstName, ...others[m.tripId] }));
+  const dots = [...(mine ? [{ name: "You", ...mine, you: true }] : []), ...visible.map((d) => ({ ...d, you: false }))];
 
   return (
-    <section className="mt-3 rounded border p-2 text-sm" aria-label="Live location">
-      <h4 className="font-semibold">Find each other</h4>
-      {sharing ? (
-        <p className="mt-1 rounded bg-info-soft p-1 text-info">
-          Sharing your location with your group until {untilText}. Keep Namastute open.{" "}
-          {mine ? `Accurate to about ${mine.accuracy} m.` : "Finding you…"}{" "}
-          <button onClick={stop} className="underline">Stop</button>
+    <section aria-labelledby="pickup-title" className="flex flex-col gap-3">
+      <h2 id="pickup-title" className="font-display text-title">Pickup</h2>
+      <div className="h-[13.75rem] overflow-hidden rounded-[16px] border-[1.5px] border-line">
+        <PickupMap meet={meet} dots={dots} />
+      </div>
+      <p className="text-[0.9375rem] leading-[1.45] text-fg-muted">{note}</p>
+
+      {active && now < from && (
+        <p className="text-[0.9375rem] text-fg-muted">
+          From {formatIstTime(group.sharingFrom)} you can share your live location here, to find each other.
         </p>
-      ) : (
-        <>
-          <button onClick={start} className="mt-1 rounded bg-accent px-3 py-1 text-on-accent">
-            Share my location
-          </button>
-          <span className="ml-2">Only your group sees it, only until {untilText}. Nothing is saved.</span>
-        </>
       )}
-      <ul className="mt-2" aria-live="polite">
-        {visible.length === 0 && <li>No one else is sharing their location yet.</li>}
-        {visible.map((d) => (
-          <li key={d.tripId}>
-            <strong>{d.name}</strong>
-            {mine ? ` · about ${Math.round(metres(mine, d) / 10) * 10} m away (± ${Math.max(mine.accuracy, d.accuracy)} m)` : ""}
-            {" · "}{Math.max(0, Math.round((now - d.at) / 1000))} s ago
-          </li>
-        ))}
-      </ul>
-      {(mine || visible.length > 0) && (
-        <PickupMap dots={[...(mine ? [{ name: "You", ...mine, you: true }] : []), ...visible.map((d) => ({ ...d, you: false }))]} />
+      {open && (
+        <div className="flex flex-col gap-3" aria-live="polite">
+          {sharing ? (
+            <Alert variant="info">
+              Sharing your location with your group until {untilText}. Keep Namastute open.{" "}
+              {mine ? `Accurate to about ${mine.accuracy} m.` : "Finding you…"}
+            </Alert>
+          ) : (
+            <p className="text-[0.9375rem] text-fg-muted">Only your group sees it, only until {untilText}. Nothing is saved.</p>
+          )}
+          {sharing
+            ? <Button variant="secondary" onClick={stop}>Stop sharing my location</Button>
+            : <Button variant="secondary" onClick={start}>Share my live location</Button>}
+          <ul className="flex flex-col">
+            {visible.length === 0 && <li className="text-small text-fg-muted">No one else is sharing their location yet.</li>}
+            {visible.map((d) => (
+              <li key={d.tripId} className="flex min-h-11 items-center justify-between gap-3 border-b border-line last:border-b-0">
+                <b>{d.name}</b>
+                <span className="tnum text-small text-fg-muted">
+                  {mine ? `about ${Math.round(metres(mine, d) / 10) * 10} m away (± ${Math.max(mine.accuracy, d.accuracy)} m) · ` : ""}
+                  {Math.max(0, Math.round((now - d.at) / 1000))} s ago
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-      <p role="alert" className="text-danger">{error}</p>
+      {error && <Alert variant="error">{error}</Alert>}
     </section>
   );
 }

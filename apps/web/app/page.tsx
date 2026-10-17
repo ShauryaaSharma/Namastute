@@ -10,6 +10,7 @@ import CurrentTrip from "./current-trip";
 export default function Home() {
   const router = useRouter();
   const [me, setMe] = useState<Profile | null>(null);
+  const [live, setLive] = useState<boolean | null>(null); // the group's live connection, lifted up for the top bar
 
   useEffect(() => {
     restoreSession()
@@ -24,8 +25,8 @@ export default function Home() {
   if (!me?.name) return <p role="status" className="p-6 text-fg-muted">Checking your session…</p>;
   return (
     <>
-      <AppBar name={me.name} />
-      <CurrentTrip />
+      <AppBar name={me.name} live={live} />
+      <CurrentTrip onLive={setLive} />
     </>
   );
 }

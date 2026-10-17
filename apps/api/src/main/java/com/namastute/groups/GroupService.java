@@ -45,10 +45,10 @@ public class GroupService {
     // tripId: an opaque handle for report/block (Learning Notes 56), never the user id
     record MemberView(UUID tripId, String firstName, String destArea, int seats, int bags, boolean booker, boolean you,
                       boolean here, @Schema(nullable = true) BigDecimal share, UserService.Rating rating) {}
-    // sharingFrom/Until: when live location works (locked or met groups only)
+    // meetAt: when the group meets at the pickup; sharingFrom/Until: when live location works (locked or met groups only)
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
                      @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members,
-                     OffsetDateTime sharingFrom, OffsetDateTime sharingUntil) {}
+                     OffsetDateTime meetAt, OffsetDateTime sharingFrom, OffsetDateTime sharingUntil) {}
     record ShareView(String firstName, boolean booker, BigDecimal share) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}
@@ -426,7 +426,7 @@ public class GroupService {
         }).toList();
         OffsetDateTime meetAt = db.sql("select meet_at from groups where id = ?").param(groupId).query(OffsetDateTime.class).single();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
-                g.fareTotal(), views, meetAt.minus(SHARE_BEFORE), meetAt.plus(SHARE_AFTER)));
+                g.fareTotal(), views, meetAt, meetAt.minus(SHARE_BEFORE), meetAt.plus(SHARE_AFTER)));
     }
 
     // For the chat module: may this user read and write this group's chat? (accepted member of an open, locked or met group)

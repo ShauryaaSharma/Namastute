@@ -168,6 +168,7 @@ class ChatTest {
         mvc.perform(post("/api/v1/groups/" + group + "/lock").with(as(keshav))).andExpect(status().isNoContent());
         jdbc.update("update groups set meet_at = now() + interval '10 minutes' where id = ?::uuid", group);
         mvc.perform(get("/api/v1/groups/current").with(as(asha)))   // the browser learns the window from here
+                .andExpect(jsonPath("$.meetAt").exists())
                 .andExpect(jsonPath("$.sharingFrom").exists()).andExpect(jsonPath("$.sharingUntil").exists());
         int messages = jdbc.queryForObject("select count(*) from messages where group_id = ?::uuid", Integer.class, group);
 
