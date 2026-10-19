@@ -99,6 +99,7 @@ flowchart LR
 | Web | Next.js 16, React 19, TypeScript | The web app and its language |
 | | Tailwind CSS 4 | Styling, with the design system's tokens (colours, type, spacing) and dark/light themes |
 | | Leaflet + OpenStreetMap | Maps |
+| | uqr | Draws the UPI QR code shown on laptops |
 | Infra | Docker, Docker Compose | Run every part in containers, the same on every computer |
 | | Caddy | The front door: HTTPS certificates and routing |
 | | GitHub Actions | Builds and tests every change before it's merged |
@@ -161,7 +162,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
 - **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups.
-- **The redesign:** in progress, in four slices. Done: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, and the group screen (chat, pickup, live location, report and block, ratings). Next: the fare and paying by UPI, and light-mode polish.
+- **The redesign:** ✅ done, in four slices: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, the group screen (chat, pickup, live location, report and block, ratings), and the fare with UPI payment (a QR code on laptops).
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 
 The full roadmap is in the design doc, section 7.

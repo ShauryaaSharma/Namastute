@@ -18,7 +18,7 @@ export function AppBar({ name, live = null }: { name: string; live?: boolean | n
   }, []);
 
   return (
-    <header className="mx-auto flex w-full max-w-[30rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pt-3 pb-3 lg:h-16 lg:max-w-none lg:border-b lg:border-line lg:px-8 lg:py-0">
+    <header className="mx-auto flex w-full max-w-[30rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pt-3 pb-3 lg:h-16 lg:max-w-none lg:border-b lg:border-line lg:bg-surface lg:px-8 lg:py-0 lg:dark:bg-bg">
       <Link href="/" aria-label="Namastute home" className="inline-flex items-center gap-2.5 rounded-sm">
         {/* Laptops only. "hidden" can't go on AppIcon itself: its own inline-flex would fight it (Learning Notes 71.3) */}
         <span className="hidden lg:contents"><AppIcon className="size-[2.125rem] text-2xl" /></span>

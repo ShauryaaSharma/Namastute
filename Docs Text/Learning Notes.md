@@ -2,7 +2,7 @@
 
 How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.
 
-Last updated: 2026-10-17.
+Last updated: 2026-10-19.
 
 ---
 
@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 77) defines every term in the book, A to Z. The **Command cheat sheet** (76) and **Interview questions** (78) are for revision.
+- The **Glossary** (chapter 79) defines every term in the book, A to Z. The **Command cheat sheet** (78) and **Interview questions** (80) are for revision.
 
 ---
 
@@ -221,12 +221,14 @@ flowchart LR
 73. [Code walkthrough: home and plan trip (slice B)](#73-code-walkthrough-home-and-plan-trip-slice-b)
 74. [The group screen: chat that behaves, honest connection status, safety one tap away](#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away)
 75. [Code walkthrough: the group screen (slice C)](#75-code-walkthrough-the-group-screen-slice-c)
+76. [The fare and paying: irreversible actions, deep links and QR codes](#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes)
+77. [Code walkthrough: the fare, UPI QR and light polish (slice D)](#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d)
 
 **[Reference](#reference)**
 
-76. [Command cheat sheet](#76-command-cheat-sheet)
-77. [Glossary](#77-glossary)
-78. [Interview questions to practise](#78-interview-questions-to-practise)
+78. [Command cheat sheet](#78-command-cheat-sheet)
+79. [Glossary](#79-glossary)
+80. [Interview questions to practise](#80-interview-questions-to-practise)
 
 ---
 
@@ -5194,13 +5196,98 @@ This slice redesigns everything you see once you're in a group, applying chapter
 
 ---
 
+## 76. The fare and paying: irreversible actions, deep links and QR codes
+
+### 76.0 Words first
+- **Irreversible action:** something the app can't undo. The fare is one: the API accepts it once, and everyone's share is fixed from then on.
+- **Preview → confirm:** first show exactly what will happen, then confirm that exact thing; changing the input throws the preview away.
+- **Indian digit grouping:** `1,00,000` (lakh), not `100,000`. `Intl.NumberFormat("en-IN")` does it.
+- **Formatted input:** a box that shows "1,200" while you type 1200. The value kept is the plain number; the commas are only for showing.
+- **Deep link:** a link that opens another app. `upi://pay?pa=…&am=…` opens whichever UPI app is installed. On a laptop there's none, so it does nothing.
+- **QR code:** a square of black and white **modules** that encodes text. It has **error correction** (it still scans when partly damaged) and needs a **quiet zone** (an empty margin of 4 modules).
+- **Pointer media query:** `(hover: hover) and (pointer: fine)` means "a mouse or trackpad", which in practice means a laptop or desktop; a phone has `pointer: coarse`.
+- **Dependency:** someone else's code the project installs: more download, more security risk, more upkeep. Worth it only when writing it ourselves would be big or risky.
+- **Hidden vs unmounted:** a hidden component still exists and keeps working (a chat stays connected); an unmounted one is gone (its connection closes).
+
+### 76.1 The problem
+After meeting up there are two jobs: the booker enters what the cab cost (once), and everyone else pays the booker their share. The old fare section was a plain list. The design gives it its biggest moments (6a–6c, W7): a huge ₹ input, "Keshav owes you ₹246", "Your share ₹246 to Asha" with a 64 px Pay button. And on a laptop the Pay button, a `upi://` link, does nothing: the design's answer is a QR code of the same link, scanned with your phone.
+
+### 76.2 The naive ways, and why they hurt
+- **Confirm straight from the input:** a typo (6000 for 600) can never be fixed, and three people get wrong shares.
+- **A plain number box:** "12000" is easy to misread; "12,000" isn't.
+- **Writing our own QR encoder:** QR needs Reed–Solomon error correction, masks and versions: hundreds of lines where a small bug makes a code that scans to *different* text, here a payee and an amount.
+- **Inserting the library's SVG as an HTML string:** `dangerouslySetInnerHTML` is how injected code gets in. Drawing the grid ourselves inserts nothing.
+- **The QR everywhere:** you can't scan your own phone's screen; on phones the link is the right thing.
+- **Following W7 literally and dropping the chat once met:** the chat's connection is also what tells the members "the fare is in". Losing it would lose a feature and the live update.
+
+### 76.3 The tools
+1. **The same rules, a new layout:** preview first, Confirm only for the exact amount previewed, ₹50–₹10,000, entered once (the API enforces all of it again, chapter 50).
+2. **Whole rupees, grouped as you type:** the input keeps only digits (`replace(/\D/g, "")`, at most 5) and shows `Number(digits).toLocaleString("en-IN")`.
+3. **`uqr` 0.1.3:** a small QR library with no dependencies of its own, MIT licence, pinned exactly. Its `encode(text)` returns the grid of modules; we turn every dark module into a 1×1 square of one SVG `<path>`. Black on white in both themes, because that's what cameras read best.
+4. **Choosing by pointer:** `useMedia("(hover: hover) and (pointer: fine)")` (the `useWide` hook from chapter 73, generalised) decides: laptops get a Pay button that opens the QR sheet; phones get the `upi://` link.
+5. **Met on laptops:** the group on the left (each person's share appears next to their name once the fare is in, with ratings below); on the right a **Fare | Group chat** switch. The chat is hidden, never unmounted.
+
+### 76.4 Decisions (2026-10-19)
+| Decision | Choice |
+|---|---|
+| Laptop Pay | A QR sheet on laptops (mouse/trackpad), the UPI link on phones |
+| QR library | `uqr` 0.1.3, drawn by us as an SVG path from `encode()` |
+| Fare input | Whole rupees, grouped as you type, ₹50–₹10,000 |
+| Confirm | Only after a preview of that exact amount |
+| Laptop layout once met | Group pane + a Fare / Group chat switch; the chat is only hidden |
+| Pickup once met | Hidden: you've found each other |
+| "Plan another trip" (6b) | Skipped: the API refuses a new trip while the group is active; the group closes 4 h after meeting |
+| Several people owe the booker | One block each, with a smaller amount |
+| "He sees your UPI ID…" (6b) | "They see…": the app doesn't know anyone's gender |
+| Light mode | A sweep of every screen; the top bar becomes `surface`, the "asked you" border `accent-text` |
+
+> **Later change:** the redesign is complete with this chapter. What's left from the design are features it reserves space for (ID-verified badge, women-only groups, sharing a live trip with a contact).
+
+---
+
+## 77. Code walkthrough: the fare, UPI QR and light polish (slice D)
+
+### 77.0 Before you read
+The last slice of the redesign, applying chapter 76 on top of the group screen from chapter 75. There are no API changes; one new library (`uqr`).
+
+### 77.1 `app/fare-section.tsx`
+- **`FareSection`** picks one of four views: the booker before the fare (`EnterFare`), a member before the fare (one line), the booker after (`FareConfirmed`), a member after (`PayBooker`).
+- **`EnterFare`:** the eyebrow "You booked, so you enter it", "What did the cab cost?", the 72 px ₹ box (80 px on laptops), **Preview shares** (a form submit, so Enter works), the shares card ("Split by distance each person rode."), the warning, then **Confirm fare ₹1,200**. Every keystroke clears the preview and the error, so Confirm can only ever send the amount that was previewed.
+- **`FareConfirmed`:** "Fare ₹1,200 · confirmed", one "X owes you ₹412" block per person (a smaller size when there are several), "They each see your UPI ID and a Pay button", a profile link if the booker has no UPI ID, and the "never sees or confirms payments" note.
+- **`PayBooker`:** "नेहा added the fare · ₹1,200", "Your share **₹452** to नेहा", then the pay card: `UpiCard`, the warning, and Pay. The `upi://pay?...` link is built exactly as before (chapter 50.4). On laptops, Pay opens a `Sheet` with `QrCode`; on phones it's an `<a href>` with `buttonClass({ size: "pay" })`.
+- **`QrCode`:** `encode(text, { ecc: "M", border: 4 })`, then one path: `M{x} {y}h1v1h-1z` for each dark module, `viewBox` the grid's size, `shapeRendering="crispEdges"`. `ecc: "M"` lets about 15% of the code be damaged and still scan.
+- **`UpiCard`** moved here from the group screen (both use it), with an `inCard` prop instead of a passed-in background class: two `bg-*` classes would fight (71.3). The same rule split the big amount's sizes into `BIG` and `SMALLER`.
+
+### 77.2 `app/group-screen.tsx`, `lib/use-wide.ts`
+- `useWide(px)` now calls a general `useMedia(query)`.
+- Once met: the fare comes right after the banner on phones; the booker's UPI card and the pickup disappear (the fare shows the UPI ID where it's needed); member rows show their share once it exists.
+- Laptops when met: `grid-cols-[380px_1fr]`; the left pane is the same function as before (`leftPane`) with ratings added; the right has the `Segmented` switch, the fare view (banner + fare, up to 60 rem wide) and the chat in a `hidden` wrapper when not selected.
+- The banner's last line now differs for the booker ("here's who owes you") and members ("here's your share").
+
+### 77.3 Light polish
+- `components/app-bar.tsx`: `lg:bg-surface lg:dark:bg-bg`, the design's light top bar.
+- `app/current-trip.tsx`: the "asked you" border is `border-accent-text dark:border-accent`: the bright orange fill was too faint as a thin line on cream.
+- The sweep (home, plan trip, profile, group, fare, at 1280 px in light) found nothing else.
+
+### 77.4 Verified in a real browser
+- **Data:** a dev script built a met group: नेहा (our test user, the booker), अर्जुन and Asha, all "here". The old test group had to close first: the once-a-minute job did it when the API started.
+- **Booker, laptop:** the Fare | Group chat switch; "12000" showed as "12,000" and was refused ("₹50 to ₹10,000"); "1,200" previewed अर्जुन ₹412, Asha ₹452, You ₹336; Confirm showed both "owes you" blocks and the shares beside each name.
+- **Member, laptop (logged in as Asha):** "Your share ₹452 to नेहा", the pay card and "On a laptop?…"; Pay opened the QR sheet (focus on Done, Esc closes).
+- **The QR, proven:** the page's code was hashed in the browser and compared with one generated in Node for the expected link (identical), and an independent decoder (`jsQR`, installed only in a scratch folder) read it back as exactly `upi://pay?pa=neha.s@okaxis&pn=नेहा&am=452.00&cu=INR&tn=Namastute cab`.
+- **Member, phone (375 px):** no QR; Pay is a 64 px `upi://` link; nothing wider than the screen.
+- **Light mode:** the member fare view, plan trip and profile.
+- **Testing gotcha:** OTP rate limits (3 per number per 15 min, 10 per address per hour) also apply to us: the scripts' logins plus the browser's used most of the hour's allowance, so the logins were planned.
+- **Not checked:** scanning the QR with a real UPI app (the decoder proves the content, not that every UPI app accepts it), paying for real, a screen reader, 200% text.
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 76. Command cheat sheet
+## 78. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5286,7 +5373,7 @@ git fetch --prune
 
 ---
 
-## 77. Glossary
+## 79. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5420,6 +5507,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Fixed window (rate limit) | Count events per time slot (e.g. 10 s); refuse the ones over the limit until the slot ends |
 | Floating point | How double stores numbers in binary; most decimal fractions are slightly off |
 | Foreign key | A column that must point at an existing row in another table |
+| Formatted input | A box that shows "1,200" while keeping the plain number 1200 |
 | Framework | A large ready-made toolkit that gives a program its structure (Spring, Next.js) |
 | Frontend | The part of an app people see and use, running in the browser |
 | Full-duplex | Both sides can send at the same time |
@@ -5451,11 +5539,13 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | IME (Input Method Editor) | The system that turns key presses into another script, e.g. Hindi; Enter picks a word while composing |
 | Independent scrolling | Each pane scrolls on its own; needs `overflow-y-auto` and `min-h-0` |
 | Index scan / B-tree | Finding rows through an index / the default index type, a sorted tree |
+| Indian digit grouping | Writing 100000 as 1,00,000 (lakh); `Intl.NumberFormat("en-IN")` |
 | Interceptor | Code that inspects every incoming message before it's handled |
 | Interface (Java) | A list of methods a class promises to provide, without saying how |
 | Internet | The worldwide network of computer networks |
 | IoC | Inversion of Control: the framework creates and wires objects |
 | IP address | The network address a request comes from |
+| Irreversible action | Something the app can't undo, like entering the fare |
 | JDBC | Java's standard database API |
 | JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
 | JIT warm-up | Java gets faster after its first minute as hot code is compiled |
@@ -5517,6 +5607,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
 | Personal data | Information that identifies a person (phone number, UPI ID) |
 | Pessimistic locking | Lock the row when reading it (`select ... for update`) |
+| Pointer media query | `(hover: hover) and (pointer: fine)`: a mouse or trackpad, so most likely a laptop |
 | Polling | Asking the server "anything new?" again and again |
 | Pool starvation | Every connection is taken and threads wait forever for one more |
 | Port | Numbered "door" a program listens on |
@@ -5525,6 +5616,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Prefilter | A cheap first pass that throws away obviously wrong rows |
 | Preflight | Browser's automatic `OPTIONS` permission check before a cross-origin request |
 | Prerendering | Building a page ahead of time instead of per visitor |
+| Preview → confirm | Show exactly what will happen, then confirm that exact thing |
 | Primitive | A small basic component bigger ones are built from (Button, Chip) |
 | Principal | The authenticated caller of a request |
 | Process | One running program |
@@ -5542,8 +5634,10 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Push subscription | A browser's endpoint URL + keys for receiving pushes |
 | PUT | HTTP method for replacing a whole resource |
 | PWA / web app manifest | An installable web app / the file describing its name, icons and colours |
+| QR code | A square of black and white modules encoding text, with error correction and a quiet zone |
 | Query | One question to the database |
 | Query planner | The part of Postgres that decides how to run a query |
+| Quiet zone | The empty margin (4 modules) a QR code needs around it to scan |
 | R-tree | Tree of nested bounding boxes; how PostGIS indexes points |
 | Race condition | Bug where the result depends on the timing of simultaneous operations |
 | RAM | A computer's fast, temporary memory; emptied when a program stops |
@@ -5673,7 +5767,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 78. Interview questions to practise
+## 80. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -5830,3 +5924,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 151. The top bar shows "Live", but the chat owns the connection. How does the information get there?
 152. Why is a sticky bar inside a section not sticky for the whole page, and how did you fix it?
 153. Where would you put Report and Block in a group screen, and why not on every row?
+154. How do you make sure the amount someone confirms is exactly the amount they previewed?
+155. Why does a UPI Pay link do nothing on a laptop, and what did you do instead?
+156. How did you prove the QR code on the page encodes the right payee and amount?
+157. When is adding a dependency the right call? Walk through how you chose the QR library.
+158. Why hide the chat instead of removing it when the fare view is shown?
