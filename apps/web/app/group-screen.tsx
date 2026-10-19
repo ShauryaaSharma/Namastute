@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/controls";
 import { cx } from "@/components/ui/cx";
 import { Alert, Avatar, Chip, StatusBadge } from "@/components/ui/display";
 import { Sheet } from "@/components/ui/layout";
@@ -19,11 +20,11 @@ import {
   type Terminal,
   type Trip,
 } from "@/lib/api";
-import { plural, ratingText } from "@/lib/format";
+import { plural, ratingText, rupees } from "@/lib/format";
 import { formatIstTime } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
 import { useWide } from "@/lib/use-wide";
-import FareSection from "./fare-section";
+import FareSection, { UpiCard } from "./fare-section";
 import GroupChat from "./group-chat";
 import PickupLocation from "./pickup-location";
 import ReportForm from "./report-form";
@@ -49,6 +50,7 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
   const [terminal, setTerminal] = useState<Terminal | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [person, setPerson] = useState<GroupMember | null>(null); // whose "⋯" sheet is open
+  const [tab, setTab] = useState<"fare" | "chat">("fare"); // laptops, once met (W7): the fare, or the chat
   const { busy, error, run } = useAction();
 
   useEffect(() => {
@@ -98,7 +100,8 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
               </span>
               <span className="text-small text-fg-muted">{m.destArea} · {plural(m.seats, "seat")} · {plural(m.bags, "bag")}</span>
             </span>
-            {m.here && <Chip variant="here" className="shrink-0">here ✓</Chip>}
+            {m.share !== null ? <b className="tnum shrink-0 font-display text-title">{rupees(m.share)}</b>
+              : m.here && <Chip variant="here" className="shrink-0">here ✓</Chip>}
             {!m.you && (
               <button type="button" onClick={() => setPerson(m)} aria-label={`More for ${m.firstName}: report or block`}
                       className="-mr-2 flex size-tap shrink-0 items-center justify-center rounded-full text-xl font-bold text-fg-muted hover:bg-surface-2">
@@ -124,14 +127,15 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
         You&apos;ve met up.<br className="lg:hidden" /> Have a good ride!
       </p>
       <p className="text-fg">
-        {g.fareTotal !== null ? "The fare is in: see your share below."
+        {g.fareTotal !== null ? (g.youAreBooker ? "The fare is in: here's who owes you." : "The fare is in: here's your share.")
           : g.youAreBooker ? "Add the fare after the ride." : `${booker?.firstName} will add the fare after the ride.`}
       </p>
     </div>
   ) : null;
 
-  const upi = g.youAreBooker
-    ? !g.bookerUpiId && !met && (
+  // Once met, the fare section shows the UPI ID where it's needed: next to "Pay"
+  const upi = met ? null : g.youAreBooker
+    ? !g.bookerUpiId && (
       <p className="text-[0.9375rem] text-fg-muted">
         Add your UPI ID in <Link href="/profile" className="font-semibold text-accent-text underline underline-offset-4 dark:text-accent">your profile</Link> so
         your group can pay you back.
@@ -148,17 +152,11 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
     </div>
   );
 
-  // After meeting up: the fare (redesigned in slice D) and ratings, in the space the design reserves for them
-  const next = met && (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-line bg-surface p-4 dark:border-transparent">
-        <FareSection group={g} onChange={onChange} />
-      </div>
-      <RideRatings group={g} />
-    </div>
-  );
+  // After meeting up: the fare (design 6 / W7) and ratings. The pickup goes: you've found each other.
+  const fare = met && <FareSection group={g} onChange={onChange} />;
+  const ratings = met && <RideRatings group={g} />;
 
-  const pickup = meet && (
+  const pickup = !met && meet && (
     <PickupLocation group={g} meet={meet} note={terminal?.pickupNote ?? `${short(trip.terminalId)} arrivals, cab pickup zone. Agree on a pillar in the chat.`} />
   );
 
@@ -208,11 +206,12 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
       <main className="mx-auto flex w-full max-w-[30rem] flex-col gap-4 px-4">
         {header}
         {metPanel}
+        {fare}
         {status}
         {members}
         {upi}
         {joinRequests}
-        {next}
+        {ratings}
         {pickup}
         {chat}
         {sheets}
@@ -221,55 +220,56 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
   }
 
   const pane = "flex min-h-0 flex-col gap-5 overflow-y-auto p-7";
+  const leftPane = (extra: ReactNode) => (
+    <div className="flex min-h-0 flex-col border-r border-line">
+      <div className={cx(pane, "flex-1")}>
+        {header}
+        {status}
+        {upi}
+        {members}
+        {joinRequests}
+        {extra}
+      </div>
+      {actions && <div className="border-t border-line px-7 pt-4 pb-5">{actions}</div>}
+    </div>
+  );
+
+  // Met (W7): the group on the left; the fare fills the rest, with the chat one tap away. The chat is only hidden,
+  // never unmounted: its connection brings the live updates (like "the fare is in") to this screen.
+  if (met) {
+    return (
+      <main className="grid h-[calc(100dvh-4rem)] grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+        {leftPane(ratings)}
+        <div className="flex min-h-0 flex-col">
+          <div className="flex h-16 shrink-0 items-center border-b border-line px-7">
+            <Segmented label="Show" value={tab} onChange={setTab} className="w-80"
+                       options={[{ value: "fare", label: "Fare" }, { value: "chat", label: "Group chat" }]} />
+          </div>
+          {tab === "fare" && (
+            <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-7 xl:p-10">
+              {metPanel}
+              <div className="w-full max-w-[60rem]">{fare}</div>
+            </div>
+          )}
+          <div className={tab === "chat" ? "flex min-h-0 flex-1 flex-col" : "hidden"}>{chat}</div>
+        </div>
+        {sheets}
+      </main>
+    );
+  }
+
   return (
     <main className={cx("grid h-[calc(100dvh-4rem)]", threePanes ? "grid-cols-[380px_minmax(0,1fr)_320px]" : "grid-cols-[360px_minmax(0,1fr)]")}>
-      <div className="flex min-h-0 flex-col border-r border-line">
-        <div className={cx(pane, "flex-1")}>
-          {header}
-          {status}
-          {upi}
-          {members}
-          {joinRequests}
-          {!threePanes && next}
-          {!threePanes && pickup}
-        </div>
-        {actions && <div className="border-t border-line px-7 pt-4 pb-5">{actions}</div>}
-      </div>
-      <div className="flex min-h-0 flex-col">
-        {metPanel && <div className="px-7 pt-6">{metPanel}</div>}
-        {chat}
-      </div>
+      {leftPane(!threePanes && pickup)}
+      <div className="flex min-h-0 flex-col">{chat}</div>
       {threePanes && (
         <div className={cx(pane, "border-l border-line px-6")}>
-          {next}
           {pickup}
-          {!met && <Alert variant="info" className="mt-auto">Members only see first names and areas, never phone numbers.</Alert>}
+          <Alert variant="info" className="mt-auto">Members only see first names and areas, never phone numbers.</Alert>
         </div>
       )}
       {sheets}
     </main>
-  );
-}
-
-// The booker's UPI ID (members only), with Copy: no typing a long ID on a phone
-function UpiCard({ name, upiId }: { name: string; upiId: string }) {
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    navigator.clipboard.writeText(upiId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {}); // blocked clipboard: the ID is still on screen to select
-  }
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[16px] border border-line bg-surface px-4 py-3.5 dark:border-transparent">
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[0.8125rem] font-semibold text-fg-muted">{name}&apos;s UPI · members only</span>
-        <b className="break-all font-mono font-semibold">{upiId}</b>
-      </span>
-      <Button variant="tonal" onClick={copy} className="shrink-0">
-        <span aria-live="polite">{copied ? "Copied ✓" : "Copy"}</span>
-      </Button>
-    </div>
   );
 }
 

@@ -128,15 +128,17 @@
 <details><summary><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">73. Code walkthrough: home and plan trip (slice B)</a></summary><a class="sub" href="#730-before-you-read">73.0 Before you read</a><a class="sub" href="#731-small-shared-changes">73.1 Small shared changes</a><a class="sub" href="#732-apppagetsx-and-appcurrent-triptsx-home">73.2 app/page.tsx and app/current-trip.tsx: home</a><a class="sub" href="#733-apptripnewpagetsx-and-destination-maptsx-planning-a-trip">73.3 app/trip/new/page.tsx and destination-map.tsx: planning a trip</a><a class="sub" href="#734-verified-in-a-real-browser">73.4 Verified in a real browser</a></details>
 <details><summary><a href="#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away">74. The group screen: chat that behaves, honest connection status, safety one tap away</a></summary><a class="sub" href="#740-words-first">74.0 Words first</a><a class="sub" href="#741-the-problem">74.1 The problem</a><a class="sub" href="#742-the-naive-ways-and-why-they-hurt">74.2 The naive ways, and why they hurt</a><a class="sub" href="#743-the-tools">74.3 The tools</a><a class="sub" href="#744-decisions-2026-10-17">74.4 Decisions (2026-10-17)</a></details>
 <details><summary><a href="#75-code-walkthrough-the-group-screen-slice-c">75. Code walkthrough: the group screen (slice C)</a></summary><a class="sub" href="#750-before-you-read">75.0 Before you read</a><a class="sub" href="#751-api-meetat">75.1 API: meetAt</a><a class="sub" href="#752-appgroup-screentsx">75.2 app/group-screen.tsx</a><a class="sub" href="#753-appgroup-chattsx">75.3 app/group-chat.tsx</a><a class="sub" href="#754-pickup-report-ratings-top-bar">75.4 Pickup, report, ratings, top bar</a><a class="sub" href="#755-verified-in-a-real-browser">75.5 Verified in a real browser</a></details>
+<details><summary><a href="#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes">76. The fare and paying: irreversible actions, deep links and QR codes</a></summary><a class="sub" href="#760-words-first">76.0 Words first</a><a class="sub" href="#761-the-problem">76.1 The problem</a><a class="sub" href="#762-the-naive-ways-and-why-they-hurt">76.2 The naive ways, and why they hurt</a><a class="sub" href="#763-the-tools">76.3 The tools</a><a class="sub" href="#764-decisions-2026-10-19">76.4 Decisions (2026-10-19)</a></details>
+<details><summary><a href="#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d">77. Code walkthrough: the fare, UPI QR and light polish (slice D)</a></summary><a class="sub" href="#770-before-you-read">77.0 Before you read</a><a class="sub" href="#771-appfare-sectiontsx">77.1 app/fare-section.tsx</a><a class="sub" href="#772-appgroup-screentsx-libuse-widets">77.2 app/group-screen.tsx, lib/use-wide.ts</a><a class="sub" href="#773-light-polish">77.3 Light polish</a><a class="sub" href="#774-verified-in-a-real-browser">77.4 Verified in a real browser</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#76-command-cheat-sheet">76. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#77-glossary">77. Glossary</a>
-<a class="topic" href="#78-interview-questions-to-practise">78. Interview questions to practise</a>
+<details><summary><a href="#78-command-cheat-sheet">78. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#79-glossary">79. Glossary</a>
+<a class="topic" href="#80-interview-questions-to-practise">80. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
 <p>How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.</p>
-<p>Last updated: 2026-10-17.</p>
+<p>Last updated: 2026-10-19.</p>
 <hr>
 <h2 id="about-this-book">About this book</h2>
 <h3 id="who-its-for">Who it&#39;s for</h3>
@@ -164,7 +166,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 77) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (76) and <strong>Interview questions</strong> (78) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 79) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (78) and <strong>Interview questions</strong> (80) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -393,12 +395,14 @@
 <li><a href="#73-code-walkthrough-home-and-plan-trip-slice-b">Code walkthrough: home and plan trip (slice B)</a></li>
 <li><a href="#74-the-group-screen-chat-that-behaves-honest-connection-status-safety-one-tap-away">The group screen: chat that behaves, honest connection status, safety one tap away</a></li>
 <li><a href="#75-code-walkthrough-the-group-screen-slice-c">Code walkthrough: the group screen (slice C)</a></li>
+<li><a href="#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes">The fare and paying: irreversible actions, deep links and QR codes</a></li>
+<li><a href="#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d">Code walkthrough: the fare, UPI QR and light polish (slice D)</a></li>
 </ol>
 <p><strong><a href="#reference">Reference</a></strong></p>
-<ol start="76">
-<li><a href="#76-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#77-glossary">Glossary</a></li>
-<li><a href="#78-interview-questions-to-practise">Interview questions to practise</a></li>
+<ol start="78">
+<li><a href="#78-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#79-glossary">Glossary</a></li>
+<li><a href="#80-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -7067,10 +7071,132 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked:</strong> typing with a real Hindi keyboard (the IME rule is in the code, untested), a real phone, a screen reader, 200% text.</li>
 </ul>
 <hr>
+<h2 id="76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes">76. The fare and paying: irreversible actions, deep links and QR codes</h2>
+<h3 id="760-words-first">76.0 Words first</h3>
+<ul>
+<li><strong>Irreversible action:</strong> something the app can&#39;t undo. The fare is one: the API accepts it once, and everyone&#39;s share is fixed from then on.</li>
+<li><strong>Preview → confirm:</strong> first show exactly what will happen, then confirm that exact thing; changing the input throws the preview away.</li>
+<li><strong>Indian digit grouping:</strong> <code>1,00,000</code> (lakh), not <code>100,000</code>. <code>Intl.NumberFormat(&quot;en-IN&quot;)</code> does it.</li>
+<li><strong>Formatted input:</strong> a box that shows &quot;1,200&quot; while you type 1200. The value kept is the plain number; the commas are only for showing.</li>
+<li><strong>Deep link:</strong> a link that opens another app. <code>upi://pay?pa=…&amp;am=…</code> opens whichever UPI app is installed. On a laptop there&#39;s none, so it does nothing.</li>
+<li><strong>QR code:</strong> a square of black and white <strong>modules</strong> that encodes text. It has <strong>error correction</strong> (it still scans when partly damaged) and needs a <strong>quiet zone</strong> (an empty margin of 4 modules).</li>
+<li><strong>Pointer media query:</strong> <code>(hover: hover) and (pointer: fine)</code> means &quot;a mouse or trackpad&quot;, which in practice means a laptop or desktop; a phone has <code>pointer: coarse</code>.</li>
+<li><strong>Dependency:</strong> someone else&#39;s code the project installs: more download, more security risk, more upkeep. Worth it only when writing it ourselves would be big or risky.</li>
+<li><strong>Hidden vs unmounted:</strong> a hidden component still exists and keeps working (a chat stays connected); an unmounted one is gone (its connection closes).</li>
+</ul>
+<h3 id="761-the-problem">76.1 The problem</h3>
+<p>After meeting up there are two jobs: the booker enters what the cab cost (once), and everyone else pays the booker their share. The old fare section was a plain list. The design gives it its biggest moments (6a–6c, W7): a huge ₹ input, &quot;Keshav owes you ₹246&quot;, &quot;Your share ₹246 to Asha&quot; with a 64 px Pay button. And on a laptop the Pay button, a <code>upi://</code> link, does nothing: the design&#39;s answer is a QR code of the same link, scanned with your phone.</p>
+<h3 id="762-the-naive-ways-and-why-they-hurt">76.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Confirm straight from the input:</strong> a typo (6000 for 600) can never be fixed, and three people get wrong shares.</li>
+<li><strong>A plain number box:</strong> &quot;12000&quot; is easy to misread; &quot;12,000&quot; isn&#39;t.</li>
+<li><strong>Writing our own QR encoder:</strong> QR needs Reed–Solomon error correction, masks and versions: hundreds of lines where a small bug makes a code that scans to <em>different</em> text, here a payee and an amount.</li>
+<li><strong>Inserting the library&#39;s SVG as an HTML string:</strong> <code>dangerouslySetInnerHTML</code> is how injected code gets in. Drawing the grid ourselves inserts nothing.</li>
+<li><strong>The QR everywhere:</strong> you can&#39;t scan your own phone&#39;s screen; on phones the link is the right thing.</li>
+<li><strong>Following W7 literally and dropping the chat once met:</strong> the chat&#39;s connection is also what tells the members &quot;the fare is in&quot;. Losing it would lose a feature and the live update.</li>
+</ul>
+<h3 id="763-the-tools">76.3 The tools</h3>
+<ol>
+<li><strong>The same rules, a new layout:</strong> preview first, Confirm only for the exact amount previewed, ₹50–₹10,000, entered once (the API enforces all of it again, chapter 50).</li>
+<li><strong>Whole rupees, grouped as you type:</strong> the input keeps only digits (<code>replace(/\D/g, &quot;&quot;)</code>, at most 5) and shows <code>Number(digits).toLocaleString(&quot;en-IN&quot;)</code>.</li>
+<li><strong><code>uqr</code> 0.1.3:</strong> a small QR library with no dependencies of its own, MIT licence, pinned exactly. Its <code>encode(text)</code> returns the grid of modules; we turn every dark module into a 1×1 square of one SVG <code>&lt;path&gt;</code>. Black on white in both themes, because that&#39;s what cameras read best.</li>
+<li><strong>Choosing by pointer:</strong> <code>useMedia(&quot;(hover: hover) and (pointer: fine)&quot;)</code> (the <code>useWide</code> hook from chapter 73, generalised) decides: laptops get a Pay button that opens the QR sheet; phones get the <code>upi://</code> link.</li>
+<li><strong>Met on laptops:</strong> the group on the left (each person&#39;s share appears next to their name once the fare is in, with ratings below); on the right a <strong>Fare | Group chat</strong> switch. The chat is hidden, never unmounted.</li>
+</ol>
+<h3 id="764-decisions-2026-10-19">76.4 Decisions (2026-10-19)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Laptop Pay</td>
+<td>A QR sheet on laptops (mouse/trackpad), the UPI link on phones</td>
+</tr>
+<tr>
+<td>QR library</td>
+<td><code>uqr</code> 0.1.3, drawn by us as an SVG path from <code>encode()</code></td>
+</tr>
+<tr>
+<td>Fare input</td>
+<td>Whole rupees, grouped as you type, ₹50–₹10,000</td>
+</tr>
+<tr>
+<td>Confirm</td>
+<td>Only after a preview of that exact amount</td>
+</tr>
+<tr>
+<td>Laptop layout once met</td>
+<td>Group pane + a Fare / Group chat switch; the chat is only hidden</td>
+</tr>
+<tr>
+<td>Pickup once met</td>
+<td>Hidden: you&#39;ve found each other</td>
+</tr>
+<tr>
+<td>&quot;Plan another trip&quot; (6b)</td>
+<td>Skipped: the API refuses a new trip while the group is active; the group closes 4 h after meeting</td>
+</tr>
+<tr>
+<td>Several people owe the booker</td>
+<td>One block each, with a smaller amount</td>
+</tr>
+<tr>
+<td>&quot;He sees your UPI ID…&quot; (6b)</td>
+<td>&quot;They see…&quot;: the app doesn&#39;t know anyone&#39;s gender</td>
+</tr>
+<tr>
+<td>Light mode</td>
+<td>A sweep of every screen; the top bar becomes <code>surface</code>, the &quot;asked you&quot; border <code>accent-text</code></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Later change:</strong> the redesign is complete with this chapter. What&#39;s left from the design are features it reserves space for (ID-verified badge, women-only groups, sharing a live trip with a contact).</p>
+</blockquote>
+<hr>
+<h2 id="77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d">77. Code walkthrough: the fare, UPI QR and light polish (slice D)</h2>
+<h3 id="770-before-you-read">77.0 Before you read</h3>
+<p>The last slice of the redesign, applying chapter 76 on top of the group screen from chapter 75. There are no API changes; one new library (<code>uqr</code>).</p>
+<h3 id="771-appfare-sectiontsx">77.1 <code>app/fare-section.tsx</code></h3>
+<ul>
+<li><strong><code>FareSection</code></strong> picks one of four views: the booker before the fare (<code>EnterFare</code>), a member before the fare (one line), the booker after (<code>FareConfirmed</code>), a member after (<code>PayBooker</code>).</li>
+<li><strong><code>EnterFare</code>:</strong> the eyebrow &quot;You booked, so you enter it&quot;, &quot;What did the cab cost?&quot;, the 72 px ₹ box (80 px on laptops), <strong>Preview shares</strong> (a form submit, so Enter works), the shares card (&quot;Split by distance each person rode.&quot;), the warning, then <strong>Confirm fare ₹1,200</strong>. Every keystroke clears the preview and the error, so Confirm can only ever send the amount that was previewed.</li>
+<li><strong><code>FareConfirmed</code>:</strong> &quot;Fare ₹1,200 · confirmed&quot;, one &quot;X owes you ₹412&quot; block per person (a smaller size when there are several), &quot;They each see your UPI ID and a Pay button&quot;, a profile link if the booker has no UPI ID, and the &quot;never sees or confirms payments&quot; note.</li>
+<li><strong><code>PayBooker</code>:</strong> &quot;नेहा added the fare · ₹1,200&quot;, &quot;Your share <strong>₹452</strong> to नेहा&quot;, then the pay card: <code>UpiCard</code>, the warning, and Pay. The <code>upi://pay?...</code> link is built exactly as before (chapter 50.4). On laptops, Pay opens a <code>Sheet</code> with <code>QrCode</code>; on phones it&#39;s an <code>&lt;a href&gt;</code> with <code>buttonClass({ size: &quot;pay&quot; })</code>.</li>
+<li><strong><code>QrCode</code>:</strong> <code>encode(text, { ecc: &quot;M&quot;, border: 4 })</code>, then one path: <code>M{x} {y}h1v1h-1z</code> for each dark module, <code>viewBox</code> the grid&#39;s size, <code>shapeRendering=&quot;crispEdges&quot;</code>. <code>ecc: &quot;M&quot;</code> lets about 15% of the code be damaged and still scan.</li>
+<li><strong><code>UpiCard</code></strong> moved here from the group screen (both use it), with an <code>inCard</code> prop instead of a passed-in background class: two <code>bg-*</code> classes would fight (71.3). The same rule split the big amount&#39;s sizes into <code>BIG</code> and <code>SMALLER</code>.</li>
+</ul>
+<h3 id="772-appgroup-screentsx-libuse-widets">77.2 <code>app/group-screen.tsx</code>, <code>lib/use-wide.ts</code></h3>
+<ul>
+<li><code>useWide(px)</code> now calls a general <code>useMedia(query)</code>.</li>
+<li>Once met: the fare comes right after the banner on phones; the booker&#39;s UPI card and the pickup disappear (the fare shows the UPI ID where it&#39;s needed); member rows show their share once it exists.</li>
+<li>Laptops when met: <code>grid-cols-[380px_1fr]</code>; the left pane is the same function as before (<code>leftPane</code>) with ratings added; the right has the <code>Segmented</code> switch, the fare view (banner + fare, up to 60 rem wide) and the chat in a <code>hidden</code> wrapper when not selected.</li>
+<li>The banner&#39;s last line now differs for the booker (&quot;here&#39;s who owes you&quot;) and members (&quot;here&#39;s your share&quot;).</li>
+</ul>
+<h3 id="773-light-polish">77.3 Light polish</h3>
+<ul>
+<li><code>components/app-bar.tsx</code>: <code>lg:bg-surface lg:dark:bg-bg</code>, the design&#39;s light top bar.</li>
+<li><code>app/current-trip.tsx</code>: the &quot;asked you&quot; border is <code>border-accent-text dark:border-accent</code>: the bright orange fill was too faint as a thin line on cream.</li>
+<li>The sweep (home, plan trip, profile, group, fare, at 1280 px in light) found nothing else.</li>
+</ul>
+<h3 id="774-verified-in-a-real-browser">77.4 Verified in a real browser</h3>
+<ul>
+<li><strong>Data:</strong> a dev script built a met group: नेहा (our test user, the booker), अर्जुन and Asha, all &quot;here&quot;. The old test group had to close first: the once-a-minute job did it when the API started.</li>
+<li><strong>Booker, laptop:</strong> the Fare | Group chat switch; &quot;12000&quot; showed as &quot;12,000&quot; and was refused (&quot;₹50 to ₹10,000&quot;); &quot;1,200&quot; previewed अर्जुन ₹412, Asha ₹452, You ₹336; Confirm showed both &quot;owes you&quot; blocks and the shares beside each name.</li>
+<li><strong>Member, laptop (logged in as Asha):</strong> &quot;Your share ₹452 to नेहा&quot;, the pay card and &quot;On a laptop?…&quot;; Pay opened the QR sheet (focus on Done, Esc closes).</li>
+<li><strong>The QR, proven:</strong> the page&#39;s code was hashed in the browser and compared with one generated in Node for the expected link (identical), and an independent decoder (<code>jsQR</code>, installed only in a scratch folder) read it back as exactly <code>upi://pay?pa=neha.s@okaxis&amp;pn=नेहा&amp;am=452.00&amp;cu=INR&amp;tn=Namastute cab</code>.</li>
+<li><strong>Member, phone (375 px):</strong> no QR; Pay is a 64 px <code>upi://</code> link; nothing wider than the screen.</li>
+<li><strong>Light mode:</strong> the member fare view, plan trip and profile.</li>
+<li><strong>Testing gotcha:</strong> OTP rate limits (3 per number per 15 min, 10 per address per hour) also apply to us: the scripts&#39; logins plus the browser&#39;s used most of the hour&#39;s allowance, so the logins were planned.</li>
+<li><strong>Not checked:</strong> scanning the QR with a real UPI app (the decoder proves the content, not that every UPI app accepts it), paying for real, a screen reader, 200% text.</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="76-command-cheat-sheet">76. Command cheat sheet</h2>
+<h2 id="78-command-cheat-sheet">78. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -7135,7 +7261,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="77-glossary">77. Glossary</h2>
+<h2 id="79-glossary">79. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -7657,6 +7783,10 @@ git fetch --prune
 <td>A column that must point at an existing row in another table</td>
 </tr>
 <tr>
+<td>Formatted input</td>
+<td>A box that shows &quot;1,200&quot; while keeping the plain number 1200</td>
+</tr>
+<tr>
 <td>Framework</td>
 <td>A large ready-made toolkit that gives a program its structure (Spring, Next.js)</td>
 </tr>
@@ -7781,6 +7911,10 @@ git fetch --prune
 <td>Finding rows through an index / the default index type, a sorted tree</td>
 </tr>
 <tr>
+<td>Indian digit grouping</td>
+<td>Writing 100000 as 1,00,000 (lakh); <code>Intl.NumberFormat(&quot;en-IN&quot;)</code></td>
+</tr>
+<tr>
 <td>Interceptor</td>
 <td>Code that inspects every incoming message before it&#39;s handled</td>
 </tr>
@@ -7799,6 +7933,10 @@ git fetch --prune
 <tr>
 <td>IP address</td>
 <td>The network address a request comes from</td>
+</tr>
+<tr>
+<td>Irreversible action</td>
+<td>Something the app can&#39;t undo, like entering the fare</td>
 </tr>
 <tr>
 <td>JDBC</td>
@@ -8045,6 +8183,10 @@ git fetch --prune
 <td>Lock the row when reading it (<code>select ... for update</code>)</td>
 </tr>
 <tr>
+<td>Pointer media query</td>
+<td><code>(hover: hover) and (pointer: fine)</code>: a mouse or trackpad, so most likely a laptop</td>
+</tr>
+<tr>
 <td>Polling</td>
 <td>Asking the server &quot;anything new?&quot; again and again</td>
 </tr>
@@ -8075,6 +8217,10 @@ git fetch --prune
 <tr>
 <td>Prerendering</td>
 <td>Building a page ahead of time instead of per visitor</td>
+</tr>
+<tr>
+<td>Preview → confirm</td>
+<td>Show exactly what will happen, then confirm that exact thing</td>
 </tr>
 <tr>
 <td>Primitive</td>
@@ -8145,12 +8291,20 @@ git fetch --prune
 <td>An installable web app / the file describing its name, icons and colours</td>
 </tr>
 <tr>
+<td>QR code</td>
+<td>A square of black and white modules encoding text, with error correction and a quiet zone</td>
+</tr>
+<tr>
 <td>Query</td>
 <td>One question to the database</td>
 </tr>
 <tr>
 <td>Query planner</td>
 <td>The part of Postgres that decides how to run a query</td>
+</tr>
+<tr>
+<td>Quiet zone</td>
+<td>The empty margin (4 modules) a QR code needs around it to scan</td>
 </tr>
 <tr>
 <td>R-tree</td>
@@ -8658,7 +8812,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="78-interview-questions-to-practise">78. Interview questions to practise</h2>
+<h2 id="80-interview-questions-to-practise">80. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -8814,6 +8968,11 @@ git fetch --prune
 <li>The top bar shows &quot;Live&quot;, but the chat owns the connection. How does the information get there?</li>
 <li>Why is a sticky bar inside a section not sticky for the whole page, and how did you fix it?</li>
 <li>Where would you put Report and Block in a group screen, and why not on every row?</li>
+<li>How do you make sure the amount someone confirms is exactly the amount they previewed?</li>
+<li>Why does a UPI Pay link do nothing on a laptop, and what did you do instead?</li>
+<li>How did you prove the QR code on the page encodes the right payee and amount?</li>
+<li>When is adding a dependency the right call? Walk through how you chose the QR library.</li>
+<li>Why hide the chat instead of removing it when the fare view is shown?</li>
 </ol>
 
 

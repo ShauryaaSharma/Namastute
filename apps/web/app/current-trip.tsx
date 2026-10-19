@@ -347,7 +347,7 @@ function CompactRow({ match, askedYou }: { match: Match; askedYou: boolean }) {
   const r = match.riders[0];
   const names = match.riders.map((x) => x.firstName).join(" + ");
   return (
-    <li className={cx("flex items-center gap-3", ROW, askedYou ? "border-[1.5px] border-accent" : ROW_BORDER)}>
+    <li className={cx("flex items-center gap-3", ROW, askedYou ? "border-[1.5px] border-accent-text dark:border-accent" : ROW_BORDER)}>
       <Avatars match={match} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <b className="text-[1.0625rem]">{names}</b>
