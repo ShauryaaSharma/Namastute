@@ -34,6 +34,14 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
+      seaweedfs:                      # S3-compatible storage for the ID verification tests, same as our docker-compose
+        image: chrislusf/seaweedfs:4.48
+        env:
+          AWS_ACCESS_KEY_ID: namastute
+          AWS_SECRET_ACCESS_KEY: namastute-dev-secret
+          S3_BUCKET: namastute-verification
+        ports:
+          - 8333:8333
     steps:
       - uses: actions/checkout@v5     # download the repo onto the VM
       - uses: actions/setup-java@v5   # install Java

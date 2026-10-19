@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: validate            # Hibernate only checks the tables; Flyway creates them
     open-in-view: false
+  servlet:
+    multipart:                      # ID photos (Learning Notes 78): the browser sends ~400 KB JPEGs
+      max-file-size: 2MB
+      max-request-size: 5MB
 
 namastute:
   web-origin: ${WEB_ORIGIN:http://localhost:3000}
@@ -24,6 +28,14 @@ namastute:
     # SSRF defence (58.7): we only ever send to HTTPS endpoints on these push services (and their subdomains)
     allowed-hosts: fcm.googleapis.com, push.services.mozilla.com, push.apple.com, notify.windows.com
     require-https: true
+
+  verification:
+    # ID photos in S3 (Learning Notes 78). Development: SeaweedFS from infra/docker-compose.yml with its dev keys.
+    bucket: ${S3_BUCKET:namastute-verification}
+    s3-endpoint: ${S3_ENDPOINT:http://localhost:8333}   # empty = real AWS
+    s3-region: ${AWS_REGION:ap-south-1}
+    s3-access-key: ${S3_ACCESS_KEY:namastute}           # empty = the AWS default chain (an IAM role in production)
+    s3-secret-key: ${S3_SECRET_KEY:namastute-dev-secret}
 
 springdoc:
   api-docs:

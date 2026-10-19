@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/controls";
 import { Alert, Avatar, Card, Chip, Eyebrow } from "@/components/ui/display";
 import { TextField } from "@/components/ui/field";
 import { BottomBar } from "@/components/ui/layout";
-import { type BlockView, getBlocks, getCurrentTrip, logout, restoreSession, type Profile, type Trip, unblock, updateMe } from "@/lib/api";
+import { type BlockView, getBlocks, getVerification, type Verification, getCurrentTrip, logout, restoreSession, type Profile, type Trip, unblock, updateMe } from "@/lib/api";
 import { plural } from "@/lib/format";
 import { setThemeChoice, type ThemeChoice, themeChoice } from "@/lib/theme";
 import { useAction } from "@/lib/use-action";
@@ -103,6 +104,7 @@ export default function ProfilePage() {
 
           {!firstTime && (
             <>
+              <Section title="ID verification"><IdStatus /></Section>
               <Section title="Notifications"><PushPrompt /></Section>
               <Section title="Appearance"><ThemePicker /></Section>
               <Section title="Blocked people"><BlockedPeople /></Section>
@@ -158,6 +160,27 @@ function GroupPreview({ firstName, trip }: { firstName: string; trip: Trip | nul
         </div>
       </Card>
     </div>
+  );
+}
+
+// Where your ID check stands, and the way to /verify (Learning Notes 78)
+function IdStatus() {
+  const [v, setV] = useState<Verification | null>(null);
+  useEffect(() => {
+    getVerification().then(setV).catch(() => {});
+  }, []);
+  if (!v) return null;
+  if (v.status === "verified") return <Chip variant="info" className="self-start">◆ ID verified</Chip>;
+  if (v.status === "pending") return <p className="text-fg-muted">Under review. We&apos;ll let you know, usually within a day.</p>;
+  return (
+    <>
+      <p className="text-fg-muted">
+        {v.status === "rejected" ? `Not approved: ${v.rejectReason}` : "Get the ID verified badge, and women-only groups for women."}
+      </p>
+      <Link href="/verify" className={buttonClass({ variant: "secondary", className: "self-start" })}>
+        {v.status === "rejected" ? "Try again" : "Verify your ID"}
+      </Link>
+    </>
   );
 }
 

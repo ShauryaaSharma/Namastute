@@ -28,7 +28,7 @@ let refreshing: Promise<boolean> | null = null;
 
 function send(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  if (init.body) headers.set("Content-Type", "application/json");
+  if (typeof init.body === "string") headers.set("Content-Type", "application/json"); // FormData sets its own (with the boundary)
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   return fetch(`${API_URL}${path}`, { ...init, headers, credentials: "include" });
 }
@@ -275,6 +275,20 @@ export function sendChat(client: Client, groupId: string, body: string, clientId
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ body, clientId }),
   });
+}
+
+// ---- ID verification (Learning Notes 78) ----
+
+export type Verification = Schemas["VerificationView"];
+
+// Where your check stands, and the gesture your next selfie must show
+export function getVerification(): Promise<Verification> {
+  return request<Verification>("/api/v1/verification");
+}
+
+// docType, consent, idPhoto and selfie in one multipart request
+export function submitVerification(form: FormData): Promise<Verification> {
+  return request<Verification>("/api/v1/verification", { method: "POST", body: form });
 }
 
 // ---- Live location at the pickup (Learning Notes 60) ----

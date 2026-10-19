@@ -29,7 +29,25 @@ These need a decision, an account or a site visit, not code (Learning Notes 64):
    rm vapid.pem
    nano infra/.env              # paste them all in and set DOMAIN
    ```
-6. **Start:**
+6. **ID photos (private S3 bucket, Learning Notes 78).** From a computer with admin AWS access (or AWS CloudShell). Bucket names are global, so pick your own and put it in `S3_BUCKET` in `infra/.env`:
+   ```bash
+   B=namastute-verification-<something-unique>
+   aws s3api create-bucket --bucket $B --region ap-south-1 --create-bucket-configuration LocationConstraint=ap-south-1
+   aws s3api put-public-access-block --bucket $B --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   aws s3api put-bucket-encryption --bucket $B --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+   # The safety net: AWS itself deletes any ID photo older than 7 days, even if our own job stops
+   aws s3api put-bucket-lifecycle-configuration --bucket $B --lifecycle-configuration '{"Rules":[{"ID":"delete-id-photos","Status":"Enabled","Filter":{"Prefix":"verification/"},"Expiration":{"Days":7}}]}'
+   ```
+   Then give the server access without any keys: **IAM → Roles → Create role → AWS service: EC2**, with this one inline policy (put your bucket name in), named e.g. `namastute-api`:
+   ```json
+   {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+     "Resource": "arn:aws:s3:::<your bucket>/verification/*"}]}
+   ```
+   Attach it: **EC2 → your instance → Actions → Security → Modify IAM role**. Containers are one network step further from the instance's metadata service than the machine itself, so allow that, or the API can't fetch its credentials:
+   ```bash
+   aws ec2 modify-instance-metadata-options --instance-id <your instance id> --http-tokens required --http-put-response-hop-limit 2
+   ```
+7. **Start:**
    ```bash
    docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d --build
    ```

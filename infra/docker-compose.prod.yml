@@ -40,6 +40,8 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:?set VAPID_PRIVATE_KEY in infra/.env}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:?set VAPID_PUBLIC_KEY in infra/.env}
       PUSH_CONTACT: https://${DOMAIN}   # who push services contact about our pushes (RFC 8292)
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET in infra/.env}   # ID photos; access comes from the EC2 IAM role
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
     depends_on:
       postgres:
         condition: service_healthy

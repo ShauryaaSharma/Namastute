@@ -130,10 +130,13 @@
 <details><summary><a href="#75-code-walkthrough-the-group-screen-slice-c">75. Code walkthrough: the group screen (slice C)</a></summary><a class="sub" href="#750-before-you-read">75.0 Before you read</a><a class="sub" href="#751-api-meetat">75.1 API: meetAt</a><a class="sub" href="#752-appgroup-screentsx">75.2 app/group-screen.tsx</a><a class="sub" href="#753-appgroup-chattsx">75.3 app/group-chat.tsx</a><a class="sub" href="#754-pickup-report-ratings-top-bar">75.4 Pickup, report, ratings, top bar</a><a class="sub" href="#755-verified-in-a-real-browser">75.5 Verified in a real browser</a></details>
 <details><summary><a href="#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes">76. The fare and paying: irreversible actions, deep links and QR codes</a></summary><a class="sub" href="#760-words-first">76.0 Words first</a><a class="sub" href="#761-the-problem">76.1 The problem</a><a class="sub" href="#762-the-naive-ways-and-why-they-hurt">76.2 The naive ways, and why they hurt</a><a class="sub" href="#763-the-tools">76.3 The tools</a><a class="sub" href="#764-decisions-2026-10-19">76.4 Decisions (2026-10-19)</a></details>
 <details><summary><a href="#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d">77. Code walkthrough: the fare, UPI QR and light polish (slice D)</a></summary><a class="sub" href="#770-before-you-read">77.0 Before you read</a><a class="sub" href="#771-appfare-sectiontsx">77.1 app/fare-section.tsx</a><a class="sub" href="#772-appgroup-screentsx-libuse-widets">77.2 app/group-screen.tsx, lib/use-wide.ts</a><a class="sub" href="#773-light-polish">77.3 Light polish</a><a class="sub" href="#774-verified-in-a-real-browser">77.4 Verified in a real browser</a></details>
+<a class="topic" href="#part-x-id-verification">Part X. ID verification</a>
+<details><summary><a href="#78-id-verification-checking-ids-without-keeping-them">78. ID verification: checking IDs without keeping them</a></summary><a class="sub" href="#780-words-first">78.0 Words first</a><a class="sub" href="#781-the-problem">78.1 The problem</a><a class="sub" href="#782-the-options">78.2 The options</a><a class="sub" href="#783-how-slice-1-keeps-the-photos-safe">78.3 How slice 1 keeps the photos safe</a><a class="sub" href="#784-decisions-2026-10-19">78.4 Decisions (2026-10-19)</a></details>
+<details><summary><a href="#79-code-walkthrough-id-upload-slice-1">79. Code walkthrough: ID upload (slice 1)</a></summary><a class="sub" href="#790-before-you-read">79.0 Before you read</a><a class="sub" href="#791-infrastructure">79.1 Infrastructure</a><a class="sub" href="#792-database-v9__verification_uploadsql">79.2 Database: V9__verification_upload.sql</a><a class="sub" href="#793-the-verification-module">79.3 The verification module</a><a class="sub" href="#794-web">79.4 Web</a><a class="sub" href="#795-verified">79.5 Verified</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#78-command-cheat-sheet">78. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#79-glossary">79. Glossary</a>
-<a class="topic" href="#80-interview-questions-to-practise">80. Interview questions to practise</a>
+<details><summary><a href="#80-command-cheat-sheet">80. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#81-glossary">81. Glossary</a>
+<a class="topic" href="#82-interview-questions-to-practise">82. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
@@ -166,7 +169,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 79) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (78) and <strong>Interview questions</strong> (80) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 81) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (80) and <strong>Interview questions</strong> (82) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -398,11 +401,16 @@
 <li><a href="#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes">The fare and paying: irreversible actions, deep links and QR codes</a></li>
 <li><a href="#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d">Code walkthrough: the fare, UPI QR and light polish (slice D)</a></li>
 </ol>
-<p><strong><a href="#reference">Reference</a></strong></p>
+<p><strong><a href="#part-x-id-verification">Part X. ID verification</a></strong></p>
 <ol start="78">
-<li><a href="#78-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#79-glossary">Glossary</a></li>
-<li><a href="#80-interview-questions-to-practise">Interview questions to practise</a></li>
+<li><a href="#78-id-verification-checking-ids-without-keeping-them">ID verification: checking IDs without keeping them</a></li>
+<li><a href="#79-code-walkthrough-id-upload-slice-1">Code walkthrough: ID upload (slice 1)</a></li>
+</ol>
+<p><strong><a href="#reference">Reference</a></strong></p>
+<ol start="80">
+<li><a href="#80-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#81-glossary">Glossary</a></li>
+<li><a href="#82-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -7193,10 +7201,167 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked:</strong> scanning the QR with a real UPI app (the decoder proves the content, not that every UPI app accepts it), paying for real, a screen reader, 200% text.</li>
 </ul>
 <hr>
+<h2 id="part-x-id-verification">Part X. ID verification</h2>
+<p>Women-only groups only make sense if &quot;female&quot; can&#39;t simply be ticked by anyone. This part adds a one-time ID check: a photo of an ID and a selfie, checked by a person (with a machine&#39;s help), then deleted. It&#39;s the most sensitive data the app ever touches, so most of the work is about holding it as briefly and as safely as possible.</p>
+<hr>
+<h2 id="78-id-verification-checking-ids-without-keeping-them">78. ID verification: checking IDs without keeping them</h2>
+<h3 id="780-words-first">78.0 Words first</h3>
+<ul>
+<li><strong>ID verification / KYC (Know Your Customer):</strong> checking that a person is real and that the ID they show is theirs.</li>
+<li><strong>Face match:</strong> comparing the face on the ID with a <strong>selfie</strong>; a program gives a <strong>similarity score</strong>.</li>
+<li><strong>Liveness:</strong> proof the selfie is of a live person now, not a photo of a photo.</li>
+<li><strong>Masked Aadhaar:</strong> an Aadhaar card with the first 8 of its 12 digits hidden. The <strong>Aadhaar Act</strong> doesn&#39;t allow private companies to collect full Aadhaar numbers.</li>
+<li><strong>DPDP Act 2023:</strong> India&#39;s data protection law: give <strong>notice</strong>, get <strong>consent</strong>, collect only what&#39;s <strong>needed</strong> (data minimisation), and <strong>delete</strong> it when the purpose is over.</li>
+<li><strong>Object storage (S3):</strong> cloud storage for files, separate from the database. A <strong>bucket</strong> is one named container of files; each file (an <strong>object</strong>) has a <strong>key</strong>, its name.</li>
+<li><strong>SeaweedFS:</strong> a free, open-source server that speaks S3&#39;s language; we run it in Docker for development.</li>
+<li><strong>IAM role:</strong> permissions given to a machine (our EC2 server) instead of a password or key: AWS gives the server short-lived credentials automatically.</li>
+<li><strong>Lifecycle rule:</strong> an S3 setting that deletes objects by itself after a set time.</li>
+<li><strong>Multipart upload:</strong> the standard way a browser sends files in a form: the files and the other fields in one request.</li>
+<li><strong>EXIF:</strong> hidden information inside a photo file, often including the <strong>GPS location</strong> where it was taken.</li>
+<li><strong>Re-encoding:</strong> opening an image and saving it as a brand-new file, which drops hidden data and proves the file really is an image.</li>
+<li><strong>Decompression bomb:</strong> a tiny file that claims to be an enormous picture, so that decoding it uses up all the memory.</li>
+</ul>
+<h3 id="781-the-problem">78.1 The problem</h3>
+<p>A women-only option is worse than none if anyone can join it by ticking &quot;female&quot;. So gender must come from a checked ID, the ID must belong to the person (face match plus liveness), and the photos, the most dangerous thing the app could ever leak, must exist only as long as the check takes.</p>
+<h3 id="782-the-options">78.2 The options</h3>
+<table>
+<thead>
+<tr>
+<th>Way</th>
+<th>Good</th>
+<th>Bad</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Upload + human review</td>
+<td>Free, works today, a person catches odd cases</td>
+<td>Slow, needs someone on duty, a good fake can fool a person</td>
+</tr>
+<tr>
+<td>DigiLocker / Aadhaar e-KYC</td>
+<td>Government-signed: can&#39;t be faked</td>
+<td>Needs a registered company approved as a partner</td>
+</tr>
+<tr>
+<td>A paid KYC company</td>
+<td>Instant, automatic liveness</td>
+<td>A business contract; ₹5–30 a check</td>
+</tr>
+<tr>
+<td><strong>Chosen:</strong> human review, <strong>helped by machine learning</strong> (slice 2), DigiLocker later as a drop-in</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Why the machine doesn&#39;t decide gender from the face</strong> (a question we discussed): AWS documents that its face-gender guess is based on appearance and shouldn&#39;t be used to determine anyone&#39;s gender; Microsoft removed that feature from its face service in 2022; the well-known <em>Gender Shades</em> study (2018) found commercial classifiers wrong up to about 35% of the time for darker-skinned women, against under 1% for lighter-skinned men. A wrong &quot;yes&quot; puts a man in a women-only cab; a wrong &quot;no&quot; insults a real woman. The ID states gender: that&#39;s the source (read by OCR as a suggestion, confirmed by a person). The face match itself is reliable enough as a <strong>helper score</strong>: OpenCV&#39;s SFace model is 99.6% accurate on the classic LFW test but 94.9% on photos taken years apart, which is what ID photos usually are.</p>
+<h3 id="783-how-slice-1-keeps-the-photos-safe">78.3 How slice 1 keeps the photos safe</h3>
+<ol>
+<li><strong>Notice and consent first:</strong> what&#39;s collected, why, who sees it, and that it&#39;s deleted after the check; the time of consent is saved.</li>
+<li><strong>A random gesture</strong> (&quot;Touch your left ear&quot;), picked by the server and kept for 30 minutes, must appear in the selfie: an old photo can&#39;t know it.</li>
+<li><strong>The browser shrinks each photo</strong> on a canvas to a JPEG of at most 1600 px: ~300 KB instead of ~4 MB on airport data, and EXIF stays behind.</li>
+<li><strong>The server trusts nothing:</strong> at most 2 MB, it must decode as an image, its size is read from the header before decoding (480 to 6000 px), and it&#39;s re-encoded as a fresh JPEG with no metadata.</li>
+<li><strong>A private bucket,</strong> random keys that say nothing about whose photo it is, no public access.</li>
+<li><strong>Deleted no later than 7 days,</strong> whatever happens: our own job every 6 hours, and in production also an S3 lifecycle rule.</li>
+</ol>
+<h3 id="784-decisions-2026-10-19">78.4 Decisions (2026-10-19)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Overall approach</td>
+<td>Human review helped by ML (face score, OCR), DigiLocker later</td>
+</tr>
+<tr>
+<td>Gender</td>
+<td>From the ID, never guessed from the face</td>
+</tr>
+<tr>
+<td>Where photos live</td>
+<td>S3 in production; SeaweedFS in development (MinIO stopped publishing images in October 2025)</td>
+</tr>
+<tr>
+<td>Upload path</td>
+<td>Through our API, which checks and re-encodes, not presigned links (the Java SDK v2 has no presigned POST anyway)</td>
+</tr>
+<tr>
+<td>Liveness</td>
+<td>A random gesture in the selfie</td>
+</tr>
+<tr>
+<td>Limits</td>
+<td>One pending check at a time; 5 submissions a day</td>
+</tr>
+<tr>
+<td>Deletion</td>
+<td>A job every 6 hours (7 days) + an S3 lifecycle rule in production</td>
+</tr>
+<tr>
+<td>Laptops</td>
+<td>A file picker; no webcam screen</td>
+</tr>
+<tr>
+<td>Transgender / third-gender IDs</td>
+<td><strong>Open: a team policy decision</strong>; until then only &quot;female&quot; counts, in one marked place (slice 3)</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Later change:</strong> slice 2 adds the face score, OCR suggestions, the admin review and deleting at decision time; slice 3 adds women-only groups.</p>
+</blockquote>
+<hr>
+<h2 id="79-code-walkthrough-id-upload-slice-1">79. Code walkthrough: ID upload (slice 1)</h2>
+<h3 id="790-before-you-read">79.0 Before you read</h3>
+<p>The first of three slices, applying chapter 78: everything needed to collect the photos safely, and nothing that decides yet.</p>
+<h3 id="791-infrastructure">79.1 Infrastructure</h3>
+<ul>
+<li><strong><code>infra/docker-compose.yml</code>:</strong> a <code>seaweedfs</code> service (<code>chrislusf/seaweedfs:4.48</code>). Its one-node mode reads <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code> and <code>S3_BUCKET</code> and starts an S3 endpoint on port 8333 with the bucket ready. It checks real request signatures: an unsigned request gets &quot;Access Denied&quot;, like AWS.</li>
+<li><strong>CI:</strong> the same container as a service next to Postgres and Redis.</li>
+<li><strong><code>pom.xml</code>:</strong> the AWS SDK for Java (<code>s3</code>, pinned 2.55.10) with its three heavy HTTP clients excluded (<code>netty-nio-client</code>, <code>apache-client</code>, <code>apache5-client</code>) and the small <code>url-connection-client</code> instead.</li>
+<li><strong>Config:</strong> <code>namastute.verification.*</code> (bucket, endpoint, region, keys) with dev defaults; production sets an empty endpoint (real AWS) and empty keys (the IAM role). <code>spring.servlet.multipart</code> limits files to 2 MB.</li>
+<li><strong>Production:</strong> <code>S3_BUCKET</code> is required in <code>docker-compose.prod.yml</code>; <code>infra/README.md</code> step 6 creates the private, encrypted bucket with its 7-day lifecycle rule, an IAM role allowed to put/get/delete only under <code>verification/</code>, and the metadata &quot;hop limit&quot; of 2 so the API&#39;s container can fetch the role&#39;s credentials.</li>
+</ul>
+<h3 id="792-database-v9__verification_uploadsql">79.2 Database: <code>V9__verification_upload.sql</code></h3>
+<ul>
+<li><code>verifications</code> (already in V1, with <code>doc_key</code> / <code>selfie_key</code> for S3 keys) gains <code>gesture</code> and <code>consented_at</code>.</li>
+<li>A <strong>partial unique index</strong> on <code>user_id</code> where <code>status = &#39;pending&#39;</code>: the database itself refuses a second pending check, even if two submissions arrive at the same moment.</li>
+</ul>
+<h3 id="793-the-verification-module">79.3 The <code>verification</code> module</h3>
+<ul>
+<li><strong><code>PhotoStore</code>:</strong> builds the <code>S3Client</code> (endpoint and path-style addresses for SeaweedFS; checksums only when required, because S3-compatible stores don&#39;t all support the newer ones) and offers <code>put</code>, <code>get</code>, <code>delete</code>.</li>
+<li><strong><code>Photos.clean</code>:</strong> the &quot;trust nothing&quot; checks from 78.3; dimensions come from <code>ImageReader.getWidth/getHeight</code> before <code>read</code>, which stops decompression bombs; the result is drawn on a white RGB canvas (transparent PNGs don&#39;t turn black) and written as a JPEG at quality 0.9 with <code>null</code> metadata.</li>
+<li><strong><code>VerificationService</code>:</strong><ul>
+<li><code>current</code>: the latest check&#39;s status; for a new attempt, the gesture (<code>SET NX</code> with a 30-minute TTL, so it stays the same while you take the photos);</li>
+<li><code>submit</code>: consent → document type → no pending check → the gesture still valid → the rate limit (5 a day, counting failed tries too, so nobody can probe the checks endlessly) → both photos cleaned → both uploaded under random keys → the row inserted. If anything after the first upload fails, both photos are deleted; a duplicate-key error from the unique index becomes &quot;already being checked&quot;;</li>
+<li><code>purgeOld</code>: objects first, then the row (keys cleared; a check still pending becomes &quot;Not reviewed within 7 days… Please try again&quot;). Deleting a missing object is fine in S3, so a half-finished run is simply completed by the next one.</li>
+</ul>
+</li>
+<li><strong><code>VerificationController</code>:</strong> <code>GET /api/v1/verification</code> and a multipart <code>POST</code>. Every part is optional in the signature, so a missing one gets our own clear error message.</li>
+<li><strong><code>VerificationJobs</code>:</strong> <code>purgeOld</code> every 6 hours.</li>
+<li><strong><code>ApiExceptionHandler</code>:</strong> an upload over 2 MB is refused by Spring before any controller runs; it now becomes our usual error JSON (413, &quot;Each photo must be under 2 MB.&quot;).</li>
+<li>A known limit, marked <code>shortcut:</code> in the code: a crash between the uploads and the insert leaves photos without a row; production&#39;s lifecycle rule deletes them, development doesn&#39;t.</li>
+</ul>
+<h3 id="794-web">79.4 Web</h3>
+<ul>
+<li><strong><code>lib/api.ts</code>:</strong> <code>send()</code> used to label every request body as JSON, which would break a file upload. It now does that only for strings; a <code>FormData</code> body sets its own type (with the boundary between parts). <code>getVerification</code>, <code>submitVerification</code>.</li>
+<li><strong><code>lib/photo.ts</code>:</strong> <code>shrinkPhoto</code>: <code>createImageBitmap</code> (upright, as the camera meant it), a canvas at most 1600 px, <code>toBlob</code> as JPEG 0.85.</li>
+<li><strong><code>app/verify/page.tsx</code>:</strong> the route guard; the status states (verified, under review, not approved with the reason); the form: the notice with a consent checkbox, four document choices (a warning appears for Aadhaar: masked only), the ID photo (<code>capture=&quot;environment&quot;</code>: phones open the back camera), the gesture in a highlighted box, the selfie (<code>capture=&quot;user&quot;</code>: the front camera), previews, and &quot;Send for checking&quot;, enabled only when everything is there.</li>
+<li><strong>Profile:</strong> an &quot;ID verification&quot; section: the badge, &quot;Under review&quot;, or a link to <code>/verify</code>.</li>
+</ul>
+<h3 id="795-verified">79.5 Verified</h3>
+<ul>
+<li><strong>API tests (5 new, 98 in all):</strong> a clean JPEG is stored and the hidden GPS text from a crafted EXIF block is gone; a text file, a 320×240 image and a 7000-px PNG are refused (the last from its header); consent, document type and a fresh gesture are required; a second pending check is refused; photos older than 7 days are deleted from SeaweedFS and the check closes. Both key tests were made to fail on purpose (storing the original upload; skipping the deletes) and did.</li>
+<li><strong>Browser (1280 and 375 px):</strong> the profile link; the page; consent, masked Aadhaar with its warning; two generated photos given to the file inputs (a 2400 px image arrived as 1600 px); submitted → &quot;Under review&quot; on the page and the profile; the row has the gesture and consent time; both objects are in SeaweedFS as JPEGs; an unsigned request to the bucket is refused.</li>
+<li><strong>A slip, and its fix:</strong> the code first cited the wrong chapter number, V9&#39;s comment included, after V9 had already run on the local dev database (in the tests). Since it had never left this laptop, V9 was corrected and the local database needs V9 undone once so it applies again (chapter 69&#39;s rule: an applied migration is never edited; here it hadn&#39;t been shared yet).</li>
+<li><strong>Not checked:</strong> a real phone camera, HEIC photos from iPhones on browsers that can&#39;t read them, real AWS S3 and the IAM role (production only).</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="78-command-cheat-sheet">78. Command cheat sheet</h2>
+<h2 id="80-command-cheat-sheet">80. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -7261,7 +7426,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="79-glossary">79. Glossary</h2>
+<h2 id="81-glossary">81. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -7429,6 +7594,10 @@ git fetch --prune
 <tr>
 <td>Brute force</td>
 <td>Trying every possibility (e.g. all 24 orders of 4 drops)</td>
+</tr>
+<tr>
+<td>Bucket / object / key (S3)</td>
+<td>A named container of files / one file in it / the file&#39;s name</td>
 </tr>
 <tr>
 <td>Build</td>
@@ -7627,6 +7796,10 @@ git fetch --prune
 <td>Two transactions each waiting for a lock the other holds</td>
 </tr>
 <tr>
+<td>Decompression bomb</td>
+<td>A tiny file claiming to be an enormous image, to exhaust memory when decoded</td>
+</tr>
+<tr>
 <td>Deduplication</td>
 <td>Recognising the same item arriving twice and keeping one</td>
 </tr>
@@ -7699,6 +7872,10 @@ git fetch --prune
 <td>A human-readable address like namastute.in</td>
 </tr>
 <tr>
+<td>DPDP Act 2023</td>
+<td>India&#39;s data protection law: notice, consent, data minimisation, deletion when done</td>
+</tr>
+<tr>
 <td>Drift</td>
 <td>Two copies of the same truth slowly stop matching</td>
 </tr>
@@ -7747,6 +7924,10 @@ git fetch --prune
 <td>A pool of threads that run submitted tasks</td>
 </tr>
 <tr>
+<td>EXIF</td>
+<td>Hidden data inside a photo file, often including the GPS location</td>
+</tr>
+<tr>
 <td>Expiry</td>
 <td>The moment something (a code, a token) stops being valid</td>
 </tr>
@@ -7757,6 +7938,10 @@ git fetch --prune
 <tr>
 <td>Extension (Postgres)</td>
 <td>Add-on giving the database new abilities (PostGIS)</td>
+</tr>
+<tr>
+<td>Face match</td>
+<td>Comparing an ID photo&#39;s face with a selfie; gives a similarity score</td>
 </tr>
 <tr>
 <td>Fail fast</td>
@@ -7891,6 +8076,10 @@ git fetch --prune
 <td>Request/response protocol between browser and server</td>
 </tr>
 <tr>
+<td>IAM role</td>
+<td>Permissions given to a machine instead of keys; AWS supplies short-lived credentials</td>
+</tr>
+<tr>
 <td>Idempotent</td>
 <td>Running it twice has the same effect as running it once</td>
 </tr>
@@ -7979,6 +8168,10 @@ git fetch --prune
 <td>Database that saves values under keys (Redis)</td>
 </tr>
 <tr>
+<td>KYC (Know Your Customer)</td>
+<td>Checking a person is real and their ID is theirs</td>
+</tr>
+<tr>
 <td>Latency</td>
 <td>The delay between something happening and you seeing it</td>
 </tr>
@@ -8007,12 +8200,20 @@ git fetch --prune
 <td>Ordered build phases: compile → test → package → verify</td>
 </tr>
 <tr>
+<td>Lifecycle rule</td>
+<td>An S3 setting that deletes objects automatically after a set time</td>
+</tr>
+<tr>
 <td>Lifting state up</td>
 <td>Moving shared state to the nearest common parent, which passes it to the components that need it</td>
 </tr>
 <tr>
 <td>Linter</td>
 <td>Tool that flags likely bugs without running code</td>
+</tr>
+<tr>
+<td>Liveness</td>
+<td>Proof a selfie shows a live person now, not a photo of a photo</td>
 </tr>
 <tr>
 <td>Load test / stress / spike / soak</td>
@@ -8029,6 +8230,10 @@ git fetch --prune
 <tr>
 <td>Lost update</td>
 <td>Two writers start from the same old value; one overwrites the other</td>
+</tr>
+<tr>
+<td>Masked Aadhaar</td>
+<td>An Aadhaar card with the first 8 of 12 digits hidden; the only kind we accept</td>
 </tr>
 <tr>
 <td>Media query</td>
@@ -8081,6 +8286,10 @@ git fetch --prune
 <tr>
 <td>Multi-stage build</td>
 <td>A Dockerfile that builds in a big image and ships only the result in a small one</td>
+</tr>
+<tr>
+<td>Multipart upload</td>
+<td>Sending files and form fields together in one request</td>
 </tr>
 <tr>
 <td>N+1 query problem</td>
@@ -8165,6 +8374,10 @@ git fetch --prune
 <tr>
 <td>Partial index</td>
 <td>Index holding only rows matching a <code>where</code></td>
+</tr>
+<tr>
+<td>Partial unique index</td>
+<td>A uniqueness rule that applies only to rows matching a condition, e.g. pending checks</td>
 </tr>
 <tr>
 <td>PATCH</td>
@@ -8331,6 +8544,10 @@ git fetch --prune
 <td>Almost everyone gives the top score, so the scale stops carrying information</td>
 </tr>
 <tr>
+<td>Re-encoding</td>
+<td>Saving an image as a brand-new file, dropping hidden data and proving it&#39;s an image</td>
+</tr>
+<tr>
 <td>READ COMMITTED</td>
 <td>Postgres&#39;s default isolation level: you only see committed data</td>
 </tr>
@@ -8461,6 +8678,10 @@ git fetch --prune
 <tr>
 <td>Scroll anchoring</td>
 <td>Keeping what you&#39;re reading in place when content is added above it</td>
+</tr>
+<tr>
+<td>SeaweedFS</td>
+<td>An open-source S3-compatible storage server, used in development</td>
 </tr>
 <tr>
 <td>Secure context</td>
@@ -8812,7 +9033,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="80-interview-questions-to-practise">80. Interview questions to practise</h2>
+<h2 id="82-interview-questions-to-practise">82. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -8973,6 +9194,12 @@ git fetch --prune
 <li>How did you prove the QR code on the page encodes the right payee and amount?</li>
 <li>When is adding a dependency the right call? Walk through how you chose the QR library.</li>
 <li>Why hide the chat instead of removing it when the fare view is shown?</li>
+<li>Why shouldn&#39;t a women-only feature decide gender from a face, and where should gender come from?</li>
+<li>Your app must hold ID photos briefly. List every place a copy could linger and how you closed each.</li>
+<li>Why read an image&#39;s size from its header before decoding it?</li>
+<li>Why upload through the API instead of a presigned URL here, when presigned uploads are usually recommended?</li>
+<li>How does the database stop two pending checks for one person, even when two requests arrive at once?</li>
+<li>How does a random gesture make a selfie harder to fake, and what can it still not stop?</li>
 </ol>
 
 
