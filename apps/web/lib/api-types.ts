@@ -107,7 +107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["current_1"];
+        get: operations["current_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -395,7 +395,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["current"];
+        get: operations["current_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -430,6 +430,22 @@ export interface paths {
         get: operations["matches"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["current"];
+        put?: never;
+        post: operations["submit"];
         delete?: never;
         options?: never;
         head?: never;
@@ -660,6 +676,15 @@ export interface components {
             name: string | null;
             upiId: string | null;
         };
+        VerificationView: {
+            docType: string | null;
+            gesture: string | null;
+            rejectReason: string | null;
+            /** @enum {string} */
+            status: "unverified" | "pending" | "verified" | "rejected";
+            /** Format: date-time */
+            submittedAt: string | null;
+        };
         VerifyRequest: {
             code: string;
             phone: string;
@@ -823,7 +848,7 @@ export interface operations {
             };
         };
     };
-    current_1: {
+    current_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1282,7 +1307,7 @@ export interface operations {
             };
         };
     };
-    current: {
+    current_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1340,6 +1365,58 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MatchView"][];
+                };
+            };
+        };
+    };
+    current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VerificationView"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: {
+                docType?: string;
+                consent?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    idPhoto: string;
+                    /** Format: binary */
+                    selfie: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VerificationView"];
                 };
             };
         };

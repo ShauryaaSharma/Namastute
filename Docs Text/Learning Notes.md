@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 79) defines every term in the book, A to Z. The **Command cheat sheet** (78) and **Interview questions** (80) are for revision.
+- The **Glossary** (chapter 81) defines every term in the book, A to Z. The **Command cheat sheet** (80) and **Interview questions** (82) are for revision.
 
 ---
 
@@ -224,11 +224,16 @@ flowchart LR
 76. [The fare and paying: irreversible actions, deep links and QR codes](#76-the-fare-and-paying-irreversible-actions-deep-links-and-qr-codes)
 77. [Code walkthrough: the fare, UPI QR and light polish (slice D)](#77-code-walkthrough-the-fare-upi-qr-and-light-polish-slice-d)
 
+**[Part X. ID verification](#part-x-id-verification)**
+
+78. [ID verification: checking IDs without keeping them](#78-id-verification-checking-ids-without-keeping-them)
+79. [Code walkthrough: ID upload (slice 1)](#79-code-walkthrough-id-upload-slice-1)
+
 **[Reference](#reference)**
 
-78. [Command cheat sheet](#78-command-cheat-sheet)
-79. [Glossary](#79-glossary)
-80. [Interview questions to practise](#80-interview-questions-to-practise)
+80. [Command cheat sheet](#80-command-cheat-sheet)
+81. [Glossary](#81-glossary)
+82. [Interview questions to practise](#82-interview-questions-to-practise)
 
 ---
 
@@ -5281,13 +5286,116 @@ The last slice of the redesign, applying chapter 76 on top of the group screen f
 
 ---
 
+## Part X. ID verification
+
+Women-only groups only make sense if "female" can't simply be ticked by anyone. This part adds a one-time ID check: a photo of an ID and a selfie, checked by a person (with a machine's help), then deleted. It's the most sensitive data the app ever touches, so most of the work is about holding it as briefly and as safely as possible.
+
+---
+
+## 78. ID verification: checking IDs without keeping them
+
+### 78.0 Words first
+- **ID verification / KYC (Know Your Customer):** checking that a person is real and that the ID they show is theirs.
+- **Face match:** comparing the face on the ID with a **selfie**; a program gives a **similarity score**.
+- **Liveness:** proof the selfie is of a live person now, not a photo of a photo.
+- **Masked Aadhaar:** an Aadhaar card with the first 8 of its 12 digits hidden. The **Aadhaar Act** doesn't allow private companies to collect full Aadhaar numbers.
+- **DPDP Act 2023:** India's data protection law: give **notice**, get **consent**, collect only what's **needed** (data minimisation), and **delete** it when the purpose is over.
+- **Object storage (S3):** cloud storage for files, separate from the database. A **bucket** is one named container of files; each file (an **object**) has a **key**, its name.
+- **SeaweedFS:** a free, open-source server that speaks S3's language; we run it in Docker for development.
+- **IAM role:** permissions given to a machine (our EC2 server) instead of a password or key: AWS gives the server short-lived credentials automatically.
+- **Lifecycle rule:** an S3 setting that deletes objects by itself after a set time.
+- **Multipart upload:** the standard way a browser sends files in a form: the files and the other fields in one request.
+- **EXIF:** hidden information inside a photo file, often including the **GPS location** where it was taken.
+- **Re-encoding:** opening an image and saving it as a brand-new file, which drops hidden data and proves the file really is an image.
+- **Decompression bomb:** a tiny file that claims to be an enormous picture, so that decoding it uses up all the memory.
+
+### 78.1 The problem
+A women-only option is worse than none if anyone can join it by ticking "female". So gender must come from a checked ID, the ID must belong to the person (face match plus liveness), and the photos, the most dangerous thing the app could ever leak, must exist only as long as the check takes.
+
+### 78.2 The options
+| Way | Good | Bad |
+|---|---|---|
+| Upload + human review | Free, works today, a person catches odd cases | Slow, needs someone on duty, a good fake can fool a person |
+| DigiLocker / Aadhaar e-KYC | Government-signed: can't be faked | Needs a registered company approved as a partner |
+| A paid KYC company | Instant, automatic liveness | A business contract; ₹5–30 a check |
+| **Chosen:** human review, **helped by machine learning** (slice 2), DigiLocker later as a drop-in | | |
+
+**Why the machine doesn't decide gender from the face** (a question we discussed): AWS documents that its face-gender guess is based on appearance and shouldn't be used to determine anyone's gender; Microsoft removed that feature from its face service in 2022; the well-known *Gender Shades* study (2018) found commercial classifiers wrong up to about 35% of the time for darker-skinned women, against under 1% for lighter-skinned men. A wrong "yes" puts a man in a women-only cab; a wrong "no" insults a real woman. The ID states gender: that's the source (read by OCR as a suggestion, confirmed by a person). The face match itself is reliable enough as a **helper score**: OpenCV's SFace model is 99.6% accurate on the classic LFW test but 94.9% on photos taken years apart, which is what ID photos usually are.
+
+### 78.3 How slice 1 keeps the photos safe
+1. **Notice and consent first:** what's collected, why, who sees it, and that it's deleted after the check; the time of consent is saved.
+2. **A random gesture** ("Touch your left ear"), picked by the server and kept for 30 minutes, must appear in the selfie: an old photo can't know it.
+3. **The browser shrinks each photo** on a canvas to a JPEG of at most 1600 px: ~300 KB instead of ~4 MB on airport data, and EXIF stays behind.
+4. **The server trusts nothing:** at most 2 MB, it must decode as an image, its size is read from the header before decoding (480 to 6000 px), and it's re-encoded as a fresh JPEG with no metadata.
+5. **A private bucket,** random keys that say nothing about whose photo it is, no public access.
+6. **Deleted no later than 7 days,** whatever happens: our own job every 6 hours, and in production also an S3 lifecycle rule.
+
+### 78.4 Decisions (2026-10-19)
+| Decision | Choice |
+|---|---|
+| Overall approach | Human review helped by ML (face score, OCR), DigiLocker later |
+| Gender | From the ID, never guessed from the face |
+| Where photos live | S3 in production; SeaweedFS in development (MinIO stopped publishing images in October 2025) |
+| Upload path | Through our API, which checks and re-encodes, not presigned links (the Java SDK v2 has no presigned POST anyway) |
+| Liveness | A random gesture in the selfie |
+| Limits | One pending check at a time; 5 submissions a day |
+| Deletion | A job every 6 hours (7 days) + an S3 lifecycle rule in production |
+| Laptops | A file picker; no webcam screen |
+| Transgender / third-gender IDs | **Open: a team policy decision**; until then only "female" counts, in one marked place (slice 3) |
+
+> **Later change:** slice 2 adds the face score, OCR suggestions, the admin review and deleting at decision time; slice 3 adds women-only groups.
+
+---
+
+## 79. Code walkthrough: ID upload (slice 1)
+
+### 79.0 Before you read
+The first of three slices, applying chapter 78: everything needed to collect the photos safely, and nothing that decides yet.
+
+### 79.1 Infrastructure
+- **`infra/docker-compose.yml`:** a `seaweedfs` service (`chrislusf/seaweedfs:4.48`). Its one-node mode reads `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `S3_BUCKET` and starts an S3 endpoint on port 8333 with the bucket ready. It checks real request signatures: an unsigned request gets "Access Denied", like AWS.
+- **CI:** the same container as a service next to Postgres and Redis.
+- **`pom.xml`:** the AWS SDK for Java (`s3`, pinned 2.55.10) with its three heavy HTTP clients excluded (`netty-nio-client`, `apache-client`, `apache5-client`) and the small `url-connection-client` instead.
+- **Config:** `namastute.verification.*` (bucket, endpoint, region, keys) with dev defaults; production sets an empty endpoint (real AWS) and empty keys (the IAM role). `spring.servlet.multipart` limits files to 2 MB.
+- **Production:** `S3_BUCKET` is required in `docker-compose.prod.yml`; `infra/README.md` step 6 creates the private, encrypted bucket with its 7-day lifecycle rule, an IAM role allowed to put/get/delete only under `verification/`, and the metadata "hop limit" of 2 so the API's container can fetch the role's credentials.
+
+### 79.2 Database: `V9__verification_upload.sql`
+- `verifications` (already in V1, with `doc_key` / `selfie_key` for S3 keys) gains `gesture` and `consented_at`.
+- A **partial unique index** on `user_id` where `status = 'pending'`: the database itself refuses a second pending check, even if two submissions arrive at the same moment.
+
+### 79.3 The `verification` module
+- **`PhotoStore`:** builds the `S3Client` (endpoint and path-style addresses for SeaweedFS; checksums only when required, because S3-compatible stores don't all support the newer ones) and offers `put`, `get`, `delete`.
+- **`Photos.clean`:** the "trust nothing" checks from 78.3; dimensions come from `ImageReader.getWidth/getHeight` before `read`, which stops decompression bombs; the result is drawn on a white RGB canvas (transparent PNGs don't turn black) and written as a JPEG at quality 0.9 with `null` metadata.
+- **`VerificationService`:**
+  - `current`: the latest check's status; for a new attempt, the gesture (`SET NX` with a 30-minute TTL, so it stays the same while you take the photos);
+  - `submit`: consent → document type → no pending check → the gesture still valid → the rate limit (5 a day, counting failed tries too, so nobody can probe the checks endlessly) → both photos cleaned → both uploaded under random keys → the row inserted. If anything after the first upload fails, both photos are deleted; a duplicate-key error from the unique index becomes "already being checked";
+  - `purgeOld`: objects first, then the row (keys cleared; a check still pending becomes "Not reviewed within 7 days… Please try again"). Deleting a missing object is fine in S3, so a half-finished run is simply completed by the next one.
+- **`VerificationController`:** `GET /api/v1/verification` and a multipart `POST`. Every part is optional in the signature, so a missing one gets our own clear error message.
+- **`VerificationJobs`:** `purgeOld` every 6 hours.
+- **`ApiExceptionHandler`:** an upload over 2 MB is refused by Spring before any controller runs; it now becomes our usual error JSON (413, "Each photo must be under 2 MB.").
+- A known limit, marked `shortcut:` in the code: a crash between the uploads and the insert leaves photos without a row; production's lifecycle rule deletes them, development doesn't.
+
+### 79.4 Web
+- **`lib/api.ts`:** `send()` used to label every request body as JSON, which would break a file upload. It now does that only for strings; a `FormData` body sets its own type (with the boundary between parts). `getVerification`, `submitVerification`.
+- **`lib/photo.ts`:** `shrinkPhoto`: `createImageBitmap` (upright, as the camera meant it), a canvas at most 1600 px, `toBlob` as JPEG 0.85.
+- **`app/verify/page.tsx`:** the route guard; the status states (verified, under review, not approved with the reason); the form: the notice with a consent checkbox, four document choices (a warning appears for Aadhaar: masked only), the ID photo (`capture="environment"`: phones open the back camera), the gesture in a highlighted box, the selfie (`capture="user"`: the front camera), previews, and "Send for checking", enabled only when everything is there.
+- **Profile:** an "ID verification" section: the badge, "Under review", or a link to `/verify`.
+
+### 79.5 Verified
+- **API tests (5 new, 98 in all):** a clean JPEG is stored and the hidden GPS text from a crafted EXIF block is gone; a text file, a 320×240 image and a 7000-px PNG are refused (the last from its header); consent, document type and a fresh gesture are required; a second pending check is refused; photos older than 7 days are deleted from SeaweedFS and the check closes. Both key tests were made to fail on purpose (storing the original upload; skipping the deletes) and did.
+- **Browser (1280 and 375 px):** the profile link; the page; consent, masked Aadhaar with its warning; two generated photos given to the file inputs (a 2400 px image arrived as 1600 px); submitted → "Under review" on the page and the profile; the row has the gesture and consent time; both objects are in SeaweedFS as JPEGs; an unsigned request to the bucket is refused.
+- **A slip, and its fix:** the code first cited the wrong chapter number, V9's comment included, after V9 had already run on the local dev database (in the tests). Since it had never left this laptop, V9 was corrected and the local database needs V9 undone once so it applies again (chapter 69's rule: an applied migration is never edited; here it hadn't been shared yet).
+- **Not checked:** a real phone camera, HEIC photos from iPhones on browsers that can't read them, real AWS S3 and the IAM role (production only).
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 78. Command cheat sheet
+## 80. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5373,7 +5481,7 @@ git fetch --prune
 
 ---
 
-## 79. Glossary
+## 81. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5419,6 +5527,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Breakpoint | The screen width where a responsive layout changes, e.g. Tailwind's `lg:` at 1024 px |
 | Browser | The program used to open websites (Chrome, Safari); a client |
 | Brute force | Trying every possibility (e.g. all 24 orders of 4 drops) |
+| Bucket / object / key (S3) | A named container of files / one file in it / the file's name |
 | Build | Turning source code into something that runs (compile, bundle, package) |
 | Burst | Many requests arriving close together |
 | Bytecode | Compiled `.class` instructions run by the JVM |
@@ -5468,6 +5577,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Database | A program that stores data and answers questions about it |
 | DDL | SQL that changes structure (`create table`) |
 | Deadlock | Two transactions each waiting for a lock the other holds |
+| Decompression bomb | A tiny file claiming to be an enormous image, to exhaust memory when decoded |
 | Deduplication | Recognising the same item arriving twice and keeping one |
 | Deep link | A URL that opens an app (e.g. `upi://pay?...`) instead of a web page |
 | Denormalisation | Storing a value you could calculate, for cheap reads; you must keep it correct yourself |
@@ -5486,6 +5596,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | divIcon | A Leaflet map marker made of our own HTML instead of an image |
 | Dockerfile | Recipe for building your own image |
 | Domain | A human-readable address like namastute.in |
+| DPDP Act 2023 | India's data protection law: notice, consent, data minimisation, deletion when done |
 | Drift | Two copies of the same truth slowly stop matching |
 | Drift check | CI regenerates a file and fails if it differs from the committed one |
 | Driver | A library that knows how to talk to one particular database |
@@ -5498,9 +5609,11 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Entity | A class mapped to a database table |
 | Ephemeral data | Data that is passed along and never saved |
 | ExecutorService | A pool of threads that run submitted tasks |
+| EXIF | Hidden data inside a photo file, often including the GPS location |
 | Expiry | The moment something (a code, a token) stops being valid |
 | EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
 | Extension (Postgres) | Add-on giving the database new abilities (PostGIS) |
+| Face match | Comparing an ID photo's face with a selfie; gives a similarity score |
 | Fail fast | Stop at startup when something essential is missing, instead of running wrongly |
 | Fail open / fail closed | When a safety check itself breaks: let requests through / refuse them |
 | Filter | Code that inspects a request before the controller |
@@ -5534,6 +5647,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Hosting | Running an app on a server that users can reach |
 | Hot reload | Browser updates automatically when a file is saved |
 | HTTP | Request/response protocol between browser and server |
+| IAM role | Permissions given to a machine instead of keys; AWS supplies short-lived credentials |
 | Idempotent | Running it twice has the same effect as running it once |
 | Image (Docker) | Packaged, read-only snapshot of a program and its environment |
 | IME (Input Method Editor) | The system that turns key presses into another script, e.g. Hindi; Enter picks a word while composing |
@@ -5556,6 +5670,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | JTS | Java Topology Suite: Java's standard shapes library (Point…) |
 | JWT | JSON Web Token: header.payload.signature |
 | Key-value store | Database that saves values under keys (Redis) |
+| KYC (Know Your Customer) | Checking a person is real and their ID is theirs |
 | Latency | The delay between something happening and you seeing it |
 | Latitude / longitude | North–south / east–west position in degrees |
 | Launch blocker | Something that must be done before real users |
@@ -5563,12 +5678,15 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
 | Library | A package of ready-made code a project uses (a jar in Java, a package in JavaScript) |
 | Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
+| Lifecycle rule | An S3 setting that deletes objects automatically after a set time |
 | Lifting state up | Moving shared state to the nearest common parent, which passes it to the components that need it |
 | Linter | Tool that flags likely bugs without running code |
+| Liveness | Proof a selfie shows a live person now, not a photo of a photo |
 | Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
 | Lock (database) | A temporary claim on a row that makes others wait |
 | Lockfile | Exact versions of all installed packages |
 | Lost update | Two writers start from the same old value; one overwrites the other |
+| Masked Aadhaar | An Aadhaar card with the first 8 of 12 digits hidden; the only kind we accept |
 | Media query | A question about the screen, like "at least 1024 px wide?", in CSS or JavaScript |
 | Merge | Combining the changes from one branch into another |
 | Message broker | The part that delivers published messages to subscribers |
@@ -5582,6 +5700,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Module | A self-contained part of a program with its own job |
 | Monorepo | One repository holding several related projects |
 | Multi-stage build | A Dockerfile that builds in a big image and ships only the result in a small one |
+| Multipart upload | Sending files and form fields together in one request |
 | N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
 | Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
 | Native input | A control the browser draws itself (`<input type="time">`), accessible for free |
@@ -5603,6 +5722,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Pagination | Sending a long list one page at a time |
 | Pane | One independently scrolling column of a desktop layout |
 | Partial index | Index holding only rows matching a `where` |
+| Partial unique index | A uniqueness rule that applies only to rows matching a condition, e.g. pending checks |
 | PATCH | HTTP method for changing part of a resource |
 | Percentile (p95) | The value 95% of measurements are below; shows the slow tail an average hides |
 | Personal data | Information that identifies a person (phone number, UPI ID) |
@@ -5644,6 +5764,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Ranking | Ordering candidates from best to worst using the exact rules |
 | Rate limiting | Capping how often something can be done |
 | Rating inflation | Almost everyone gives the top score, so the scale stops carrying information |
+| Re-encoding | Saving an image as a brand-new file, dropping hidden data and proving it's an image |
 | READ COMMITTED | Postgres's default isolation level: you only see committed data |
 | Ref (React) | A value kept between redraws without causing one (`useRef`) |
 | Refactoring | Changing how code is written without changing what it does |
@@ -5677,6 +5798,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Schema (data shape) | A description of the fields a piece of data has |
 | Schema (DB) | A namespace for tables inside a database |
 | Scroll anchoring | Keeping what you're reading in place when content is added above it |
+| SeaweedFS | An open-source S3-compatible storage server, used in development |
 | Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
 | Self-invocation | A method calling another in the same class, bypassing the proxy |
 | Self-join | A table joined with itself under two names (`me` and `t`) |
@@ -5767,7 +5889,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 80. Interview questions to practise
+## 82. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -5929,3 +6051,9 @@ Questions an interviewer could ask about this project, roughly in the order the 
 156. How did you prove the QR code on the page encodes the right payee and amount?
 157. When is adding a dependency the right call? Walk through how you chose the QR library.
 158. Why hide the chat instead of removing it when the fare view is shown?
+159. Why shouldn't a women-only feature decide gender from a face, and where should gender come from?
+160. Your app must hold ID photos briefly. List every place a copy could linger and how you closed each.
+161. Why read an image's size from its header before decoding it?
+162. Why upload through the API instead of a presigned URL here, when presigned uploads are usually recommended?
+163. How does the database stop two pending checks for one person, even when two requests arrive at once?
+164. How does a random gesture make a selfie harder to fake, and what can it still not stop?

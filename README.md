@@ -82,6 +82,7 @@ flowchart LR
 | `chat` | Live chat and live location over WebSocket |
 | `feedback` | Reports, ratings, and the block/unblock requests |
 | `notifications` | Push notifications |
+| `verification` | ID checks: photo upload, the 7-day photo deletion (the review comes next) |
 | `shared` | Error responses and the rate limiter, used by every module |
 
 ## Tech stack
@@ -96,6 +97,7 @@ flowchart LR
 | | zerodep-web-push-java | Signs and encrypts push notifications |
 | Data | PostgreSQL 16 + PostGIS 3.5 | The main database, with map support ("within 15 km") |
 | | Redis 7.4 | Fast short-lived data: login codes and rate-limit counters |
+| | Amazon S3 (SeaweedFS in development) | Private file storage for ID photos, deleted after the check; AWS SDK for Java |
 | Web | Next.js 16, React 19, TypeScript | The web app and its language |
 | | Tailwind CSS 4 | Styling, with the design system's tokens (colours, type, spacing) and dark/light themes |
 | | Leaflet + OpenStreetMap | Maps |
@@ -161,7 +163,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups.
+- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups (in progress: uploading is done; the review and women-only groups come next).
 - **The redesign:** ✅ done, in four slices: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, the group screen (chat, pickup, live location, report and block, ratings), and the fare with UPI payment (a QR code on laptops).
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 

@@ -24,6 +24,17 @@ services:                         # the list of containers to run
       interval: 5s
       timeout: 3s
       retries: 10
+  seaweedfs:                         # S3-compatible storage for ID photos, development only (Learning Notes 78)
+    image: chrislusf/seaweedfs:4.48  # one-node mode: an S3 endpoint with these keys and this bucket ready at start
+    environment:
+      AWS_ACCESS_KEY_ID: namastute
+      AWS_SECRET_ACCESS_KEY: namastute-dev-secret   # local dev only; production uses an IAM role, no keys
+      S3_BUCKET: namastute-verification
+    ports:
+      - "8333:8333"                  # the S3 API
+    volumes:
+      - seaweed:/data
 
 volumes:
-  pgdata:                         # declare the named volume used above
+  pgdata:                         # declare the named volumes used above
+  seaweed:

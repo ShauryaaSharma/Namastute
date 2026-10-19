@@ -165,7 +165,7 @@
     },
     "/api/v1/groups/current" : {
       "get" : {
-        "operationId" : "current_1",
+        "operationId" : "current_2",
         "responses" : {
           "200" : {
             "content" : {
@@ -673,7 +673,7 @@
     },
     "/api/v1/trips/current" : {
       "get" : {
-        "operationId" : "current",
+        "operationId" : "current_1",
         "responses" : {
           "200" : {
             "content" : {
@@ -737,6 +737,75 @@
           }
         },
         "tags" : [ "trip-controller" ]
+      }
+    },
+    "/api/v1/verification" : {
+      "get" : {
+        "operationId" : "current",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerificationView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "verification-controller" ]
+      },
+      "post" : {
+        "operationId" : "submit",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "docType",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "consent",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "idPhoto" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  },
+                  "selfie" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerificationView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "verification-controller" ]
       }
     }
   },
@@ -1335,6 +1404,32 @@
           "upiId" : {
             "pattern" : "^$|^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$",
             "type" : "string",
+            "nullable" : true
+          }
+        }
+      },
+      "VerificationView" : {
+        "type" : "object",
+        "properties" : {
+          "docType" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "gesture" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "rejectReason" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "unverified", "pending", "verified", "rejected" ]
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time",
             "nullable" : true
           }
         }

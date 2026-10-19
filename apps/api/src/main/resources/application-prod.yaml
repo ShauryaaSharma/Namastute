@@ -18,6 +18,11 @@ namastute:
     vapid-private-key: ${VAPID_PRIVATE_KEY}
     vapid-public-key: ${VAPID_PUBLIC_KEY}
     contact: ${PUSH_CONTACT}        # e.g. mailto:team@namastute.in
+  verification:
+    bucket: ${S3_BUCKET}            # private bucket, see infra/README.md "ID photos"
+    s3-endpoint: ""                 # real AWS
+    s3-access-key: ""               # no keys: the EC2 machine's IAM role gives access
+    s3-secret-key: ""
 
 server:
   # Behind Caddy: read the real client IP from X-Forwarded-For, trusted only from private-network
