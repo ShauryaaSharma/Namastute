@@ -2,24 +2,35 @@ package com.namastute.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import com.namastute.users.UserService;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.imageio.ImageIO;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +49,14 @@ class VerificationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired PhotoStore photos;
     @Autowired VerificationService verification;
+
+    private final List<UUID> admins = new ArrayList<>();
+
+    // Test admins go back to being ordinary users: they mustn't pile up as real admins in the dev database
+    @AfterEach
+    void demoteTestAdmins() {
+        admins.forEach(id -> jdbc.update("update users set role = 'user' where id = ?", id));
+    }
 
     @Test
     void submitsStoresCleanJpegsAndShowsUnderReview() throws Exception {
@@ -130,7 +149,123 @@ class VerificationTest {
                 .containsOnlyNulls();
     }
 
+    // ---- The review (Learning Notes 80) ----
+
+    @Test
+    void onlyAdminsCanReviewAndNobodyReviewsTheirOwn() throws Exception {
+        UUID priya = user(), admin = admin(), stranger = user();
+        String check = submitted(priya);
+
+        // A non-admin learns nothing, not even that the admin area exists
+        mvc.perform(get("/api/v1/admin/verifications").with(as(stranger))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/admin/verifications/" + check + "/photos/id").with(as(stranger))).andExpect(status().isNotFound());
+        approve(stranger, check).andExpect(status().isNotFound());
+
+        mvc.perform(get("/api/v1/admin/verifications").with(as(admin)))
+                .andExpect(jsonPath("$[?(@.id == '" + check + "')].firstName").value(contains("Test")));
+        byte[] photo = mvc.perform(get("/api/v1/admin/verifications/" + check + "/photos/selfie").with(as(admin)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))   // the browser keeps no copy
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(photo[0] & 0xff).isEqualTo(0xFF);
+        mvc.perform(get("/api/v1/admin/verifications/" + check + "/photos/passport").with(as(admin))).andExpect(status().isNotFound());
+
+        String own = submitted(admin);
+        approve(admin, own).andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("ALREADY_DECIDED"));
+    }
+
+    @Test
+    void approvingVerifiesThePersonDeletesThePhotosAndShowsTheBadge() throws Exception {
+        UUID priya = user(), admin = admin(), ravi = user();
+        String check = submitted(priya);
+        Map<String, Object> keys = jdbc.queryForMap("select doc_key, selfie_key from verifications where id = ?::uuid", check);
+
+        approve(admin, check).andExpect(status().isNoContent());
+        approve(admin, check).andExpect(status().isConflict());   // a double click: still one decision
+
+        assertThat(jdbc.queryForMap("select verification::text, gender::text from users where id = ?", priya))
+                .containsEntry("verification", "verified").containsEntry("gender", "female");
+        Map<String, Object> row = jdbc.queryForMap(
+                "select status::text, doc_last4, reviewed_by, doc_key, selfie_key from verifications where id = ?::uuid", check);
+        assertThat(row).containsEntry("status", "verified").containsEntry("doc_last4", "AB12").containsEntry("reviewed_by", admin);
+        assertThat(row.get("doc_key")).isNull();
+        for (Object key : keys.values()) {
+            assertThatThrownBy(() -> photos.get((String) key)).isInstanceOf(NoSuchKeyException.class);
+        }
+        mvc.perform(get("/api/v1/verification").with(as(priya))).andExpect(jsonPath("$.status").value("verified"));
+
+        // The badge: Ravi sees "ID verified" next to Priya in his matches, and Priya sees no badge on Ravi
+        String priyaTrip = trip(priya), raviTrip = trip(ravi);
+        mvc.perform(get("/api/v1/trips/" + raviTrip + "/matches").with(as(ravi)))
+                .andExpect(jsonPath("$[?(@.riders[0].tripId == '" + priyaTrip + "')].riders[0].rating.idVerified").value(contains(true)));
+        mvc.perform(get("/api/v1/trips/" + priyaTrip + "/matches").with(as(priya)))
+                .andExpect(jsonPath("$[?(@.riders[0].tripId == '" + raviTrip + "')].riders[0].rating.idVerified").value(contains(false)));
+        // Only our own two trips: leftovers would crowd this slot's top 5 on the next run
+        mvc.perform(delete("/api/v1/trips/" + priyaTrip).with(as(priya))).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/v1/trips/" + raviTrip).with(as(ravi))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void rejectingGivesTheReasonAndAllowsATryAgain() throws Exception {
+        UUID kiran = user(), admin = admin();
+        String check = submitted(kiran);
+        mvc.perform(post("/api/v1/admin/verifications/" + check + "/reject").with(as(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"Photo blurry or unreadable\"}"))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/verification").with(as(kiran)))
+                .andExpect(jsonPath("$.status").value("rejected"))
+                .andExpect(jsonPath("$.rejectReason").value("Photo blurry or unreadable"))
+                .andExpect(jsonPath("$.gesture").isNotEmpty());
+        assertThat(jdbc.queryForObject("select verification::text from users where id = ?", String.class, kiran)).isEqualTo("unverified");
+        assertThat(jdbc.queryForObject("select doc_key from verifications where id = ?::uuid", String.class, check)).isNull();
+    }
+
+    @Test
+    void thePurgeFinishesADecidedCheckWhosePhotosWereLeftBehind() throws Exception {
+        UUID meera = user(), admin = admin();
+        String check = submitted(meera);
+        approve(admin, check).andExpect(status().isNoContent());
+        // As if S3 had been down at decision time: the photo is still stored and its key still on the row
+        String left = "verification/left-" + check + ".jpg";
+        photos.put(left, jpeg(800, 600));
+        jdbc.update("update verifications set doc_key = ? where id = ?::uuid", left, check);
+
+        verification.purgeOld();
+
+        assertThatThrownBy(() -> photos.get(left)).isInstanceOf(NoSuchKeyException.class);
+        assertThat(jdbc.queryForMap("select status::text, doc_key from verifications where id = ?::uuid", check))
+                .containsEntry("status", "verified").containsEntry("doc_key", null);   // still approved: only the photo went
+    }
+
     // ---- helpers ----
+
+    private String submitted(UUID user) throws Exception {
+        gesture(user);
+        submit(user, jpeg(800, 600), jpeg(800, 600)).andExpect(status().isCreated());
+        return jdbc.queryForObject("select id::text from verifications where user_id = ? and status = 'pending'", String.class, user);
+    }
+
+    private ResultActions approve(UUID admin, String check) throws Exception {
+        return mvc.perform(post("/api/v1/admin/verifications/" + check + "/approve").with(as(admin))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"gender\":\"female\",\"docLast4\":\"ab12\"}"));
+    }
+
+    private UUID admin() {
+        UUID id = user();
+        jdbc.update("update users set role = 'admin' where id = ?", id);
+        admins.add(id);
+        return id;
+    }
+
+    // Terminal 3, ten hours ahead: a slot no other test uses, so their trips can't crowd the top 5 matches
+    private String trip(UUID user) throws Exception {
+        String json = """
+                {"terminalId":"DEL-T3","exitAt":"%s","destLat":28.4936,"destLng":77.0930,"destArea":"DLF Phase 3, Gurugram",\
+                "seats":1,"bags":1,"womenOnly":false}""".formatted(Instant.now().plus(Duration.ofHours(10)));
+        return JsonPath.read(mvc.perform(post("/api/v1/trips").with(as(user)).contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.id");
+    }
+
 
     private ResultActions submit(UUID user, byte[] idPhoto, byte[] selfie) throws Exception {
         return mvc.perform(multipart("/api/v1/verification").file(part("idPhoto", idPhoto)).file(part("selfie", selfie))
@@ -139,7 +274,7 @@ class VerificationTest {
 
     private String gesture(UUID user) throws Exception {
         String body = mvc.perform(get("/api/v1/verification").with(as(user))).andReturn().getResponse().getContentAsString();
-        return com.jayway.jsonpath.JsonPath.read(body, "$.gesture");
+        return JsonPath.read(body, "$.gesture");
     }
 
     private static MockMultipartFile part(String name, byte[] bytes) {

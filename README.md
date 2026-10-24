@@ -82,7 +82,7 @@ flowchart LR
 | `chat` | Live chat and live location over WebSocket |
 | `feedback` | Reports, ratings, and the block/unblock requests |
 | `notifications` | Push notifications |
-| `verification` | ID checks: photo upload, the 7-day photo deletion (the review comes next) |
+| `verification` | ID checks: photo upload, the admin review, deleting the photos (at the decision, and after 7 days at the latest) |
 | `shared` | Error responses and the rate limiter, used by every module |
 
 ## Tech stack
@@ -163,7 +163,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups (in progress: uploading is done; the review and women-only groups come next).
+- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups (in progress: uploading and the admin review are done; the machine-learning helpers and women-only groups come next).
 - **The redesign:** ✅ done, in four slices: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, the group screen (chat, pickup, live location, report and block, ratings), and the fare with UPI payment (a QR code on laptops).
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 

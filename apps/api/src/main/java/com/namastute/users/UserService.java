@@ -20,9 +20,10 @@ public class UserService {
     public record BlockView(UUID id, String firstName) {}
     record BlockRow(UUID id, UUID blockedId) {}
 
-    // "92% 👍 · 12 ratings". upPercent stays null below MIN_RATINGS, so one early thumbs-down can't brand a newcomer
-    public record Rating(int count, @Schema(nullable = true) Integer upPercent) {}
-    record RatingRow(UUID id, int ratingCount, int ratingSum) {}
+    // What others see next to a name: "92% 👍 · 12 ratings" and the "◆ ID verified" badge (Learning Notes 80).
+    // upPercent stays null below MIN_RATINGS, so one early thumbs-down can't brand a newcomer.
+    public record Rating(int count, @Schema(nullable = true) Integer upPercent, boolean idVerified) {}
+    record RatingRow(UUID id, int ratingCount, int ratingSum, boolean verified) {}
 
     static final int MIN_RATINGS = 3;
 
@@ -49,24 +50,35 @@ public class UserService {
         }
     }
 
-    // Ratings summaries for everyone shown on a screen, in one query. rating_sum counts thumbs up (V7).
+    // Ratings summaries (and the ID badge) for everyone shown on a screen, in one query. rating_sum counts thumbs up (V7).
     public Map<UUID, Rating> ratings(Collection<UUID> ids) {
         Map<UUID, Rating> out = new HashMap<>();
         if (!ids.isEmpty()) {
-            db.sql("select id, rating_count, rating_sum from users where id in (:ids)").param("ids", ids)
-                    .query(RatingRow.class).list()
-                    .forEach(r -> out.put(r.id(), rating(r.ratingCount(), r.ratingSum())));
+            db.sql("select id, rating_count, rating_sum, verification = 'verified' as verified from users where id in (:ids)")
+                    .param("ids", ids).query(RatingRow.class).list()
+                    .forEach(r -> out.put(r.id(), rating(r.ratingCount(), r.ratingSum(), r.verified())));
         }
         return out;
     }
 
-    static Rating rating(int count, int ups) {
-        return new Rating(count, count < MIN_RATINGS ? null : (int) Math.round(100.0 * ups / count));
+    static Rating rating(int count, int ups, boolean idVerified) {
+        return new Rating(count, count < MIN_RATINGS ? null : (int) Math.round(100.0 * ups / count), idVerified);
     }
 
     // Who reviews reports (users.role, V1). Made by hand with SQL, see infra/README.md.
     public List<UUID> adminIds() {
         return db.sql("select id from users where role = 'admin'").query(UUID.class).list();
+    }
+
+    // Admin-only pages and endpoints check this on the server, on every request (Learning Notes 80)
+    public boolean isAdmin(UUID id) {
+        return db.sql("select exists (select 1 from users where id = ? and role = 'admin')").param(id).query(Boolean.class).single();
+    }
+
+    // For the verification module, inside its decision's transaction. gender is the one printed on the ID.
+    public void markVerified(UUID id, String gender) {
+        db.sql("update users set verification = 'verified', gender = ?::gender, verified_at = now() where id = ?")
+                .params(gender, id).update();
     }
 
     // For the feedback module, inside its transaction: the counters move together with the new ratings row
@@ -134,8 +146,10 @@ public class UserService {
     }
 
     private static Profile toProfile(User user) {
-        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId());
+        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId(), user.isAdmin());
     }
 
-    record Profile(UUID id, String phone, @Schema(nullable = true) String name, @Schema(nullable = true) String upiId) {}
+    // admin: shows the "Review ID checks" link; every admin endpoint checks the role again on the server
+    record Profile(UUID id, String phone, @Schema(nullable = true) String name, @Schema(nullable = true) String upiId,
+                   boolean admin) {}
 }

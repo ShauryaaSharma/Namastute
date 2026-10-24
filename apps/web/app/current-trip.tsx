@@ -17,12 +17,13 @@ import {
   type Requests,
   type Trip,
 } from "@/lib/api";
-import { plural, ratingText } from "@/lib/format";
+import { plural } from "@/lib/format";
 import { formatIstTime, istDate, istDayName } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
 import GroupScreen from "./group-screen";
 import PushPrompt from "./push-prompt";
 import { Received, Sent, timing } from "./requests";
+import TrustChips from "./trust-chips";
 
 // Phones: one column (trip, matches, requests). Laptops: the trip card and requests on the left,
 // matches on the right; each pane scrolls on its own (Learning Notes 72).
@@ -277,7 +278,7 @@ function Riders({ match }: { match: Match }) {
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <b className="text-title">{r.firstName}</b>
-          <Chip variant="muted">{ratingText(r.rating)}</Chip>
+          <TrustChips rating={r.rating} />
         </span>
         <span className="text-[0.9375rem] text-fg-muted">{r.destArea}</span>
       </span>

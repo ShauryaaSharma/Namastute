@@ -1,5 +1,6 @@
 package com.namastute.users;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,6 +23,9 @@ class User {
 
     private String upiId;   // private: only ever shown to the user and their own group members (design 4.4)
 
+    @Column(insertable = false, updatable = false)   // read-only here: the database default 'user'; admins are made with SQL
+    private String role;
+
     protected User() {
         // required by JPA: Hibernate creates the object empty, then fills the fields from the row
     }
@@ -32,6 +36,10 @@ class User {
 
     UUID getId() {
         return id;
+    }
+
+    boolean isAdmin() {
+        return "admin".equals(role);
     }
 
     String getPhone() {

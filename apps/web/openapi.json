@@ -9,6 +9,122 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/v1/admin/verifications" : {
+      "get" : {
+        "operationId" : "pending",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PendingView"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "review-controller" ]
+      }
+    },
+    "/api/v1/admin/verifications/{id}/approve" : {
+      "post" : {
+        "operationId" : "approve",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApproveRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "review-controller" ]
+      }
+    },
+    "/api/v1/admin/verifications/{id}/photos/{which}" : {
+      "get" : {
+        "operationId" : "photo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "which",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "review-controller" ]
+      }
+    },
+    "/api/v1/admin/verifications/{id}/reject" : {
+      "post" : {
+        "operationId" : "reject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "review-controller" ]
+      }
+    },
     "/api/v1/auth/logout" : {
       "post" : {
         "operationId" : "logout",
@@ -811,6 +927,21 @@
   },
   "components" : {
     "schemas" : {
+      "ApproveRequest" : {
+        "required" : [ "docLast4", "gender" ],
+        "type" : "object",
+        "properties" : {
+          "docLast4" : {
+            "pattern" : "[A-Za-z0-9]{4}",
+            "type" : "string"
+          },
+          "gender" : {
+            "pattern" : "female|male|other",
+            "type" : "string",
+            "enum" : [ "female", "male", "other" ]
+          }
+        }
+      },
       "AskRequest" : {
         "required" : [ "toTripId" ],
         "type" : "object",
@@ -1111,9 +1242,34 @@
           }
         }
       },
+      "PendingView" : {
+        "type" : "object",
+        "properties" : {
+          "docType" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "gesture" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
       "Profile" : {
         "type" : "object",
         "properties" : {
+          "admin" : {
+            "type" : "boolean"
+          },
           "id" : {
             "type" : "string",
             "format" : "uuid"
@@ -1159,10 +1315,24 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "idVerified" : {
+            "type" : "boolean"
+          },
           "upPercent" : {
             "type" : "integer",
             "format" : "int32",
             "nullable" : true
+          }
+        }
+      },
+      "RejectRequest" : {
+        "required" : [ "reason" ],
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "maxLength" : 200,
+            "minLength" : 3,
+            "type" : "string"
           }
         }
       },
