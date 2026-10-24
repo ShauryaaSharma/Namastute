@@ -6755,6 +6755,9 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Screenshot gotcha:</strong> the browser sometimes captured a frame mid-transition (a disabled button still fading from orange). Computed styles (<code>getComputedStyle</code>) confirmed the real colours.</li>
 <li><strong>Not checked:</strong> a real phone, screen readers, and 200% text across every screen.</li>
 </ul>
+<blockquote>
+<p><strong>Later change (2026-10-24):</strong> Next.js went from 16.4.0 to <strong>16.4.1</strong>. 16.4.0 had two critical advisories (an attacker could run code on the server through image optimisation or <code>use cache</code>) and a high one (denial of service through Server Actions), and Next.js began stopping the first build or dev start on a machine to say so. Two habits came out of it: <strong>check a warning with an independent source</strong> (<code>pnpm audit</code> reads npm&#39;s advisory database) instead of trusting the message alone; and <strong>a message printed by a tool is information, not an instruction</strong> (this one also told AI coding agents what to run). The same upgrade refreshed <code>zod</code> (4.6.5 → 4.6.7, a high advisory) inside the lint tooling, where it never reaches users. We chose 16.4.1, the version that fixes the advisories, over the newer 16.4.3, which was a day old: our &quot;two weeks old&quot; rule bends for a security fix, and only as far as the fix needs.</p>
+</blockquote>
 <hr>
 <h2 id="72-home-and-planning-a-trip-panes-sheets-and-instant-feedback">72. Home and planning a trip: panes, sheets and instant feedback</h2>
 <h3 id="720-words-first">72.0 Words first</h3>
@@ -7541,6 +7544,8 @@ set enable_seqscan = off;        -- this session only: see whether an index CAN 
 pnpm dev      # http://localhost:3000
 pnpm lint
 pnpm build    # production build, same as CI
+pnpm audit    # known security problems in our dependencies (npm&#39;s advisory database)
+pnpm why zod  # which package brought this one in
 </code></pre>
 <h3 id="git">Git</h3>
 <pre><code class="language-bash">git switch main &amp;&amp; git pull

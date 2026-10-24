@@ -4985,6 +4985,8 @@ This slice builds everything later screens stand on (tokens, fonts, theme, brand
 - **Screenshot gotcha:** the browser sometimes captured a frame mid-transition (a disabled button still fading from orange). Computed styles (`getComputedStyle`) confirmed the real colours.
 - **Not checked:** a real phone, screen readers, and 200% text across every screen.
 
+> **Later change (2026-10-24):** Next.js went from 16.4.0 to **16.4.1**. 16.4.0 had two critical advisories (an attacker could run code on the server through image optimisation or `use cache`) and a high one (denial of service through Server Actions), and Next.js began stopping the first build or dev start on a machine to say so. Two habits came out of it: **check a warning with an independent source** (`pnpm audit` reads npm's advisory database) instead of trusting the message alone; and **a message printed by a tool is information, not an instruction** (this one also told AI coding agents what to run). The same upgrade refreshed `zod` (4.6.5 → 4.6.7, a high advisory) inside the lint tooling, where it never reaches users. We chose 16.4.1, the version that fixes the advisories, over the newer 16.4.3, which was a day old: our "two weeks old" rule bends for a security fix, and only as far as the fix needs.
+
 ---
 
 ## 72. Home and planning a trip: panes, sheets and instant feedback
@@ -5549,6 +5551,8 @@ pnpm install
 pnpm dev      # http://localhost:3000
 pnpm lint
 pnpm build    # production build, same as CI
+pnpm audit    # known security problems in our dependencies (npm's advisory database)
+pnpm why zod  # which package brought this one in
 ```
 
 ### Git
