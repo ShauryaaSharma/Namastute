@@ -36,6 +36,8 @@ namastute:
     s3-region: ${AWS_REGION:ap-south-1}
     s3-access-key: ${S3_ACCESS_KEY:namastute}           # empty = the AWS default chain (an IAM role in production)
     s3-secret-key: ${S3_SECRET_KEY:namastute-dev-secret}
+    models-dir: ${MODELS_DIR:target/models}             # face models + Tesseract languages, downloaded by the build (82)
+    checks-enabled: true                                # the automatic checks job; the test run turns it off (pom.xml)
 
 springdoc:
   api-docs:

@@ -1245,8 +1245,20 @@
       "PendingView" : {
         "type" : "object",
         "properties" : {
+          "checkNotes" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "checked" : {
+            "type" : "boolean"
+          },
           "docType" : {
             "type" : "string"
+          },
+          "faceScore" : {
+            "type" : "number",
+            "format" : "double",
+            "nullable" : true
           },
           "firstName" : {
             "type" : "string"
@@ -1261,6 +1273,15 @@
           "submittedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "suggestedGender" : {
+            "type" : "string",
+            "nullable" : true,
+            "enum" : [ "female", "male", "other" ]
+          },
+          "suggestedLast4" : {
+            "type" : "string",
+            "nullable" : true
           }
         }
       },

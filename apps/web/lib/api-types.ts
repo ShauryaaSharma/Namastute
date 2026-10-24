@@ -633,13 +633,20 @@ export interface components {
             phone: string;
         };
         PendingView: {
+            checkNotes: string | null;
+            checked: boolean;
             docType: string;
+            /** Format: double */
+            faceScore: number | null;
             firstName: string;
             gesture: string;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             submittedAt: string;
+            /** @enum {string|null} */
+            suggestedGender: "female" | "male" | "other" | null;
+            suggestedLast4: string | null;
         };
         Profile: {
             admin: boolean;

@@ -49,6 +49,11 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven                # reuse downloaded jars between runs (much faster)
+      # The OCR engine for the ID checks (Learning Notes 82); OpenCV's library comes inside its jar
+      - run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libtesseract5
+          # Tess4J asks for libleptonica.so and libtesseract.so; Ubuntu names them liblept.so.5 and libtesseract.so.5
+          cd /usr/lib/x86_64-linux-gnu && sudo ln -sf liblept.so.5 libleptonica.so && sudo ln -sf libtesseract.so.5 libtesseract.so
       - run: ./mvnw -B verify         # compile + all tests; -B = batch mode, cleaner logs
       # Drift check (Learning Notes 52.5): OpenApiExportTest just rewrote the API contract; fail if it differs from the commit
       - run: git diff --exit-code -- ../web/openapi.json || (echo "::error::apps/web/openapi.json is out of date. Run the API tests and commit it." && exit 1)

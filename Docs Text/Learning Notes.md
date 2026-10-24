@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 83) defines every term in the book, A to Z. The **Command cheat sheet** (82) and **Interview questions** (84) are for revision.
+- The **Glossary** (chapter 86) defines every term in the book, A to Z. The **Command cheat sheet** (85) and **Interview questions** (87) are for revision. The **Backlog** (84) lists everything still open.
 
 ---
 
@@ -113,7 +113,9 @@ flowchart LR
 | VI. Finishing the ride and shipping | 50–55 | Money, API contracts, containers and HTTPS for production |
 | VII. Safety and staying in touch | 56–63 | Report and block, push notifications, live location, ratings |
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
-| Reference | 70–72 | Commands, glossary, interview questions |
+| IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
+| X. ID verification | 78–83 | Handling ID photos safely, admin review, and machine helpers for faces and text |
+| Reference | 84–87 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -230,12 +232,15 @@ flowchart LR
 79. [Code walkthrough: ID upload (slice 1)](#79-code-walkthrough-id-upload-slice-1)
 80. [Reviewing ID checks: admin access, safe decisions and the badge](#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge)
 81. [Code walkthrough: the review (slice 2a)](#81-code-walkthrough-the-review-slice-2a)
+82. [Machine helpers for ID checks: face score and reading the ID](#82-machine-helpers-for-id-checks-face-score-and-reading-the-id)
+83. [Code walkthrough: the machine checks (slice 2b)](#83-code-walkthrough-the-machine-checks-slice-2b)
 
 **[Reference](#reference)**
 
-82. [Command cheat sheet](#82-command-cheat-sheet)
-83. [Glossary](#83-glossary)
-84. [Interview questions to practise](#84-interview-questions-to-practise)
+84. [Backlog: everything still open](#84-backlog-everything-still-open)
+85. [Command cheat sheet](#85-command-cheat-sheet)
+86. [Glossary](#86-glossary)
+87. [Interview questions to practise](#87-interview-questions-to-practise)
 
 ---
 
@@ -1406,6 +1411,8 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 - **Expiry:** the moment a token stops being valid.
 - **Revoke:** to cancel something before it would expire by itself.
 - **Cookie:** a small piece of data the server asks the browser to store and send back automatically (24.1).
+- **Lost response:** the server finished the work and sent its answer, but the answer never arrived (the page was closed, or the network dropped). The server can't tell; it thinks all went well (24.7).
+- **Grace window:** a short period after a change during which the old state is still accepted, to forgive honest timing accidents (24.7).
 
 ### 24.1 Two ways to remember who's logged in
 HTTP is stateless (18.6), so after login the browser needs proof it sends with every request.
@@ -1440,6 +1447,7 @@ HTTP is stateless (18.6), so after login the browser needs proof it sends with e
 ### 24.4 Rotation and reuse detection
 - **Rotation:** each refresh token works **once**; using it returns a new one and revokes the old.
 - **Reuse detection:** if an already-used refresh token comes back, someone holds a copy (thief or victim, we can't tell), so **all of that user's sessions are revoked**.
+- **Later change (24.7):** a token presented again within 30 seconds of its rotation, whose replacement hasn't been used yet, is treated as a lost response instead of a theft.
 
 ### 24.5 Hash, but not HMAC
 `sessions.token_hash` = **plain SHA-256** of the refresh token. Safe because the token has 2²⁵⁶ (about 10⁷⁷) possibilities, impossible to try. The 6-digit OTP needed HMAC because 10⁶ can be tried in a second. **The size of the input space decides.**
@@ -1454,6 +1462,42 @@ HTTP is stateless (18.6), so after login the browser needs proof it sends with e
   - `SameSite=Lax`: not attached to POSTs started by other sites (stops CSRF).
   - `Path=/api/v1/auth`: only sent to auth endpoints, not every request.
   - `Max-Age`: how long the browser keeps it; `0` deletes it.
+
+### 24.7 Lost responses and the grace window
+**The problem.** Rotation (24.4) changes the token on the server **before** the browser has the new one. A refresh is a round trip:
+1. The browser sends cookie **A**.
+2. The server revokes A, saves a new session **B**, and answers with `Set-Cookie: B`.
+3. The browser stores B.
+
+If step 3 never happens (the user navigates away mid-request, or a phone on a weak network drops the answer), the browser still holds **A**, and the server thinks A was used. The next refresh sends A again, reuse detection sees an "already used" token and **logs the user out on every device**. We saw exactly this while testing (2026-10-24): a rotation, then 0.2 s later a revoke-all, for a user who did nothing wrong.
+
+**The naive fixes, and why they hurt.**
+- *Stop rotating:* a stolen refresh token would then work for 30 days, unnoticed.
+- *Send B again:* impossible. We store only `sha256(B)` (24.5); the raw B is gone the moment we answer.
+
+**What we do instead.** Each session remembers which one it replaced: `sessions.parent_id` (B's parent is A). When an already-used token A comes back, the server asks two questions:
+- Was A rotated **less than 30 seconds ago** (`RefreshTokens.GRACE`)?
+- Is A's replacement B **still unused** (active)?
+
+Both yes → most likely the same browser retrying after a lost answer. The server revokes B (the browser never got it), creates a new session **B′** whose parent is also A, and answers 200 with `Set-Cookie: B′`. If that answer is lost too, A still works for the rest of the 30 seconds.
+
+Either no → still a replay: revoke everything, as before. That covers:
+- A comes back **after** 30 seconds.
+- A comes back after B was **already used** (A → B → C, then A again): A is two rotations old, so someone else has been refreshing with the newer tokens.
+
+**The trade-off.** The grace window can't tell a thief from the user; it only looks at time. A thief who copies A and uses it within 30 seconds of the user's rotation also gets a working token, without the revoke-all. Three things keep this small:
+- The window is short, and only opens right after a rotation, which the thief can't trigger or see.
+- Only **one** token can be handed out per retry: B′ replaces B. Whoever is left holding the revoked one (the user or the thief) sends it at their next refresh, and since nothing replaced it, that **is** a replay: revoke-all, the theft is caught one refresh later.
+- The tokens are hard to steal in the first place: `HttpOnly`, `Secure`, a narrow `Path` (24.6).
+
+A longer window forgives slower networks but gives a thief more time; 30 seconds covers a retry while staying short.
+
+| Decision | Choice | Why |
+|---|---|---|
+| Window length | 30 s | Enough for a retry after a dropped response; short for a thief |
+| What the retry gets | A brand-new token; the unseen replacement is revoked | The raw replacement isn't stored, and only one live token per chain |
+| Measured from | The first rotation of the old token | A thief can't stretch the window by retrying |
+| Two rotations old | Still revoke-all | The newer token was used, so this is not a lost response |
 
 ---
 
@@ -1666,6 +1710,8 @@ if (session.getRevokedAt() != null || sessions.revokeIfActive(session.getId(), n
 - **Right side** (only checked if the left is false, short-circuit `||`): try to revoke it. If that returns **0**, another request revoked it a moment earlier: two requests used the same token, also a replay.
 - Either way: **revoke every session for this user** (everyone logs in again, the thief's copy dies) and answer 401.
 - No `@Transactional` around this method **on purpose**: if it were one transaction, the `throw` would **roll back** the "revoke all", undoing the protection. Each repository call commits on its own.
+- **Later change (24.7):** the replay branch now calls `retryOrLogOutEverywhere(session, now)`. It looks up the active session whose `parentId` is this one (`findByParentIdAndRevokedAtIsNull`). If the old token was rotated less than `GRACE` (30 s) ago and that replacement can still be revoked (`revokeIfActive(...) == 1`), it creates a new token with the same parent and returns it. Otherwise it revokes everything and throws, as before. `create` now takes the parent's id too, saved in the new `parent_id` column (migration `V10__session_parent.sql`, with an index because every replay looks it up).
+- `Objects.requireNonNullElse(used.getRevokedAt(), now)`: use the revoke time, or `now` if it is still `null`. It is `null` when another request revoked the token **after** we read it (the right side of the `||` above), which means it was rotated a moment ago.
 
 ```java
 if (session.getExpiresAt().isBefore(now)) {
@@ -1813,7 +1859,10 @@ private static ResponseCookie refreshCookie(String value, Duration maxAge) {
   |---|---|
   | `accessTokenOpensProtectedEndpoint` | Token → `/me` 200 with the right phone; no token or a fake token → 401 |
   | `sameUserOnEveryLogin` | Logging in twice gives the same user id (find, not create) |
-  | `refreshRotatesAndReuseLogsOutEverywhere` | Refresh returns a new, different cookie; replaying the old one → 401 **and** the new one stops working |
+  | `refreshRotatesAndReuseLogsOutEverywhere` | Refresh returns a new, different cookie; replaying the old one **after the grace window** → 401 **and** the new one stops working |
+  | `replayInsideGraceWindowIsALostResponse` | Replaying the old cookie right after a refresh → 200 with a fresh cookie, which keeps working (24.7) |
+  | `replayOfATokenTwoRotationsOldLogsOutEverywhere` | A → B → C, then A again → 401 and C stops working, even inside the window (24.7) |
+- **Later change (24.7):** to test "after the window" without waiting 30 seconds, `endGraceWindow` moves the rotation times one minute into the past with a `JdbcTemplate` update (plain SQL from a test).
   | `logoutRevokesRefreshToken` | Logout deletes the cookie (`Max-Age=0`) and the token no longer refreshes |
   | `refreshCookieIsLockedDown` | The cookie is `HttpOnly`, `Secure`, `Path=/api/v1/auth`, `SameSite=Lax` |
 - `throws Exception` on tests: `perform` declares checked exceptions; in a test, letting them fail the test is exactly right.
@@ -5476,15 +5525,183 @@ The admin side of chapter 80, on top of slice 1 (chapter 79). No new migration: 
 - **Found along the way:** `pnpm audit` reports two critical vulnerabilities in Next.js 16.4.0, fixed in 16.4.1; the first build on a fresh machine stops with a security error until it's upgraded.
 - **Not checked:** push delivery to a real phone, two admins deciding the same check at the same moment from two browsers (the conditional update is tested, not the race in a browser).
 
+## 82. Machine helpers for ID checks: face score and reading the ID
+
+### 82.0 Words first
+- **Native library:** code compiled for one kind of computer (`.dll` on Windows, `.so` on Linux), not Java. OpenCV and Tesseract are C++; Java reaches them through a bridge: **JNI** (OpenCV) or **JNA** (Tesseract).
+- **glibc vs musl:** two versions of the basic C library Linux programs are built on. Alpine Linux uses musl; most native libraries, OpenCV's included, are built for glibc (Ubuntu, Debian) and won't load on Alpine.
+- **Leptonica:** the C image library Tesseract is built on. Tess4J ships a Java binding to it that expects a particular version.
+- **Symbolic link (symlink):** a file that is only a pointer to another file's name, like a shortcut.
+- **Model file (ONNX):** a trained neural network's numbers, saved in a standard format any language can run.
+- **Face detection vs recognition:** detection finds *where* faces are (YuNet: a box and 5 points); recognition describes *whose* face it is (SFace: an **embedding** of 128 numbers).
+- **Cosine similarity:** how alike two embeddings are, from −1 to 1; OpenCV publishes 0.363 as SFace's "same person" threshold on its benchmark.
+- **OCR:** reading printed text in a photo. **Tesseract** is the open-source engine; **traineddata** files teach it a language.
+- **Regular expression (regex):** a text pattern, like `[A-Z]\d{7}` (a letter, then 7 digits).
+- **Checksum pinning:** writing down a file's SHA-256 fingerprint so the build refuses any other file.
+- **Calibration:** choosing thresholds from your own real data instead of a benchmark's.
+- **Mock:** a stand-in for a component in a test, with fixed answers.
+
+### 82.1 The problem
+Since slice 2a, the reviewer judges everything by eye. A machine can do a tedious first pass: find the faces and score how alike they are, read the ID's printed gender and document number, and spot an unmasked Aadhaar. But chapter 78's rules stand: a person decides, and gender comes from the ID, never from a face.
+
+### 82.2 The naive ways, and why they hurt
+- **Running the models while the person waits:** reading text takes 1–3 seconds on a 2-core server, and several uploads at once would slow everyone's matches.
+- **Auto-rejecting below the published threshold:** it comes from clean photos; on photos taken years apart OpenCV's own accuracy drops from 99.6% to 94.9%, and on Indian ID cards we haven't measured at all.
+- **Trusting OCR:** glare and holograms cause misreads. In this slice's own test, Tesseract read a clean "XXXX XXXX 4821" as "XXXXK 4821".
+- **Committing the model files:** 38 MB of binaries in the history forever, and no way to see if one was swapped.
+- **Staying on Alpine:** OpenCV's Linux library won't load there.
+
+### 82.3 The tools
+1. **OpenCV for Java (`org.openpnp:opencv` 4.9.0-0)**, whose jar contains the official `FaceDetectorYN` and `FaceRecognizerSF` classes and the compiled library for Windows and Linux (checked inside the jar before choosing it).
+2. **Tess4J 5.20.0** with Tesseract's "fast" English and Hindi data: Windows' libraries come in the jar, Linux uses the `libtesseract5` package.
+3. **A tested parser** (`IdText`) that turns OCR text into suggestions, tolerant of misreads.
+4. **Pinned model downloads at build time** (YuNet, SFace from OpenCV's official Hugging Face pages at fixed revisions; the two language files from a fixed GitHub commit), each checked against its SHA-256.
+5. **A background job** every 30 seconds, one check at a time; it stores only results and auto-rejects only when there's no face at all.
+6. **Ubuntu instead of Alpine** for the API image, and `libtesseract5` in CI.
+
+### 82.4 Decisions (2026-10-24)
+| Decision | Choice |
+|---|---|
+| Face library | OpenCV Java 4.9.0-0 (`org.openpnp`) with YuNet + SFace |
+| OCR | Tess4J 5.20.0 + `tessdata_fast` English and Hindi |
+| Model files | Downloaded at build, SHA-256 pinned, cached, never committed |
+| When | A background job every 30 s, one check at a time |
+| Automatic decision | Only "no face found" (in the ID photo or the selfie) |
+| Face score shown as | A label from the 0.363 threshold ± 0.1 plus the number: "likely the same person", "unclear", "likely different people" |
+| OCR results | Suggestions pre-filled in the reviewer's form; warnings as notes |
+| Stored | Score, suggested gender, suggested last 4, notes, time checked (V11); never embeddings or the ID's text |
+| Docker image | `eclipse-temurin:21` on Ubuntu "noble" + `libtesseract5` (981 MB: the OpenCV jar carries every platform's library) |
+| Tests | No real person's face or ID anywhere: a parser on sample text, Tesseract on a generated card, "no face" on a text-only card, the job with a mock face model |
+| Calibration | Later, with consenting team members, on a laptop only |
+
+---
+
+## 83. Code walkthrough: the machine checks (slice 2b)
+
+### 83.0 Before you read
+The helpers from chapter 82, added to the review from chapter 81.
+
+### 83.1 Build and infrastructure
+- **`pom.xml`:** `org.openpnp:opencv` and `tess4j` (Tess4J's PDF and JBoss extras excluded: we only read photos); `download-maven-plugin` 1.13.0 downloads the four model files into `target/models` during `generate-resources`, each with its `sha256`. A wrong checksum was tried on purpose: the build stopped with "Not same digest as expected".
+- **Surefire** sets `namastute.verification.checks-enabled=false` for the test run, so the 30-second job can't touch the checks tests are working with; tests call the checks themselves.
+- **`application.yaml`:** `models-dir` (`MODELS_DIR`, `target/models` by default) and `checks-enabled`.
+- **`Dockerfile`:** both stages on Ubuntu noble; the runtime installs `libtesseract5` (and `wget` for the healthcheck), copies `target/models`, and sets `MODELS_DIR`. Two symlinks follow: Tess4J asks for `libleptonica.so` and `libtesseract.so`, but Ubuntu names them `liblept.so.5` and `libtesseract.so.5`.
+- **CI:** `apt-get install libtesseract5` and the same two symlinks before the tests (CI runs on Ubuntu too).
+
+### 83.2 Migration V11, and why not V10
+`verifications` gains `suggested_gender`, `suggested_last4`, `check_notes`, `checked_at`; V1's `face_similarity` holds the cosine score. It was written as V10, but the refresh-token fix, built at the same time in another session against the same development database, had already applied its own `V10__session_parent.sql` there. Two branches can't both own a number: this one became **V11**. Flyway then refused to start here ("applied migration not resolved locally: 10"): the database had a V10 this branch didn't know. The fix was to merge the refresh-token fix into this branch (24.7), so both travel in one pull request, V10 before V11.
+
+### 83.3 The code (`verification` module)
+- **`FaceMatch`:** loads OpenCV and the two models on first use; for each photo finds faces (confidence at least 0.8), keeps the largest (IDs can print a small second "ghost" photo), aligns it by its 5 points and computes the 128 numbers; returns whether each photo had a face and the cosine score. Native memory is released explicitly. One call at a time (`synchronized`).
+- **`Ocr`:** a Tess4J `Tesseract` with `eng+hin`, reading a photo into text. One call at a time. It hands Tesseract raw grey pixels (`doOCR(width, height, buffer, 8, …)`) instead of the picture: the picture path converts it through Leptonica, and Tess4J 5.20's Leptonica binding needs a newer Leptonica than Ubuntu 24.04's 1.82 (it failed with "undefined symbol: pixDisplayDiff"). Grey is all OCR needs anyway.
+- **`IdText`:** pure functions:
+  - gender: `TRANSGENDER` / third gender first, then `FEMALE` before `MALE` ("MALE" is inside "FEMALE"), Hindi `महिला`, `स्त्री`, `पुरुष`, and the passport's "Sex / लिंग F";
+  - the last 4 per document type (masked Aadhaar tolerant of a blurred mask, passport `A1234567`, voter ID `ABC1234567`, driving licence `DL-14 2011 0012345`);
+  - notes for anything unreadable, and a warning for a 12-digit (unmasked) Aadhaar number.
+- **`IdChecks`:** every 30 s takes the oldest unchecked waiting check (or, for tests, one given check); loads both photos; no face → automatic rejection with a clear reason, a push, photos deleted (the same order as a person's decision, chapter 80); otherwise saves the score, suggestions and notes. Any failure becomes a note and the check is still marked as checked, so one bad photo is never retried forever.
+- **`ReviewService`:** the queue now includes `checked`, `faceScore`, `suggestedGender`, `suggestedLast4`, `checkNotes`.
+
+### 83.4 Web
+- The queue shows "Machine checks done" or "Checking…" per check.
+- A "Machine checks" card: the face label and number, what was read from the ID, each note as a warning, and "Suggestions only, filled into the form below. You decide."
+- The approve form starts with the suggested gender and last 4.
+
+### 83.5 Verified
+- **API tests (12 new, 117 in all, with the refresh-token fix's):**
+  - the parser on sample text (Hindi Aadhaar, a blurred mask with a real misread, FEMALE vs MALE, the passport's "Sex / लिंग F", each document type, an unmasked number, nothing readable);
+  - real Tesseract on a generated card, and "no face" on a text-only card;
+  - the job with a mock face model: results saved and shown to the admin, never run twice; no face → rejected with the right reason and the photos deleted.
+
+  Three things were broken on purpose and caught: checking MALE before FEMALE, skipping the automatic rejection, and a wrong model checksum (the build stopped).
+- **Real faces, on a laptop only** (two public-domain portraits, never in the repository):
+  - the same person in two photos: 0.956;
+  - two different people: −0.007;
+  - a photo compared with itself: 1.000.
+
+  At first no face was found in a large close-up. YuNet looks for faces at the size it's given, so photos are now shrunk to 640 px on the long side first.
+- **Linux (the Docker image, limited to 768 MB like production):** the face check scored a development check 1.000. Reading text failed twice before it worked:
+  1. Tess4J couldn't find `libleptonica.so`: Ubuntu names it `liblept.so.5`. Two symlinks in the Dockerfile and CI fixed it.
+  2. "undefined symbol: pixDisplayDiff": Tess4J 5.20's Leptonica binding needs a newer Leptonica than Ubuntu 24.04's 1.82. `Ocr` now passes raw grey pixels, which skips Leptonica (83.3).
+
+  Then the parser and model tests passed in a Linux container set up exactly like CI; Tesseract read "FEMALE" and "4821" from the generated card. Memory with both models loaded: 504 MiB of 768 MiB (66%).
+- **Browser (1280 px, as the admin नेहा):**
+  - "Machine checks done" on each queued check;
+  - Ritika's check: "Likely the same person (1.00)" and two warnings (her development "ID" is a portrait with no printed text);
+  - a test check: "gender female, last 4 4821", with Female selected and 4821 filled in.
+
+  Web lint, type-check and build pass.
+- **Gotchas:**
+  - the first run of the new image's job checked every waiting check in the shared development database. It automatically rejected 38 leftover test checks whose "photos" have no face: correct behaviour, but on data no test owned;
+  - the migration-number clash (83.2);
+  - the first `docker build` failed once, right after Docker started, and passed when run again. The cause wasn't found.
+- **Not checked:**
+  - real Indian ID cards (none may be in the repository), so neither the thresholds nor Hindi reading on a real card;
+  - the "Unclear" and "Likely different people" labels in a browser;
+  - how long a check takes on the 2-core server;
+  - CI itself (it runs when the branch is pushed).
+
 ---
 
 ## Reference
 
-The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
+The last four chapters are for looking things up: everything still open, the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 82. Command cheat sheet
+## 84. Backlog: everything still open
+
+Everything the project knows it still has to do, in one place, as of 2026-10-24. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
+
+### Decisions the team has to make (no code first)
+| Item | Why it matters | Where |
+|---|---|---|
+| SMS provider + DLT registration (MSG91 or Firebase) | Real users can't log in without it; the production API refuses to start | 19, 54–55, infra/README.md |
+| Domain, then the first deployment to AWS | Web and API must share one domain for the login cookie; the runbook is ready | 54–55, infra/README.md |
+| The real pickup points at T1, T2, T3 | The seeded coordinates are approximate | 33–35 |
+| Map search provider before growing (Ola Maps or Google) | Nominatim allows about one search a second | 33 |
+| Uptime monitor | Otherwise nobody knows the site is down | 64 |
+| ID check reviewers and how fast they answer | The app promises "usually within a day" | 80 |
+| Women-only policy for transgender / third-gender IDs | Needed before women-only groups ship | 78, design doc open question 4 |
+| Face-score calibration with consenting team members | Thresholds come from a benchmark, not Indian IDs | 82 |
+| Privacy policy covering ID photos | Required by the DPDP Act; must match the consent notice | 78 |
+| Detour default (3 km / 25%) checked on real routes | Chosen by reasoning, not data | 37 |
+| The old "Ubery" name in the design docs; archiving the old repository | Tidiness and trademark risk | design doc open question 6 |
+
+### Code still to write
+| Item | Status | Where |
+|---|---|---|
+| ID verification slice 3: women-only groups (the switch, the matching and joining rules, tests) | Next | 78 |
+| An admin page for reports | Reports are reviewed with SQL; admins get a push | 56–57 |
+| A separate test database | Tests leave trips and checks in the development database, which can crowd results | 63, 73, 81 |
+| DigiLocker, or a KYC company with automatic liveness, in place of the human reviewer | Needs a registered company or a contract | 78 |
+
+### Deliberate shortcuts (`shortcut:` in the code)
+| Shortcut | Change it when |
+|---|---|
+| One API server: the chat broker and the message flood limit live in its memory | A second server is needed (then RabbitMQ or Redis as the broker) |
+| Pushes after a change aren't stored durably | Missing a push becomes costly (then an "outbox" table) |
+| Straight-line distance × 1.4, destinations within 15 km | Detours feel wrong in practice (then a road-routing service) |
+| Chat catch-up stops at 200 missed messages | Groups chat far more than expected |
+| Chat pushes skip anyone with the app open, even in a background tab | People report missed messages |
+| A blocked person's request to your group stays until someone declines it | It causes confusion |
+| Matching at 1,000 simultaneous users: p95 593 ms, over the 500 ms target | Real traffic approaches that (66–67; the partial index idea is noted in `TripRepository`) |
+| The API image is 981 MB: the OpenCV jar carries every platform's library | Pulls on the server get slow (then strip the other platforms' libraries in the Dockerfile) |
+| ID photos left behind if the server crashes between upload and saving | Seen in practice (production's S3 rule deletes them anyway) |
+
+### Never checked (honest gaps)
+- A real phone end to end: push notifications arriving, camera capture for ID photos, iPhone HEIC photos on non-Safari browsers.
+- Screen readers, and 200% text size on every screen.
+- Scanning the laptop UPI QR code with a real UPI app; a real payment.
+- Real AWS S3 with the IAM role (only SeaweedFS so far), and the production stack on the real server.
+- Typing Hindi with a real input method in the chat.
+- A development-only Next.js console message about "instant navigation" on the home page (not compared with the previous Next.js version).
+
+### Later (phase 3)
+Flight-delay tracking, automatic matching, and whatever real users ask for first.
+
+---
+
+## 85. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5572,7 +5789,7 @@ git fetch --prune
 
 ---
 
-## 83. Glossary
+## 86. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5592,6 +5809,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Admin panel | Pages only staff can use, e.g. the queue of ID checks |
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
 | Allowlist | A list of the only values accepted; everything else is refused |
+| Alpine Linux | A very small Linux used for Docker images; it uses musl, so many native libraries won't load on it (82) |
 | Annotation | `@Something` tag adding information to code without changing it |
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
 | API | Application Programming Interface: the list of requests a program accepts from other programs |
@@ -5627,9 +5845,11 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Build | Turning source code into something that runs (compile, bundle, package) |
 | Burst | Many requests arriving close together |
 | Bytecode | Compiled `.class` instructions run by the JVM |
+| Calibration | Choosing thresholds from your own real data instead of a benchmark's (82) |
 | Candidate | A row that survived the cheap first stage of a search |
 | ChannelInterceptor | Spring checkpoint that every incoming STOMP frame passes through |
 | Chat bubble | One chat message drawn as a rounded box; yours on the right, others on the left |
+| Checksum pinning | Writing down a file's SHA-256 so the build refuses any other file (82) |
 | Check-then-act (TOCTOU) | Bug where the fact you checked is stale by the time you act on it |
 | Checksum | A fingerprint of a file's contents; changes if the file changes |
 | CI | Continuous Integration: automatic build + test on every change |
@@ -5660,6 +5880,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Contrast ratio | How readable text is on its background; WCAG AA asks for at least 4.5:1 for normal text |
 | Cookie | Data the browser stores and sends back automatically |
 | CORS | Server headers allowing another origin to read responses |
+| Cosine similarity | How alike two embeddings are, from −1 to 1; SFace's published "same person" threshold is 0.363 (82) |
 | CountDownLatch | A gate that makes threads wait until it's opened |
 | CPU credits | A burstable server (t3) borrows full speed and slows when credits run out |
 | CSRF | Another site making the user's browser send requests to us |
@@ -5700,6 +5921,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | ECDH | Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other's public key to get the same shared secret |
 | Effect | Code run after a component appears (`useEffect`) |
 | Effectively final | A variable that never changes after it's set; only these can be used inside a lambda |
+| Embedding | A list of numbers describing something; SFace describes a face with 128 numbers, and similar faces give similar lists (82) |
 | Encoding vs encryption | Changing format (anyone can undo it) vs hiding content (needs a key) |
 | End-to-end encryption | Only sender and receiver can read it; carriers in between can't |
 | Endpoint | One HTTP method + path the API accepts |
@@ -5710,6 +5932,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Expiry | The moment something (a code, a token) stops being valid |
 | EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
 | Extension (Postgres) | Add-on giving the database new abilities (PostGIS) |
+| Face detection / recognition | Detection finds where faces are in a photo; recognition describes whose face it is (82) |
 | Face match | Comparing an ID photo's face with a selfie; gives a similarity score |
 | Fail fast | Stop at startup when something essential is missing, instead of running wrongly |
 | Fail open / fail closed | When a safety check itself breaks: let requests through / refuse them |
@@ -5729,6 +5952,8 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Git | A version control tool that records every change to the code |
 | git stash | Puts uncommitted changes on a temporary shelf (`git stash pop` brings them back) |
 | GitHub | A website hosting Git repositories, with pull requests and CI |
+| glibc / musl | Two versions of Linux's basic C library; most native libraries are built for glibc (Ubuntu, Debian) (82) |
+| Grace window | A short time after a change when the old state is still accepted; ours lets a just-rotated refresh token be retried for 30 s (24.7) |
 | Great circle | Shortest path between two points on a sphere |
 | Greedy algorithm | Takes the best-looking step now and never reconsiders |
 | Hash | One-way fixed-length fingerprint of data |
@@ -5760,6 +5985,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | JDBC | Java's standard database API |
 | JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
 | JIT warm-up | Java gets faster after its first minute as hot code is compiled |
+| JNA / JNI | Two bridges from Java to native libraries: JNI needs glue code compiled for each platform, JNA looks functions up by name while running (82, 83.5) |
 | Join request | "I'd like to share with you": pending until accepted or declined |
 | JPA / Hibernate | Java's ORM standard / its implementation |
 | JPQL | SQL-like query language using entity and field names |
@@ -5772,6 +5998,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Latitude / longitude | North–south / east–west position in degrees |
 | Launch blocker | Something that must be done before real users |
 | Layout shift | Content jumping while the page loads, e.g. when a font arrives late |
+| Leptonica | The C image library Tesseract is built on; Tess4J's binding to it expects a particular version (83) |
 | Let's Encrypt / ACME | Free certificate authority / the protocol for proving you own a domain |
 | Library | A package of ready-made code a project uses (a jar in Java, a package in JavaScript) |
 | Lifecycle (Maven) | Ordered build phases: compile → test → package → verify |
@@ -5782,6 +6009,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Load test / stress / spike / soak | Expected traffic / until it breaks / a sudden jump / steady for hours |
 | Lock (database) | A temporary claim on a row that makes others wait |
 | Lockfile | Exact versions of all installed packages |
+| Lost response | The server did the work and answered, but the answer never reached the client, so the two now disagree (24.7) |
 | Lost update | Two writers start from the same old value; one overwrites the other |
 | Masked Aadhaar | An Aadhaar card with the first 8 of 12 digits hidden; the only kind we accept |
 | Media query | A question about the screen, like "at least 1024 px wide?", in CSS or JavaScript |
@@ -5793,6 +6021,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Minor units | Money stored as an integer count of the smallest unit (paise) |
 | Mitigation | A change that makes the harm smaller without removing the cause |
 | Mobile-first | Build for the phone first, then add the larger layouts with breakpoints |
+| Mock | A stand-in for a component in a test, with fixed answers (`@MockitoBean`) (82) |
 | Moderation | People reviewing reports and deciding what to do |
 | Module | A self-contained part of a program with its own job |
 | Monorepo | One repository holding several related projects |
@@ -5801,12 +6030,16 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | N+1 query problem | 1 query for a list, then 1 more per item; fix with one `in (…)` query or a join |
 | Named matcher (Caddy) | A reusable request condition, e.g. @api path /api/* /ws |
 | Native input | A control the browser draws itself (`<input type="time">`), accessible for free |
+| Native library | Code compiled for one kind of computer (`.dll` on Windows, `.so` on Linux), reached from Java through JNI or JNA (82) |
 | Native query | Plain SQL in a repository (`nativeQuery = true`) |
 | Network call | A request to another program over a network; slower and can fail |
 | Notification tag | A label on a notification; a new one with the same tag replaces the old one |
 | Object | One real thing built from a class while the program runs |
+| OCR | Optical character recognition: reading printed text in a photo (82) |
+| ONNX | A standard file format for trained neural networks, runnable from any language (82) |
 | Opaque id | A random identifier that reveals nothing about the person (a UUID) |
 | OpenAPI (Swagger) | Standard document describing an HTTP API's paths and data shapes |
+| OpenCV | The open-source computer vision library; we use its YuNet and SFace face models (82) |
 | Operating system | The base software that runs a computer (Windows, Linux, macOS) |
 | Optimistic locking | Detect conflicts with a `version` column and retry |
 | Optimistic UI | Showing your action as done before the server confirms it |
@@ -5855,6 +6088,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Query | One question to the database |
 | Query planner | The part of Postgres that decides how to run a query |
 | Quiet zone | The empty margin (4 modules) a QR code needs around it to scan |
+| Regular expression (regex) | A text pattern, like `[A-Z]\d{7}` (a letter, then 7 digits) (82) |
 | R-tree | Tree of nested bounding boxes; how PostGIS indexes points |
 | Race condition | Bug where the result depends on the timing of simultaneous operations |
 | RAM | A computer's fast, temporary memory; emptied when a program stops |
@@ -5908,6 +6142,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Service worker | Background JavaScript the browser can wake even when no tab is open |
 | Session | The period during which the server treats someone as logged in |
 | Severity / likelihood | How bad a problem is when it happens / how likely it is to happen |
+| SFace | OpenCV's face recognition model: an aligned face in, 128 numbers out (82) |
 | Side effect | Anything a function does besides returning a value (DB, network, clock…) |
 | Signature | A cryptographic stamp proving who issued something and that it's unchanged |
 | Silent block | Blocking without telling the blocked person anything |
@@ -5939,10 +6174,12 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Supply-chain risk | Danger of a malicious or broken release of a library you depend on |
 | Sweep | A periodic job that handles everything that's due in one go |
 | Sybil attack | One person running many fake identities to sway a system |
+| Symbolic link (symlink) | A file that only points to another file's name, like a shortcut (83) |
 | System message | A line the app writes into a chat ("Asha joined"), styled differently from people's messages |
 | Table | Data arranged in rows and columns |
 | Technical debt | A shortcut taken on purpose to ship sooner, to be paid back later |
 | Terminal | A text window for typing commands |
+| Tesseract | The open-source OCR engine; Tess4J is its Java bridge (82) |
 | Testcontainers | Library that starts throwaway databases in Docker for tests |
 | Think time | The pauses a real person takes between actions |
 | Thread | One line of execution inside a program; a server runs many at once |
@@ -5956,6 +6193,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | TLS termination | Decrypting HTTPS at the proxy, then forwarding plain HTTP privately |
 | Token | Text the browser sends to prove who it is, like a ticket |
 | TOTP | Time-based one-time password (authenticator apps) |
+| traineddata | A Tesseract language file, such as `eng.traineddata` or `hin.traineddata` (82) |
 | Transaction | Database changes that all happen or none do |
 | TransactionSynchronization | Spring hook to run code at a transaction moment, e.g. afterCommit |
 | Transition | One allowed move between states, e.g. `open → locked` |
@@ -5984,10 +6222,11 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | X-Forwarded-For | Header a proxy adds with the real client's IP address |
 | XSS | Attacker's script running on our page |
 | YAML | Indentation-based settings format |
+| YuNet | OpenCV's face detection model: a box and 5 landmark points per face (82) |
 
 ---
 
-## 84. Interview questions to practise
+## 87. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6160,3 +6399,11 @@ Questions an interviewer could ask about this project, roughly in the order the 
 167. Why can't database work in an after-commit callback be relied on, and what did you do instead?
 168. How do you show a private image to a logged-in user when <img> can't send a token?
 169. How did you add the ID badge to three screens without extra queries?
+170. A refresh response gets lost and the browser sends the old token again. Why did that log users out everywhere, how does the grace window fix it, and what does it give a thief?
+171. Why run the face and text checks in a background job instead of while the person uploads?
+172. Why does the machine reject automatically only when no face is found, and never for a low face score?
+173. How do you make sure a model file downloaded at build time is exactly the one you tested with?
+174. How would you test face matching without putting any real person's face in the repository?
+175. OCR read "XXXX XXXX 4821" as "XXXXK 4821". How do you make a parser tolerant of misreads without accepting wrong numbers?
+176. A Java library works on Windows but fails on Linux with "undefined symbol". What does that mean, and what are your options?
+177. Two branches both added migration V10 against the same database. What goes wrong, and how did you resolve it?

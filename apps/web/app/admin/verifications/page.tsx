@@ -5,7 +5,7 @@ import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { AppBar } from "@/components/app-bar";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
-import { Alert, Card, EmptyState, Eyebrow } from "@/components/ui/display";
+import { Alert, Card, Chip, EmptyState, Eyebrow } from "@/components/ui/display";
 import { boxClass } from "@/components/ui/field";
 import { approveCheck, getCheckPhoto, getPendingChecks, type PendingCheck, rejectCheck, restoreSession } from "@/lib/api";
 import { formatIst } from "@/lib/time";
@@ -23,6 +23,17 @@ const CHECKLIST = [
   "Aadhaar: only the last 4 digits are visible",
 ];
 const FIELD = "outline-none focus-visible:shadow-none focus:border-2 focus:border-fg dark:focus:border-accent";
+// OpenCV's published "same person" threshold for SFace (Learning Notes 82); near it, the machine can't tell
+const SAME_PERSON = 0.363;
+const MARGIN = 0.1;
+
+function faceLabel(score: number | null): string {
+  if (score === null) return "Couldn't compare the faces: compare them yourself";
+  const n = score.toFixed(2);
+  if (score >= SAME_PERSON + MARGIN) return `Likely the same person (${n})`;
+  if (score <= SAME_PERSON - MARGIN) return `Likely different people (${n}): look very carefully`;
+  return `Unclear (${n}): check carefully`;
+}
 
 // The ID check queue (Learning Notes 80). Admins only: the server refuses everyone else; this page just sends them home.
 export default function ReviewPage() {
@@ -72,7 +83,10 @@ export default function ReviewPage() {
                 <Card className="flex flex-wrap items-center justify-between gap-3">
                   <span className="flex flex-col">
                     <b>{c.firstName} · {DOC_NAMES[c.docType] ?? c.docType}</b>
-                    <span className="text-small text-fg-muted">Sent {formatIst(c.submittedAt)}</span>
+                    <span className="flex flex-wrap items-center gap-2 text-small text-fg-muted">
+                      Sent {formatIst(c.submittedAt)}
+                      <Chip variant={c.checked ? "info" : "muted"}>{c.checked ? "Machine checks done" : "Checking…"}</Chip>
+                    </span>
                   </span>
                   <Button variant="secondary" onClick={() => { setNotice(""); setOpen(c.id); }}>Review</Button>
                 </Card>
@@ -92,8 +106,8 @@ function CheckReview({ check, onBack, onDecided }: {
   onDecided: (id: string, message: string) => void;
 }) {
   const [urls, setUrls] = useState<{ id: string; selfie: string } | null>(null);
-  const [gender, setGender] = useState("");
-  const [last4, setLast4] = useState("");
+  const [gender, setGender] = useState(check.suggestedGender ?? "");   // suggestions: the reviewer can change them
+  const [last4, setLast4] = useState(check.suggestedLast4 ?? "");
   const [reason, setReason] = useState("");
   const [other, setOther] = useState("");
   const approve = useAction();
@@ -146,6 +160,22 @@ function CheckReview({ check, onBack, onDecided }: {
         <p className="text-small font-semibold">They were asked to:</p>
         <p className="font-display text-h3">{check.gesture}</p>
       </div>
+
+      <Card className="flex flex-col gap-2">
+        <h2 className="font-display text-h3">Machine checks</h2>
+        {check.checked ? (
+          <>
+            <p><b>Faces:</b> {faceLabel(check.faceScore)}</p>
+            <p>
+              <b>Read from the ID:</b> gender {check.suggestedGender ?? "not readable"}, last 4 {check.suggestedLast4 ?? "not readable"}
+            </p>
+            {check.checkNotes?.split("\n").map((note) => <Alert key={note} variant="warning">{note}</Alert>)}
+            <p className="text-small text-fg-muted">Suggestions only, filled into the form below. You decide.</p>
+          </>
+        ) : (
+          <p className="text-fg-muted">Checking… The machine looks at each new check within a minute. You can review without it.</p>
+        )}
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {(["id", "selfie"] as const).map((which) => (
