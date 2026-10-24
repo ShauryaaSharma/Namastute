@@ -17,6 +17,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,6 +32,7 @@ class AuthFlowTest {
     @Autowired MockMvc mvc;
     @Autowired StringRedisTemplate redis;
     @Autowired CapturingSms sms;
+    @Autowired JdbcTemplate jdbc;
 
     record Login(String accessToken, Cookie refreshCookie) {}
 
@@ -64,7 +66,8 @@ class AuthFlowTest {
 
     @Test
     void refreshRotatesAndReuseLogsOutEverywhere() throws Exception {
-        Cookie original = login().refreshCookie();
+        Login login = login();
+        Cookie original = login.refreshCookie();
 
         MockHttpServletResponse refreshed = mvc.perform(post("/api/v1/auth/refresh").cookie(original))
                 .andExpect(status().isOk())
@@ -72,10 +75,33 @@ class AuthFlowTest {
                 .andReturn().getResponse();
         Cookie rotated = refreshed.getCookie(AuthController.REFRESH_COOKIE);
         assertThat(rotated.getValue()).isNotEqualTo(original.getValue());
+        endGraceWindow(login);
 
-        // Replaying the old cookie = theft signal: rejected, and the new one is revoked too
+        // Replaying the old cookie after the grace window = theft signal: rejected, and the new one is revoked too
         mvc.perform(post("/api/v1/auth/refresh").cookie(original)).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/auth/refresh").cookie(rotated)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void replayInsideGraceWindowIsALostResponse() throws Exception {
+        Cookie original = login().refreshCookie();
+        refresh(original);   // the browser never receives this response, so it still holds the original cookie
+
+        // Retrying the original seconds later gets a fresh cookie instead of logging out everywhere (Learning Notes 24.7)
+        Cookie retried = refresh(original);
+        assertThat(retried.getValue()).isNotEqualTo(original.getValue());
+        refresh(retried);   // still logged in: no revoke-all happened
+    }
+
+    @Test
+    void replayOfATokenTwoRotationsOldLogsOutEverywhere() throws Exception {
+        Cookie original = login().refreshCookie();
+        Cookie second = refresh(original);
+        Cookie third = refresh(second);
+
+        // Still inside the window, but the original's replacement was already used: not a lost response
+        mvc.perform(post("/api/v1/auth/refresh").cookie(original)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/auth/refresh").cookie(third)).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -112,6 +138,18 @@ class AuthFlowTest {
                 .andReturn().getResponse();
         return new Login(JsonPath.read(res.getContentAsString(), "$.accessToken"),
                 res.getCookie(AuthController.REFRESH_COOKIE));
+    }
+
+    private Cookie refresh(Cookie cookie) throws Exception {
+        return mvc.perform(post("/api/v1/auth/refresh").cookie(cookie))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getCookie(AuthController.REFRESH_COOKIE);
+    }
+
+    // Pretend the rotations happened a minute ago, past RefreshTokens.GRACE, instead of waiting in the test
+    private void endGraceWindow(Login login) throws Exception {
+        jdbc.update("update sessions set revoked_at = revoked_at - interval '1 minute' where user_id = ?::uuid and revoked_at is not null",
+                userId(login));
     }
 
     private String userId(Login login) throws Exception {

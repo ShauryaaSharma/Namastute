@@ -4,6 +4,7 @@ import com.namastute.notifications.PushService;
 import com.namastute.notifications.PushService.Push;
 import com.namastute.shared.ApiException;
 import com.namastute.users.UserService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,8 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class ReviewService {
 
-    record PendingView(UUID id, String firstName, String docType, String gesture, OffsetDateTime submittedAt) {}
-    record PendingRow(UUID id, UUID userId, String docType, String gesture, OffsetDateTime createdAt) {}
+    // checked: the machine checks have run (Learning Notes 82); their results are suggestions for the reviewer
+    record PendingView(UUID id, String firstName, String docType, String gesture, OffsetDateTime submittedAt, boolean checked,
+                       @Schema(nullable = true) Double faceScore,
+                       @Schema(nullable = true, allowableValues = {"female", "male", "other"}) String suggestedGender,
+                       @Schema(nullable = true) String suggestedLast4, @Schema(nullable = true) String checkNotes) {}
+    record PendingRow(UUID id, UUID userId, String docType, String gesture, OffsetDateTime createdAt, OffsetDateTime checkedAt,
+                      Double faceSimilarity, String suggestedGender, String suggestedLast4, String checkNotes) {}
 
     private static final Logger log = LoggerFactory.getLogger(ReviewService.class);
 
@@ -45,11 +51,13 @@ class ReviewService {
     List<PendingView> pending(UUID admin) {
         requireAdmin(admin);
         List<PendingRow> rows = db.sql("""
-                        select id, user_id, doc_type, gesture, created_at from verifications
+                        select id, user_id, doc_type, gesture, created_at, checked_at, face_similarity, suggested_gender,
+                          suggested_last4, check_notes from verifications
                         where status = 'pending' and doc_key is not null order by created_at""")
                 .query(PendingRow.class).list();
         Map<UUID, String> names = users.firstNames(rows.stream().map(PendingRow::userId).toList());
-        return rows.stream().map(r -> new PendingView(r.id(), names.get(r.userId()), r.docType(), r.gesture(), r.createdAt())).toList();
+        return rows.stream().map(r -> new PendingView(r.id(), names.get(r.userId()), r.docType(), r.gesture(), r.createdAt(),
+                r.checkedAt() != null, r.faceSimilarity(), r.suggestedGender(), r.suggestedLast4(), r.checkNotes())).toList();
     }
 
     // "id" or "selfie", only while the check is waiting. Anything else looks like nothing exists.

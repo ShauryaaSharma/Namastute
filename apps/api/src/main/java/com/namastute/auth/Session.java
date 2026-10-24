@@ -25,14 +25,17 @@ class Session {
 
     private Instant revokedAt;
 
+    private UUID parentId;   // the session this one replaced (null for a fresh login)
+
     protected Session() {
         // required by JPA
     }
 
-    Session(UUID userId, String tokenHash, Instant expiresAt) {
+    Session(UUID userId, String tokenHash, Instant expiresAt, UUID parentId) {
         this.userId = userId;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
+        this.parentId = parentId;
     }
 
     UUID getId() {

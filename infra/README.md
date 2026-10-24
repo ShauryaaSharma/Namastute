@@ -11,6 +11,10 @@ These need a decision, an account or a site visit, not code (Learning Notes 64):
 2. **Pickup points:** the terminal pickup locations in the database are approximate. Someone visits each terminal, notes the real app-cab pickup spot (latitude and longitude), and a developer ships them as a new migration (never by editing `V3__seed_terminals.sql`).
 3. **Map search:** OpenStreetMap's Nominatim only allows light use (about 1 search a second). Fine for a small pilot; before growing, choose Ola Maps or Google. Only `apps/web/lib/geocode.ts` changes.
 4. **Uptime monitor:** a free monitor (for example UptimeRobot) that opens `https://<your domain>/` every 5 minutes and emails the team when it fails. Without one, nobody knows the site is down.
+5. **ID check reviewers (Learning Notes 80):** who reviews, and how fast (the app tells people "usually within a day"). Reviewers should read the checklist on the review page and never approve an unmasked Aadhaar.
+6. **Women-only policy:** decide whether IDs showing transgender / third gender count for women-only groups (open question 4 in the design doc) before slice 3 ships.
+7. **Calibrate the face score (Learning Notes 82):** with consenting team members' real IDs and selfies, on a laptop only (never committed or uploaded), note the scores of same-person and different-person pairs. Only then decide whether low scores should reject automatically.
+8. **Privacy policy:** it must cover ID photos (what, why, who sees them, deletion within 7 days), matching the consent notice on `/verify` (DPDP Act).
 
 ## First-time server setup (AWS, region ap-south-1 Mumbai)
 1. **Server:** EC2 **t3.small** (Intel/AMD, 2 GB; the PostGIS image is amd64-only), Ubuntu LTS, 20 GB disk. Attach an **Elastic IP** so the address never changes.
@@ -75,7 +79,7 @@ docker compose -f infra/docker-compose.prod.yml --env-file infra/.env start api
 ```
 
 ## Admins
-Admins get a push notification for every new report (category only, never names), so a safety report never waits unseen.
+Admins get a push notification for every new report (category only, never names), so a safety report never waits unseen, and for every new ID check, which they review in the app: **Profile → Admin → Review ID checks**.
 ```bash
 docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T postgres psql -U namastute -d namastute -c \
   "update users set role = 'admin' where phone = '+91XXXXXXXXXX'"

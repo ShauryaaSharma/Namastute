@@ -12,6 +12,9 @@ interface SessionRepository extends JpaRepository<Session, UUID> {
 
     Optional<Session> findByTokenHash(String tokenHash);
 
+    // The still-active session that replaced this one; rotation keeps at most one per parent (Learning Notes 24.7)
+    Optional<Session> findByParentIdAndRevokedAtIsNull(UUID parentId);
+
     // Revokes one session only if it is still active; returns 1 if this call revoked it, 0 if it was already revoked
     @Modifying
     @Transactional

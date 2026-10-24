@@ -70,7 +70,7 @@
 <details><summary><a href="#21-redis">21. Redis</a></summary><a class="sub" href="#210-words-first">21.0 Words first</a><a class="sub" href="#211-what-it-is">21.1 What it is</a><a class="sub" href="#212-what-goes-in-redis-vs-postgres">21.2 What goes in Redis vs Postgres</a><a class="sub" href="#213-commands">21.3 Commands</a><a class="sub" href="#214-atomic-operations-and-race-conditions">21.4 Atomic operations and race conditions</a><a class="sub" href="#215-hands-on-lab-the-otp-flow-by-hand-what-each-line-did">21.5 Hands-on lab: the OTP flow by hand (what each line did)</a></details>
 <details><summary><a href="#22-rate-limiting">22. Rate limiting</a></summary><a class="sub" href="#220-words-first">22.0 Words first</a><a class="sub" href="#221-why">22.1 Why</a><a class="sub" href="#222-our-rules">22.2 Our rules</a><a class="sub" href="#223-fixed-window-counter">22.3 Fixed window counter</a></details>
 <details><summary><a href="#23-code-walkthrough-the-otp-service">23. Code walkthrough: the OTP service</a></summary><a class="sub" href="#230-before-you-read">23.0 Before you read</a><a class="sub" href="#231-the-package-and-imports">23.1 The package and imports</a><a class="sub" href="#232-the-class">23.2 The class</a><a class="sub" href="#233-the-constants-the-rules-in-one-place">23.3 The constants (the rules, in one place)</a><a class="sub" href="#234-the-rate-limit-counter-script-lua">23.4 The rate-limit counter script (Lua)</a><a class="sub" href="#235-the-fields-what-each-otpservice-object-holds">23.5 The fields (what each OtpService object holds)</a><a class="sub" href="#236-the-constructor">23.6 The constructor</a><a class="sub" href="#237-requestotp-sending-a-code">23.7 requestOtp: sending a code</a><a class="sub" href="#238-verify-checking-a-code">23.8 verify: checking a code</a><a class="sub" href="#239-hit-the-counter-helper">23.9 hit: the counter helper</a><a class="sub" href="#2310-hmac-the-fingerprint">23.10 hmac: the fingerprint</a><a class="sub" href="#2311-small-helpers">23.11 Small helpers</a><a class="sub" href="#2312-the-tests-otpservicetestjava">23.12 The tests (OtpServiceTest.java)</a></details>
-<details><summary><a href="#24-login-tokens-jwt-refresh-tokens-cookies">24. Login tokens: JWT, refresh tokens, cookies</a></summary><a class="sub" href="#240-words-first">24.0 Words first</a><a class="sub" href="#241-two-ways-to-remember-whos-logged-in">24.1 Two ways to remember who&#x27;s logged in</a><a class="sub" href="#242-jwt-json-web-token">24.2 JWT (JSON Web Token)</a><a class="sub" href="#243-access-token--refresh-token">24.3 Access token + refresh token</a><a class="sub" href="#244-rotation-and-reuse-detection">24.4 Rotation and reuse detection</a><a class="sub" href="#245-hash-but-not-hmac">24.5 Hash, but not HMAC</a><a class="sub" href="#246-where-the-browser-keeps-tokens">24.6 Where the browser keeps tokens</a></details>
+<details><summary><a href="#24-login-tokens-jwt-refresh-tokens-cookies">24. Login tokens: JWT, refresh tokens, cookies</a></summary><a class="sub" href="#240-words-first">24.0 Words first</a><a class="sub" href="#241-two-ways-to-remember-whos-logged-in">24.1 Two ways to remember who&#x27;s logged in</a><a class="sub" href="#242-jwt-json-web-token">24.2 JWT (JSON Web Token)</a><a class="sub" href="#243-access-token--refresh-token">24.3 Access token + refresh token</a><a class="sub" href="#244-rotation-and-reuse-detection">24.4 Rotation and reuse detection</a><a class="sub" href="#245-hash-but-not-hmac">24.5 Hash, but not HMAC</a><a class="sub" href="#246-where-the-browser-keeps-tokens">24.6 Where the browser keeps tokens</a><a class="sub" href="#247-lost-responses-and-the-grace-window">24.7 Lost responses and the grace window</a></details>
 <details><summary><a href="#25-spring-security">25. Spring Security</a></summary><a class="sub" href="#250-words-first">25.0 Words first</a><a class="sub" href="#251-filters">25.1 Filters</a><a class="sub" href="#252-our-rules-securityfilterchain">25.2 Our rules (SecurityFilterChain)</a><a class="sub" href="#253-the-starter">25.3 The starter</a></details>
 <details><summary><a href="#26-jpa-entities-and-spring-data-repositories">26. JPA entities and Spring Data repositories</a></summary><a class="sub" href="#260-words-first">26.0 Words first</a></details>
 <details><summary><a href="#27-code-walkthrough-tokens-security-and-users">27. Code walkthrough: tokens, security and users</a></summary><a class="sub" href="#270-before-you-read">27.0 Before you read</a><a class="sub" href="#271-usersuserjava-the-entity">27.1 users/User.java: the entity</a><a class="sub" href="#272-usersuserrepositoryjava">27.2 users/UserRepository.java</a><a class="sub" href="#273-usersuserservicejava-the-modules-public-api">27.3 users/UserService.java: the module&#x27;s public API</a><a class="sub" href="#274-usersmecontrollerjava-the-first-protected-endpoint">27.4 users/MeController.java: the first protected endpoint</a><a class="sub" href="#275-v2__users_name_optionalsql">27.5 V2__users_name_optional.sql</a><a class="sub" href="#276-authsessionjava-and-authsessionrepositoryjava">27.6 auth/Session.java and auth/SessionRepository.java</a><a class="sub" href="#277-authrefreshtokensjava">27.7 auth/RefreshTokens.java</a><a class="sub" href="#278-authaccesstokensjava-issuing-jwts">27.8 auth/AccessTokens.java: issuing JWTs</a><a class="sub" href="#279-authsecurityconfigjava">27.9 auth/SecurityConfig.java</a><a class="sub" href="#2710-authauthcontrollerjava-renamed-from-otpcontroller">27.10 auth/AuthController.java (renamed from OtpController)</a><a class="sub" href="#2711-the-tests">27.11 The tests</a></details>
@@ -135,10 +135,13 @@
 <details><summary><a href="#79-code-walkthrough-id-upload-slice-1">79. Code walkthrough: ID upload (slice 1)</a></summary><a class="sub" href="#790-before-you-read">79.0 Before you read</a><a class="sub" href="#791-infrastructure">79.1 Infrastructure</a><a class="sub" href="#792-database-v9__verification_uploadsql">79.2 Database: V9__verification_upload.sql</a><a class="sub" href="#793-the-verification-module">79.3 The verification module</a><a class="sub" href="#794-web">79.4 Web</a><a class="sub" href="#795-verified">79.5 Verified</a></details>
 <details><summary><a href="#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge">80. Reviewing ID checks: admin access, safe decisions and the badge</a></summary><a class="sub" href="#800-words-first">80.0 Words first</a><a class="sub" href="#801-the-problem">80.1 The problem</a><a class="sub" href="#802-the-naive-ways-and-why-they-hurt">80.2 The naive ways, and why they hurt</a><a class="sub" href="#803-the-tools">80.3 The tools</a><a class="sub" href="#804-decisions-2026-10-24">80.4 Decisions (2026-10-24)</a></details>
 <details><summary><a href="#81-code-walkthrough-the-review-slice-2a">81. Code walkthrough: the review (slice 2a)</a></summary><a class="sub" href="#810-before-you-read">81.0 Before you read</a><a class="sub" href="#811-the-users-module">81.1 The users module</a><a class="sub" href="#812-the-verification-module">81.2 The verification module</a><a class="sub" href="#813-web">81.3 Web</a><a class="sub" href="#814-verified">81.4 Verified</a></details>
+<details><summary><a href="#82-machine-helpers-for-id-checks-face-score-and-reading-the-id">82. Machine helpers for ID checks: face score and reading the ID</a></summary><a class="sub" href="#820-words-first">82.0 Words first</a><a class="sub" href="#821-the-problem">82.1 The problem</a><a class="sub" href="#822-the-naive-ways-and-why-they-hurt">82.2 The naive ways, and why they hurt</a><a class="sub" href="#823-the-tools">82.3 The tools</a><a class="sub" href="#824-decisions-2026-10-24">82.4 Decisions (2026-10-24)</a></details>
+<details><summary><a href="#83-code-walkthrough-the-machine-checks-slice-2b">83. Code walkthrough: the machine checks (slice 2b)</a></summary><a class="sub" href="#830-before-you-read">83.0 Before you read</a><a class="sub" href="#831-build-and-infrastructure">83.1 Build and infrastructure</a><a class="sub" href="#832-migration-v11-and-why-not-v10">83.2 Migration V11, and why not V10</a><a class="sub" href="#833-the-code-verification-module">83.3 The code (verification module)</a><a class="sub" href="#834-web">83.4 Web</a><a class="sub" href="#835-verified">83.5 Verified</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#82-command-cheat-sheet">82. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#83-glossary">83. Glossary</a>
-<a class="topic" href="#84-interview-questions-to-practise">84. Interview questions to practise</a>
+<details><summary><a href="#84-backlog-everything-still-open">84. Backlog: everything still open</a></summary><a class="sub" href="#decisions-the-team-has-to-make-no-code-first">Decisions the team has to make (no code first)</a><a class="sub" href="#code-still-to-write">Code still to write</a><a class="sub" href="#deliberate-shortcuts-shortcut-in-the-code">Deliberate shortcuts (shortcut: in the code)</a><a class="sub" href="#never-checked-honest-gaps">Never checked (honest gaps)</a><a class="sub" href="#later-phase-3">Later (phase 3)</a></details>
+<details><summary><a href="#85-command-cheat-sheet">85. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#86-glossary">86. Glossary</a>
+<a class="topic" href="#87-interview-questions-to-practise">87. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
@@ -171,7 +174,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 83) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (82) and <strong>Interview questions</strong> (84) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 86) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (85) and <strong>Interview questions</strong> (87) are for revision. The <strong>Backlog</strong> (84) lists everything still open.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -291,9 +294,19 @@
 <td>Technical debt, load testing, indexes and rate limits</td>
 </tr>
 <tr>
+<td>IX. The new look</td>
+<td>70–77</td>
+<td>A design system, accessible components, and every screen redesigned</td>
+</tr>
+<tr>
+<td>X. ID verification</td>
+<td>78–83</td>
+<td>Handling ID photos safely, admin review, and machine helpers for faces and text</td>
+</tr>
+<tr>
 <td>Reference</td>
-<td>70–72</td>
-<td>Commands, glossary, interview questions</td>
+<td>84–87</td>
+<td>What&#39;s still open, commands, glossary, interview questions</td>
 </tr>
 </tbody></table>
 <hr>
@@ -409,12 +422,15 @@
 <li><a href="#79-code-walkthrough-id-upload-slice-1">Code walkthrough: ID upload (slice 1)</a></li>
 <li><a href="#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge">Reviewing ID checks: admin access, safe decisions and the badge</a></li>
 <li><a href="#81-code-walkthrough-the-review-slice-2a">Code walkthrough: the review (slice 2a)</a></li>
+<li><a href="#82-machine-helpers-for-id-checks-face-score-and-reading-the-id">Machine helpers for ID checks: face score and reading the ID</a></li>
+<li><a href="#83-code-walkthrough-the-machine-checks-slice-2b">Code walkthrough: the machine checks (slice 2b)</a></li>
 </ol>
 <p><strong><a href="#reference">Reference</a></strong></p>
-<ol start="82">
-<li><a href="#82-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#83-glossary">Glossary</a></li>
-<li><a href="#84-interview-questions-to-practise">Interview questions to practise</a></li>
+<ol start="84">
+<li><a href="#84-backlog-everything-still-open">Backlog: everything still open</a></li>
+<li><a href="#85-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#86-glossary">Glossary</a></li>
+<li><a href="#87-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -1910,6 +1926,8 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 <li><strong>Expiry:</strong> the moment a token stops being valid.</li>
 <li><strong>Revoke:</strong> to cancel something before it would expire by itself.</li>
 <li><strong>Cookie:</strong> a small piece of data the server asks the browser to store and send back automatically (24.1).</li>
+<li><strong>Lost response:</strong> the server finished the work and sent its answer, but the answer never arrived (the page was closed, or the network dropped). The server can&#39;t tell; it thinks all went well (24.7).</li>
+<li><strong>Grace window:</strong> a short period after a change during which the old state is still accepted, to forgive honest timing accidents (24.7).</li>
 </ul>
 <h3 id="241-two-ways-to-remember-whos-logged-in">24.1 Two ways to remember who&#39;s logged in</h3>
 <p>HTTP is stateless (18.6), so after login the browser needs proof it sends with every request.</p>
@@ -1997,6 +2015,7 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 <ul>
 <li><strong>Rotation:</strong> each refresh token works <strong>once</strong>; using it returns a new one and revokes the old.</li>
 <li><strong>Reuse detection:</strong> if an already-used refresh token comes back, someone holds a copy (thief or victim, we can&#39;t tell), so <strong>all of that user&#39;s sessions are revoked</strong>.</li>
+<li><strong>Later change (24.7):</strong> a token presented again within 30 seconds of its rotation, whose replacement hasn&#39;t been used yet, is treated as a lost response instead of a theft.</li>
 </ul>
 <h3 id="245-hash-but-not-hmac">24.5 Hash, but not HMAC</h3>
 <p><code>sessions.token_hash</code> = <strong>plain SHA-256</strong> of the refresh token. Safe because the token has 2²⁵⁶ (about 10⁷⁷) possibilities, impossible to try. The 6-digit OTP needed HMAC because 10⁶ can be tried in a second. <strong>The size of the input space decides.</strong></p>
@@ -2014,6 +2033,66 @@ private static ApiException rateLimited() { return new ApiException(HttpStatus.T
 </ul>
 </li>
 </ul>
+<h3 id="247-lost-responses-and-the-grace-window">24.7 Lost responses and the grace window</h3>
+<p><strong>The problem.</strong> Rotation (24.4) changes the token on the server <strong>before</strong> the browser has the new one. A refresh is a round trip:</p>
+<ol>
+<li>The browser sends cookie <strong>A</strong>.</li>
+<li>The server revokes A, saves a new session <strong>B</strong>, and answers with <code>Set-Cookie: B</code>.</li>
+<li>The browser stores B.</li>
+</ol>
+<p>If step 3 never happens (the user navigates away mid-request, or a phone on a weak network drops the answer), the browser still holds <strong>A</strong>, and the server thinks A was used. The next refresh sends A again, reuse detection sees an &quot;already used&quot; token and <strong>logs the user out on every device</strong>. We saw exactly this while testing (2026-10-24): a rotation, then 0.2 s later a revoke-all, for a user who did nothing wrong.</p>
+<p><strong>The naive fixes, and why they hurt.</strong></p>
+<ul>
+<li><em>Stop rotating:</em> a stolen refresh token would then work for 30 days, unnoticed.</li>
+<li><em>Send B again:</em> impossible. We store only <code>sha256(B)</code> (24.5); the raw B is gone the moment we answer.</li>
+</ul>
+<p><strong>What we do instead.</strong> Each session remembers which one it replaced: <code>sessions.parent_id</code> (B&#39;s parent is A). When an already-used token A comes back, the server asks two questions:</p>
+<ul>
+<li>Was A rotated <strong>less than 30 seconds ago</strong> (<code>RefreshTokens.GRACE</code>)?</li>
+<li>Is A&#39;s replacement B <strong>still unused</strong> (active)?</li>
+</ul>
+<p>Both yes → most likely the same browser retrying after a lost answer. The server revokes B (the browser never got it), creates a new session <strong>B′</strong> whose parent is also A, and answers 200 with <code>Set-Cookie: B′</code>. If that answer is lost too, A still works for the rest of the 30 seconds.</p>
+<p>Either no → still a replay: revoke everything, as before. That covers:</p>
+<ul>
+<li>A comes back <strong>after</strong> 30 seconds.</li>
+<li>A comes back after B was <strong>already used</strong> (A → B → C, then A again): A is two rotations old, so someone else has been refreshing with the newer tokens.</li>
+</ul>
+<p><strong>The trade-off.</strong> The grace window can&#39;t tell a thief from the user; it only looks at time. A thief who copies A and uses it within 30 seconds of the user&#39;s rotation also gets a working token, without the revoke-all. Three things keep this small:</p>
+<ul>
+<li>The window is short, and only opens right after a rotation, which the thief can&#39;t trigger or see.</li>
+<li>Only <strong>one</strong> token can be handed out per retry: B′ replaces B. Whoever is left holding the revoked one (the user or the thief) sends it at their next refresh, and since nothing replaced it, that <strong>is</strong> a replay: revoke-all, the theft is caught one refresh later.</li>
+<li>The tokens are hard to steal in the first place: <code>HttpOnly</code>, <code>Secure</code>, a narrow <code>Path</code> (24.6).</li>
+</ul>
+<p>A longer window forgives slower networks but gives a thief more time; 30 seconds covers a retry while staying short.</p>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Window length</td>
+<td>30 s</td>
+<td>Enough for a retry after a dropped response; short for a thief</td>
+</tr>
+<tr>
+<td>What the retry gets</td>
+<td>A brand-new token; the unseen replacement is revoked</td>
+<td>The raw replacement isn&#39;t stored, and only one live token per chain</td>
+</tr>
+<tr>
+<td>Measured from</td>
+<td>The first rotation of the old token</td>
+<td>A thief can&#39;t stretch the window by retrying</td>
+</tr>
+<tr>
+<td>Two rotations old</td>
+<td>Still revoke-all</td>
+<td>The newer token was used, so this is not a lost response</td>
+</tr>
+</tbody></table>
 <hr>
 <h2 id="25-spring-security">25. Spring Security</h2>
 <h3 id="250-words-first">25.0 Words first</h3>
@@ -2234,6 +2313,8 @@ return token;
 <li><strong>Right side</strong> (only checked if the left is false, short-circuit <code>||</code>): try to revoke it. If that returns <strong>0</strong>, another request revoked it a moment earlier: two requests used the same token, also a replay.</li>
 <li>Either way: <strong>revoke every session for this user</strong> (everyone logs in again, the thief&#39;s copy dies) and answer 401.</li>
 <li>No <code>@Transactional</code> around this method <strong>on purpose</strong>: if it were one transaction, the <code>throw</code> would <strong>roll back</strong> the &quot;revoke all&quot;, undoing the protection. Each repository call commits on its own.</li>
+<li><strong>Later change (24.7):</strong> the replay branch now calls <code>retryOrLogOutEverywhere(session, now)</code>. It looks up the active session whose <code>parentId</code> is this one (<code>findByParentIdAndRevokedAtIsNull</code>). If the old token was rotated less than <code>GRACE</code> (30 s) ago and that replacement can still be revoked (<code>revokeIfActive(...) == 1</code>), it creates a new token with the same parent and returns it. Otherwise it revokes everything and throws, as before. <code>create</code> now takes the parent&#39;s id too, saved in the new <code>parent_id</code> column (migration <code>V10__session_parent.sql</code>, with an index because every replay looks it up).</li>
+<li><code>Objects.requireNonNullElse(used.getRevokedAt(), now)</code>: use the revoke time, or <code>now</code> if it is still <code>null</code>. It is <code>null</code> when another request revoked the token <strong>after</strong> we read it (the right side of the <code>||</code> above), which means it was rotated a moment ago.</li>
 </ul>
 <pre><code class="language-java">if (session.getExpiresAt().isBefore(now)) {
     throw invalid();
@@ -2396,20 +2477,23 @@ ResponseEntity&lt;TokenResponse&gt; refresh(@CookieValue(name = REFRESH_COOKIE, 
 </tr>
 <tr>
 <td><code>refreshRotatesAndReuseLogsOutEverywhere</code></td>
-<td>Refresh returns a new, different cookie; replaying the old one → 401 <strong>and</strong> the new one stops working</td>
+<td>Refresh returns a new, different cookie; replaying the old one <strong>after the grace window</strong> → 401 <strong>and</strong> the new one stops working</td>
 </tr>
 <tr>
-<td><code>logoutRevokesRefreshToken</code></td>
-<td>Logout deletes the cookie (<code>Max-Age=0</code>) and the token no longer refreshes</td>
+<td><code>replayInsideGraceWindowIsALostResponse</code></td>
+<td>Replaying the old cookie right after a refresh → 200 with a fresh cookie, which keeps working (24.7)</td>
 </tr>
 <tr>
-<td><code>refreshCookieIsLockedDown</code></td>
-<td>The cookie is <code>HttpOnly</code>, <code>Secure</code>, <code>Path=/api/v1/auth</code>, <code>SameSite=Lax</code></td>
+<td><code>replayOfATokenTwoRotationsOldLogsOutEverywhere</code></td>
+<td>A → B → C, then A again → 401 and C stops working, even inside the window (24.7)</td>
 </tr>
 </tbody></table>
 </li>
 </ul>
 </li>
+<li><strong>Later change (24.7):</strong> to test &quot;after the window&quot; without waiting 30 seconds, <code>endGraceWindow</code> moves the rotation times one minute into the past with a <code>JdbcTemplate</code> update (plain SQL from a test).
+| <code>logoutRevokesRefreshToken</code> | Logout deletes the cookie (<code>Max-Age=0</code>) and the token no longer refreshes |
+| <code>refreshCookieIsLockedDown</code> | The cookie is <code>HttpOnly</code>, <code>Secure</code>, <code>Path=/api/v1/auth</code>, <code>SameSite=Lax</code> |</li>
 <li><code>throws Exception</code> on tests: <code>perform</code> declares checked exceptions; in a test, letting them fail the test is exactly right.</li>
 </ul>
 <hr>
@@ -7490,11 +7574,335 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Found along the way:</strong> <code>pnpm audit</code> reports two critical vulnerabilities in Next.js 16.4.0, fixed in 16.4.1; the first build on a fresh machine stops with a security error until it&#39;s upgraded.</li>
 <li><strong>Not checked:</strong> push delivery to a real phone, two admins deciding the same check at the same moment from two browsers (the conditional update is tested, not the race in a browser).</li>
 </ul>
+<h2 id="82-machine-helpers-for-id-checks-face-score-and-reading-the-id">82. Machine helpers for ID checks: face score and reading the ID</h2>
+<h3 id="820-words-first">82.0 Words first</h3>
+<ul>
+<li><strong>Native library:</strong> code compiled for one kind of computer (<code>.dll</code> on Windows, <code>.so</code> on Linux), not Java. OpenCV and Tesseract are C++; Java reaches them through a bridge: <strong>JNI</strong> (OpenCV) or <strong>JNA</strong> (Tesseract).</li>
+<li><strong>glibc vs musl:</strong> two versions of the basic C library Linux programs are built on. Alpine Linux uses musl; most native libraries, OpenCV&#39;s included, are built for glibc (Ubuntu, Debian) and won&#39;t load on Alpine.</li>
+<li><strong>Leptonica:</strong> the C image library Tesseract is built on. Tess4J ships a Java binding to it that expects a particular version.</li>
+<li><strong>Symbolic link (symlink):</strong> a file that is only a pointer to another file&#39;s name, like a shortcut.</li>
+<li><strong>Model file (ONNX):</strong> a trained neural network&#39;s numbers, saved in a standard format any language can run.</li>
+<li><strong>Face detection vs recognition:</strong> detection finds <em>where</em> faces are (YuNet: a box and 5 points); recognition describes <em>whose</em> face it is (SFace: an <strong>embedding</strong> of 128 numbers).</li>
+<li><strong>Cosine similarity:</strong> how alike two embeddings are, from −1 to 1; OpenCV publishes 0.363 as SFace&#39;s &quot;same person&quot; threshold on its benchmark.</li>
+<li><strong>OCR:</strong> reading printed text in a photo. <strong>Tesseract</strong> is the open-source engine; <strong>traineddata</strong> files teach it a language.</li>
+<li><strong>Regular expression (regex):</strong> a text pattern, like <code>[A-Z]\d{7}</code> (a letter, then 7 digits).</li>
+<li><strong>Checksum pinning:</strong> writing down a file&#39;s SHA-256 fingerprint so the build refuses any other file.</li>
+<li><strong>Calibration:</strong> choosing thresholds from your own real data instead of a benchmark&#39;s.</li>
+<li><strong>Mock:</strong> a stand-in for a component in a test, with fixed answers.</li>
+</ul>
+<h3 id="821-the-problem">82.1 The problem</h3>
+<p>Since slice 2a, the reviewer judges everything by eye. A machine can do a tedious first pass: find the faces and score how alike they are, read the ID&#39;s printed gender and document number, and spot an unmasked Aadhaar. But chapter 78&#39;s rules stand: a person decides, and gender comes from the ID, never from a face.</p>
+<h3 id="822-the-naive-ways-and-why-they-hurt">82.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>Running the models while the person waits:</strong> reading text takes 1–3 seconds on a 2-core server, and several uploads at once would slow everyone&#39;s matches.</li>
+<li><strong>Auto-rejecting below the published threshold:</strong> it comes from clean photos; on photos taken years apart OpenCV&#39;s own accuracy drops from 99.6% to 94.9%, and on Indian ID cards we haven&#39;t measured at all.</li>
+<li><strong>Trusting OCR:</strong> glare and holograms cause misreads. In this slice&#39;s own test, Tesseract read a clean &quot;XXXX XXXX 4821&quot; as &quot;XXXXK 4821&quot;.</li>
+<li><strong>Committing the model files:</strong> 38 MB of binaries in the history forever, and no way to see if one was swapped.</li>
+<li><strong>Staying on Alpine:</strong> OpenCV&#39;s Linux library won&#39;t load there.</li>
+</ul>
+<h3 id="823-the-tools">82.3 The tools</h3>
+<ol>
+<li><strong>OpenCV for Java (<code>org.openpnp:opencv</code> 4.9.0-0)</strong>, whose jar contains the official <code>FaceDetectorYN</code> and <code>FaceRecognizerSF</code> classes and the compiled library for Windows and Linux (checked inside the jar before choosing it).</li>
+<li><strong>Tess4J 5.20.0</strong> with Tesseract&#39;s &quot;fast&quot; English and Hindi data: Windows&#39; libraries come in the jar, Linux uses the <code>libtesseract5</code> package.</li>
+<li><strong>A tested parser</strong> (<code>IdText</code>) that turns OCR text into suggestions, tolerant of misreads.</li>
+<li><strong>Pinned model downloads at build time</strong> (YuNet, SFace from OpenCV&#39;s official Hugging Face pages at fixed revisions; the two language files from a fixed GitHub commit), each checked against its SHA-256.</li>
+<li><strong>A background job</strong> every 30 seconds, one check at a time; it stores only results and auto-rejects only when there&#39;s no face at all.</li>
+<li><strong>Ubuntu instead of Alpine</strong> for the API image, and <code>libtesseract5</code> in CI.</li>
+</ol>
+<h3 id="824-decisions-2026-10-24">82.4 Decisions (2026-10-24)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Face library</td>
+<td>OpenCV Java 4.9.0-0 (<code>org.openpnp</code>) with YuNet + SFace</td>
+</tr>
+<tr>
+<td>OCR</td>
+<td>Tess4J 5.20.0 + <code>tessdata_fast</code> English and Hindi</td>
+</tr>
+<tr>
+<td>Model files</td>
+<td>Downloaded at build, SHA-256 pinned, cached, never committed</td>
+</tr>
+<tr>
+<td>When</td>
+<td>A background job every 30 s, one check at a time</td>
+</tr>
+<tr>
+<td>Automatic decision</td>
+<td>Only &quot;no face found&quot; (in the ID photo or the selfie)</td>
+</tr>
+<tr>
+<td>Face score shown as</td>
+<td>A label from the 0.363 threshold ± 0.1 plus the number: &quot;likely the same person&quot;, &quot;unclear&quot;, &quot;likely different people&quot;</td>
+</tr>
+<tr>
+<td>OCR results</td>
+<td>Suggestions pre-filled in the reviewer&#39;s form; warnings as notes</td>
+</tr>
+<tr>
+<td>Stored</td>
+<td>Score, suggested gender, suggested last 4, notes, time checked (V11); never embeddings or the ID&#39;s text</td>
+</tr>
+<tr>
+<td>Docker image</td>
+<td><code>eclipse-temurin:21</code> on Ubuntu &quot;noble&quot; + <code>libtesseract5</code> (981 MB: the OpenCV jar carries every platform&#39;s library)</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>No real person&#39;s face or ID anywhere: a parser on sample text, Tesseract on a generated card, &quot;no face&quot; on a text-only card, the job with a mock face model</td>
+</tr>
+<tr>
+<td>Calibration</td>
+<td>Later, with consenting team members, on a laptop only</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="83-code-walkthrough-the-machine-checks-slice-2b">83. Code walkthrough: the machine checks (slice 2b)</h2>
+<h3 id="830-before-you-read">83.0 Before you read</h3>
+<p>The helpers from chapter 82, added to the review from chapter 81.</p>
+<h3 id="831-build-and-infrastructure">83.1 Build and infrastructure</h3>
+<ul>
+<li><strong><code>pom.xml</code>:</strong> <code>org.openpnp:opencv</code> and <code>tess4j</code> (Tess4J&#39;s PDF and JBoss extras excluded: we only read photos); <code>download-maven-plugin</code> 1.13.0 downloads the four model files into <code>target/models</code> during <code>generate-resources</code>, each with its <code>sha256</code>. A wrong checksum was tried on purpose: the build stopped with &quot;Not same digest as expected&quot;.</li>
+<li><strong>Surefire</strong> sets <code>namastute.verification.checks-enabled=false</code> for the test run, so the 30-second job can&#39;t touch the checks tests are working with; tests call the checks themselves.</li>
+<li><strong><code>application.yaml</code>:</strong> <code>models-dir</code> (<code>MODELS_DIR</code>, <code>target/models</code> by default) and <code>checks-enabled</code>.</li>
+<li><strong><code>Dockerfile</code>:</strong> both stages on Ubuntu noble; the runtime installs <code>libtesseract5</code> (and <code>wget</code> for the healthcheck), copies <code>target/models</code>, and sets <code>MODELS_DIR</code>. Two symlinks follow: Tess4J asks for <code>libleptonica.so</code> and <code>libtesseract.so</code>, but Ubuntu names them <code>liblept.so.5</code> and <code>libtesseract.so.5</code>.</li>
+<li><strong>CI:</strong> <code>apt-get install libtesseract5</code> and the same two symlinks before the tests (CI runs on Ubuntu too).</li>
+</ul>
+<h3 id="832-migration-v11-and-why-not-v10">83.2 Migration V11, and why not V10</h3>
+<p><code>verifications</code> gains <code>suggested_gender</code>, <code>suggested_last4</code>, <code>check_notes</code>, <code>checked_at</code>; V1&#39;s <code>face_similarity</code> holds the cosine score. It was written as V10, but the refresh-token fix, built at the same time in another session against the same development database, had already applied its own <code>V10__session_parent.sql</code> there. Two branches can&#39;t both own a number: this one became <strong>V11</strong>. Flyway then refused to start here (&quot;applied migration not resolved locally: 10&quot;): the database had a V10 this branch didn&#39;t know. The fix was to merge the refresh-token fix into this branch (24.7), so both travel in one pull request, V10 before V11.</p>
+<h3 id="833-the-code-verification-module">83.3 The code (<code>verification</code> module)</h3>
+<ul>
+<li><strong><code>FaceMatch</code>:</strong> loads OpenCV and the two models on first use; for each photo finds faces (confidence at least 0.8), keeps the largest (IDs can print a small second &quot;ghost&quot; photo), aligns it by its 5 points and computes the 128 numbers; returns whether each photo had a face and the cosine score. Native memory is released explicitly. One call at a time (<code>synchronized</code>).</li>
+<li><strong><code>Ocr</code>:</strong> a Tess4J <code>Tesseract</code> with <code>eng+hin</code>, reading a photo into text. One call at a time. It hands Tesseract raw grey pixels (<code>doOCR(width, height, buffer, 8, …)</code>) instead of the picture: the picture path converts it through Leptonica, and Tess4J 5.20&#39;s Leptonica binding needs a newer Leptonica than Ubuntu 24.04&#39;s 1.82 (it failed with &quot;undefined symbol: pixDisplayDiff&quot;). Grey is all OCR needs anyway.</li>
+<li><strong><code>IdText</code>:</strong> pure functions:<ul>
+<li>gender: <code>TRANSGENDER</code> / third gender first, then <code>FEMALE</code> before <code>MALE</code> (&quot;MALE&quot; is inside &quot;FEMALE&quot;), Hindi <code>महिला</code>, <code>स्त्री</code>, <code>पुरुष</code>, and the passport&#39;s &quot;Sex / लिंग F&quot;;</li>
+<li>the last 4 per document type (masked Aadhaar tolerant of a blurred mask, passport <code>A1234567</code>, voter ID <code>ABC1234567</code>, driving licence <code>DL-14 2011 0012345</code>);</li>
+<li>notes for anything unreadable, and a warning for a 12-digit (unmasked) Aadhaar number.</li>
+</ul>
+</li>
+<li><strong><code>IdChecks</code>:</strong> every 30 s takes the oldest unchecked waiting check (or, for tests, one given check); loads both photos; no face → automatic rejection with a clear reason, a push, photos deleted (the same order as a person&#39;s decision, chapter 80); otherwise saves the score, suggestions and notes. Any failure becomes a note and the check is still marked as checked, so one bad photo is never retried forever.</li>
+<li><strong><code>ReviewService</code>:</strong> the queue now includes <code>checked</code>, <code>faceScore</code>, <code>suggestedGender</code>, <code>suggestedLast4</code>, <code>checkNotes</code>.</li>
+</ul>
+<h3 id="834-web">83.4 Web</h3>
+<ul>
+<li>The queue shows &quot;Machine checks done&quot; or &quot;Checking…&quot; per check.</li>
+<li>A &quot;Machine checks&quot; card: the face label and number, what was read from the ID, each note as a warning, and &quot;Suggestions only, filled into the form below. You decide.&quot;</li>
+<li>The approve form starts with the suggested gender and last 4.</li>
+</ul>
+<h3 id="835-verified">83.5 Verified</h3>
+<ul>
+<li><p><strong>API tests (12 new, 117 in all, with the refresh-token fix&#39;s):</strong></p>
+<ul>
+<li>the parser on sample text (Hindi Aadhaar, a blurred mask with a real misread, FEMALE vs MALE, the passport&#39;s &quot;Sex / लिंग F&quot;, each document type, an unmasked number, nothing readable);</li>
+<li>real Tesseract on a generated card, and &quot;no face&quot; on a text-only card;</li>
+<li>the job with a mock face model: results saved and shown to the admin, never run twice; no face → rejected with the right reason and the photos deleted.</li>
+</ul>
+<p>Three things were broken on purpose and caught: checking MALE before FEMALE, skipping the automatic rejection, and a wrong model checksum (the build stopped).</p>
+</li>
+<li><p><strong>Real faces, on a laptop only</strong> (two public-domain portraits, never in the repository):</p>
+<ul>
+<li>the same person in two photos: 0.956;</li>
+<li>two different people: −0.007;</li>
+<li>a photo compared with itself: 1.000.</li>
+</ul>
+<p>At first no face was found in a large close-up. YuNet looks for faces at the size it&#39;s given, so photos are now shrunk to 640 px on the long side first.</p>
+</li>
+<li><p><strong>Linux (the Docker image, limited to 768 MB like production):</strong> the face check scored a development check 1.000. Reading text failed twice before it worked:</p>
+<ol>
+<li>Tess4J couldn&#39;t find <code>libleptonica.so</code>: Ubuntu names it <code>liblept.so.5</code>. Two symlinks in the Dockerfile and CI fixed it.</li>
+<li>&quot;undefined symbol: pixDisplayDiff&quot;: Tess4J 5.20&#39;s Leptonica binding needs a newer Leptonica than Ubuntu 24.04&#39;s 1.82. <code>Ocr</code> now passes raw grey pixels, which skips Leptonica (83.3).</li>
+</ol>
+<p>Then the parser and model tests passed in a Linux container set up exactly like CI; Tesseract read &quot;FEMALE&quot; and &quot;4821&quot; from the generated card. Memory with both models loaded: 504 MiB of 768 MiB (66%).</p>
+</li>
+<li><p><strong>Browser (1280 px, as the admin नेहा):</strong></p>
+<ul>
+<li>&quot;Machine checks done&quot; on each queued check;</li>
+<li>Ritika&#39;s check: &quot;Likely the same person (1.00)&quot; and two warnings (her development &quot;ID&quot; is a portrait with no printed text);</li>
+<li>a test check: &quot;gender female, last 4 4821&quot;, with Female selected and 4821 filled in.</li>
+</ul>
+<p>Web lint, type-check and build pass.</p>
+</li>
+<li><p><strong>Gotchas:</strong></p>
+<ul>
+<li>the first run of the new image&#39;s job checked every waiting check in the shared development database. It automatically rejected 38 leftover test checks whose &quot;photos&quot; have no face: correct behaviour, but on data no test owned;</li>
+<li>the migration-number clash (83.2);</li>
+<li>the first <code>docker build</code> failed once, right after Docker started, and passed when run again. The cause wasn&#39;t found.</li>
+</ul>
+</li>
+<li><p><strong>Not checked:</strong></p>
+<ul>
+<li>real Indian ID cards (none may be in the repository), so neither the thresholds nor Hindi reading on a real card;</li>
+<li>the &quot;Unclear&quot; and &quot;Likely different people&quot; labels in a browser;</li>
+<li>how long a check takes on the 2-core server;</li>
+<li>CI itself (it runs when the branch is pushed).</li>
+</ul>
+</li>
+</ul>
 <hr>
 <h2 id="reference">Reference</h2>
-<p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
+<p>The last four chapters are for looking things up: everything still open, the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="82-command-cheat-sheet">82. Command cheat sheet</h2>
+<h2 id="84-backlog-everything-still-open">84. Backlog: everything still open</h2>
+<p>Everything the project knows it still has to do, in one place, as of 2026-10-24. Each item says what kind of work it is and where the book explains it. Items marked <code>shortcut:</code> in the code are listed with the condition that would make them worth changing.</p>
+<h3 id="decisions-the-team-has-to-make-no-code-first">Decisions the team has to make (no code first)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why it matters</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SMS provider + DLT registration (MSG91 or Firebase)</td>
+<td>Real users can&#39;t log in without it; the production API refuses to start</td>
+<td>19, 54–55, infra/README.md</td>
+</tr>
+<tr>
+<td>Domain, then the first deployment to AWS</td>
+<td>Web and API must share one domain for the login cookie; the runbook is ready</td>
+<td>54–55, infra/README.md</td>
+</tr>
+<tr>
+<td>The real pickup points at T1, T2, T3</td>
+<td>The seeded coordinates are approximate</td>
+<td>33–35</td>
+</tr>
+<tr>
+<td>Map search provider before growing (Ola Maps or Google)</td>
+<td>Nominatim allows about one search a second</td>
+<td>33</td>
+</tr>
+<tr>
+<td>Uptime monitor</td>
+<td>Otherwise nobody knows the site is down</td>
+<td>64</td>
+</tr>
+<tr>
+<td>ID check reviewers and how fast they answer</td>
+<td>The app promises &quot;usually within a day&quot;</td>
+<td>80</td>
+</tr>
+<tr>
+<td>Women-only policy for transgender / third-gender IDs</td>
+<td>Needed before women-only groups ship</td>
+<td>78, design doc open question 4</td>
+</tr>
+<tr>
+<td>Face-score calibration with consenting team members</td>
+<td>Thresholds come from a benchmark, not Indian IDs</td>
+<td>82</td>
+</tr>
+<tr>
+<td>Privacy policy covering ID photos</td>
+<td>Required by the DPDP Act; must match the consent notice</td>
+<td>78</td>
+</tr>
+<tr>
+<td>Detour default (3 km / 25%) checked on real routes</td>
+<td>Chosen by reasoning, not data</td>
+<td>37</td>
+</tr>
+<tr>
+<td>The old &quot;Ubery&quot; name in the design docs; archiving the old repository</td>
+<td>Tidiness and trademark risk</td>
+<td>design doc open question 6</td>
+</tr>
+</tbody></table>
+<h3 id="code-still-to-write">Code still to write</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ID verification slice 3: women-only groups (the switch, the matching and joining rules, tests)</td>
+<td>Next</td>
+<td>78</td>
+</tr>
+<tr>
+<td>An admin page for reports</td>
+<td>Reports are reviewed with SQL; admins get a push</td>
+<td>56–57</td>
+</tr>
+<tr>
+<td>A separate test database</td>
+<td>Tests leave trips and checks in the development database, which can crowd results</td>
+<td>63, 73, 81</td>
+</tr>
+<tr>
+<td>DigiLocker, or a KYC company with automatic liveness, in place of the human reviewer</td>
+<td>Needs a registered company or a contract</td>
+<td>78</td>
+</tr>
+</tbody></table>
+<h3 id="deliberate-shortcuts-shortcut-in-the-code">Deliberate shortcuts (<code>shortcut:</code> in the code)</h3>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Change it when</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One API server: the chat broker and the message flood limit live in its memory</td>
+<td>A second server is needed (then RabbitMQ or Redis as the broker)</td>
+</tr>
+<tr>
+<td>Pushes after a change aren&#39;t stored durably</td>
+<td>Missing a push becomes costly (then an &quot;outbox&quot; table)</td>
+</tr>
+<tr>
+<td>Straight-line distance × 1.4, destinations within 15 km</td>
+<td>Detours feel wrong in practice (then a road-routing service)</td>
+</tr>
+<tr>
+<td>Chat catch-up stops at 200 missed messages</td>
+<td>Groups chat far more than expected</td>
+</tr>
+<tr>
+<td>Chat pushes skip anyone with the app open, even in a background tab</td>
+<td>People report missed messages</td>
+</tr>
+<tr>
+<td>A blocked person&#39;s request to your group stays until someone declines it</td>
+<td>It causes confusion</td>
+</tr>
+<tr>
+<td>Matching at 1,000 simultaneous users: p95 593 ms, over the 500 ms target</td>
+<td>Real traffic approaches that (66–67; the partial index idea is noted in <code>TripRepository</code>)</td>
+</tr>
+<tr>
+<td>The API image is 981 MB: the OpenCV jar carries every platform&#39;s library</td>
+<td>Pulls on the server get slow (then strip the other platforms&#39; libraries in the Dockerfile)</td>
+</tr>
+<tr>
+<td>ID photos left behind if the server crashes between upload and saving</td>
+<td>Seen in practice (production&#39;s S3 rule deletes them anyway)</td>
+</tr>
+</tbody></table>
+<h3 id="never-checked-honest-gaps">Never checked (honest gaps)</h3>
+<ul>
+<li>A real phone end to end: push notifications arriving, camera capture for ID photos, iPhone HEIC photos on non-Safari browsers.</li>
+<li>Screen readers, and 200% text size on every screen.</li>
+<li>Scanning the laptop UPI QR code with a real UPI app; a real payment.</li>
+<li>Real AWS S3 with the IAM role (only SeaweedFS so far), and the production stack on the real server.</li>
+<li>Typing Hindi with a real input method in the chat.</li>
+<li>A development-only Next.js console message about &quot;instant navigation&quot; on the home page (not compared with the previous Next.js version).</li>
+</ul>
+<h3 id="later-phase-3">Later (phase 3)</h3>
+<p>Flight-delay tracking, automatic matching, and whatever real users ask for first.</p>
+<hr>
+<h2 id="85-command-cheat-sheet">85. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -7561,7 +7969,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="83-glossary">83. Glossary</h2>
+<h2 id="86-glossary">86. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -7625,6 +8033,10 @@ git fetch --prune
 <tr>
 <td>Allowlist</td>
 <td>A list of the only values accepted; everything else is refused</td>
+</tr>
+<tr>
+<td>Alpine Linux</td>
+<td>A very small Linux used for Docker images; it uses musl, so many native libraries won&#39;t load on it (82)</td>
 </tr>
 <tr>
 <td>Annotation</td>
@@ -7767,6 +8179,10 @@ git fetch --prune
 <td>Compiled <code>.class</code> instructions run by the JVM</td>
 </tr>
 <tr>
+<td>Calibration</td>
+<td>Choosing thresholds from your own real data instead of a benchmark&#39;s (82)</td>
+</tr>
+<tr>
 <td>Candidate</td>
 <td>A row that survived the cheap first stage of a search</td>
 </tr>
@@ -7777,6 +8193,10 @@ git fetch --prune
 <tr>
 <td>Chat bubble</td>
 <td>One chat message drawn as a rounded box; yours on the right, others on the left</td>
+</tr>
+<tr>
+<td>Checksum pinning</td>
+<td>Writing down a file&#39;s SHA-256 so the build refuses any other file (82)</td>
 </tr>
 <tr>
 <td>Check-then-act (TOCTOU)</td>
@@ -7897,6 +8317,10 @@ git fetch --prune
 <tr>
 <td>CORS</td>
 <td>Server headers allowing another origin to read responses</td>
+</tr>
+<tr>
+<td>Cosine similarity</td>
+<td>How alike two embeddings are, from −1 to 1; SFace&#39;s published &quot;same person&quot; threshold is 0.363 (82)</td>
 </tr>
 <tr>
 <td>CountDownLatch</td>
@@ -8059,6 +8483,10 @@ git fetch --prune
 <td>A variable that never changes after it&#39;s set; only these can be used inside a lambda</td>
 </tr>
 <tr>
+<td>Embedding</td>
+<td>A list of numbers describing something; SFace describes a face with 128 numbers, and similar faces give similar lists (82)</td>
+</tr>
+<tr>
 <td>Encoding vs encryption</td>
 <td>Changing format (anyone can undo it) vs hiding content (needs a key)</td>
 </tr>
@@ -8097,6 +8525,10 @@ git fetch --prune
 <tr>
 <td>Extension (Postgres)</td>
 <td>Add-on giving the database new abilities (PostGIS)</td>
+</tr>
+<tr>
+<td>Face detection / recognition</td>
+<td>Detection finds where faces are in a photo; recognition describes whose face it is (82)</td>
 </tr>
 <tr>
 <td>Face match</td>
@@ -8173,6 +8605,14 @@ git fetch --prune
 <tr>
 <td>GitHub</td>
 <td>A website hosting Git repositories, with pull requests and CI</td>
+</tr>
+<tr>
+<td>glibc / musl</td>
+<td>Two versions of Linux&#39;s basic C library; most native libraries are built for glibc (Ubuntu, Debian) (82)</td>
+</tr>
+<tr>
+<td>Grace window</td>
+<td>A short time after a change when the old state is still accepted; ours lets a just-rotated refresh token be retried for 30 s (24.7)</td>
 </tr>
 <tr>
 <td>Great circle</td>
@@ -8299,6 +8739,10 @@ git fetch --prune
 <td>Java gets faster after its first minute as hot code is compiled</td>
 </tr>
 <tr>
+<td>JNA / JNI</td>
+<td>Two bridges from Java to native libraries: JNI needs glue code compiled for each platform, JNA looks functions up by name while running (82, 83.5)</td>
+</tr>
+<tr>
 <td>Join request</td>
 <td>&quot;I&#39;d like to share with you&quot;: pending until accepted or declined</td>
 </tr>
@@ -8347,6 +8791,10 @@ git fetch --prune
 <td>Content jumping while the page loads, e.g. when a font arrives late</td>
 </tr>
 <tr>
+<td>Leptonica</td>
+<td>The C image library Tesseract is built on; Tess4J&#39;s binding to it expects a particular version (83)</td>
+</tr>
+<tr>
 <td>Let&#39;s Encrypt / ACME</td>
 <td>Free certificate authority / the protocol for proving you own a domain</td>
 </tr>
@@ -8385,6 +8833,10 @@ git fetch --prune
 <tr>
 <td>Lockfile</td>
 <td>Exact versions of all installed packages</td>
+</tr>
+<tr>
+<td>Lost response</td>
+<td>The server did the work and answered, but the answer never reached the client, so the two now disagree (24.7)</td>
 </tr>
 <tr>
 <td>Lost update</td>
@@ -8431,6 +8883,10 @@ git fetch --prune
 <td>Build for the phone first, then add the larger layouts with breakpoints</td>
 </tr>
 <tr>
+<td>Mock</td>
+<td>A stand-in for a component in a test, with fixed answers (<code>@MockitoBean</code>) (82)</td>
+</tr>
+<tr>
 <td>Moderation</td>
 <td>People reviewing reports and deciding what to do</td>
 </tr>
@@ -8463,6 +8919,10 @@ git fetch --prune
 <td>A control the browser draws itself (<code>&lt;input type=&quot;time&quot;&gt;</code>), accessible for free</td>
 </tr>
 <tr>
+<td>Native library</td>
+<td>Code compiled for one kind of computer (<code>.dll</code> on Windows, <code>.so</code> on Linux), reached from Java through JNI or JNA (82)</td>
+</tr>
+<tr>
 <td>Native query</td>
 <td>Plain SQL in a repository (<code>nativeQuery = true</code>)</td>
 </tr>
@@ -8479,12 +8939,24 @@ git fetch --prune
 <td>One real thing built from a class while the program runs</td>
 </tr>
 <tr>
+<td>OCR</td>
+<td>Optical character recognition: reading printed text in a photo (82)</td>
+</tr>
+<tr>
+<td>ONNX</td>
+<td>A standard file format for trained neural networks, runnable from any language (82)</td>
+</tr>
+<tr>
 <td>Opaque id</td>
 <td>A random identifier that reveals nothing about the person (a UUID)</td>
 </tr>
 <tr>
 <td>OpenAPI (Swagger)</td>
 <td>Standard document describing an HTTP API&#39;s paths and data shapes</td>
+</tr>
+<tr>
+<td>OpenCV</td>
+<td>The open-source computer vision library; we use its YuNet and SFace face models (82)</td>
 </tr>
 <tr>
 <td>Operating system</td>
@@ -8677,6 +9149,10 @@ git fetch --prune
 <tr>
 <td>Quiet zone</td>
 <td>The empty margin (4 modules) a QR code needs around it to scan</td>
+</tr>
+<tr>
+<td>Regular expression (regex)</td>
+<td>A text pattern, like <code>[A-Z]\d{7}</code> (a letter, then 7 digits) (82)</td>
 </tr>
 <tr>
 <td>R-tree</td>
@@ -8891,6 +9367,10 @@ git fetch --prune
 <td>How bad a problem is when it happens / how likely it is to happen</td>
 </tr>
 <tr>
+<td>SFace</td>
+<td>OpenCV&#39;s face recognition model: an aligned face in, 128 numbers out (82)</td>
+</tr>
+<tr>
 <td>Side effect</td>
 <td>Anything a function does besides returning a value (DB, network, clock…)</td>
 </tr>
@@ -9015,6 +9495,10 @@ git fetch --prune
 <td>One person running many fake identities to sway a system</td>
 </tr>
 <tr>
+<td>Symbolic link (symlink)</td>
+<td>A file that only points to another file&#39;s name, like a shortcut (83)</td>
+</tr>
+<tr>
 <td>System message</td>
 <td>A line the app writes into a chat (&quot;Asha joined&quot;), styled differently from people&#39;s messages</td>
 </tr>
@@ -9029,6 +9513,10 @@ git fetch --prune
 <tr>
 <td>Terminal</td>
 <td>A text window for typing commands</td>
+</tr>
+<tr>
+<td>Tesseract</td>
+<td>The open-source OCR engine; Tess4J is its Java bridge (82)</td>
 </tr>
 <tr>
 <td>Testcontainers</td>
@@ -9081,6 +9569,10 @@ git fetch --prune
 <tr>
 <td>TOTP</td>
 <td>Time-based one-time password (authenticator apps)</td>
+</tr>
+<tr>
+<td>traineddata</td>
+<td>A Tesseract language file, such as <code>eng.traineddata</code> or <code>hin.traineddata</code> (82)</td>
 </tr>
 <tr>
 <td>Transaction</td>
@@ -9194,9 +9686,13 @@ git fetch --prune
 <td>YAML</td>
 <td>Indentation-based settings format</td>
 </tr>
+<tr>
+<td>YuNet</td>
+<td>OpenCV&#39;s face detection model: a box and 5 landmark points per face (82)</td>
+</tr>
 </tbody></table>
 <hr>
-<h2 id="84-interview-questions-to-practise">84. Interview questions to practise</h2>
+<h2 id="87-interview-questions-to-practise">87. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -9368,6 +9864,14 @@ git fetch --prune
 <li>Why can&#39;t database work in an after-commit callback be relied on, and what did you do instead?</li>
 <li>How do you show a private image to a logged-in user when <img> can&#39;t send a token?</li>
 <li>How did you add the ID badge to three screens without extra queries?</li>
+<li>A refresh response gets lost and the browser sends the old token again. Why did that log users out everywhere, how does the grace window fix it, and what does it give a thief?</li>
+<li>Why run the face and text checks in a background job instead of while the person uploads?</li>
+<li>Why does the machine reject automatically only when no face is found, and never for a low face score?</li>
+<li>How do you make sure a model file downloaded at build time is exactly the one you tested with?</li>
+<li>How would you test face matching without putting any real person&#39;s face in the repository?</li>
+<li>OCR read &quot;XXXX XXXX 4821&quot; as &quot;XXXXK 4821&quot;. How do you make a parser tolerant of misreads without accepting wrong numbers?</li>
+<li>A Java library works on Windows but fails on Linux with &quot;undefined symbol&quot;. What does that mean, and what are your options?</li>
+<li>Two branches both added migration V10 against the same database. What goes wrong, and how did you resolve it?</li>
 </ol>
 
 

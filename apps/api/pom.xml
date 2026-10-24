@@ -32,13 +32,45 @@
 		<springdoc.version>3.1.1</springdoc.version>
 		<zerodep-web-push.version>2.1.5</zerodep-web-push.version>
 		<awssdk.version>2.55.10</awssdk.version>
+		<opencv.version>4.9.0-0</opencv.version>
+		<tess4j.version>5.20.0</tess4j.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		<!-- S3 for ID photos (Learning Notes 81). The JDK's own HTTP client instead of the SDK's heavier default ones -->
+		<!-- ID check helpers (Learning Notes 82): OpenCV finds and compares faces, Tesseract reads the ID's text.
+		     Both are C++ underneath; these jars carry the bridges (and OpenCV's compiled library for each system). -->
+		<dependency>
+			<groupId>org.openpnp</groupId>
+			<artifactId>opencv</artifactId>
+			<version>${opencv.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sourceforge.tess4j</groupId>
+			<artifactId>tess4j</artifactId>
+			<version>${tess4j.version}</version>
+			<exclusions>   <!-- we only read photos: no PDFs, no JBoss -->
+				<exclusion>
+					<groupId>org.apache.pdfbox</groupId>
+					<artifactId>pdfbox</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.pdfbox</groupId>
+					<artifactId>pdfbox-tools</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.pdfbox</groupId>
+					<artifactId>jbig2-imageio</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.jboss</groupId>
+					<artifactId>jboss-vfs</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- S3 for ID photos (Learning Notes 78). The JDK's own HTTP client instead of the SDK's heavier default ones -->
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
@@ -178,6 +210,68 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<!-- Tests call the ID checks themselves; the 30-second job must not touch their checks meanwhile -->
+						<namastute.verification.checks-enabled>false</namastute.verification.checks-enabled>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<!-- The model files (Learning Notes 82): downloaded at build time from pinned revisions, each checked against
+			     its SHA-256 (a changed file fails the build), cached in ~/.m2, never committed. Same on laptops, CI, Docker. -->
+			<plugin>
+				<groupId>com.googlecode.maven-download-plugin</groupId>
+				<artifactId>download-maven-plugin</artifactId>
+				<version>1.13.0</version>
+				<configuration>
+					<outputDirectory>${project.build.directory}/models</outputDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>yunet</id>
+						<phase>generate-resources</phase>
+						<goals><goal>wget</goal></goals>
+						<configuration>
+							<url>https://huggingface.co/opencv/face_detection_yunet/resolve/3cc26e7f1014a5ee5d74a42acee58bafc9d0a310/face_detection_yunet_2023mar.onnx</url>
+							<outputFileName>face_detection_yunet_2023mar.onnx</outputFileName>
+							<sha256>8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4</sha256>
+						</configuration>
+					</execution>
+					<execution>
+						<id>sface</id>
+						<phase>generate-resources</phase>
+						<goals><goal>wget</goal></goals>
+						<configuration>
+							<url>https://huggingface.co/opencv/face_recognition_sface/resolve/3d7082438a6e4551e840c9b2bb60b71e8da4b524/face_recognition_sface_2021dec.onnx</url>
+							<outputFileName>face_recognition_sface_2021dec.onnx</outputFileName>
+							<sha256>0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79</sha256>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tess-eng</id>
+						<phase>generate-resources</phase>
+						<goals><goal>wget</goal></goals>
+						<configuration>
+							<url>https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata</url>
+							<outputFileName>eng.traineddata</outputFileName>
+							<sha256>7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2</sha256>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tess-hin</id>
+						<phase>generate-resources</phase>
+						<goals><goal>wget</goal></goals>
+						<configuration>
+							<url>https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/hin.traineddata</url>
+							<outputFileName>hin.traineddata</outputFileName>
+							<sha256>4c73ffc59d497c186b19d1e90f5d721d678ea6b2e277b719bee4e2af12271825</sha256>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
