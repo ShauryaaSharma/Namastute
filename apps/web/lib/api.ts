@@ -43,12 +43,18 @@ async function toError(res: Response): Promise<ApiError> {
   );
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+// Sends, refreshes the token once on a 401, and turns an error status into an ApiError
+async function fetchOk(path: string, init: RequestInit = {}): Promise<Response> {
   let res = await send(path, init);
   if (res.status === 401 && !path.startsWith("/api/v1/auth/") && (await refreshSession())) {
     res = await send(path, init); // the access token had expired; try once more with the new one
   }
   if (!res.ok) throw await toError(res);
+  return res;
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetchOk(path, init);
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
@@ -206,6 +212,7 @@ export async function reportTraveller(report: ReportRequest): Promise<void> {
   await request<void>("/api/v1/reports", { method: "POST", body: JSON.stringify(report) });
 }
 
+export type Rating = Schemas["Rating"]; // also carries the "ID verified" badge (Learning Notes 80)
 export type MyRating = Schemas["MyRating"];
 
 // Thumbs up or down for someone from your met group: once, final (Learning Notes 62)
@@ -289,6 +296,27 @@ export function getVerification(): Promise<Verification> {
 // docType, consent, idPhoto and selfie in one multipart request
 export function submitVerification(form: FormData): Promise<Verification> {
   return request<Verification>("/api/v1/verification", { method: "POST", body: form });
+}
+
+// ---- Reviewing ID checks: admins only (Learning Notes 80) ----
+
+export type PendingCheck = Schemas["PendingView"];
+
+export function getPendingChecks(): Promise<PendingCheck[]> {
+  return request<PendingCheck[]>("/api/v1/admin/verifications");
+}
+
+// An <img> can't send our token, so the photo is fetched here and shown through a blob: URL
+export async function getCheckPhoto(id: string, which: "id" | "selfie"): Promise<Blob> {
+  return (await fetchOk(`/api/v1/admin/verifications/${id}/photos/${which}`)).blob();
+}
+
+export async function approveCheck(id: string, gender: "female" | "male" | "other", docLast4: string): Promise<void> {
+  await request<void>(`/api/v1/admin/verifications/${id}/approve`, { method: "POST", body: JSON.stringify({ gender, docLast4 }) });
+}
+
+export async function rejectCheck(id: string, reason: string): Promise<void> {
+  await request<void>(`/api/v1/admin/verifications/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) });
 }
 
 // ---- Live location at the pickup (Learning Notes 60) ----

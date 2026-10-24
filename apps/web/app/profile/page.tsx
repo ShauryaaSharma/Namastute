@@ -8,7 +8,7 @@ import { Segmented } from "@/components/ui/controls";
 import { Alert, Avatar, Card, Chip, Eyebrow } from "@/components/ui/display";
 import { TextField } from "@/components/ui/field";
 import { BottomBar } from "@/components/ui/layout";
-import { type BlockView, getBlocks, getVerification, type Verification, getCurrentTrip, logout, restoreSession, type Profile, type Trip, unblock, updateMe } from "@/lib/api";
+import { type BlockView, getBlocks, getPendingChecks, getVerification, type Verification, getCurrentTrip, logout, restoreSession, type Profile, type Trip, unblock, updateMe } from "@/lib/api";
 import { plural } from "@/lib/format";
 import { setThemeChoice, type ThemeChoice, themeChoice } from "@/lib/theme";
 import { useAction } from "@/lib/use-action";
@@ -105,6 +105,7 @@ export default function ProfilePage() {
           {!firstTime && (
             <>
               <Section title="ID verification"><IdStatus /></Section>
+              {me.admin && <Section title="Admin"><AdminLink /></Section>}
               <Section title="Notifications"><PushPrompt /></Section>
               <Section title="Appearance"><ThemePicker /></Section>
               <Section title="Blocked people"><BlockedPeople /></Section>
@@ -160,6 +161,19 @@ function GroupPreview({ firstName, trip }: { firstName: string; trip: Trip | nul
         </div>
       </Card>
     </div>
+  );
+}
+
+// Admins only: the way into the ID check queue, with how many are waiting (Learning Notes 80)
+function AdminLink() {
+  const [waiting, setWaiting] = useState<number | null>(null);
+  useEffect(() => {
+    getPendingChecks().then((list) => setWaiting(list.length)).catch(() => {});
+  }, []);
+  return (
+    <Link href="/admin/verifications" className={buttonClass({ variant: "secondary", className: "self-start" })}>
+      Review ID checks{waiting ? ` (${waiting} waiting)` : ""}
+    </Link>
   );
 }
 

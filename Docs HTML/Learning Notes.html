@@ -133,15 +133,17 @@
 <a class="topic" href="#part-x-id-verification">Part X. ID verification</a>
 <details><summary><a href="#78-id-verification-checking-ids-without-keeping-them">78. ID verification: checking IDs without keeping them</a></summary><a class="sub" href="#780-words-first">78.0 Words first</a><a class="sub" href="#781-the-problem">78.1 The problem</a><a class="sub" href="#782-the-options">78.2 The options</a><a class="sub" href="#783-how-slice-1-keeps-the-photos-safe">78.3 How slice 1 keeps the photos safe</a><a class="sub" href="#784-decisions-2026-10-19">78.4 Decisions (2026-10-19)</a></details>
 <details><summary><a href="#79-code-walkthrough-id-upload-slice-1">79. Code walkthrough: ID upload (slice 1)</a></summary><a class="sub" href="#790-before-you-read">79.0 Before you read</a><a class="sub" href="#791-infrastructure">79.1 Infrastructure</a><a class="sub" href="#792-database-v9__verification_uploadsql">79.2 Database: V9__verification_upload.sql</a><a class="sub" href="#793-the-verification-module">79.3 The verification module</a><a class="sub" href="#794-web">79.4 Web</a><a class="sub" href="#795-verified">79.5 Verified</a></details>
+<details><summary><a href="#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge">80. Reviewing ID checks: admin access, safe decisions and the badge</a></summary><a class="sub" href="#800-words-first">80.0 Words first</a><a class="sub" href="#801-the-problem">80.1 The problem</a><a class="sub" href="#802-the-naive-ways-and-why-they-hurt">80.2 The naive ways, and why they hurt</a><a class="sub" href="#803-the-tools">80.3 The tools</a><a class="sub" href="#804-decisions-2026-10-24">80.4 Decisions (2026-10-24)</a></details>
+<details><summary><a href="#81-code-walkthrough-the-review-slice-2a">81. Code walkthrough: the review (slice 2a)</a></summary><a class="sub" href="#810-before-you-read">81.0 Before you read</a><a class="sub" href="#811-the-users-module">81.1 The users module</a><a class="sub" href="#812-the-verification-module">81.2 The verification module</a><a class="sub" href="#813-web">81.3 Web</a><a class="sub" href="#814-verified">81.4 Verified</a></details>
 <a class="topic" href="#reference">Reference</a>
-<details><summary><a href="#80-command-cheat-sheet">80. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
-<a class="topic" href="#81-glossary">81. Glossary</a>
-<a class="topic" href="#82-interview-questions-to-practise">82. Interview questions to practise</a>
+<details><summary><a href="#82-command-cheat-sheet">82. Command cheat sheet</a></summary><a class="sub" href="#after-a-pr-is-merged-from-namastute">After a PR is merged (from Namastute)</a><a class="sub" href="#database-from-namastute">Database (from Namastute)</a><a class="sub" href="#which-redis-am-i-talking-to-powershell">Which Redis am I talking to? (PowerShell)</a><a class="sub" href="#when-a-java-record-changes-api-types">When a Java record changes (API types)</a><a class="sub" href="#production-stack-from-namastute-details-in-infrareadmemd">Production stack (from Namastute; details in infra/README.md)</a><a class="sub" href="#query-plans-inside-psql">Query plans (inside psql)</a><a class="sub" href="#api-from-appsapi">API (from apps/api)</a><a class="sub" href="#redis-from-namastute">Redis (from Namastute)</a><a class="sub" href="#web-from-appsweb">Web (from apps/web)</a><a class="sub" href="#git">Git</a></details>
+<a class="topic" href="#83-glossary">83. Glossary</a>
+<a class="topic" href="#84-interview-questions-to-practise">84. Interview questions to practise</a>
 </nav>
 <main>
 <h1 id="building-namastute-a-book-about-making-a-real-web-app">Building Namastute: a book about making a real web app</h1>
 <p>How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.</p>
-<p>Last updated: 2026-10-19.</p>
+<p>Last updated: 2026-10-24.</p>
 <hr>
 <h2 id="about-this-book">About this book</h2>
 <h3 id="who-its-for">Who it&#39;s for</h3>
@@ -169,7 +171,7 @@
 <ul>
 <li><strong>Start here</strong> and <strong>The project in one page</strong> (next) give you the basics and the map.</li>
 <li>Then read the parts in order. Each part opens with a short page saying what it covers.</li>
-<li>The <strong>Glossary</strong> (chapter 81) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (80) and <strong>Interview questions</strong> (82) are for revision.</li>
+<li>The <strong>Glossary</strong> (chapter 83) defines every term in the book, A to Z. The <strong>Command cheat sheet</strong> (82) and <strong>Interview questions</strong> (84) are for revision.</li>
 </ul>
 <hr>
 <h2 id="start-here-the-absolute-basics">Start here: the absolute basics</h2>
@@ -405,12 +407,14 @@
 <ol start="78">
 <li><a href="#78-id-verification-checking-ids-without-keeping-them">ID verification: checking IDs without keeping them</a></li>
 <li><a href="#79-code-walkthrough-id-upload-slice-1">Code walkthrough: ID upload (slice 1)</a></li>
+<li><a href="#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge">Reviewing ID checks: admin access, safe decisions and the badge</a></li>
+<li><a href="#81-code-walkthrough-the-review-slice-2a">Code walkthrough: the review (slice 2a)</a></li>
 </ol>
 <p><strong><a href="#reference">Reference</a></strong></p>
-<ol start="80">
-<li><a href="#80-command-cheat-sheet">Command cheat sheet</a></li>
-<li><a href="#81-glossary">Glossary</a></li>
-<li><a href="#82-interview-questions-to-practise">Interview questions to practise</a></li>
+<ol start="82">
+<li><a href="#82-command-cheat-sheet">Command cheat sheet</a></li>
+<li><a href="#83-glossary">Glossary</a></li>
+<li><a href="#84-interview-questions-to-practise">Interview questions to practise</a></li>
 </ol>
 <hr>
 <h2 id="part-i-the-big-picture-and-the-tools">Part I. The big picture and the tools</h2>
@@ -7358,10 +7362,136 @@ ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
 <li><strong>Not checked:</strong> a real phone camera, HEIC photos from iPhones on browsers that can&#39;t read them, real AWS S3 and the IAM role (production only).</li>
 </ul>
 <hr>
+<h2 id="80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge">80. Reviewing ID checks: admin access, safe decisions and the badge</h2>
+<h3 id="800-words-first">80.0 Words first</h3>
+<ul>
+<li><strong>Authentication vs authorization:</strong> authentication is &quot;who are you?&quot; (logging in); authorization is &quot;what are you allowed to do?&quot;. Being logged in doesn&#39;t make anyone an admin.</li>
+<li><strong>Role:</strong> a label on a user that grants extra rights: <code>users.role = &#39;admin&#39;</code>, set by hand with SQL (infra/README.md, &quot;Admins&quot;).</li>
+<li><strong>Admin panel:</strong> pages only staff can use; here, the queue of ID checks.</li>
+<li><strong>Audit trail:</strong> a record of who decided what, and when (<code>reviewed_by</code>, <code>reviewed_at</code>).</li>
+<li><strong>Blob URL:</strong> a temporary <code>blob:</code> address for data already in the browser&#39;s memory. An <code>&lt;img&gt;</code> can&#39;t send our login token, so the page fetches each photo with the token and shows it through a blob URL.</li>
+<li><strong>Conditional update:</strong> <code>UPDATE … WHERE status = &#39;pending&#39;</code>: if two admins click at once, or one double-clicks, only the first changes anything (chapter 40&#39;s last-seat trick).</li>
+<li><strong>Badge:</strong> a small label next to a name: &quot;◆ ID verified&quot;.</li>
+<li><strong>N+1 queries:</strong> fetching extra data one person at a time; avoided by fetching for everyone in one query.</li>
+</ul>
+<h3 id="801-the-problem">80.1 The problem</h3>
+<p>Slice 1 collected the photos; now a person must look at them and decide, and every decision must keep the consent notice&#39;s promises: delete the photos right away, keep only the document type, last 4 characters, the gender on the ID, the reviewer and the date, tell the person, and show the badge to everyone they might travel with.</p>
+<h3 id="802-the-naive-ways-and-why-they-hurt">80.2 The naive ways, and why they hurt</h3>
+<ul>
+<li><strong>&quot;Is admin?&quot; checked only in the page:</strong> anyone can call the API directly; the check must be on the server, on every admin endpoint.</li>
+<li><strong>Photo links in <code>&lt;img src&gt;</code>:</strong> either the link is public (anyone holding it sees an ID) or the image fails (no token is sent).</li>
+<li><strong>Delete the photos, then save the decision:</strong> if saving fails, the check is still waiting but its photos are gone: nobody can ever review it. Save first, delete after.</li>
+<li><strong>Delete them in an &quot;after commit&quot; callback:</strong> database work there still runs in the finished transaction and is never saved (the trap behind the chat pool bug, chapter 51).</li>
+<li><strong>A plain <code>UPDATE</code>:</strong> a double click records two decisions.</li>
+<li><strong>Looking up each person&#39;s badge separately:</strong> N+1 queries on every match list and group.</li>
+</ul>
+<h3 id="803-the-tools">80.3 The tools</h3>
+<ol>
+<li><strong>Server-side role check on every admin call;</strong> non-admins get a plain 404, so the admin area isn&#39;t even confirmed to exist. Nobody can review their own check.</li>
+<li><strong>Photos through the API</strong> (admins only, <code>Cache-Control: no-store</code>), shown as blob URLs that are freed when the reviewer leaves the check.</li>
+<li><strong>Decide, then clean up:</strong> the decision is one conditional update (plus marking the user on approval) that commits; then, as a separate step, the photos are deleted and their keys cleared. If storage is unreachable at that moment, the keys stay on the row and the 6-hourly purge (now also covering decided checks) finishes the job.</li>
+<li><strong>The badge rides along with the rating:</strong> the query that already fetches everyone&#39;s rating summary now also reads <code>verification = &#39;verified&#39;</code>, so matches, requests and group members get <code>idVerified</code> at no extra cost.</li>
+<li><strong>Notifications:</strong> admins on each new check (no name, like report alerts); the person on the decision.</li>
+</ol>
+<h3 id="804-decisions-2026-10-24">80.4 Decisions (2026-10-24)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Slice 2</td>
+<td>Split: 2a the review (this), 2b the machine-learning helpers (next)</td>
+</tr>
+<tr>
+<td>Admins</td>
+<td><code>users.role = &#39;admin&#39;</code>, set with SQL</td>
+</tr>
+<tr>
+<td>Non-admins</td>
+<td>404 on every admin endpoint; nobody reviews their own check</td>
+</tr>
+<tr>
+<td>Showing photos</td>
+<td>Through the API, <code>no-store</code>, blob URLs freed after the decision</td>
+</tr>
+<tr>
+<td>Double decisions</td>
+<td>Conditional update; the second gets &quot;already decided&quot;</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>Save the decision, then delete the photos; the purge retries leftovers</td>
+</tr>
+<tr>
+<td>Approve</td>
+<td>Gender as printed on the ID (female / male / third gender) + last 4 characters</td>
+</tr>
+<tr>
+<td>Reject</td>
+<td>A reason from a list or &quot;Other&quot;, shown to the person</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>Admins on each new check, the person on the decision</td>
+</tr>
+<tr>
+<td>Badge</td>
+<td>&quot;◆ ID verified&quot; after the name in matches, requests and group members, via the rating lookup</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Later change:</strong> slice 2b adds the face score and text reading as helpers on the review page; slice 3 uses the verified gender for women-only groups.</p>
+</blockquote>
+<hr>
+<h2 id="81-code-walkthrough-the-review-slice-2a">81. Code walkthrough: the review (slice 2a)</h2>
+<h3 id="810-before-you-read">81.0 Before you read</h3>
+<p>The admin side of chapter 80, on top of slice 1 (chapter 79). No new migration: V1 already had <code>reviewed_by</code>, <code>reviewed_at</code>, <code>doc_last4</code>, <code>reject_reason</code>, and <code>users.gender</code>, <code>users.verification</code>, <code>users.verified_at</code>.</p>
+<h3 id="811-the-users-module">81.1 The users module</h3>
+<ul>
+<li><code>Rating</code> gains <code>idVerified</code>; <code>ratings(ids)</code> selects <code>verification = &#39;verified&#39;</code> in the same single query.</li>
+<li><code>isAdmin(id)</code>; <code>markVerified(id, gender)</code> sets the verification, the gender (cast to the <code>gender</code> enum) and the time, inside the decision&#39;s transaction.</li>
+<li><code>Profile</code> gains <code>admin</code> (for the link); the <code>User</code> entity maps <code>role</code> read-only (<code>insertable = false, updatable = false</code>), so creating a user still gets the database default <code>&#39;user&#39;</code>.</li>
+</ul>
+<h3 id="812-the-verification-module">81.2 The verification module</h3>
+<ul>
+<li><strong><code>ReviewService</code>:</strong><ul>
+<li><code>pending</code>: oldest first, with first names in one query;</li>
+<li><code>photo</code>: <code>id</code> or <code>selfie</code>, only while the check is waiting, anything else a 404;</li>
+<li><code>approve</code> / <code>reject</code> (<code>@Transactional</code>): <code>decide</code> runs <code>UPDATE verifications SET … WHERE id = ? AND status = &#39;pending&#39; AND user_id &lt;&gt; admin RETURNING user_id</code>; no row means &quot;already decided, or it&#39;s your own&quot; (409). Approval also calls <code>markVerified</code>; both queue a push, which <code>PushService</code> sends after the commit;</li>
+<li><code>deletePhotos</code>: called by the controller after the decision has committed; a storage error is logged and left to the purge.</li>
+</ul>
+</li>
+<li><strong><code>ReviewController</code>:</strong> <code>GET /api/v1/admin/verifications</code>, <code>GET …/{id}/photos/{which}</code> (<code>no-store</code>), <code>POST …/{id}/approve</code> (gender <code>female|male|other</code>, <code>docLast4</code> 4 letters or digits) and <code>…/reject</code> (a 3–200 character reason).</li>
+<li><strong><code>VerificationService</code>:</strong> a push to admins after each new check; <code>purgeOld</code> now also picks up decided checks that still list photos; the delete step is <code>deletePhotos</code>, shared with the review.</li>
+</ul>
+<h3 id="813-web">81.3 Web</h3>
+<ul>
+<li><strong><code>lib/api.ts</code>:</strong> the fetch-and-retry part of <code>request()</code> became <code>fetchOk()</code>, so <code>getCheckPhoto()</code> can return the image as a <code>Blob</code>; <code>getPendingChecks</code>, <code>approveCheck</code>, <code>rejectCheck</code>; <code>Rating</code>.</li>
+<li><strong><code>app/trust-chips.tsx</code>:</strong> the rating chip and, when <code>idVerified</code>, the &quot;◆ ID verified&quot; chip; used in matches, requests and group members.</li>
+<li><strong><code>app/admin/verifications/page.tsx</code>:</strong> admins only (others are sent home; the server refuses them anyway): the queue, then one check: the gesture asked for, both photos, the reviewer checklist, the approve form (gender, last 4) and the reject form (reasons + &quot;Other&quot;); a success notice and the next check.</li>
+<li><strong>Profile:</strong> for admins, &quot;Admin → Review ID checks (n waiting)&quot;.</li>
+</ul>
+<h3 id="814-verified">81.4 Verified</h3>
+<ul>
+<li><strong>API tests (4 new, 102 in all):</strong> only admins can list, view or decide, and not their own check; approval verifies the person (gender, last 4, reviewer), deletes both photos and shows <code>idVerified</code> in matches; a double approval is refused; a rejection shows its reason and allows a retry; the purge finishes a decided check whose photo was left behind. Three rules were broken on purpose (no admin check; no &quot;still pending&quot; condition; the old purge) and each was caught by its test.</li>
+<li><strong>Browser (1280 px, as the admin नेहा):</strong> the profile link (&quot;22 waiting&quot;, mostly test leftovers that the 7-day purge removes); Asha&#39;s check with both photos and the gesture; the form&#39;s checks (&quot;Choose the gender…&quot;, &quot;Enter the last 4…&quot;); approved → Asha verified as female, &quot;1234&quot;, reviewed by नेहा, both photos gone from storage; a test check rejected with an &quot;Other&quot; reason; on नेहा&#39;s home, Asha&#39;s match shows &quot;◆ ID verified&quot;.</li>
+<li><strong>Gotchas:</strong><ul>
+<li>the badge test first failed only in the full run: other tests&#39; leftover trips filled the top 5 at the same terminal and hour. It now uses a slot no other test uses and cancels its own two trips;</li>
+<li>the same leftovers hid Asha in the browser until the test trips moved 3 hours ahead;</li>
+<li>the local V9 checksum needed Flyway&#39;s &quot;repair&quot; (the stored checksum updated to the corrected file&#39;s), done by hand once.</li>
+</ul>
+</li>
+<li><strong>Found along the way:</strong> <code>pnpm audit</code> reports two critical vulnerabilities in Next.js 16.4.0, fixed in 16.4.1; the first build on a fresh machine stops with a security error until it&#39;s upgraded.</li>
+<li><strong>Not checked:</strong> push delivery to a real phone, two admins deciding the same check at the same moment from two browsers (the conditional update is tested, not the race in a browser).</li>
+</ul>
+<hr>
 <h2 id="reference">Reference</h2>
 <p>The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.</p>
 <hr>
-<h2 id="80-command-cheat-sheet">80. Command cheat sheet</h2>
+<h2 id="82-command-cheat-sheet">82. Command cheat sheet</h2>
 <p>The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.</p>
 <h3 id="after-a-pr-is-merged-from-namastute">After a PR is merged (from <code>Namastute</code>)</h3>
 <pre><code class="language-bash">git switch main
@@ -7426,7 +7556,7 @@ git branch -D &lt;merged-branch&gt;
 git fetch --prune
 </code></pre>
 <hr>
-<h2 id="81-glossary">81. Glossary</h2>
+<h2 id="83-glossary">83. Glossary</h2>
 <p>Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their &quot;Words first&quot; sections; this is the place to look one up again.</p>
 <table>
 <thead>
@@ -7478,6 +7608,10 @@ git fetch --prune
 <tr>
 <td>Action sheet</td>
 <td>A sheet listing the less common actions for one thing (e.g. Report, Block for one person)</td>
+</tr>
+<tr>
+<td>Admin panel</td>
+<td>Pages only staff can use, e.g. the queue of ID checks</td>
 </tr>
 <tr>
 <td>Aggregate</td>
@@ -7540,8 +7674,16 @@ git fetch --prune
 <td>Everything an attacker could try to use; smaller is safer</td>
 </tr>
 <tr>
+<td>Audit trail</td>
+<td>A record of who did what and when, e.g. reviewed_by and reviewed_at</td>
+</tr>
+<tr>
 <td>Authentication / Authorization</td>
 <td>Who you are / what you may do</td>
+</tr>
+<tr>
+<td>Authorization</td>
+<td>Deciding what a logged-in user may do (authentication is who they are)</td>
 </tr>
 <tr>
 <td>Backend</td>
@@ -7550,6 +7692,10 @@ git fetch --prune
 <tr>
 <td>Background job</td>
 <td>Code the server runs on a timer, with no request behind it</td>
+</tr>
+<tr>
+<td>Badge</td>
+<td>A small label next to a name, like &quot;◆ ID verified&quot;</td>
 </tr>
 <tr>
 <td>Base64URL</td>
@@ -7570,6 +7716,10 @@ git fetch --prune
 <tr>
 <td>Blast radius</td>
 <td>How many people one failure affects</td>
+</tr>
+<tr>
+<td>Blob URL</td>
+<td>A temporary blob: address for data in the browser&#39;s memory, e.g. a photo fetched with a token</td>
 </tr>
 <tr>
 <td>BOM</td>
@@ -7702,6 +7852,10 @@ git fetch --prune
 <tr>
 <td>Concurrency</td>
 <td>Several pieces of work running at the same time on shared data</td>
+</tr>
+<tr>
+<td>Conditional update</td>
+<td>An UPDATE that only changes rows still in the expected state, so only the first of two clicks counts</td>
 </tr>
 <tr>
 <td>Confirm sheet</td>
@@ -8624,6 +8778,10 @@ git fetch --prune
 <td>Cancel something before it would expire by itself</td>
 </tr>
 <tr>
+<td>Role</td>
+<td>A label on a user granting extra rights, e.g. users.role = &#39;admin&#39;</td>
+</tr>
+<tr>
 <td>role=&quot;log&quot;</td>
 <td>Marks a list where new lines arrive at the end, read out by screen readers as they come</td>
 </tr>
@@ -9033,7 +9191,7 @@ git fetch --prune
 </tr>
 </tbody></table>
 <hr>
-<h2 id="82-interview-questions-to-practise">82. Interview questions to practise</h2>
+<h2 id="84-interview-questions-to-practise">84. Interview questions to practise</h2>
 <p>Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, <strong>why</strong>, and what the trade-off was.</p>
 <ol>
 <li>Why a modular monolith instead of microservices? How do you <em>enforce</em> the module boundaries?</li>
@@ -9200,6 +9358,11 @@ git fetch --prune
 <li>Why upload through the API instead of a presigned URL here, when presigned uploads are usually recommended?</li>
 <li>How does the database stop two pending checks for one person, even when two requests arrive at once?</li>
 <li>How does a random gesture make a selfie harder to fake, and what can it still not stop?</li>
+<li>Why must an admin check live on the server, and why answer non-admins with 404 instead of 403?</li>
+<li>In what order do you save a decision and delete the photos, and what happens if the delete fails?</li>
+<li>Why can&#39;t database work in an after-commit callback be relied on, and what did you do instead?</li>
+<li>How do you show a private image to a logged-in user when <img> can&#39;t send a token?</li>
+<li>How did you add the ID badge to three screens without extra queries?</li>
 </ol>
 
 

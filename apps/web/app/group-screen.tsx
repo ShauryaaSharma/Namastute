@@ -20,7 +20,7 @@ import {
   type Terminal,
   type Trip,
 } from "@/lib/api";
-import { plural, ratingText, rupees } from "@/lib/format";
+import { plural, rupees } from "@/lib/format";
 import { formatIstTime } from "@/lib/time";
 import { useAction } from "@/lib/use-action";
 import { useWide } from "@/lib/use-wide";
@@ -30,6 +30,7 @@ import PickupLocation from "./pickup-location";
 import ReportForm from "./report-form";
 import { Received, Sent } from "./requests";
 import RideRatings from "./ride-ratings";
+import TrustChips from "./trust-chips";
 
 const CAR_SEATS = 4; // a sedan, same as the API's MatchRanker.CAR_SEATS
 const short = (terminalId: string) => terminalId.replace("DEL-", ""); // "DEL-T3" → "T3"
@@ -96,7 +97,7 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <b>{m.you ? "You" : m.firstName}{m.booker && <span className="font-medium text-fg-muted"> (booker)</span>}</b>
-                {!m.you && <Chip variant="muted">{ratingText(m.rating)}</Chip>}
+                {!m.you && <TrustChips rating={m.rating} />}
               </span>
               <span className="text-small text-fg-muted">{m.destArea} · {plural(m.seats, "seat")} · {plural(m.bags, "bag")}</span>
             </span>

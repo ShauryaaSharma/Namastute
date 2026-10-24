@@ -2,7 +2,7 @@
 
 How a cab-sharing app for Delhi airport was designed, built, tested and made ready for real users, one step at a time, with every idea explained from the ground up.
 
-Last updated: 2026-10-19.
+Last updated: 2026-10-24.
 
 ---
 
@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 81) defines every term in the book, A to Z. The **Command cheat sheet** (80) and **Interview questions** (82) are for revision.
+- The **Glossary** (chapter 83) defines every term in the book, A to Z. The **Command cheat sheet** (82) and **Interview questions** (84) are for revision.
 
 ---
 
@@ -228,12 +228,14 @@ flowchart LR
 
 78. [ID verification: checking IDs without keeping them](#78-id-verification-checking-ids-without-keeping-them)
 79. [Code walkthrough: ID upload (slice 1)](#79-code-walkthrough-id-upload-slice-1)
+80. [Reviewing ID checks: admin access, safe decisions and the badge](#80-reviewing-id-checks-admin-access-safe-decisions-and-the-badge)
+81. [Code walkthrough: the review (slice 2a)](#81-code-walkthrough-the-review-slice-2a)
 
 **[Reference](#reference)**
 
-80. [Command cheat sheet](#80-command-cheat-sheet)
-81. [Glossary](#81-glossary)
-82. [Interview questions to practise](#82-interview-questions-to-practise)
+82. [Command cheat sheet](#82-command-cheat-sheet)
+83. [Glossary](#83-glossary)
+84. [Interview questions to practise](#84-interview-questions-to-practise)
 
 ---
 
@@ -5389,13 +5391,98 @@ The first of three slices, applying chapter 78: everything needed to collect the
 
 ---
 
+## 80. Reviewing ID checks: admin access, safe decisions and the badge
+
+### 80.0 Words first
+- **Authentication vs authorization:** authentication is "who are you?" (logging in); authorization is "what are you allowed to do?". Being logged in doesn't make anyone an admin.
+- **Role:** a label on a user that grants extra rights: `users.role = 'admin'`, set by hand with SQL (infra/README.md, "Admins").
+- **Admin panel:** pages only staff can use; here, the queue of ID checks.
+- **Audit trail:** a record of who decided what, and when (`reviewed_by`, `reviewed_at`).
+- **Blob URL:** a temporary `blob:` address for data already in the browser's memory. An `<img>` can't send our login token, so the page fetches each photo with the token and shows it through a blob URL.
+- **Conditional update:** `UPDATE … WHERE status = 'pending'`: if two admins click at once, or one double-clicks, only the first changes anything (chapter 40's last-seat trick).
+- **Badge:** a small label next to a name: "◆ ID verified".
+- **N+1 queries:** fetching extra data one person at a time; avoided by fetching for everyone in one query.
+
+### 80.1 The problem
+Slice 1 collected the photos; now a person must look at them and decide, and every decision must keep the consent notice's promises: delete the photos right away, keep only the document type, last 4 characters, the gender on the ID, the reviewer and the date, tell the person, and show the badge to everyone they might travel with.
+
+### 80.2 The naive ways, and why they hurt
+- **"Is admin?" checked only in the page:** anyone can call the API directly; the check must be on the server, on every admin endpoint.
+- **Photo links in `<img src>`:** either the link is public (anyone holding it sees an ID) or the image fails (no token is sent).
+- **Delete the photos, then save the decision:** if saving fails, the check is still waiting but its photos are gone: nobody can ever review it. Save first, delete after.
+- **Delete them in an "after commit" callback:** database work there still runs in the finished transaction and is never saved (the trap behind the chat pool bug, chapter 51).
+- **A plain `UPDATE`:** a double click records two decisions.
+- **Looking up each person's badge separately:** N+1 queries on every match list and group.
+
+### 80.3 The tools
+1. **Server-side role check on every admin call;** non-admins get a plain 404, so the admin area isn't even confirmed to exist. Nobody can review their own check.
+2. **Photos through the API** (admins only, `Cache-Control: no-store`), shown as blob URLs that are freed when the reviewer leaves the check.
+3. **Decide, then clean up:** the decision is one conditional update (plus marking the user on approval) that commits; then, as a separate step, the photos are deleted and their keys cleared. If storage is unreachable at that moment, the keys stay on the row and the 6-hourly purge (now also covering decided checks) finishes the job.
+4. **The badge rides along with the rating:** the query that already fetches everyone's rating summary now also reads `verification = 'verified'`, so matches, requests and group members get `idVerified` at no extra cost.
+5. **Notifications:** admins on each new check (no name, like report alerts); the person on the decision.
+
+### 80.4 Decisions (2026-10-24)
+| Decision | Choice |
+|---|---|
+| Slice 2 | Split: 2a the review (this), 2b the machine-learning helpers (next) |
+| Admins | `users.role = 'admin'`, set with SQL |
+| Non-admins | 404 on every admin endpoint; nobody reviews their own check |
+| Showing photos | Through the API, `no-store`, blob URLs freed after the decision |
+| Double decisions | Conditional update; the second gets "already decided" |
+| Order | Save the decision, then delete the photos; the purge retries leftovers |
+| Approve | Gender as printed on the ID (female / male / third gender) + last 4 characters |
+| Reject | A reason from a list or "Other", shown to the person |
+| Notifications | Admins on each new check, the person on the decision |
+| Badge | "◆ ID verified" after the name in matches, requests and group members, via the rating lookup |
+
+> **Later change:** slice 2b adds the face score and text reading as helpers on the review page; slice 3 uses the verified gender for women-only groups.
+
+---
+
+## 81. Code walkthrough: the review (slice 2a)
+
+### 81.0 Before you read
+The admin side of chapter 80, on top of slice 1 (chapter 79). No new migration: V1 already had `reviewed_by`, `reviewed_at`, `doc_last4`, `reject_reason`, and `users.gender`, `users.verification`, `users.verified_at`.
+
+### 81.1 The users module
+- `Rating` gains `idVerified`; `ratings(ids)` selects `verification = 'verified'` in the same single query.
+- `isAdmin(id)`; `markVerified(id, gender)` sets the verification, the gender (cast to the `gender` enum) and the time, inside the decision's transaction.
+- `Profile` gains `admin` (for the link); the `User` entity maps `role` read-only (`insertable = false, updatable = false`), so creating a user still gets the database default `'user'`.
+
+### 81.2 The verification module
+- **`ReviewService`:**
+  - `pending`: oldest first, with first names in one query;
+  - `photo`: `id` or `selfie`, only while the check is waiting, anything else a 404;
+  - `approve` / `reject` (`@Transactional`): `decide` runs `UPDATE verifications SET … WHERE id = ? AND status = 'pending' AND user_id <> admin RETURNING user_id`; no row means "already decided, or it's your own" (409). Approval also calls `markVerified`; both queue a push, which `PushService` sends after the commit;
+  - `deletePhotos`: called by the controller after the decision has committed; a storage error is logged and left to the purge.
+- **`ReviewController`:** `GET /api/v1/admin/verifications`, `GET …/{id}/photos/{which}` (`no-store`), `POST …/{id}/approve` (gender `female|male|other`, `docLast4` 4 letters or digits) and `…/reject` (a 3–200 character reason).
+- **`VerificationService`:** a push to admins after each new check; `purgeOld` now also picks up decided checks that still list photos; the delete step is `deletePhotos`, shared with the review.
+
+### 81.3 Web
+- **`lib/api.ts`:** the fetch-and-retry part of `request()` became `fetchOk()`, so `getCheckPhoto()` can return the image as a `Blob`; `getPendingChecks`, `approveCheck`, `rejectCheck`; `Rating`.
+- **`app/trust-chips.tsx`:** the rating chip and, when `idVerified`, the "◆ ID verified" chip; used in matches, requests and group members.
+- **`app/admin/verifications/page.tsx`:** admins only (others are sent home; the server refuses them anyway): the queue, then one check: the gesture asked for, both photos, the reviewer checklist, the approve form (gender, last 4) and the reject form (reasons + "Other"); a success notice and the next check.
+- **Profile:** for admins, "Admin → Review ID checks (n waiting)".
+
+### 81.4 Verified
+- **API tests (4 new, 102 in all):** only admins can list, view or decide, and not their own check; approval verifies the person (gender, last 4, reviewer), deletes both photos and shows `idVerified` in matches; a double approval is refused; a rejection shows its reason and allows a retry; the purge finishes a decided check whose photo was left behind. Three rules were broken on purpose (no admin check; no "still pending" condition; the old purge) and each was caught by its test.
+- **Browser (1280 px, as the admin नेहा):** the profile link ("22 waiting", mostly test leftovers that the 7-day purge removes); Asha's check with both photos and the gesture; the form's checks ("Choose the gender…", "Enter the last 4…"); approved → Asha verified as female, "1234", reviewed by नेहा, both photos gone from storage; a test check rejected with an "Other" reason; on नेहा's home, Asha's match shows "◆ ID verified".
+- **Gotchas:**
+  - the badge test first failed only in the full run: other tests' leftover trips filled the top 5 at the same terminal and hour. It now uses a slot no other test uses and cancels its own two trips;
+  - the same leftovers hid Asha in the browser until the test trips moved 3 hours ahead;
+  - the local V9 checksum needed Flyway's "repair" (the stored checksum updated to the corrected file's), done by hand once.
+- **Found along the way:** `pnpm audit` reports two critical vulnerabilities in Next.js 16.4.0, fixed in 16.4.1; the first build on a fresh machine stops with a security error until it's upgraded.
+- **Not checked:** push delivery to a real phone, two admins deciding the same check at the same moment from two browsers (the conditional update is tested, not the race in a browser).
+
+---
+
 ## Reference
 
 The last three chapters are for looking things up: the commands used most often, every term in the book from A to Z, and interview questions to practise with.
 
 ---
 
-## 80. Command cheat sheet
+## 82. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5481,7 +5568,7 @@ git fetch --prune
 
 ---
 
-## 81. Glossary
+## 83. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5498,6 +5585,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Accuracy radius | "Probably within N metres": how sure a position is, drawn as a circle |
 | ACID | Atomic, Consistent, Isolated, Durable: what a transaction guarantees |
 | Action sheet | A sheet listing the less common actions for one thing (e.g. Report, Block for one person) |
+| Admin panel | Pages only staff can use, e.g. the queue of ID checks |
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
 | Allowlist | A list of the only values accepted; everything else is refused |
 | Annotation | `@Something` tag adding information to code without changing it |
@@ -5513,14 +5601,18 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Atomic | Happens as one indivisible step; can't be interleaved |
 | AtomicInteger | A counter that's safe to change from many threads |
 | Attack surface | Everything an attacker could try to use; smaller is safer |
+| Audit trail | A record of who did what and when, e.g. reviewed_by and reviewed_at |
 | Authentication / Authorization | Who you are / what you may do |
+| Authorization | Deciding what a logged-in user may do (authentication is who they are) |
 | Backend | The part of an app that runs on a server: data, rules, security |
 | Background job | Code the server runs on a timer, with no request behind it |
+| Badge | A small label next to a name, like "◆ ID verified" |
 | Base64URL | Encoding bytes as URL-safe text (not encryption) |
 | Bean | An object created and managed by Spring |
 | Bearer token | A token whose holder is trusted; sent as `Authorization: Bearer ...` |
 | BigDecimal | Java's exact decimal number type, used for money |
 | Blast radius | How many people one failure affects |
+| Blob URL | A temporary blob: address for data in the browser's memory, e.g. a photo fetched with a token |
 | BOM | (1) Bill of Materials: a list of library versions tested together; (2) Byte-order mark: invisible bytes at a file's start that some tools reject |
 | Bounding box | Smallest rectangle containing a shape or a group of shapes |
 | Branch | A separate line of work in Git, merged back when finished |
@@ -5554,6 +5646,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Component | A reusable piece of a screen (React) |
 | Composite index | One index over several columns, sorted by the first, then the next |
 | Concurrency | Several pieces of work running at the same time on shared data |
+| Conditional update | An UPDATE that only changes rows still in the expected state, so only the first of two clicks counts |
 | Confirm sheet | A styled "Are you sure?" sheet shown before a destructive action |
 | Connection pool | Reusable, ready-made database connections |
 | Connection pool (HikariCP) | A fixed set of reusable database connections (10 by default) |
@@ -5784,6 +5877,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | RETURNING | Postgres clause that hands back values from the rows just inserted/updated |
 | Reverse proxy | A server in front of your apps that receives requests and forwards them |
 | Revoke | Cancel something before it would expire by itself |
+| Role | A label on a user granting extra rights, e.g. users.role = 'admin' |
 | role="log" | Marks a list where new lines arrive at the end, read out by screen readers as they come |
 | Rotation | Replacing a token every time it's used |
 | Rounding mode | The rule for .5 and other fractions: HALF_UP, HALF_EVEN, FLOOR, CEILING |
@@ -5889,7 +5983,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 82. Interview questions to practise
+## 84. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6057,3 +6151,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 162. Why upload through the API instead of a presigned URL here, when presigned uploads are usually recommended?
 163. How does the database stop two pending checks for one person, even when two requests arrive at once?
 164. How does a random gesture make a selfie harder to fake, and what can it still not stop?
+165. Why must an admin check live on the server, and why answer non-admins with 404 instead of 403?
+166. In what order do you save a decision and delete the photos, and what happens if the delete fails?
+167. Why can't database work in an after-commit callback be relied on, and what did you do instead?
+168. How do you show a private image to a logged-in user when <img> can't send a token?
+169. How did you add the ID badge to three screens without extra queries?

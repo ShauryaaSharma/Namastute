@@ -3,10 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Alert, Avatar, Chip } from "@/components/ui/display";
 import { answerRequest, type ReceivedRequest, type SentRequest } from "@/lib/api";
-import { plural, ratingText } from "@/lib/format";
+import { plural } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import { cx } from "@/components/ui/cx";
 import type { ReactNode } from "react";
+import TrustChips from "./trust-chips";
 
 function SectionTitle({ id, children, className }: { id: string; children: ReactNode; className?: string }) {
   return <h2 id={id} className={cx("mx-1 mb-2 flex items-center gap-2.5 font-display text-h2 stretch-110", className)}>{children}</h2>;
@@ -34,7 +35,7 @@ export function Received({ requests, onChange }: { requests: ReceivedRequest[]; 
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <b className="text-title">{r.firstName}</b>
-                  <Chip variant="muted">{ratingText(r.rating)}</Chip>
+                  <TrustChips rating={r.rating} />
                 </span>
                 <span className="text-[0.9375rem] text-fg-muted">
                   {r.destArea} · out {timing(r.minutesAfterYou)} · {plural(r.seats, "seat")}, {plural(r.bags, "bag")}

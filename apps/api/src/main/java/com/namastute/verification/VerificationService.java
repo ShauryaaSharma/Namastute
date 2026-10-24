@@ -1,7 +1,10 @@
 package com.namastute.verification;
 
+import com.namastute.notifications.PushService;
+import com.namastute.notifications.PushService.Push;
 import com.namastute.shared.ApiException;
 import com.namastute.shared.RateLimiter;
+import com.namastute.users.UserService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -53,12 +56,17 @@ class VerificationService {
     private final PhotoStore photos;
     private final StringRedisTemplate redis;
     private final RateLimiter limits;
+    private final UserService users;
+    private final PushService push;
 
-    VerificationService(JdbcClient db, PhotoStore photos, StringRedisTemplate redis, RateLimiter limits) {
+    VerificationService(JdbcClient db, PhotoStore photos, StringRedisTemplate redis, RateLimiter limits, UserService users,
+                        PushService push) {
         this.db = db;
         this.photos = photos;
         this.redis = redis;
         this.limits = limits;
+        this.users = users;
+        this.push = push;
     }
 
     VerificationView current(UUID me) {
@@ -118,6 +126,9 @@ class VerificationService {
             throw e instanceof DuplicateKeyException ? alreadyPending() : e;   // two submits at once: the unique index wins
         }
         redis.delete(gestureKey(me));   // used: the next attempt gets a new gesture
+        // A check nobody looks at helps nobody (Learning Notes 80). No name in the alert, like report alerts.
+        push.send(users.adminIds(), new Push("New ID check waiting", "Review it in Namastute: Profile → Review ID checks",
+                Duration.ofDays(1)));
         return current(me);
     }
 
@@ -127,28 +138,38 @@ class VerificationService {
     }
 
     // The safety net: photos older than 7 days are deleted whatever happened, and a check nobody reviewed in time is
-    // closed so the person can try again. Objects first, then the row: if the run stops halfway, the next one finishes it.
+    // closed so the person can try again. Also finishes any decided check whose photos weren't deleted at decision time
+    // (S3 was briefly unreachable, Learning Notes 80). Objects first, then the row: a run that stops halfway is finished
+    // by the next one.
     int purgeOld() {
         List<Stale> stale = db.sql("""
                         select id, doc_key, selfie_key from verifications
-                        where (doc_key is not null or selfie_key is not null) and created_at < now() - make_interval(days => ?)""")
+                        where (doc_key is not null or selfie_key is not null)
+                          and (status <> 'pending' or created_at < now() - make_interval(days => ?))""")
                 .param((int) KEEP_PHOTOS.toDays()).query(Stale.class).list();
-        for (Stale s : stale) {
-            if (s.docKey() != null) photos.delete(s.docKey());
-            if (s.selfieKey() != null) photos.delete(s.selfieKey());
-            db.sql("""
-                            update verifications set doc_key = null, selfie_key = null,
-                              reject_reason = case when status = 'pending'
-                                then 'Not reviewed within 7 days, so your photos were deleted. Please try again.' else reject_reason end,
-                              reviewed_at = case when status = 'pending' then now() else reviewed_at end,
-                              status = case when status = 'pending' then 'rejected'::verification_status else status end
-                            where id = ?""")
-                    .param(s.id()).update();
-        }
+        stale.forEach(this::deletePhotos);
         if (!stale.isEmpty()) {
-            log.info("Deleted the photos of {} verification(s) older than {} days", stale.size(), KEEP_PHOTOS.toDays());
+            log.info("Deleted the photos of {} verification(s)", stale.size());
         }
         return stale.size();
+    }
+
+    // Deletes a check's two photos, then forgets their keys. Still pending (only the 7-day net does that) → closed.
+    void deletePhotos(Stale s) {
+        if (s.docKey() != null) photos.delete(s.docKey());
+        if (s.selfieKey() != null) photos.delete(s.selfieKey());
+        db.sql("""
+                        update verifications set doc_key = null, selfie_key = null,
+                          reject_reason = case when status = 'pending'
+                            then 'Not reviewed within 7 days, so your photos were deleted. Please try again.' else reject_reason end,
+                          reviewed_at = case when status = 'pending' then now() else reviewed_at end,
+                          status = case when status = 'pending' then 'rejected'::verification_status else status end
+                        where id = ?""")
+                .param(s.id()).update();
+    }
+
+    Stale photosOf(UUID verificationId) {
+        return db.sql("select id, doc_key, selfie_key from verifications where id = ?").param(verificationId).query(Stale.class).single();
     }
 
     private static String gestureKey(UUID me) {
