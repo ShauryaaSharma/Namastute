@@ -154,7 +154,7 @@ export default function Landing() {
         </section>
       </main>
 
-      {/* shortcut: no Privacy / Terms / Contact links yet, add them once those pages are written (Learning Notes 90) */}
+      {/* shortcut: no Privacy / Terms / Contact links yet, add them once those pages are written (Learning Notes 92) */}
       <footer className="border-t border-line">
         <div className={cx(WRAP, "flex flex-col gap-3 pt-8 pb-10")}>
           <span className="inline-flex items-center gap-2.5">

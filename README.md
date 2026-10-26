@@ -109,7 +109,7 @@ flowchart LR
 | Data | PostgreSQL 16 + PostGIS 3.5 | The main database, with map support ("within 15 km") |
 | | Redis 7.4 | Fast short-lived data: login codes and rate-limit counters |
 | | Amazon S3 (SeaweedFS in development) | Private file storage for ID photos, deleted after the check; AWS SDK for Java |
-| | Amazon SES | Sends the login codes by email (logged instead in development and staging) |
+| | Amazon SES, or SMTP | Sends the login codes by email: SES with a domain, or SMTP through a Gmail account made for the app (logged instead in development and staging) |
 | ID checks | OpenCV (YuNet + SFace models) | Finds faces and scores how alike the ID photo and the selfie are |
 | | Tesseract (English + Hindi) | Reads the text on an ID, to suggest the gender and document number |
 | Web | Next.js 16, React 19, TypeScript | The web app and its language |
@@ -211,6 +211,7 @@ The local production stack, squeezed into the 2 processor cores of the planned s
 ## Known limits
 Deliberate shortcuts for launch, each marked `shortcut:` in the code with when it would change (Learning Notes 64):
 - **One API server.** The chat broker and the message flood limit live in that server's memory; a second server needs a shared broker (RabbitMQ or Redis).
+- **Login emails through Gmail** stop at 400 codes a day (Gmail allows about 500); SES with a domain removes that limit (Learning Notes 90).
 - **Email accounts are easy to make.** Unlike an Indian phone number, an email address isn't tied to an ID, so someone blocked could return with a new one. ID verification and its badge are the counterweight; phone login can return once SMS and DLT are set up (Learning Notes 88).
 - **Women-only groups** count only IDs that say female. Whether IDs showing transgender / third gender count too is a team policy decision still open; it's one line in `UserService` (Learning Notes 84).
 - **ID checks are only as strong as a careful reviewer.** A good fake ID can fool a person; only DigiLocker (a registered company needed) would stop that. The face score's threshold is OpenCV's published one, not yet calibrated on Indian ID photos, so a low score only warns; text reading is a suggestion the reviewer confirms.

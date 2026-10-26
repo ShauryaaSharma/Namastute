@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 92) defines every term in the book, A to Z. The **Command cheat sheet** (91) and **Interview questions** (93) are for revision. The **Backlog** (90) lists everything still open.
+- The **Glossary** (chapter 94) defines every term in the book, A to Z. The **Command cheat sheet** (93) and **Interview questions** (95) are for revision. The **Backlog** (92) lists everything still open.
 
 ---
 
@@ -115,8 +115,8 @@ flowchart LR
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
 | IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
 | X. ID verification | 78–85 | Handling ID photos safely, admin review, machine helpers for faces and text, and women-only groups |
-| XI. The front door | 86–89 | A static landing page, moving the app home, checking contrast by measurement, and logging in by email |
-| Reference | 90–93 | What's still open, commands, glossary, interview questions |
+| XI. The front door | 86–91 | A static landing page, moving the app home, checking contrast by measurement, and logging in by email (SES or Gmail) |
+| Reference | 92–95 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -244,13 +244,15 @@ flowchart LR
 87. [Code walkthrough: the landing page](#87-code-walkthrough-the-landing-page)
 88. [Logging in by email: a code in the inbox instead of an SMS](#88-logging-in-by-email-a-code-in-the-inbox-instead-of-an-sms)
 89. [Code walkthrough: email login, and a roomier profile](#89-code-walkthrough-email-login-and-a-roomier-profile)
+90. [Login emails through Gmail: free, with limits](#90-login-emails-through-gmail-free-with-limits)
+91. [Code walkthrough: the SMTP sender](#91-code-walkthrough-the-smtp-sender)
 
 **[Reference](#reference)**
 
-90. [Backlog: everything still open](#90-backlog-everything-still-open)
-91. [Command cheat sheet](#91-command-cheat-sheet)
-92. [Glossary](#92-glossary)
-93. [Interview questions to practise](#93-interview-questions-to-practise)
+92. [Backlog: everything still open](#92-backlog-everything-still-open)
+93. [Command cheat sheet](#93-command-cheat-sheet)
+94. [Glossary](#94-glossary)
+95. [Interview questions to practise](#95-interview-questions-to-practise)
 
 ---
 
@@ -5819,7 +5821,7 @@ Keep `/` as the app home, and show the landing page there when nobody is logged 
 | FAQ | `<details name="faq">`, the first question open |
 | "Report and block … from any profile or chat" | Became "from any match or group member": there's no report button in chat |
 | Women-only card: "once your ID check is approved" | Became "once your ID check confirms you're a woman": approval alone isn't enough (84) |
-| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 90) |
+| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 92) |
 | A logged-in person visiting `/` | Sees the landing page; "Open the app" takes them straight in. No session check on the landing page. |
 | Checks | Lint and build; browser at 375 and 1280 px in both themes; contrast measured on every piece of text; tap targets measured |
 
@@ -5910,7 +5912,7 @@ Real SMS in India needs DLT registration: business paperwork that takes days to 
 ### 88.4 Decisions (2026-10-26)
 | Decision | Choice |
 |---|---|
-| Pilot login | Email, through Amazon SES (team choice A) |
+| Pilot login | Email, through Amazon SES (team choice A). **Later change (90):** through a Gmail account for now, SES once there's a domain |
 | Phone login | Kept in the code, off in production until an SMS provider and DLT exist (503, not a failed start) |
 | Same person, different capitals | Emails stored lower-case: `Asha@Gmail.com` and `asha@gmail.com` are one account |
 | Staging | `prod,fake-sms` as before; the name stayed so the running server needs no change, and it now logs emails too |
@@ -6008,6 +6010,98 @@ Chapter 88's design, touching the OTP code (23), tokens and users (27), the prod
   - whether codes land in spam before DMARC is in place;
   - the profile at tablet width.
 
+## 90. Login emails through Gmail: free, with limits
+
+### 90.0 Words first
+- **SMTP (Simple Mail Transfer Protocol):** the standard way a program hands an email to a mail server for delivery. Gmail runs one at `smtp.gmail.com`.
+- **Port 587 and STARTTLS:** the connection starts plain on port 587, then upgrades to encrypted (STARTTLS) before the password is sent. Port 25, the old one, is blocked on EC2 by default.
+- **App password:** a 16-letter password Google generates for one app, used instead of the account's real password. It only exists with 2-Step Verification on, and it can be revoked without changing the real password.
+- **`JavaMailSender`:** Spring's tool for sending email over SMTP, set up from the `spring.mail.*` settings.
+- **Timeout:** how long to wait for the other side before giving up. Spring's mail settings have none by default.
+- **Health check:** the `/actuator/health` address that says whether the API is working. Docker and our production start-up order wait on it (54).
+
+### 90.1 The problem
+Login emails through SES need a domain (88), and the team chose not to buy one yet. Gmail delivers email for free from a Gmail address. Because it really comes from Google's servers, it passes DKIM and DMARC and lands in the inbox.
+
+### 90.2 The naive way, and why it hurts
+Put a personal Gmail address and its password on the server, in a Gmail-only sender.
+1. **An app password opens the whole mailbox,** reading as well as sending.
+2. **Google may lock an account** that suddenly sends automated mail, and that would be someone's personal Gmail.
+3. **Gmail allows about 500 emails a day.** Our per-address and per-network limits (22) don't cap the whole app. Many people at once, or someone requesting codes from many networks, could use up the day, and Google then blocks sending for about 24 hours: nobody could log in.
+4. **No timeout:** a slow Gmail would hang login requests for minutes.
+5. **A Gmail-only sender** would need rewriting to use any other provider.
+6. **And one trap only found by reading how Spring works:** once the mail library is present, the health check also checks the mail server. On the staging server, which has no mail password, the API would report itself DOWN. Docker would call it unhealthy, and Caddy, which waits for a healthy API, would never start.
+
+### 90.3 The tools
+1. **A Gmail account made only for the app,** with 2-Step Verification and an app password. If it's ever locked, nothing personal is lost.
+2. **A general `SmtpEmailSender`:** Gmail is only its settings (host, port, user, password), so any SMTP provider works later without code changes.
+3. **The sender is chosen by a setting,** `EMAIL_VIA=smtp` or `ses` (the default). SES stays as built, ready for the domain (88).
+4. **10-second timeouts** to connect, read and write, so a slow mail server gives the clear "couldn't send the code".
+5. **A daily cap below Gmail's:** 400 codes a day for the whole app, counted in Redis with the same `RateLimiter` as the OTP limits (69). Past it: *429 "Too many people are logging in right now"*, with a `Retry-After`.
+6. **The mail check is taken out of the health report,** and a test makes sure the health check stays UP.
+
+### 90.4 Decisions (2026-10-26)
+| Decision | Choice |
+|---|---|
+| Account | A new Gmail only for the app, its details in the team's password manager |
+| Code | A general `SmtpEmailSender`, chosen with `EMAIL_VIA=smtp`; SES unchanged |
+| Connection | `smtp.gmail.com`, port 587, STARTTLS required |
+| Timeouts | 10 seconds each |
+| Daily cap | 400 codes a day across the app (`shortcut:`: move to SES before real traffic) |
+| "From" | `Namastute <the app's Gmail address>`; Gmail replaces any other "from" anyway |
+| Health check | Leaves out the mail server (`management.health.mail.enabled: false`) |
+| Tests | The sender with a fake mail server and counter; the health check with the mail library present; and the real production start-up checked by hand |
+
+---
+
+## 91. Code walkthrough: the SMTP sender
+
+### 91.0 Before you read
+Chapter 90's design, beside the SES sender from 89.
+
+### 91.1 Settings
+- **`pom.xml`:** `spring-boot-starter-mail` (its version comes from Spring Boot).
+- **`application.yaml`:**
+  - `spring.mail.*`: the host (`SMTP_HOST`, default `smtp.gmail.com`), port 587, user and app password (`SMTP_USERNAME`, `SMTP_PASSWORD`), and `mail.smtp.*` properties for login, STARTTLS (required) and the three 10-second timeouts in milliseconds;
+  - `namastute.email.via` (`EMAIL_VIA`, default `ses`) and `daily-limit: 400`;
+  - `management.health.mail.enabled: false`.
+- **`docker-compose.prod.yml`** passes `EMAIL_VIA` and the `SMTP_*` settings, all optional, so the staging server needs no change. **`.env.example`** shows them, with the SMTP lines commented out so the "nothing left empty" check from step 9 stays quiet for SES users.
+
+### 91.2 Choosing a sender
+- Both production senders keep `@Profile("prod & !fake-sms")`, and each adds an `@ConditionalOnProperty`:
+  - SES: `havingValue = "ses", matchIfMissing = true`, so it's the default;
+  - SMTP: `havingValue = "smtp"`.
+- Any other value leaves production with no `EmailSender`, and it refuses to start: a typo can't go unnoticed.
+
+### 91.3 `SmtpEmailSender`
+- **The constructor** refuses to start without `EMAIL_FROM`, `SMTP_USERNAME` and `SMTP_PASSWORD`, naming them and AWS-SETUP section 16.
+- **`send`, in order:**
+  1. **count today's email:** `limits.hit("rate:email:day", Duration.ofDays(1))`;
+  2. **past 400,** refuse with 429 and the time left as `Retry-After`, before any connection to Gmail;
+  3. **otherwise** build a `SimpleMailMessage` (from, to, subject, text) and `mail.send(...)`;
+  4. **a `MailException`** becomes the same 503 "We couldn't send the code" as SES. The log line has the reason, never the code.
+- **The daily counter** is a fixed window that starts with the day's first email, not at midnight. It's simple, and it never lets 400 go past within any one window.
+
+### 91.4 Tests
+- **`SmtpEmailSenderTest`,** a unit test with Mockito fakes (no Gmail, no Redis):
+  - the email has the right from, to and subject;
+  - a mail error becomes the 503;
+  - the 401st code is refused before sending, with its wait time;
+  - missing settings stop the start.
+- **`HealthTest`:** `/actuator/health` is `UP` with the mail library present and no mail password.
+- **Each rule was broken on purpose and caught:** the health setting, the daily cap, the error handling and the settings check.
+
+### 91.5 Verified
+- **API tests (5 new, 133 in all).** The API contract didn't change.
+- **The real production start-up, on this laptop.** The built jar ran with the `prod` profile and `EMAIL_VIA=smtp`, against the development database, on port 8081. The "mail server" was a local port, so nothing went out to Gmail.
+  - With a password: it started; health said `UP`; a login code request went through the SMTP sender and answered 503 "We couldn't send the code" (nothing was listening).
+  - Without a password: it refused to start with "Set EMAIL_FROM, SMTP_USERNAME and SMTP_PASSWORD (infra/AWS-SETUP.md, section 16)".
+  - **The timeout:** against a fake server that accepts the connection and never answers, the request gave up after 11 seconds with the same clear message. Without the timeout it would have hung indefinitely.
+- **Not checked:**
+  - real Gmail (needs the app's account and app password: AWS-SETUP section 16);
+  - where the first emails land (inbox or spam);
+  - the daily cap against real Redis over a whole day (the unit test fakes the counter).
+
 ---
 
 ## Reference
@@ -6016,14 +6110,14 @@ The last four chapters are for looking things up: everything still open, the com
 
 ---
 
-## 90. Backlog: everything still open
+## 92. Backlog: everything still open
 
 Everything the project knows it still has to do, in one place, as of 2026-10-26. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
 
 ### Decisions the team has to make (no code first)
 | Item | Why it matters | Where |
 |---|---|---|
-| A domain, then SES set up for login emails (production access) | Real users can't receive login codes until then; staging keeps them in the log | 88, infra/AWS-SETUP.md section 15 |
+| A domain, then SES set up for login emails (production access) | Until then login emails go through a Gmail account (at most 400 a day) or stay in the log | 88, 90, infra/AWS-SETUP.md sections 15–16 |
 | SMS provider + DLT registration (MSG91 or Firebase), only if phone login should return | Phone numbers are tied to an ID; email addresses aren't | 19, 88 |
 | Domain, then the first deployment to AWS | Web and API must share one domain for the login cookie; the runbook is ready | 54–55, infra/README.md |
 | The real pickup points at T1, T2, T3 | The seeded coordinates are approximate | 33–35 |
@@ -6071,7 +6165,7 @@ Flight-delay tracking, automatic matching, and whatever real users ask for first
 
 ---
 
-## 91. Command cheat sheet
+## 93. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -6159,7 +6253,7 @@ git fetch --prune
 
 ---
 
-## 92. Glossary
+## 94. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -6186,6 +6280,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
 | API | Application Programming Interface: the list of requests a program accepts from other programs |
 | API contract | The agreed shape of every request and response between two sides |
+| App password | A 16-letter password Google makes for one app, used instead of the account's real one; needs 2-Step Verification, revocable anytime (90) |
 | App shell | The frame (header, avatar) that stays the same on every signed-in screen |
 | Application event | A message one module publishes inside the app; listeners react without the publisher knowing them |
 | ApplicationContext | Spring's IoC container |
@@ -6341,6 +6436,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Haversine | Formula for great-circle distance from two lat/lng pairs |
 | Header (HTTP) | A line of extra information on a request or response |
 | Healthcheck | A test of whether a service is really ready |
+| Health check | The `/actuator/health` address saying whether the API works; Docker and the production start-up wait on it (54, 90) |
 | Heartbeat | Repeating your last state on a timer, so newcomers learn it and silence means "gone" |
 | Heuristic | A quick rule giving a good (not guaranteed best) answer |
 | High fidelity | A design that is final down to the pixel: colours, fonts, spacing and wording |
@@ -6364,6 +6460,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | IoC | Inversion of Control: the framework creates and wires objects |
 | IP address | The network address a request comes from |
 | Irreversible action | Something the app can't undo, like entering the fare |
+| JavaMailSender | Spring's tool for sending email over SMTP, set up from the `spring.mail.*` settings (90) |
 | JDBC | Java's standard database API |
 | JdbcClient | Spring's fluent helper for running plain SQL (`db.sql(...).param(...).update()`) |
 | JIT warm-up | Java gets faster after its first minute as hot code is compiled |
@@ -6539,6 +6636,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Skeleton | Grey pulsing shapes standing in for content that's loading |
 | Slice | A small piece of the product built end to end, then merged |
 | SLO / threshold | A pass line set in advance, e.g. p95 under 500 ms |
+| SMTP | The standard way a program hands an email to a mail server for delivery (90) |
 | SNAPSHOT | A Maven version still in development |
 | Soft ask | Your own "turn on notifications?" button before the browser's real prompt |
 | SPF | A DNS record listing which servers may send email for a domain (88) |
@@ -6551,6 +6649,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Staleness | How old a reading is; old positions may be wrong |
 | Standalone output | Next.js build mode producing a small self-contained server.js |
 | Starter | One dependency bringing a tested set of libraries |
+| STARTTLS | Upgrading a plain connection to an encrypted one before anything secret is sent; Gmail's port 587 requires it (90) |
 | start_url | The address an installed web app opens at, set in the manifest (86) |
 | State | Data a component remembers; changing it redraws the component |
 | State machine | A fixed set of states plus the allowed transitions between them |
@@ -6579,6 +6678,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Throttling | Sending at most every so often, however often updates arrive |
 | Throughput | Work done per second, e.g. requests per second |
 | Tile | One square image of a map at a given zoom level |
+| Timeout | How long to wait for the other side before giving up; Spring's mail settings have none by default (90) |
 | Time zone | A region's offset from UTC; IST is UTC+05:30 |
 | Timing attack | Learning secrets from how long comparisons take |
 | TLS termination | Decrypting HTTPS at the proxy, then forwarding plain HTTP privately |
@@ -6617,7 +6717,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 93. Interview questions to practise
+## 95. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6813,3 +6913,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 190. How did you make phone login switch off in production without the app refusing to start?
 191. A login email fails to send. What should the person experience, and what did you change on the server to allow it?
 192. Your full test run failed with "too many clients already" after adding one test class. Why, and how did you fix it?
+193. Why a separate Gmail account for the app instead of your own, and what can an app password do?
+194. How did you keep a shared daily limit from locking every user out, and why is the cap below Gmail's own?
+195. Adding the mail library could have stopped the production site from starting. How, and how did you prevent it?
+196. Why make the sender general (SMTP) rather than Gmail-specific, and how does the app choose between SMTP and SES?
+197. How did you prove the 10-second timeout works without a real slow mail server?
