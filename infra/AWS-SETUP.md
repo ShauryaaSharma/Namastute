@@ -13,7 +13,7 @@ Region: **Asia Pacific (Mumbai), `ap-south-1`**, for every step. Check the regio
 - a domain name, or about ₹800–1,500 a year to buy one (step 2);
 - about 2 hours. Most of it is waiting for downloads and builds.
 
-**About login codes.** People log in with a code sent by email through Amazon SES, which needs a domain: section 15, once you have one. Until then, run the server in **staging mode**: login codes are written to the server's log instead of sent. Only someone who can read the server's logs (your team) can log in, so the site can be online and safe to show meanwhile. Step 9 shows the one setting for this.
+**About login codes.** People log in with a code sent by email: through Amazon SES once you have a domain (section 15), or through a Gmail account made for the app, free and with no domain (section 16). Until then, run the server in **staging mode**: login codes are written to the server's log instead of sent. Only someone who can read the server's logs (your team) can log in, so the site can be online and safe to show meanwhile. Step 9 shows the one setting for this.
 
 **Rough monthly cost** (on-demand prices, before any credits; check the [AWS pricing calculator](https://calculator.aws) for today's numbers):
 
@@ -300,7 +300,7 @@ AWS isn't needed for this. Sign up at a free monitor (for example UptimeRobot) a
   git pull && docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d --build
   ```
 - **See what's running, and follow the API's log:** the commands in [README.md](README.md) under "Everyday commands".
-- **Going live with real login emails:** section 15.
+- **Going live with real login emails:** section 15 (SES, needs a domain) or section 16 (a Gmail account, no domain).
 - **Costs:** check **Billing** → **Bills** after the first week. The budget alert emails you before US$50.
 
 ---
@@ -349,6 +349,57 @@ DKIM from 15b plus this record is what keeps login codes out of spam. `p=none` o
 AWS usually answers within a day. After that, any address can log in.
 
 **After switching:** accounts made earlier by phone number stay in the database, but the website logs in by email, so log in by email and make that account admin again (step 11). Phone login only returns with an SMS provider and DLT registration.
+
+---
+
+## 16. Email login through a Gmail account (no domain needed)
+
+Free, and running in about 15 minutes, but Gmail allows only about 500 emails a day, so the app sends at most 400 codes a day (Learning Notes 90). Move to SES (section 15) once you have a domain and real traffic.
+
+**16a. A Gmail account only for the app.** Never your personal one: the app password below opens the whole mailbox, and Google can lock an account that sends automated mail.
+1. Go to **accounts.google.com/signup** and create an account. Name: **Namastute**. Address: for example `namastute.app@gmail.com`.
+2. Use the team's phone number and email for recovery.
+3. Keep its password in the team's password manager.
+
+**16b. Turn on 2-Step Verification.** App passwords only exist once it's on. Signed in as the new account: **myaccount.google.com** → **Security** → **2-Step Verification** → follow the steps.
+
+**16c. Create an app password.**
+1. Open **myaccount.google.com/apppasswords**.
+2. Name it `Namastute server` → **Create**.
+3. Google shows **16 letters** in four groups. Copy them **without the spaces**. They're only shown once.
+
+If the page says the setting isn't available, 2-Step Verification isn't on yet.
+
+**16d. Deploy the code that can send through Gmail (step 14),** then edit the settings on the server:
+```bash
+nano infra/.env
+```
+Set or add these lines, with your account's address and app password:
+```text
+EMAIL_VIA=smtp
+EMAIL_FROM=Namastute <namastute.app@gmail.com>
+SMTP_USERNAME=namastute.app@gmail.com
+SMTP_PASSWORD=abcdefghijklmnop
+SPRING_PROFILES_ACTIVE=prod
+```
+`EMAIL_FROM` must be the same Gmail address: Gmail replaces any other "from" address. Save, then apply the settings. Only settings changed, so there's no rebuild:
+```bash
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env up -d
+```
+
+**16e. Test it.** Log in on the site with your own email. The code now arrives **by email** (the first one may land in Spam: mark it "Not spam"), and no longer appears in the log.
+
+If the site says "We couldn't send the code", the reason is in the log:
+```bash
+docker compose -f infra/docker-compose.prod.yml --env-file infra/.env logs api | grep -i "SMTP didn't send" | tail -3
+```
+"Authentication failed" means the address or app password is wrong (make a new app password and paste it again).
+
+**Good to know:**
+- **The daily cap:** after 400 codes in a day, people see "Too many people are logging in right now. Try again later." That stops Gmail from blocking the account for a day.
+- **The account's Sent folder keeps every code email.** They expire after 5 minutes, so that's harmless, but treat the account as a team secret.
+- **If the app password leaks,** delete it on the same page (16c) and make a new one; the account's real password doesn't change.
+- **If Google locks the account,** sign in to it in a browser and follow Google's prompts. Meanwhile switch the server back to staging (`SPRING_PROFILES_ACTIVE=prod,fake-sms`, then the same `up -d`).
 
 ---
 
