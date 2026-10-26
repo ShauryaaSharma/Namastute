@@ -12,7 +12,7 @@ These need a decision, an account or a site visit, not code (Learning Notes 64):
 3. **Map search:** OpenStreetMap's Nominatim only allows light use (about 1 search a second). Fine for a small pilot; before growing, choose Ola Maps or Google. Only `apps/web/lib/geocode.ts` changes.
 4. **Uptime monitor:** a free monitor (for example UptimeRobot) that opens `https://<your domain>/` every 5 minutes and emails the team when it fails. Without one, nobody knows the site is down.
 5. **ID check reviewers (Learning Notes 80):** who reviews, and how fast (the app tells people "usually within a day"). Reviewers should read the checklist on the review page and never approve an unmasked Aadhaar.
-6. **Women-only policy:** decide whether IDs showing transgender / third gender count for women-only groups (open question 4 in the design doc) before slice 3 ships.
+6. **Women-only policy:** decide whether IDs showing transgender / third gender count for women-only groups (open question 4 in the design doc). Until then only IDs saying female count; the rule is one line in `UserService.WOMEN_ONLY_USERS`.
 7. **Calibrate the face score (Learning Notes 82):** with consenting team members' real IDs and selfies, on a laptop only (never committed or uploaded), note the scores of same-person and different-person pairs. Only then decide whether low scores should reject automatically.
 8. **Privacy policy:** it must cover ID photos (what, why, who sees them, deletion within 7 days), matching the consent notice on `/verify` (DPDP Act).
 

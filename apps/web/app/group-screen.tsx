@@ -81,6 +81,7 @@ export default function GroupScreen({ trip, requests, version, onChange, onLive 
           {short(trip.terminalId)} → {trip.destArea} · meet {formatIstTime(g.meetAt)}
         </span>
         <h1 className="font-display text-[1.625rem] font-extrabold leading-[1.15] stretch-110 lg:text-[1.75rem]">Your cab group</h1>
+        {g.womenOnly && <Chip variant="info" className="mt-1.5 self-start">Women-only</Chip>}
       </span>
       <StatusBadge status={g.status} />
     </div>

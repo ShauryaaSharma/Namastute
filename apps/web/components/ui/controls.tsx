@@ -85,10 +85,10 @@ export function Stepper({ label, hint, value, min, max, onChange, fewerLabel, mo
   );
 }
 
-// ---- Toggle: a switch. Unavailable ones (women-only, until ID verification) sit in a dashed box. ----
+// ---- Toggle: a switch. Unavailable ones (women-only, without a verified ID) sit in a dashed box. ----
 export function Toggle({ label, description, checked, onChange, unavailable }: {
   label: string;
-  description?: string;
+  description?: ReactNode;
   checked: boolean;
   onChange?: (checked: boolean) => void;
   unavailable?: boolean; // still readable by screen readers (aria-disabled), but can't be switched

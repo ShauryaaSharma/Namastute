@@ -52,6 +52,7 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 
 **Safety and trust**
 - **ID verification:** a photo of an ID (passport, driving licence, voter ID or masked Aadhaar) and a selfie with a random gesture, after a clear consent notice. Photos are checked and cleaned on the server, kept in private storage and deleted at the decision (7 days at the latest). Machines help (a face-match score and the gender and document number read from the ID); a person decides. Verified people get an "ID verified" badge.
+- **Women-only groups:** women whose ID check says female can plan a women-only trip. Only they see it or can join it, in matching and when asking or accepting, never just on the screen.
 - **Admin review:** admins see a queue of ID checks with both photos, the machine's suggestions and a checklist, and approve or reject with a reason.
 - **Report** someone you shared a cab with (reviewed by a person; "Call 112" for emergencies), and **silently block** anyone so you never see each other again.
 - **Ratings:** after meeting up, a thumbs up or down for each person in your group, once. Others see only the total ("92% 👍 · 12 ratings", or "New"); nobody sees who gave what.
@@ -170,7 +171,7 @@ Real users still need an SMS provider: until one is chosen, the production build
 
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, deployment, and ID verification for women-only groups (in progress: uploading, the admin review and the machine-learning helpers are done; women-only groups come next).
+- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. ID verification and women-only groups are done too. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, and deployment.
 - **The redesign:** ✅ done, in four slices: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, the group screen (chat, pickup, live location, report and block, ratings), and the fare with UPI payment (a QR code on laptops).
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 
@@ -193,7 +194,7 @@ The local production stack, squeezed into the 2 processor cores of the planned s
 ## Known limits
 Deliberate shortcuts for launch, each marked `shortcut:` in the code with when it would change (Learning Notes 64):
 - **One API server.** The chat broker and the message flood limit live in that server's memory; a second server needs a shared broker (RabbitMQ or Redis).
-- **Women-only groups** are switched off until slice 3 of ID verification. Who counts for them when an ID shows transgender / third gender is a team policy decision still open (the code keeps it in one place).
+- **Women-only groups** count only IDs that say female. Whether IDs showing transgender / third gender count too is a team policy decision still open; it's one line in `UserService` (Learning Notes 84).
 - **ID checks are only as strong as a careful reviewer.** A good fake ID can fool a person; only DigiLocker (a registered company needed) would stop that. The face score's threshold is OpenCV's published one, not yet calibrated on Indian ID photos, so a low score only warns; text reading is a suggestion the reviewer confirms.
 - **The API image is 981 MB:** OpenCV's jar carries its library for every platform. On Linux, text reading hands Tesseract raw grey pixels, because Tess4J's Leptonica binding is newer than Ubuntu 24.04's Leptonica (Learning Notes 83).
 - **ID photos in development** use SeaweedFS; leftover test checks pile up in the local admin queue until the 7-day purge removes them.

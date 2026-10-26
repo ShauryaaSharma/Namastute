@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 86) defines every term in the book, A to Z. The **Command cheat sheet** (85) and **Interview questions** (87) are for revision. The **Backlog** (84) lists everything still open.
+- The **Glossary** (chapter 88) defines every term in the book, A to Z. The **Command cheat sheet** (87) and **Interview questions** (89) are for revision. The **Backlog** (86) lists everything still open.
 
 ---
 
@@ -114,8 +114,8 @@ flowchart LR
 | VII. Safety and staying in touch | 56–63 | Report and block, push notifications, live location, ratings |
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
 | IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
-| X. ID verification | 78–83 | Handling ID photos safely, admin review, and machine helpers for faces and text |
-| Reference | 84–87 | What's still open, commands, glossary, interview questions |
+| X. ID verification | 78–85 | Handling ID photos safely, admin review, machine helpers for faces and text, and women-only groups |
+| Reference | 86–89 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -234,13 +234,15 @@ flowchart LR
 81. [Code walkthrough: the review (slice 2a)](#81-code-walkthrough-the-review-slice-2a)
 82. [Machine helpers for ID checks: face score and reading the ID](#82-machine-helpers-for-id-checks-face-score-and-reading-the-id)
 83. [Code walkthrough: the machine checks (slice 2b)](#83-code-walkthrough-the-machine-checks-slice-2b)
+84. [Women-only groups: one rule, checked at every door](#84-women-only-groups-one-rule-checked-at-every-door)
+85. [Code walkthrough: women-only groups (slice 3)](#85-code-walkthrough-women-only-groups-slice-3)
 
 **[Reference](#reference)**
 
-84. [Backlog: everything still open](#84-backlog-everything-still-open)
-85. [Command cheat sheet](#85-command-cheat-sheet)
-86. [Glossary](#86-glossary)
-87. [Interview questions to practise](#87-interview-questions-to-practise)
+86. [Backlog: everything still open](#86-backlog-everything-still-open)
+87. [Command cheat sheet](#87-command-cheat-sheet)
+88. [Glossary](#88-glossary)
+89. [Interview questions to practise](#89-interview-questions-to-practise)
 
 ---
 
@@ -2572,6 +2574,7 @@ int expireStale(UUID userId, Instant cutoff);
 1. `terminals.findById(...).orElseThrow(...)`: unknown terminal → 400.
 2. Exit time window check against `Instant.now()`.
 3. `if (req.womenOnly())` → 403 (shortcut until ID verification).
+   - **Later change (85.2):** step 3 now refuses only people who aren't eligible (`users.womenOnlyAllowed`), and the trip saves the choice.
 4. `Geo.point(...)` and `Geo.distanceKm(terminal pickup, dest)`; > 100 km → 400.
 5. `trips.expireStale(userId, now − 60 min)`: clear the way (34.4).
 6. `saveAndFlush(new TripRequest(...))` inside `try`. The flight number is normalised (`"ai 865"` → `"AI865"`), the area trimmed, and `soloKm = straight × 1.4`.
@@ -2653,6 +2656,7 @@ export function istInputValue(minutesFromNow: number): string {
 - `<fieldset>` + `<legend>`: groups the destination controls under one heading for screen readers.
 - `<input type="datetime-local" min max>`: the picker itself limits choices to now…+24 h (the API still checks).
 - The disabled women-only checkbox shows the feature exists and why it's unavailable.
+- **Later change (85.4):** the switch now works for women with a verified ID; everyone else sees a link to verify.
 
 ### 35.14 `app/current-trip.tsx` and `app/session-box.tsx`
 - `CurrentTrip`: loads your trip (`undefined` = loading, `null` = none). Shows "Plan a trip", or the trip (terminal → area, IST time, seats/bags/flight, km) with **Cancel**.
@@ -5002,7 +5006,7 @@ This slice builds everything later screens stand on (tokens, fonts, theme, brand
 | `button.tsx` | `Button` (primary, secondary, tonal, ink, danger, danger-text, link; sizes 56/48/64 px; `loading` with a spinner and label) and `Spinner` |
 | `field.tsx` | `TextField` (label above, helper or error below, linked with `aria-describedby`), `PhoneInput` (the "+91" segment; shows "98100 43215"; keeps the last 10 digits from autofill), `OtpInput` (six boxes driven by one invisible real input) |
 | `display.tsx` | `Alert` (error/success/info/warning with a glyph; errors use `role="alert"`), `Avatar` (first *grapheme* of the first name, so "नेहा" → "ने"), `Card`, `Chip`, `StatusBadge`, `Eyebrow`, `EmptyState`, `Skeleton` |
-| `controls.tsx` | `Segmented` (a radio group; arrow keys move the choice), `Stepper` (− value +, with aria-labels like "Fewer seats"), `Toggle` (a switch; the unavailable women-only row is a dashed box) |
+| `controls.tsx` | `Segmented` (a radio group; arrow keys move the choice), `Stepper` (− value +, with aria-labels like "Fewer seats"), `Toggle` (a switch; the unavailable women-only row is a dashed box; since 85.4 only for people who aren't eligible) |
 | `layout.tsx` | `BottomBar` (the sticky thumb-zone bar on phones; a normal block on wide screens) and `Sheet` |
 | `brand.tsx` | `AppIcon` (न on the orange tile), `Wordmark` ("ast" lit), `Lockup` |
 - **`Sheet` uses the browser's own `<dialog>`** with `showModal()`: it traps focus, makes the page behind inert and closes on Esc by itself, so no focus-trap code was needed. On phones it's a bottom sheet that slides up; from 1024 px it's a centred dialog.
@@ -5396,7 +5400,7 @@ A women-only option is worse than none if anyone can join it by ticking "female"
 | Laptops | A file picker; no webcam screen |
 | Transgender / third-gender IDs | **Open: a team policy decision**; until then only "female" counts, in one marked place (slice 3) |
 
-> **Later change:** slice 2 adds the face score, OCR suggestions, the admin review and deleting at decision time; slice 3 adds women-only groups.
+> **Later change:** slice 2 adds the face score, OCR suggestions, the admin review and deleting at decision time; slice 3 adds women-only groups (84).
 
 ---
 
@@ -5486,7 +5490,7 @@ Slice 1 collected the photos; now a person must look at them and decide, and eve
 | Notifications | Admins on each new check, the person on the decision |
 | Badge | "◆ ID verified" after the name in matches, requests and group members, via the rating lookup |
 
-> **Later change:** slice 2b adds the face score and text reading as helpers on the review page; slice 3 uses the verified gender for women-only groups.
+> **Later change:** slice 2b adds the face score and text reading as helpers on the review page; slice 3 uses the verified gender for women-only groups (84).
 
 ---
 
@@ -5640,6 +5644,123 @@ The helpers from chapter 82, added to the review from chapter 81.
   - how long a check takes on the 2-core server;
   - CI itself (it runs when the branch is pushed).
 
+## 84. Women-only groups: one rule, checked at every door
+
+### 84.0 Words first
+- **Eligibility:** the rule for who may use a feature. Here: who may create, see or join a women-only trip or group.
+- **Enforcement point:** a place in the code where a rule is checked. A rule needs one at every door a request can come through, not only the one the screen uses.
+- **Defence in depth:** checking the same rule in several layers (the matches list, asking, accepting), so one missed check doesn't open the feature to everyone.
+- **Existence leak:** telling someone a thing exists by refusing them access to it. "403 Forbidden" says "there's something here you can't have"; "404 Not Found" says nothing.
+- **Single source of truth:** keeping a rule in one place, so changing it later is one edit.
+
+### 84.1 The problem
+The women-only switch was on the trip form from the start, but locked: `TripService.create` refused it for everyone (chapter 35) until IDs could be checked. Since chapter 80, an approved ID check records the gender printed on the ID, set by a reviewer and never typed by the person. The design (4.3) asks for three things:
+- only verified users whose ID says female may create or join women-only groups;
+- the rule is enforced in matching **and** when joining, never only on the screen;
+- done when "a verified woman can create a women-only group that an unverified user cannot see".
+
+### 84.2 The naive way, and why it hurts
+Turn the switch on, save `women_only = true`, and have the screen hide those trips from everyone else. Then:
+1. **The screen isn't a lock.** Anyone can send "ask to share" with a trip id they got some other way.
+2. **Groups are born when someone says yes** (chapter 41), and every new group was created with `women_only = false`. A women-only trip would quietly become an ordinary group.
+3. **Requests outlive the situation they were sent in.** A request sent to someone alone stays pending after that person joins a group; any member can then accept it. If only "ask" checks the rule, a request sent before the group became women-only gets through.
+4. **The rule would be scattered** over the form, two matching queries, asking and accepting, while the policy for transgender and third-gender IDs is still undecided.
+5. **A 403 on a crafted request leaks** that a women-only trip exists at that id.
+
+### 84.3 The tools
+1. **One definition** in `UserService`: `WOMEN_ONLY_USERS`, a small SQL list of eligible people (`verification = 'verified' and gender = 'female'`). Java asks it through `womenOnlyAllowed(id)`; the matching queries put the same text in their SQL. Changing the policy is one line.
+2. **The rule works both ways:**
+   - a women-only trip or group is seen and joined only by eligible women;
+   - someone who asked for women-only sees and joins only eligible women who are still alone, or women-only groups.
+3. **Five enforcement points:** creating the trip, the two matching queries (travellers and open groups), asking, and accepting.
+4. **The group inherits the flag at birth:** women-only if either trip asked for it, for the group's whole life, even after the person who asked leaves.
+5. **404 for crafted asks**, the same answer as for a trip that doesn't exist (the idea from chapter 80's admin pages). Accepting answers 409 with a reason instead: the person accepting is a member who already knows the group is women-only, so nothing leaks.
+
+### 84.4 Example
+Four people at T3 around 22:00:
+
+| Person | ID check | Ticked women-only |
+|---|---|---|
+| Asha | verified, female | yes |
+| Ritika | verified, female | no |
+| Neha | none | no |
+| Arjun | verified, male | no |
+
+- Asha's matches show only Ritika. Ritika sees Asha with a "Women-only" chip, and Neha and Arjun as usual. Neha and Arjun never see Asha.
+- Ritika asks, Asha accepts: the group is born women-only.
+- Earlier, Neha had asked Ritika while Ritika was alone. Asha now sees that request (any member may answer), but accepting it is refused: "This group is women-only, for women with a verified ID".
+- Arjun copies Asha's trip id and sends "ask to share" himself: 404, as if the trip didn't exist.
+
+### 84.5 Decisions (2026-10-25)
+| Decision | Choice |
+|---|---|
+| Who may use women-only | An approved ID check with gender female (design 4.3) |
+| IDs showing transgender / third gender | **Open team decision** (design open question 4). Until then the design's rule applies; it's one line, marked `shortcut:`, and no data has to move when it changes |
+| Who sees women-only trips and groups | Only eligible women, whether or not they ticked the switch themselves |
+| What a woman who ticked it sees | Only eligible women who are alone, and women-only groups |
+| When a group is women-only | When either trip at its birth asked for it; for the group's whole life |
+| Enforced at | Creating the trip, both matching queries, asking, accepting |
+| Answer to someone not eligible | Creating: 403 "Women-only trips are for women with a verified ID". Asking: 404. Accepting: 409 with the reason |
+| Screens | The switch works for eligible women; others see "For women with a verified ID · Verify your ID". A "Women-only" chip on match cards and the group screen |
+| Not in this slice | Taking a verification back; changing a trip's women-only setting after it's planned (there's no "edit trip") |
+
+---
+
+## 85. Code walkthrough: women-only groups (slice 3)
+
+### 85.0 Before you read
+The rule from chapter 84, added to trips (chapter 35), matching (36–38, 42–44) and groups (39–41).
+
+### 85.1 The rule (`users` module)
+- **`UserService.WOMEN_ONLY_USERS`:** `"(select id from users where verification = 'verified' and gender = 'female')"`. It's a `public static final String`: a compile-time constant, so it can even go inside a repository's `@Query` annotation, whose text must be fixed when the code compiles. The `shortcut:` comment above it names the open third-gender decision.
+- **`womenOnlyAllowed(id)`:** `select ? in` + that list. One query.
+- **`Profile.womenOnlyAllowed`:** tells the trip form whether to unlock the switch. The server checks again when the trip is created.
+
+### 85.2 Trips module
+- **`TripService.create`:** the old "refused for everyone" `shortcut:` is gone. Now `req.womenOnly() && !users.womenOnlyAllowed(userId)` → 403, and the trip saves the person's choice (it used to save `false` whatever was sent).
+- **`TripRepository.matchCandidates`** gains two lines, one per direction:
+  - `not me.women_only or t.user_id in WOMEN_ONLY_USERS`: if I asked for women-only, only eligible women;
+  - `not t.women_only or me.user_id in WOMEN_ONLY_USERS`: their women-only trip only if I'm eligible.
+
+  A text block (`"""`) can't start in the middle of a line, so the second line is a plain string joined with `+`.
+- **`OpenGroups` port:** `near(...)` now takes the asker's `womenOnly` and returns `OpenGroup(womenOnly, tripIds)` records instead of bare lists, so the badge can come from the group itself.
+- **`MatchView.womenOnly`:** true for a women-only traveller, or any rider in a women-only group. `TripSummary.womenOnly` lets the groups module read the trip's choice.
+
+### 85.3 Groups module
+- **`OpenGroupsQuery`:** the same two conditions for groups: `not g.women_only or :user in …` and `not :womenOnly or g.women_only`. Here the SQL runs through `JdbcClient` while the program runs, so the list goes in with `.formatted(...)` and `%s`.
+- **`womenOnlyMismatch(from, to)`:** the rule for one request, returning the reason if it doesn't fit. "To" is the group if the person asked is in one, otherwise their trip.
+- **`ask`:** one more `.filter(...)` in the chain, so a mismatch ends in the same 404 as a blocked or ended trip.
+- **`accept`:** checks again before anything changes (409 `WOMEN_ONLY`). Then a new group gets `women_only = from.womenOnly() || to.womenOnly()`.
+- **`Membership`** (the group a trip is in) now carries `womenOnly`; **`GroupView.womenOnly`** shows it to members.
+
+### 85.4 Web
+- **Trip form:** the switch is enabled when `me.womenOnlyAllowed`, and its description says "Only women with a verified ID will see your trip". Otherwise it stays in its dashed "unavailable" box with "For women with a verified ID · Verify your ID" (a link to `/verify`). `Toggle`'s `description` now accepts a link (`ReactNode` instead of `string`).
+- **Matches:** a "Women-only" chip on match cards, and "· women-only" on the compact rows.
+- **Group screen:** a "Women-only" chip under "Your cab group".
+
+### 85.5 Verified
+- **API tests (6 new, 123 in all)**, one per enforcement point, in `WomenOnlyTest`:
+  - planning: refused without an ID check, with a male ID and with an "other" ID; allowed for a verified woman;
+  - matching: a women-only trip is seen only by verified women and sees only them; a women-only group likewise; a women-only trip doesn't see an ordinary group;
+  - a crafted ask gets 404, like a trip that doesn't exist;
+  - the group is born women-only;
+  - an old request is refused at accept (409) once the group has become women-only.
+
+  `MatchesTest`'s privacy guard now expects 7 fields per match (the new `womenOnly`).
+- **Each check broken on purpose (7 times), each caught:** the planning check, both directions of traveller matching, both group-matching conditions, the ask check, the accept check, and the flag at group birth.
+- **The break-it run found two weaknesses in the tests themselves** before it could prove anything:
+  1. **Crowding.** All six tests first shared one time slot, so one test's trips filled another's top 5 matches, and a broken rule could pass by luck. Each test now cancels its own users' trips and groups afterwards (only its own rows), in a slot no other test uses (Terminal 3, 12 hours ahead).
+  2. **The label of a group's match isn't fixed.** It's one member's trip id, and two members who joined in the same instant can come in either order. The tests now look for any rider, never for the label.
+
+  The script running the break-it checks also first reported "not caught" for everything because Maven never started; it now stops if Maven doesn't run.
+- **Browser (1024 px):**
+  - as Asha (verified female): the switch is unlocked ("Only women with a verified ID will see your trip"), and her trip was saved with `women_only = true`;
+  - as Arjun (no verified ID): the switch stays locked, with "For women with a verified ID · Verify your ID" linking to `/verify`; his ordinary trip to the same place, a minute later, shows "No one heading your way".
+
+  Both trips were cancelled afterwards.
+- Web lint, type-check and build pass.
+- **Not checked:** the "Women-only" chips in a browser (no second verified woman in the development data; the API's `womenOnly` field is tested), a screen reader on the switch, and two people accepting at the same moment.
+
 ---
 
 ## Reference
@@ -5648,9 +5769,9 @@ The last four chapters are for looking things up: everything still open, the com
 
 ---
 
-## 84. Backlog: everything still open
+## 86. Backlog: everything still open
 
-Everything the project knows it still has to do, in one place, as of 2026-10-24. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
+Everything the project knows it still has to do, in one place, as of 2026-10-25. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
 
 ### Decisions the team has to make (no code first)
 | Item | Why it matters | Where |
@@ -5661,7 +5782,7 @@ Everything the project knows it still has to do, in one place, as of 2026-10-24.
 | Map search provider before growing (Ola Maps or Google) | Nominatim allows about one search a second | 33 |
 | Uptime monitor | Otherwise nobody knows the site is down | 64 |
 | ID check reviewers and how fast they answer | The app promises "usually within a day" | 80 |
-| Women-only policy for transgender / third-gender IDs | Needed before women-only groups ship | 78, design doc open question 4 |
+| Women-only policy for transgender / third-gender IDs | Until decided, only IDs saying female count (one line, a `shortcut:` in `UserService`) | 78, 84, design doc open question 4 |
 | Face-score calibration with consenting team members | Thresholds come from a benchmark, not Indian IDs | 82 |
 | Privacy policy covering ID photos | Required by the DPDP Act; must match the consent notice | 78 |
 | Detour default (3 km / 25%) checked on real routes | Chosen by reasoning, not data | 37 |
@@ -5670,7 +5791,6 @@ Everything the project knows it still has to do, in one place, as of 2026-10-24.
 ### Code still to write
 | Item | Status | Where |
 |---|---|---|
-| ID verification slice 3: women-only groups (the switch, the matching and joining rules, tests) | Next | 78 |
 | An admin page for reports | Reports are reviewed with SQL; admins get a push | 56–57 |
 | A separate test database | Tests leave trips and checks in the development database, which can crowd results | 63, 73, 81 |
 | DigiLocker, or a KYC company with automatic liveness, in place of the human reviewer | Needs a registered company or a contract | 78 |
@@ -5701,7 +5821,7 @@ Flight-delay tracking, automatic matching, and whatever real users ask for first
 
 ---
 
-## 85. Command cheat sheet
+## 87. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5789,7 +5909,7 @@ git fetch --prune
 
 ---
 
-## 86. Glossary
+## 88. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5867,6 +5987,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Cold start | A new user (or item) with no history yet |
 | Combining mark | Unicode sign that attaches to the previous letter (Indian vowel signs); `\p{M}` |
 | Commit | A saved snapshot of files, with a message, in Git's history |
+| Compile-time constant | A value Java knows while compiling (a `static final String` set to text); only these can go inside an annotation like `@Query` (85) |
 | Component | A reusable piece of a screen (React) |
 | Composite index | One index over several columns, sorted by the first, then the next |
 | Concurrency | Several pieces of work running at the same time on shared data |
@@ -5898,6 +6019,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Decompression bomb | A tiny file claiming to be an enormous image, to exhaust memory when decoded |
 | Deduplication | Recognising the same item arriving twice and keeping one |
 | Deep link | A URL that opens an app (e.g. `upi://pay?...`) instead of a web page |
+| Defence in depth | Checking the same rule in several layers, so one missed check doesn't open the door (84) |
 | Denormalisation | Storing a value you could calculate, for cheap reads; you must keep it correct yourself |
 | Dependency cycle | Module A depends on B and B on A; neither stands alone |
 | Dependency Inversion | Depend on an interface you own; others implement it (the D in SOLID) |
@@ -5921,14 +6043,17 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | ECDH | Elliptic-Curve Diffie-Hellman: two sides combine their own private key with the other's public key to get the same shared secret |
 | Effect | Code run after a component appears (`useEffect`) |
 | Effectively final | A variable that never changes after it's set; only these can be used inside a lambda |
+| Eligibility | The rule for who may use a feature; for women-only groups, an approved ID check that says female (84) |
 | Embedding | A list of numbers describing something; SFace describes a face with 128 numbers, and similar faces give similar lists (82) |
 | Encoding vs encryption | Changing format (anyone can undo it) vs hiding content (needs a key) |
 | End-to-end encryption | Only sender and receiver can read it; carriers in between can't |
 | Endpoint | One HTTP method + path the API accepts |
+| Enforcement point | A place in the code where a rule is checked; a rule needs one at every way in (84) |
 | Entity | A class mapped to a database table |
 | Ephemeral data | Data that is passed along and never saved |
 | ExecutorService | A pool of threads that run submitted tasks |
 | EXIF | Hidden data inside a photo file, often including the GPS location |
+| Existence leak | Revealing that something exists by refusing access to it (a 403 instead of a 404) (80, 84) |
 | Expiry | The moment something (a code, a token) stops being valid |
 | EXPLAIN | Shows the plan Postgres chose for a query (`ANALYZE` also runs it) |
 | Extension (Postgres) | Add-on giving the database new abilities (PostGIS) |
@@ -6181,6 +6306,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Terminal | A text window for typing commands |
 | Tesseract | The open-source OCR engine; Tess4J is its Java bridge (82) |
 | Testcontainers | Library that starts throwaway databases in Docker for tests |
+| Text block | A Java string written between `"""` marks that can span several lines; it can't start in the middle of a line (85) |
 | Think time | The pauses a real person takes between actions |
 | Thread | One line of execution inside a program; a server runs many at once |
 | Thread dump | A snapshot of every thread's stack in a running Java program (`kill -3`) |
@@ -6226,7 +6352,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 87. Interview questions to practise
+## 89. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6407,3 +6533,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 175. OCR read "XXXX XXXX 4821" as "XXXXK 4821". How do you make a parser tolerant of misreads without accepting wrong numbers?
 176. A Java library works on Windows but fails on Linux with "undefined symbol". What does that mean, and what are your options?
 177. Two branches both added migration V10 against the same database. What goes wrong, and how did you resolve it?
+178. Why isn't hiding women-only trips on the screen enough? List every way in that needs the check.
+179. A request was valid when it was sent but isn't any more when it's accepted. How can that happen here, and how do you handle it?
+180. When should a refused request answer 404, and when 409 with a reason? Use asking and accepting as examples.
+181. The policy for transgender and third-gender IDs isn't decided. How did you build the feature so the decision is cheap to change?
+182. Your test passed with the rule removed. What does that tell you, and what were the two causes here?

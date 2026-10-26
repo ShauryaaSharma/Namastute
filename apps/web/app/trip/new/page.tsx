@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { AppBar } from "@/components/app-bar";
@@ -38,6 +39,8 @@ export default function NewTripPage() {
   const [flightNo, setFlightNo] = useState("");
   const [seats, setSeats] = useState(1);
   const [bags, setBags] = useState(1);
+  const [womenOnly, setWomenOnly] = useState(false);
+  const [womenOnlyAllowed, setWomenOnlyAllowed] = useState(false);
   const [destination, setDestination] = useState<LatLng | null>(null);
   const [destArea, setDestArea] = useState("");
   const [query, setQuery] = useState("");
@@ -57,6 +60,7 @@ export default function NewTripPage() {
         setTime(at.slice(11));
         setTerminals(await getTerminals());
         setName(me.name);
+        setWomenOnlyAllowed(me.womenOnlyAllowed);
       })
       .catch(() => router.replace("/login"));
   }, [router]);
@@ -104,7 +108,7 @@ export default function NewTripPage() {
         destArea: destArea.trim(),
         seats,
         bags,
-        womenOnly: false,
+        womenOnly,
       });
       router.replace("/");
     });
@@ -212,7 +216,16 @@ export default function NewTripPage() {
               )}
             </div>
 
-            <Toggle label="Women-only group" description="Needs ID verification · coming soon" checked={false} unavailable />
+            {/* The server checks again: this switch only saves a wasted tap (Learning Notes 84) */}
+            <Toggle
+              label="Women-only group"
+              description={womenOnlyAllowed ? "Only women with a verified ID will see your trip" : (
+                <>For women with a verified ID · <Link href="/verify" className="font-semibold underline underline-offset-4">Verify your ID</Link></>
+              )}
+              checked={womenOnly}
+              onChange={setWomenOnly}
+              unavailable={!womenOnlyAllowed}
+            />
           </div>
 
           <BottomBar bordered pane>
