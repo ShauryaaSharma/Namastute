@@ -17,7 +17,7 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 - **Module:** a self-contained part of the backend with one job (logging in, trips, groups…).
 - **Container (Docker):** a packaged, isolated copy of a program with everything it needs, so it runs the same on every computer.
 - **Repository (repo):** this project folder, with its full history in Git.
-- **OTP:** one-time password, the 6-digit code sent by SMS to log in.
+- **OTP:** one-time password, the 6-digit code sent by email to log in (by SMS again once an SMS provider is set up).
 - **WebSocket:** a connection that stays open so the server can send messages instantly (used for chat).
 - **p95:** in performance results, the time 95% of requests were faster than.
 
@@ -34,7 +34,7 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 
 ## What works today
 **Accounts**
-- **Phone login with OTP.** You stay logged in safely: a short-lived access token in memory plus a refresh token in a cookie JavaScript can't read. Code requests and wrong guesses are rate-limited.
+- **Email login with a one-time code** (phone login comes back once SMS is set up). You stay logged in safely: a short-lived access token in memory plus a refresh token in a cookie JavaScript can't read. Code requests and wrong guesses are rate-limited.
 - **Profile:** a name in any Indian script, plus an optional UPI ID.
 
 **Trips and matching**
@@ -105,6 +105,7 @@ flowchart LR
 | Data | PostgreSQL 16 + PostGIS 3.5 | The main database, with map support ("within 15 km") |
 | | Redis 7.4 | Fast short-lived data: login codes and rate-limit counters |
 | | Amazon S3 (SeaweedFS in development) | Private file storage for ID photos, deleted after the check; AWS SDK for Java |
+| | Amazon SES | Sends the login codes by email (logged instead in development and staging) |
 | ID checks | OpenCV (YuNet + SFace models) | Finds faces and scores how alike the ID photo and the selfie are |
 | | Tesseract (English + Hindi) | Reads the text on an ID, to suggest the gender and document number |
 | Web | Next.js 16, React 19, TypeScript | The web app and its language |
@@ -145,7 +146,7 @@ You need **JDK 21** (Java), **Node 24 with pnpm** (JavaScript tools) and **Docke
    pnpm install
    pnpm dev
    ```
-4. **Log in:** in development no real SMS is sent. The code appears in the API's log as `SMS to +91…: Your Namastute code is 123456`.
+4. **Log in:** in development no real email is sent. The code appears in the API's log as `Email to you@example.com: Your Namastute code is 123456`.
 
 ### Tests
 ```bash
@@ -168,7 +169,7 @@ How to run them is in [load/README.md](load/README.md); the results are below.
 ## Production
 One server (AWS EC2 in Mumbai) runs Postgres, Redis, the API, the web app and Caddy with `infra/docker-compose.prod.yml`. Only Caddy is reachable from the internet, it gets HTTPS certificates automatically, and secrets come from an `infra/.env` file that is never committed. Setup, everyday commands, backups and the before-launch checklist are in **[infra/README.md](infra/README.md)**.
 
-Real users still need an SMS provider: until one is chosen, the production build refuses to start, on purpose.
+Real login emails need a domain and Amazon SES ([infra/AWS-SETUP.md](infra/AWS-SETUP.md), section 15). Until then the server runs in staging mode, with login codes in its log.
 
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
@@ -195,6 +196,7 @@ The local production stack, squeezed into the 2 processor cores of the planned s
 ## Known limits
 Deliberate shortcuts for launch, each marked `shortcut:` in the code with when it would change (Learning Notes 64):
 - **One API server.** The chat broker and the message flood limit live in that server's memory; a second server needs a shared broker (RabbitMQ or Redis).
+- **Email accounts are easy to make.** Unlike an Indian phone number, an email address isn't tied to an ID, so someone blocked could return with a new one. ID verification and its badge are the counterweight; phone login can return once SMS and DLT are set up (Learning Notes 88).
 - **Women-only groups** count only IDs that say female. Whether IDs showing transgender / third gender count too is a team policy decision still open; it's one line in `UserService` (Learning Notes 84).
 - **ID checks are only as strong as a careful reviewer.** A good fake ID can fool a person; only DigiLocker (a registered company needed) would stop that. The face score's threshold is OpenCV's published one, not yet calibrated on Indian ID photos, so a low score only warns; text reading is a suggestion the reviewer confirms.
 - **The API image is 981 MB:** OpenCV's jar carries its library for every platform. On Linux, text reading hands Tesseract raw grey pixels, because Tess4J's Leptonica binding is newer than Ubuntu 24.04's Leptonica (Learning Notes 83).
@@ -208,7 +210,7 @@ Deliberate shortcuts for launch, each marked `shortcut:` in the code with when i
 - **Reports** are reviewed with SQL (admins get a push for each one); ID checks have an admin page, reports don't yet.
 - **Tests share the local development database.** Trips and checks they create stay behind and can crowd results (tests use their own time slots to avoid it). Two branches worked on at the same time can also both add a migration with the same number: renumber the unmerged one, and merge in order.
 
-Before real users, the team also needs an SMS provider, the real pickup points, a map provider and an uptime monitor: see the checklist in [infra/README.md](infra/README.md).
+Before real users, the team also needs a domain with SES set up for login emails, the real pickup points, a map provider and an uptime monitor: see the checklist in [infra/README.md](infra/README.md).
 
 ## Docs
 - [Learning Notes](Docs%20Text/Learning%20Notes.md) (also as a [web page](Docs%20HTML/Learning%20Notes.html)): the book. Every concept behind the code explained from scratch, with walkthroughs of the real files.

@@ -632,7 +632,8 @@ export interface components {
             up: boolean;
         };
         OtpRequest: {
-            phone: string;
+            email: string | null;
+            phone: string | null;
         };
         PendingView: {
             checkNotes: string | null;
@@ -652,10 +653,11 @@ export interface components {
         };
         Profile: {
             admin: boolean;
+            email: string | null;
             /** Format: uuid */
             id: string;
             name: string | null;
-            phone: string;
+            phone: string | null;
             upiId: string | null;
             womenOnlyAllowed: boolean;
         };
@@ -780,7 +782,8 @@ export interface components {
         };
         VerifyRequest: {
             code: string;
-            phone: string;
+            email?: string | null;
+            phone?: string | null;
         };
     };
     responses: never;

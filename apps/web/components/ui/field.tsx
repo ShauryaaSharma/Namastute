@@ -61,6 +61,7 @@ export function TextField({ id, label, optional, helper, error, className, ...in
 }
 
 // "+91" segment, then the 10 digits shown grouped as "98100 43215". onChange gets digits only.
+// Unused while login is by email; kept for phone login's return once SMS is set up (Learning Notes 88).
 export function PhoneInput({ id, value, onChange, error, autoFocus }: {
   id: string;
   value: string;

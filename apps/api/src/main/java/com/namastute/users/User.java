@@ -17,7 +17,9 @@ class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String phone;
+    private String phone;   // E.164 (+91…); null for accounts made by email (V12)
+
+    private String email;   // trimmed, lower-case; null for accounts made by phone
 
     private String name;
 
@@ -30,8 +32,9 @@ class User {
         // required by JPA: Hibernate creates the object empty, then fills the fields from the row
     }
 
-    User(String phone) {
+    User(String phone, String email) {
         this.phone = phone;
+        this.email = email;
     }
 
     UUID getId() {
@@ -44,6 +47,10 @@ class User {
 
     String getPhone() {
         return phone;
+    }
+
+    String getEmail() {
+        return email;
     }
 
     String getName() {

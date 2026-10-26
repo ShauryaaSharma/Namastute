@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 // End-to-end through HTTP and Spring Security: OTP login → tokens → protected endpoint → refresh → logout
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(CapturingSms.Config.class)
+@Import({CapturingSms.Config.class, CapturingEmail.Config.class})   // the same set in every login test: they share one Spring context
 class AuthFlowTest {
 
     static final String PHONE = "+919000000002";
@@ -40,7 +40,7 @@ class AuthFlowTest {
     void cleanRedis() {
         // MockMvc requests come from 127.0.0.1; reset that IP's limit and this phone's OTP keys
         redis.delete(List.of("otp:code:" + PHONE, "otp:tries:" + PHONE, "otp:cooldown:" + PHONE,
-                "rate:otp:phone:" + PHONE, "rate:otp:ip:127.0.0.1"));
+                "rate:otp:to:" + PHONE, "rate:otp:ip:127.0.0.1"));
     }
 
     @Test

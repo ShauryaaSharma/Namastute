@@ -111,7 +111,7 @@ export default function Landing() {
               <h3 className="font-display text-[1.5rem] font-extrabold leading-[1.1] tracking-[-0.02em] stretch-115">Women-only groups</h3>
               <p>Once your ID check confirms you&apos;re a woman, you can form groups that nobody else can see or join.</p>
             </li>
-            <Safety badge="🔒 Hidden" title="Phone number never shown" line="Nor your surname or exact address. Just first name and area." />
+            <Safety badge="🔒 Hidden" title="Contact details never shown" line="Not your email or phone number, surname or exact address. Just first name and area." />
             <Safety badge="◆ ID verified" badgeClass="text-info" title="An optional ID check" line="Pass it and your card shows the badge to others." />
             <Safety badge={["Report", "Block"]} badgeClass="text-danger" title="Report and block in one tap" line="From any match or group member." />
             <Safety badge="● Group only" badgeClass="text-success" title="Live location, briefly" line="Shared only with your group, and only around pickup time." />
@@ -154,7 +154,7 @@ export default function Landing() {
         </section>
       </main>
 
-      {/* shortcut: no Privacy / Terms / Contact links yet, add them once those pages are written (Learning Notes 88) */}
+      {/* shortcut: no Privacy / Terms / Contact links yet, add them once those pages are written (Learning Notes 90) */}
       <footer className="border-t border-line">
         <div className={cx(WRAP, "flex flex-col gap-3 pt-8 pb-10")}>
           <span className="inline-flex items-center gap-2.5">
@@ -172,7 +172,7 @@ export default function Landing() {
 
 const FAQ: [string, string][] = [
   ["Do you book the cab?", "No. One person in your group books a single Uber or Ola in their own app. Namastute only connects people."],
-  ["Who sees my phone number?", "Nobody. Others see your first name and your area, like \"Sector 29, Gurgaon\". Never your phone number, surname or exact address."],
+  ["Who sees my email or phone number?", "Nobody. Others see your first name and your area, like \"Sector 29, Gurgaon\". Never your email, phone number, surname or exact address."],
   ["How is the fare split?", "By how far each person goes, so whoever rides further pays more. Everyone pays the booker by UPI, in their own UPI app. We never see or confirm payments."],
   ["What are women-only groups?", "Women whose ID check is approved can form groups that nobody else can see or join."],
   ["What happens to my ID photos?", "They're used only for the optional ID check, then deleted once it's decided. Within 7 days at most."],

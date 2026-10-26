@@ -5,25 +5,26 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Lockup } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/display";
-import { OtpInput, PhoneInput } from "@/components/ui/field";
+import { OtpInput, TextField } from "@/components/ui/field";
 import { BottomBar } from "@/components/ui/layout";
 import { getMe, requestOtp, verifyOtp } from "@/lib/api";
 import { useAction } from "@/lib/use-action";
 import { AuthShell, Headline, LoginAside, PITCH } from "../auth-shell";
 
 const RESEND_SECONDS = 30; // matches the API's resend cooldown
-const NOT_A_NUMBER = "Enter a 10-digit Indian mobile number.";
+const NOT_AN_EMAIL = "Enter your email address, like you@example.com.";
+const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/; // same check as the API; the code proves the rest
 
 export default function LoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"phone" | "code">("phone");
-  const [digits, setDigits] = useState(""); // the 10 digits after +91
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [typed, setTyped] = useState("");
   const [code, setCode] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [resendIn, setResendIn] = useState(0);
   const { busy, error, setError, run } = useAction();
 
-  const phone = `+91${digits}`;
+  const email = typed.trim();
 
   // Count the resend timer down by one each second until it reaches 0
   useEffect(() => {
@@ -34,13 +35,13 @@ export default function LoginPage() {
 
   function sendCode(e?: FormEvent) {
     e?.preventDefault();
-    if (!/^[6-9]\d{9}$/.test(digits)) {
-      setPhoneError(NOT_A_NUMBER);
+    if (!EMAIL.test(email)) {
+      setEmailError(NOT_AN_EMAIL);
       return;
     }
-    setPhoneError("");
+    setEmailError("");
     run(async () => {
-      await requestOtp(phone);
+      await requestOtp({ email });
       setStep("code");
       setCode("");
       setResendIn(RESEND_SECONDS);
@@ -50,7 +51,7 @@ export default function LoginPage() {
   function verify(value: string) {
     if (value.length !== 6 || busy) return;
     run(async () => {
-      await verifyOtp(phone, value);
+      await verifyOtp({ email }, value);
       const me = await getMe();
       router.replace(me.name ? "/home" : "/profile"); // first login: ask for a name before anything else
     });
@@ -75,13 +76,13 @@ export default function LoginPage() {
   });
 
   function change() {
-    setStep("phone"); // the number stays filled in
+    setStep("email"); // the address stays filled in
     setError("");
   }
 
   return (
-    <AuthShell aside={<LoginAside withTrust={step === "phone"} />}>
-      {step === "phone" ? (
+    <AuthShell aside={<LoginAside withTrust={step === "email"} />}>
+      {step === "email" ? (
         <form onSubmit={sendCode} noValidate className="flex flex-1 flex-col lg:flex-none">
           <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">
             <div className="flex flex-col gap-14 lg:hidden">
@@ -95,8 +96,21 @@ export default function LoginPage() {
               <h2 className="font-display text-h1 stretch-110">Log in</h2>
               <p className="text-fg-muted">New here? Same thing. We&apos;ll set you up.</p>
             </div>
-            <PhoneInput id="phone" value={digits} onChange={(d) => { setDigits(d); setPhoneError(""); }} error={phoneError} />
-            <Alert variant="info">Your number is never shown to other travellers.</Alert>
+            <TextField
+              id="email"
+              label="Email address"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              maxLength={254}
+              placeholder="you@example.com"
+              value={typed}
+              onChange={(e) => { setTyped(e.target.value); setEmailError(""); }}
+              error={emailError}
+            />
+            <Alert variant="info">Your email is never shown to other travellers.</Alert>
             {error && <Alert variant="error">{error}</Alert>}
           </div>
           <BottomBar>
@@ -113,9 +127,10 @@ export default function LoginPage() {
             <div className="flex flex-col gap-2">
               <h1 className="font-display text-h1 stretch-110">Enter the 6-digit code</h1>
               <p className="flex flex-wrap items-center gap-x-2 text-[1.0625rem] text-fg-muted">
-                Sent to <b className="tnum tracking-[0.03em] text-fg">+91 {digits.slice(0, 5)} {digits.slice(5)}</b>
+                Sent to <b className="break-all text-fg">{email}</b>
                 <Button variant="link" size="tap" onClick={change}>Change</Button>
               </p>
+              <p className="text-fg-muted">Not there? Check your spam folder. It can take a minute.</p>
             </div>
             <OtpInput id="code" value={code} onChange={onCode} error={!!error} autoFocus />
             {error && <Alert variant="error">{error}</Alert>}

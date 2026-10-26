@@ -1238,13 +1238,19 @@
         }
       },
       "OtpRequest" : {
-        "required" : [ "phone" ],
         "type" : "object",
         "properties" : {
+          "email" : {
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "type" : "string",
+            "nullable" : true
+          },
           "phone" : {
-            "minLength" : 1,
             "pattern" : "^\\+91[6-9]\\d{9}$",
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }
       },
@@ -1297,6 +1303,10 @@
           "admin" : {
             "type" : "boolean"
           },
+          "email" : {
+            "type" : "string",
+            "nullable" : true
+          },
           "id" : {
             "type" : "string",
             "format" : "uuid"
@@ -1306,7 +1316,8 @@
             "nullable" : true
           },
           "phone" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           },
           "upiId" : {
             "type" : "string",
@@ -1635,7 +1646,7 @@
         }
       },
       "VerifyRequest" : {
-        "required" : [ "code", "phone" ],
+        "required" : [ "code" ],
         "type" : "object",
         "properties" : {
           "code" : {
@@ -1643,10 +1654,17 @@
             "pattern" : "^\\d{6}$",
             "type" : "string"
           },
+          "email" : {
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "type" : "string",
+            "nullable" : true
+          },
           "phone" : {
-            "minLength" : 1,
             "pattern" : "^\\+91[6-9]\\d{9}$",
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }
       }
