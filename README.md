@@ -2,6 +2,8 @@
 
 **Share a cab from Delhi airport with people from your flight.**
 
+🌐 **Live at [namastute.dev](https://namastute.dev)**, hosted on AWS in Mumbai (a pilot: see [Status](#status)).
+
 Travellers landing at Delhi's IGI airport around the same time, heading the same way, find each other in the app and share one Uber or Ola. Namastute only **connects people**: it never books rides and never handles money. The fare is split fairly by distance, and everyone pays the person who booked directly, by UPI (India's instant bank-to-bank payments).
 
 *The name: **namaste** (a warm Indian greeting) + **astute** (smart). A smart way to greet a stranger and split a cab.*
@@ -24,7 +26,7 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 ---
 
 ## What it does
-1. **Log in** with your phone number and a one-time code. No passwords.
+1. **Log in** with your email and a one-time code. No passwords.
 2. **Plan a trip:** which terminal, when you'll be outside, where you're going (search or tap a map).
 3. **See matches:** people and groups heading your way at about the same time, best first.
 4. **Ask to share.** When someone accepts, you're in a **group** with a live **chat**.
@@ -68,15 +70,17 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 ---
 
 ## How it's built
-The backend is a **modular monolith**: one Spring Boot program split into modules whose boundaries are checked by an automated test (Spring Modulith). It's simpler to run than many separate services, while still keeping each part self-contained. In production everything runs on one server under one domain:
+The backend is a **modular monolith**: one Spring Boot program split into modules whose boundaries are checked by an automated test (Spring Modulith). It's simpler to run than many separate services, while still keeping each part self-contained. In production everything runs on one server under one domain, with a few AWS services beside it:
 
 ```mermaid
 flowchart LR
-    B[Browser or phone] -->|HTTPS| C[Caddy<br/>front door + certificates]
+    B[Browser or phone] -->|"HTTPS, namastute.dev"| C[Caddy<br/>front door + certificates]
     C -->|"/api/*, /ws"| A[Spring Boot API]
     C -->|everything else| W[Next.js web app]
     A --> P[(Postgres + PostGIS)]
     A --> R[(Redis)]
+    A -->|ID photos| S3[(Amazon S3)]
+    A -->|login codes| SES[Amazon SES]
     A -->|encrypted Web Push| N[Browser push services<br/>Google, Mozilla, Apple]
 ```
 
@@ -113,7 +117,8 @@ flowchart LR
 | | Leaflet + OpenStreetMap | Maps |
 | | uqr | Draws the UPI QR code shown on laptops |
 | Infra | Docker, Docker Compose | Run every part in containers, the same on every computer |
-| | Caddy | The front door: HTTPS certificates and routing |
+| | Caddy | The front door: HTTPS certificates (Let's Encrypt) and routing |
+| | AWS: EC2, S3, SES, Route 53, IAM | The server, private storage and backups, login emails, the domain, and access without stored keys |
 | | GitHub Actions | Builds and tests every change before it's merged |
 | | k6 | Load testing |
 
@@ -167,13 +172,23 @@ How to run them is in [load/README.md](load/README.md); the results are below.
 ---
 
 ## Production
-One server (AWS EC2 in Mumbai) runs Postgres, Redis, the API, the web app and Caddy with `infra/docker-compose.prod.yml`. Only Caddy is reachable from the internet, it gets HTTPS certificates automatically, and secrets come from an `infra/.env` file that is never committed. Setup, everyday commands, backups and the before-launch checklist are in **[infra/README.md](infra/README.md)**.
+**Live at [namastute.dev](https://namastute.dev)** since 26 October 2026.
 
-Real login emails need a domain and Amazon SES ([infra/AWS-SETUP.md](infra/AWS-SETUP.md), section 15). Until then the server runs in staging mode, with login codes in its log.
+| Piece | Where it runs |
+|---|---|
+| The app | One AWS **EC2** server (`t3.small`, Mumbai) running Postgres, Redis, the API, the web app and Caddy with `infra/docker-compose.prod.yml`. A fixed **Elastic IP**; only ports 80 and 443 are open to everyone. |
+| The domain | `namastute.dev`, registered in **Route 53**, which also holds its DNS records |
+| HTTPS | **Caddy** gets and renews a free Let's Encrypt certificate by itself (`.dev` sites only open over HTTPS) |
+| Login emails | **Amazon SES**, from `login@namastute.dev`, signed with DKIM so they reach the inbox |
+| ID photos | A private, encrypted **S3** bucket; AWS deletes anything older than 7 days, even if our own clean-up stopped |
+| Backups | A nightly database dump, copied to a second S3 bucket and kept 30 days |
+| Access | The server's **IAM role** gives it exactly S3 and SES rights; no AWS keys are stored anywhere |
+
+Secrets live in an `infra/.env` file on the server, never committed. How it was all set up, one AWS service at a time, is in **[infra/AWS-SETUP.md](infra/AWS-SETUP.md)**. Everyday commands, backups, admins and the before-launch checklist are in **[infra/README.md](infra/README.md)**.
 
 ## Status
 - **Phase 1, the core loop:** ✅ done. Two people can sign up, match, form a group, chat, lock, meet and split the fare.
-- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. ID verification and women-only groups are done too. **Still to do:** an SMS provider (with India's DLT registration), the real pickup points, and deployment.
+- **Phase 2, trust, safety and launch readiness:** almost done. Fare split, the production build, report and block, push notifications, live location, ratings, the pre-launch fixes, load tests, indexes and rate limits are done. ID verification and women-only groups are done too. Deployed: **live on AWS at [namastute.dev](https://namastute.dev)**, with login by email through Amazon SES. **Still to do:** the real pickup points, a map provider before growing, the privacy policy and terms pages, and (only if phone login should return) an SMS provider with India's DLT registration.
 - **The redesign:** ✅ done, in four slices: the design system (tokens, fonts, dark/light theme, components), log in, profile, home, plan trip, the group screen (chat, pickup, live location, report and block, ratings), and the fare with UPI payment (a QR code on laptops).
 - **Phase 3:** flight-delay tracking, automatic matching, and more.
 
@@ -210,7 +225,7 @@ Deliberate shortcuts for launch, each marked `shortcut:` in the code with when i
 - **Reports** are reviewed with SQL (admins get a push for each one); ID checks have an admin page, reports don't yet.
 - **Tests share the local development database.** Trips and checks they create stay behind and can crowd results (tests use their own time slots to avoid it). Two branches worked on at the same time can also both add a migration with the same number: renumber the unmerged one, and merge in order.
 
-Before real users, the team also needs a domain with SES set up for login emails, the real pickup points, a map provider and an uptime monitor: see the checklist in [infra/README.md](infra/README.md).
+Before inviting many people, the team also needs the real pickup points, a map provider, and the privacy policy and terms pages: see the checklist in [infra/README.md](infra/README.md).
 
 ## Docs
 - [Learning Notes](Docs%20Text/Learning%20Notes.md) (also as a [web page](Docs%20HTML/Learning%20Notes.html)): the book. Every concept behind the code explained from scratch, with walkthroughs of the real files.
