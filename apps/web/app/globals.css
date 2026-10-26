@@ -157,6 +157,12 @@
   button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
 }
 
+/* The landing page's "How it works" / "Safety" / "FAQ" links glide; layout.tsx's data-scroll-behavior stops Next.js
+   from gliding on page changes too */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

@@ -13,6 +13,6 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((tabs) => (tabs.length ? tabs[0].focus() : self.clients.openWindow("/"))),
+      .then((tabs) => (tabs.length ? tabs[0].focus() : self.clients.openWindow("/home"))),
   );
 });

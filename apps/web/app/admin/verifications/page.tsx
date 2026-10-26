@@ -47,7 +47,7 @@ export default function ReviewPage() {
     restoreSession()
       .then(async (me) => {
         if (!me) return router.replace("/login");
-        if (!me.admin || !me.name) return router.replace("/");
+        if (!me.admin || !me.name) return router.replace("/home");
         setName(me.name);
         setChecks(await getPendingChecks());
       })

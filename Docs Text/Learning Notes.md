@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 88) defines every term in the book, A to Z. The **Command cheat sheet** (87) and **Interview questions** (89) are for revision. The **Backlog** (86) lists everything still open.
+- The **Glossary** (chapter 90) defines every term in the book, A to Z. The **Command cheat sheet** (89) and **Interview questions** (91) are for revision. The **Backlog** (88) lists everything still open.
 
 ---
 
@@ -115,7 +115,8 @@ flowchart LR
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
 | IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
 | X. ID verification | 78–85 | Handling ID photos safely, admin review, machine helpers for faces and text, and women-only groups |
-| Reference | 86–89 | What's still open, commands, glossary, interview questions |
+| XI. The front door | 86–87 | A static landing page, moving the app home, and checking contrast by measurement |
+| Reference | 88–91 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -237,12 +238,17 @@ flowchart LR
 84. [Women-only groups: one rule, checked at every door](#84-women-only-groups-one-rule-checked-at-every-door)
 85. [Code walkthrough: women-only groups (slice 3)](#85-code-walkthrough-women-only-groups-slice-3)
 
+**[Part XI. The front door](#part-xi-the-front-door)**
+
+86. [The landing page: a static front door](#86-the-landing-page-a-static-front-door)
+87. [Code walkthrough: the landing page](#87-code-walkthrough-the-landing-page)
+
 **[Reference](#reference)**
 
-86. [Backlog: everything still open](#86-backlog-everything-still-open)
-87. [Command cheat sheet](#87-command-cheat-sheet)
-88. [Glossary](#88-glossary)
-89. [Interview questions to practise](#89-interview-questions-to-practise)
+88. [Backlog: everything still open](#88-backlog-everything-still-open)
+89. [Command cheat sheet](#89-command-cheat-sheet)
+90. [Glossary](#90-glossary)
+91. [Interview questions to practise](#91-interview-questions-to-practise)
 
 ---
 
@@ -4435,6 +4441,7 @@ The test plays **both** outside parties:
   - `notificationclick` → focus an open Namastute tab, or open `/`.
   - No caching, so there's no offline mode to get wrong.
 - `app/manifest.ts`: Next serves it as `/manifest.webmanifest` and links it automatically: name, `display: "standalone"`, colours, icons (192, 512, and 512 "maskable").
+  - **Later change (87.1):** `start_url` is now `/home`, so the installed app skips the landing page.
 - `app/apple-icon.png`: Next's file convention adds `<link rel="apple-touch-icon">` for the iPhone Home Screen.
   - The icons (a white "N" on black) were drawn with Python's standard library: PNG = signature + `IHDR` (size, colour type) + `IDAT` (zlib-compressed pixel rows) + `IEND`, each chunk with a CRC checksum.
 - `lib/api.ts`:
@@ -5110,6 +5117,7 @@ This slice redesigns the two busiest screens on top of slice A's components (cha
 
 ### 73.2 `app/page.tsx` and `app/current-trip.tsx`: home
 - `page.tsx` became a client page with a route guard; the old `session-box.tsx` is gone (log out lives on the profile).
+  - **Later change (87.1):** the home moved to `app/home/page.tsx` (`/home`); `/` is now the landing page.
 - `CurrentTrip` keeps its data logic unchanged (load trip and requests, refresh every 60 s and when the tab comes back, `version` to reload after actions), and is now split into small parts:
   - **`TripCard`:** the orange card (an ink card in light mode, as the design asks), with "Your trip · Today", the title, "Outside at 2:25 pm · 1 seat, 1 bag · about 9.7 km", and "Cancel trip", which opens a `Sheet`.
   - **`Matches`:** loading skeletons, an error alert, the empty state, or a grid of **`MatchCard`** (one person or an open group, with chips and "Ask to share") and **`CompactRow`** ("Asked ✓", or an orange border and "Asked you · answer below ↓", "Asked you ←" on laptops where requests sit on the left).
@@ -5761,6 +5769,103 @@ The rule from chapter 84, added to trips (chapter 35), matching (36–38, 42–4
 - Web lint, type-check and build pass.
 - **Not checked:** the "Women-only" chips in a browser (no second verified woman in the development data; the API's `womenOnly` field is tested), a screen reader on the switch, and two people accepting at the same moment.
 
+## Part XI. The front door
+
+Everything so far was built for people already inside the app. A stranger typing the domain saw only "Checking your session…" and then a login screen, with no idea what Namastute is. This part gives the product a front door: a landing page that explains it in one scroll and sends people in.
+
+---
+
+## 86. The landing page: a static front door
+
+### 86.0 Words first
+- **Landing page:** the page a stranger sees first, usually the bare domain. Its job is to explain the product and send people into the app.
+- **Static rendering:** the server builds the page's HTML once, when the app is built, and sends it ready-made. It shows instantly, and search engines can read it. Our app screens are the opposite: they run in the browser and check your login first.
+- **`start_url`:** in the web app manifest (58.6), the address an installed app opens at.
+- **Exclusive accordion:** a list of questions where opening one closes the others. Browsers now do this natively with `<details name="…">`, with no JavaScript.
+- **`IntersectionObserver`:** a browser tool that tells your code when an element comes into view or leaves it, without checking on every scroll.
+- **Anchor link:** a link to a spot on the same page (`#faq` jumps to the element with `id="faq"`).
+
+### 86.1 The problem
+`/` was the app's home: a client page that checks the session, then sends anyone logged out to `/login`. So a visitor saw a blank "checking" line, and a search engine saw an empty page. A designer delivered a landing page (a build spec plus reference designs for phone and laptop, dark and light), to be built as production code.
+
+### 86.2 The naive way, and why it hurts
+Keep `/` as the app home, and show the landing page there when nobody is logged in. Then:
+- the login check runs in the browser, so every visitor first sees the "checking" flash;
+- search engines read the flash, not the page;
+- the landing page's code ships inside the app screen, and the app's inside the landing page.
+
+### 86.3 The tools
+1. **Two routes:** the landing page takes `/` and is static. The app's home moves to `/home`, which already sends logged-out people to `/login`. Every link that meant "the app's home" changed (about eight: the logo, redirects after login, after saving the profile and after planning a trip, the admin guard, the push-notification click). The manifest's `start_url` became `/home`, so the installed app skips the landing page.
+2. **Reuse, not a copy of the spec's CSS.** The spec's colour tokens turned out to be exactly the app's tokens under other names (`--raised` is our `surface-2`, `--mark` our `brand-mark`). So the page uses the app's theme system (dark by default, follows the phone, remembers a choice), its self-hosted fonts (no request to Google from visitors), `Lockup`, `buttonClass` and `BottomBar`.
+3. **`<details name="faq">`** for the FAQ: one answer open at a time, keyboard and screen-reader support built in, no JavaScript.
+4. **One small client component** for the phone's sticky "Find co-travellers" bar, which appears once the hero's button has scrolled away (`IntersectionObserver`).
+5. **Honest copy.** The spec forbids invented claims, and three lines overstated what we built; they were corrected before building (86.4).
+
+### 86.4 Decisions (2026-10-26)
+| Decision | Choice |
+|---|---|
+| Where | The landing page at `/` (static); the app home at `/home`; the installed app opens `/home` |
+| Styling | The app's tokens, theme, fonts and components |
+| Fonts | Self-hosted with `next/font` instead of the spec's Google Fonts link |
+| FAQ | `<details name="faq">`, the first question open |
+| "Report and block … from any profile or chat" | Became "from any match or group member": there's no report button in chat |
+| Women-only card: "once your ID check is approved" | Became "once your ID check confirms you're a woman": approval alone isn't enough (84) |
+| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 88) |
+| A logged-in person visiting `/` | Sees the landing page; "Open the app" takes them straight in. No session check on the landing page. |
+| Checks | Lint and build; browser at 375 and 1280 px in both themes; contrast measured on every piece of text; tap targets measured |
+
+---
+
+## 87. Code walkthrough: the landing page
+
+### 87.0 Before you read
+The page from chapter 86. Everything is in `apps/web`.
+
+### 87.1 Moving the app home
+- `app/page.tsx` moved to `app/home/page.tsx` with `git mv`, so Git keeps its history. Its only change is the import path `../current-trip`.
+- `"/"` became `"/home"` in `login/page.tsx`, `profile/page.tsx` (after saving, and "‹ Back"), `trip/new/page.tsx`, `admin/verifications/page.tsx`, `components/app-bar.tsx` (the logo), `public/sw.js` (opening the app from a notification) and `app/manifest.ts` (`start_url`). A search for every `"/"` in the code found them all; afterwards it found none.
+
+### 87.2 `app/page.tsx`: the landing page
+- **A Server Component with no data:** Next.js builds it once (`○ /` in the build output means static). Its own `metadata` gives the tab and search results a real title and description.
+- **Class constants** at the top (`WRAP`, `SECTION`, `EYEBROW`, `H2`, `LEAD`, `CARD`, `CHIP`) carry the spec's spacing and type tokens, with phone values first and `lg:` for laptops (`text-[2.875rem] lg:text-[5.75rem]` is the 46 / 92 px hero). Sizes are in `rem`, so the page survives 200% text.
+- **Avoiding class clashes:** the app's `Card` and `Chip` have fixed padding and a pill shape, while the design wants other values. Adding `p-6` to a `p-5` would be two classes for the same property, and the stylesheet's order would decide (the lesson from chapter 71). So `CARD` and `CHIP` are written out, and `CHIP` has no colour or weight: every use adds its own.
+- **Sections** use `<section aria-labelledby>` pointing at their heading. The steps are an `<ol>`, and the trust points and safety cards are `<ul>`s. Decorative glyphs and the mini chips are `aria-hidden`.
+- **`MatchesPreview`** draws the matches screen from real-looking parts, with `role="img"` and one `aria-label` sentence, so a screen reader hears a description instead of a fake button.
+- **`FareExample`:** the split bar uses `flex-[246]` and `flex-[354]`, so its two parts have exactly the shares' proportions. The rows are a `<dl>` (name → amount).
+- **FAQ:** `<details name="faq" open={i === 0} className="group">`. The `+` / `−` swap with `group-open:hidden` and `hidden group-open:inline`, and `[&::-webkit-details-marker]:hidden` removes Safari's triangle.
+- **Footer:** the logo and the "we only connect people" line. A `shortcut:` comment notes the missing Privacy / Terms / Contact links.
+
+### 87.3 `app/sticky-cta.tsx`
+- A client component that watches the hero button (`id="hero-cta"`). When it's out of view *above* the screen (`!isIntersecting && boundingClientRect.top < 0`), it renders the app's `BottomBar` with the same button. `md:hidden` keeps it to phones; `BottomBar` already adds the safe-area padding for phones with a home bar.
+- `observer.disconnect()` in the effect's cleanup, so leaving the page leaves nothing watching.
+
+### 87.4 Smooth anchor links
+- `globals.css`: `html { scroll-behavior: smooth }`, but only inside `@media (prefers-reduced-motion: no-preference)`, so people who turn off motion get instant jumps.
+- `layout.tsx`: `data-scroll-behavior="smooth"` on `<html>` tells Next.js to turn the smoothing off while it changes pages, so moving between screens doesn't glide.
+
+### 87.5 Verified
+- **Build:** lint, type-check and `pnpm build` pass; `/` is static (`○`) and `/home` too.
+- **Laptop (1280 px), measured:**
+  - columns: hero 2, trust points 3, steps 4, fares 2, safety 3, FAQ 2;
+  - headlines 92 px and 60 px at width 115%;
+  - the fare bar's parts are 191 : 276 px, the same proportion as 246 : 354;
+  - `#how` lands on its section;
+  - opening the third question closed the first, and the sign turned to "−";
+  - the sticky bar is hidden.
+- **Phone (375 px):**
+  - nav links hidden, buttons full width and stacked, everything in one column, no sideways scrolling;
+  - the sticky bar appears after scrolling past the hero button and disappears at the top again.
+- **Both themes:** a contrast check written for this page (no outside code) measured all 104 pieces of text.
+  - Dark: nothing below WCAG AA; the lowest is 7.3:1.
+  - Light: the lowest is 3.9:1, for the large orange headline words ("Share the cab.", "company."), which need 3:1. Normal text is at least 6:1.
+  - The first run reported 2.67:1 for a link in dark mode. It had flipped the theme instantly while the link was still animating its colour (the `transition` class). Measured after a proper reload, the link is fine. Measure after transitions finish.
+- **Tap targets:** everything visible is at least 48 px tall.
+- **App home:** `/home` shows the app, and its logo links to `/home`.
+- **Not checked:**
+  - a real phone (the safe-area padding, smooth scrolling);
+  - an installed app that still has the old `start_url`. It opens `/`, and "Open the app" takes it in. Phones refresh the manifest on their own over time.
+  - a full automatic accessibility scanner: loading axe from the internet into the page was blocked, so contrast and tap targets were measured by hand instead.
+
 ---
 
 ## Reference
@@ -5769,9 +5874,9 @@ The last four chapters are for looking things up: everything still open, the com
 
 ---
 
-## 86. Backlog: everything still open
+## 88. Backlog: everything still open
 
-Everything the project knows it still has to do, in one place, as of 2026-10-25. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
+Everything the project knows it still has to do, in one place, as of 2026-10-26. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
 
 ### Decisions the team has to make (no code first)
 | Item | Why it matters | Where |
@@ -5784,7 +5889,8 @@ Everything the project knows it still has to do, in one place, as of 2026-10-25.
 | ID check reviewers and how fast they answer | The app promises "usually within a day" | 80 |
 | Women-only policy for transgender / third-gender IDs | Until decided, only IDs saying female count (one line, a `shortcut:` in `UserService`) | 78, 84, design doc open question 4 |
 | Face-score calibration with consenting team members | Thresholds come from a benchmark, not Indian IDs | 82 |
-| Privacy policy covering ID photos | Required by the DPDP Act; must match the consent notice | 78 |
+| Privacy policy covering ID photos | Required by the DPDP Act; must match the consent notice; then linked from the landing page's footer | 78, 86 |
+| Terms of use and a contact address | The landing page's footer leaves out Terms and Contact until they exist | 86 |
 | Detour default (3 km / 25%) checked on real routes | Chosen by reasoning, not data | 37 |
 | The old "Ubery" name in the design docs; archiving the old repository | Tidiness and trademark risk | design doc open question 6 |
 
@@ -5806,6 +5912,7 @@ Everything the project knows it still has to do, in one place, as of 2026-10-25.
 | A blocked person's request to your group stays until someone declines it | It causes confusion |
 | Matching at 1,000 simultaneous users: p95 593 ms, over the 500 ms target | Real traffic approaches that (66–67; the partial index idea is noted in `TripRepository`) |
 | The API image is 981 MB: the OpenCV jar carries every platform's library | Pulls on the server get slow (then strip the other platforms' libraries in the Dockerfile) |
+| The landing page's footer has no Privacy / Terms / Contact links | Those pages are written |
 | ID photos left behind if the server crashes between upload and saving | Seen in practice (production's S3 rule deletes them anyway) |
 
 ### Never checked (honest gaps)
@@ -5821,7 +5928,7 @@ Flight-delay tracking, automatic matching, and whatever real users ask for first
 
 ---
 
-## 87. Command cheat sheet
+## 89. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -5909,7 +6016,7 @@ git fetch --prune
 
 ---
 
-## 88. Glossary
+## 90. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -5930,6 +6037,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
 | Allowlist | A list of the only values accepted; everything else is refused |
 | Alpine Linux | A very small Linux used for Docker images; it uses musl, so many native libraries won't load on it (82) |
+| Anchor link | A link to a spot on the same page: `#faq` jumps to the element with `id="faq"` (86) |
 | Annotation | `@Something` tag adding information to code without changing it |
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
 | API | Application Programming Interface: the list of requests a program accepts from other programs |
@@ -6051,6 +6159,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Enforcement point | A place in the code where a rule is checked; a rule needs one at every way in (84) |
 | Entity | A class mapped to a database table |
 | Ephemeral data | Data that is passed along and never saved |
+| Exclusive accordion | Questions where opening one closes the others; native with `<details name="…">` (86) |
 | ExecutorService | A pool of threads that run submitted tasks |
 | EXIF | Hidden data inside a photo file, often including the GPS location |
 | Existence leak | Revealing that something exists by refusing access to it (a 403 instead of a 404) (80, 84) |
@@ -6104,6 +6213,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Interceptor | Code that inspects every incoming message before it's handled |
 | Interface (Java) | A list of methods a class promises to provide, without saying how |
 | Internet | The worldwide network of computer networks |
+| IntersectionObserver | A browser tool that tells code when an element enters or leaves the view, without checking on every scroll (86) |
 | IoC | Inversion of Control: the framework creates and wires objects |
 | IP address | The network address a request comes from |
 | Irreversible action | Something the app can't undo, like entering the fare |
@@ -6119,6 +6229,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | JWT | JSON Web Token: header.payload.signature |
 | Key-value store | Database that saves values under keys (Redis) |
 | KYC (Know Your Customer) | Checking a person is real and their ID is theirs |
+| Landing page | The page a stranger sees first; it explains the product and sends people in (86) |
 | Latency | The delay between something happening and you seeing it |
 | Latitude / longitude | North–south / east–west position in degrees |
 | Launch blocker | Something that must be done before real users |
@@ -6289,9 +6400,11 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Staleness | How old a reading is; old positions may be wrong |
 | Standalone output | Next.js build mode producing a small self-contained server.js |
 | Starter | One dependency bringing a tested set of libraries |
+| start_url | The address an installed web app opens at, set in the manifest (86) |
 | State | Data a component remembers; changing it redraws the component |
 | State machine | A fixed set of states plus the allowed transitions between them |
 | Stateless | Each request stands alone; the server remembers nothing between them |
+| Static rendering | Building a page's HTML once at build time and sending it ready-made: instant, and readable by search engines (86) |
 | Status code | 3-digit result of an HTTP request (2xx/4xx/5xx) |
 | Stick to bottom | A chat following new messages only if you were already at the bottom |
 | STOMP | Text protocol over WebSocket with destinations (CONNECT, SUBSCRIBE, SEND, MESSAGE) |
@@ -6352,7 +6465,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 89. Interview questions to practise
+## 91. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6538,3 +6651,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 180. When should a refused request answer 404, and when 409 with a reason? Use asking and accepting as examples.
 181. The policy for transgender and third-gender IDs isn't decided. How did you build the feature so the decision is cheap to change?
 182. Your test passed with the rule removed. What does that tell you, and what were the two causes here?
+183. Why make the landing page static instead of showing it from the app's home when nobody is logged in?
+184. You moved a route that eight places linked to. How did you make sure none were missed?
+185. A designer's spec says "Report from any chat". The app can't do that. What do you do, and why does it matter on a landing page?
+186. How do you build an accordion where only one answer is open, with no JavaScript, and what does the browser give you for free?
+187. Your contrast check reported a failure that wasn't real. What caused it, and how would you avoid it next time?

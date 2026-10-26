@@ -52,7 +52,7 @@ export default function LoginPage() {
     run(async () => {
       await verifyOtp(phone, value);
       const me = await getMe();
-      router.replace(me.name ? "/" : "/profile"); // first login: ask for a name before anything else
+      router.replace(me.name ? "/home" : "/profile"); // first login: ask for a name before anything else
     });
   }
 
