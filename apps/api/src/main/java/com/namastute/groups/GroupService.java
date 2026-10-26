@@ -42,9 +42,10 @@ public class GroupService {
     record SentView(UUID id, UUID toTripId, String firstName, @Schema(allowableValues = {"pending", "declined"}) String status) {}
     record Requests(List<SentView> sent, List<RequestView> received) {}
     // share: what this member owes the booker (the booker's own share is what they paid themselves); null until the fare
+    // paid: the member said they've paid the booker, their own word only (Learning Notes 92)
     // tripId: an opaque handle for report/block (Learning Notes 56), never the user id
     record MemberView(UUID tripId, String firstName, String destArea, int seats, int bags, boolean booker, boolean you,
-                      boolean here, @Schema(nullable = true) BigDecimal share, UserService.Rating rating) {}
+                      boolean here, @Schema(nullable = true) BigDecimal share, boolean paid, UserService.Rating rating) {}
     // meetAt: when the group meets at the pickup; sharingFrom/Until: when live location works (locked or met groups only)
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
                      @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members,
@@ -55,7 +56,8 @@ public class GroupService {
     record Pending(UUID id, UUID fromTripId, UUID toTripId) {}
     record Member(UUID userId, UUID tripId) {}
     record GroupRow(String status, UUID bookerId, BigDecimal fareTotal) {}
-    record MemberRow(UUID userId, UUID tripId, OffsetDateTime hereAt, BigDecimal share) {}
+    record MemberRow(UUID userId, UUID tripId, OffsetDateTime hereAt, BigDecimal share, OffsetDateTime paidAt) {}
+    record MyPart(UUID tripId, boolean booker, boolean fareIn, boolean paid) {}
 
     private final JdbcClient db;
     private final TripService trips;
@@ -284,6 +286,52 @@ public class GroupService {
         return conflict("CANNOT_ENTER_FARE", "Only the booker can enter the fare, once, after the group has met up");
     }
 
+    // ---- After the ride (Learning Notes 92) ----
+
+    // "Done": once the fare is in, your own trip ends, so you can plan the next one straight away. The group stays as it
+    // is for the others, and the 4-hour sweep (finish) closes it. Tapping twice changes nothing.
+    @Transactional
+    void done(UUID userId, UUID groupId) {
+        MyPart me = myPart(userId, groupId);
+        if (!me.fareIn()) {
+            throw conflict("FARE_NOT_IN", "You can finish once the booker has entered the fare");
+        }
+        trips.markDone(List.of(me.tripId()));
+    }
+
+    // "I've paid": the member's own word that they paid the booker, shown to the group. Namastute never sees or checks
+    // payments, so this is information, not proof. Saying it twice changes nothing.
+    @Transactional
+    void paid(UUID userId, UUID groupId) {
+        MyPart me = myPart(userId, groupId);
+        if (me.booker()) {
+            throw conflict("BOOKER_DOESNT_OWE", "You booked the cab: the others pay you");
+        }
+        if (!me.fareIn()) {
+            throw conflict("FARE_NOT_IN", "You can pay once the booker has entered the fare");
+        }
+        if (me.paid() || db.sql("update group_members set paid_at = now() where group_id = ? and user_id = ? and paid_at is null")
+                .params(groupId, userId).update() == 0) {
+            return;
+        }
+        events.publishEvent(new GroupChanged(groupId, firstName(userId) + " says they've paid their share"));
+        UUID booker = db.sql("select booker_id from groups where id = ?").param(groupId).query(UUID.class).single();
+        // No amount on the lock screen (Learning Notes 58.5)
+        push.send(List.of(booker), new Push(nameOf(userId) + " says they've paid",
+                "Check your UPI app to be sure: Namastute never sees payments", Duration.ofDays(1)));
+    }
+
+    // Your place in an active group: anyone else gets the same 404 as a missing group. fareIn = met and the fare entered.
+    private MyPart myPart(UUID userId, UUID groupId) {
+        return db.sql("""
+                        select m.trip_id, m.user_id = g.booker_id as booker, g.status = 'met' and g.fare_total is not null as fare_in,
+                               m.paid_at is not null as paid
+                        from group_members m join groups g on g.id = m.group_id
+                        where g.id = ? and m.user_id = ? and m.status = 'accepted' and g.status in ('open', 'locked', 'met')""")
+                .params(groupId, userId).query(MyPart.class).optional()
+                .orElseThrow(GroupService::groupNotFound);
+    }
+
     // ---- Background jobs (Learning Notes 48), run every minute by GroupJobs ----
     // Each is a conditional UPDATE ... RETURNING id: only groups this run actually changed are followed up and
     // announced, so a second run or a second server does nothing twice (idempotent). now() = the database's clock.
@@ -421,7 +469,7 @@ public class GroupService {
         UUID groupId = membership.get().groupId();
         GroupRow g = db.sql("select status, booker_id, fare_total from groups where id = ?").param(groupId).query(GroupRow.class).single();
         List<MemberRow> members = db.sql("""
-                        select user_id, trip_id, here_at, share from group_members
+                        select user_id, trip_id, here_at, share, paid_at from group_members
                         where group_id = ? and status = 'accepted' order by created_at, user_id""")
                 .param(groupId).query(MemberRow.class).list();
         Map<UUID, TripSummary> memberTrips = byId(members.stream().map(MemberRow::tripId).toList());
@@ -430,7 +478,8 @@ public class GroupService {
         List<MemberView> views = members.stream().map(m -> {
             TripSummary t = memberTrips.get(m.tripId());
             return new MemberView(m.tripId(), names.get(m.userId()), t.destArea(), t.seats(), t.bags(),
-                    m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share(), ratings.get(m.userId()));
+                    m.userId().equals(g.bookerId()), m.userId().equals(userId), m.hereAt() != null, m.share(), m.paidAt() != null,
+                    ratings.get(m.userId()));
         }).toList();
         OffsetDateTime meetAt = db.sql("select meet_at from groups where id = ?").param(groupId).query(OffsetDateTime.class).single();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),

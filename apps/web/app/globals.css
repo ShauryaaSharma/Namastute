@@ -32,27 +32,29 @@
 
 /* Dark: the default (a script in layout.tsx adds the class before the first paint) */
 .dark {
-  --bg: 17 15 13;
-  --surface: 27 24 20;
-  --surface-2: 37 33 28;
-  --line: 59 53 45;
-  --line-strong: 90 81 70;
-  --fg: 246 240 231;
-  --fg-muted: 184 174 159;
-  --fg-disabled: 143 133 119;
+  /* "Night terminal" navy (2026-10-26): calm and trustworthy behind the orange, like an airport at night. Every
+     text/background pair here was measured against WCAG AA (Learning Notes 93.4). */
+  --bg: 11 22 38;
+  --surface: 19 35 58;
+  --surface-2: 28 48 80;
+  --line: 43 66 99;
+  --line-strong: 76 100 133;
+  --fg: 244 241 234;
+  --fg-muted: 169 180 196;
+  --fg-disabled: 124 139 161;
   --accent: 255 166 48;
   --on-accent: 26 18 6;
   --accent-text: 255 192 116;
-  --accent-soft: 58 39 16;
+  --accent-soft: 58 44 30;
   --brand-mark: 255 166 48;
   --success: 111 220 156;
-  --success-soft: 18 48 31;
+  --success-soft: 18 53 40;
   --danger: 255 154 139;
-  --danger-soft: 58 23 20;
+  --danger-soft: 61 28 34;
   --on-danger: 42 13 9;
   --info: 156 203 255;
-  --info-soft: 21 37 54;
-  --ring: 246 240 231;
+  --info-soft: 23 52 88;
+  --ring: 244 241 234;
 }
 
 @theme inline {

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { encode } from "uqr";
 import { Button, buttonClass } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
-import { Alert, Eyebrow } from "@/components/ui/display";
+import { Alert, Chip, Eyebrow } from "@/components/ui/display";
 import { Sheet } from "@/components/ui/layout";
-import { enterFare, type Group, previewFare, type ShareView } from "@/lib/api";
+import { enterFare, finishRide, type Group, previewFare, sayPaid, type ShareView } from "@/lib/api";
 import { rupees } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import { useMedia } from "@/lib/use-wide";
@@ -26,7 +27,34 @@ export default function FareSection({ group: g, onChange }: { group: Group; onCh
       ? <EnterFare group={g} onChange={onChange} />
       : <p className="text-fg-muted">After the ride, {booker.firstName} enters the fare and your share appears here.</p>;
   }
-  return g.youAreBooker ? <FareConfirmed group={g} /> : <PayBooker group={g} />;
+  return (
+    <div className="flex flex-col gap-8">
+      {g.youAreBooker ? <FareConfirmed group={g} /> : <PayBooker group={g} onChange={onChange} />}
+      <Finish groupId={g.id} />
+    </div>
+  );
+}
+
+// After the ride (Learning Notes 92, design 6b's "Plan another trip"): ends your own trip so you can plan the next one.
+// The group stays as it is for the others until it closes by itself.
+function Finish({ groupId }: { groupId: string }) {
+  const router = useRouter();
+  const { busy, error, run } = useAction();
+  return (
+    <div className="flex flex-col gap-2.5 border-t border-line pt-6">
+      <p className="text-small text-fg-muted">Before you go, you can rate your group under &ldquo;How was the ride?&rdquo;.</p>
+      <Button
+        variant="secondary"
+        className="self-start"
+        loading={busy}
+        loadingLabel="Finishing…"
+        onClick={() => run(async () => { await finishRide(groupId); router.push("/trip/new"); })}
+      >
+        Done · plan another trip
+      </Button>
+      {error && <Alert variant="error">{error}</Alert>}
+    </div>
+  );
 }
 
 // 6a / W7a. Whole rupees, shown grouped as you type ("1,200"); Confirm appears only after a preview of that exact amount.
@@ -101,6 +129,7 @@ function FareConfirmed({ group: g }: { group: Group }) {
         <div key={m.tripId} className="-mt-2 flex flex-col gap-1">
           <p className="font-display text-h3">{m.firstName} owes you</p>
           <p className={cx(HERO, owing.length > 1 ? SMALLER : BIG)}>{rupees(m.share!)}</p>
+          {m.paid && <Chip variant="here" className="mt-2 self-start">✓ {m.firstName} says they&apos;ve paid</Chip>}
         </div>
       ))}
       <p className="text-fg-muted">
@@ -118,11 +147,12 @@ function FareConfirmed({ group: g }: { group: Group }) {
 }
 
 // 6c / W7b: your share and how to pay it. Phones open the UPI app; laptops (no UPI app) show a QR code to scan.
-function PayBooker({ group: g }: { group: Group }) {
+function PayBooker({ group: g, onChange }: { group: Group; onChange: () => void }) {
   const laptop = useMedia("(hover: hover) and (pointer: fine)");
   const [qr, setQr] = useState(false);
   const booker = g.members.find((m) => m.booker)!;
-  const share = g.members.find((m) => m.you)!.share!;
+  const me = g.members.find((m) => m.you)!;
+  const share = me.share!;
   // UPI deep link (Learning Notes 50.4). The UPI ID is left as is: it only contains letters, digits, . _ - and @
   // (checked when saved), and some UPI apps don't decode %40. Name and note are encoded.
   const link = g.bookerUpiId
@@ -141,22 +171,25 @@ function PayBooker({ group: g }: { group: Group }) {
         <p className={cx(HERO, BIG)}>{rupees(share)}</p>
         <p className="font-display text-h3">to {booker.firstName}</p>
       </div>
-      {link ? (
-        <div className="flex flex-col gap-4 xl:rounded-lg xl:border xl:border-line xl:bg-surface xl:p-6 xl:dark:border-transparent">
-          <UpiCard name={booker.firstName} upiId={g.bookerUpiId!} inCard />
-          <Alert variant="warning">Check the name your UPI app shows before paying. Namastute never sees or confirms payments.</Alert>
-          {laptop ? (
-            <>
-              <Button size="pay" onClick={() => setQr(true)}>{payLabel}</Button>
-              <p className="text-small text-fg-muted">On a laptop? The button shows a UPI QR code to scan with your phone.</p>
-            </>
-          ) : (
-            <a href={link} className={buttonClass({ size: "pay" })}>{payLabel}</a>
-          )}
-        </div>
-      ) : (
-        <p className="text-fg-muted">{booker.firstName} hasn&apos;t added a UPI ID yet: pay them directly.</p>
-      )}
+      <div className="flex flex-col gap-4">
+        {link ? (
+          <div className="flex flex-col gap-4 xl:rounded-lg xl:border xl:border-line xl:bg-surface xl:p-6 xl:dark:border-transparent">
+            <UpiCard name={booker.firstName} upiId={g.bookerUpiId!} inCard />
+            <Alert variant="warning">Check the name your UPI app shows before paying. Namastute never sees or confirms payments.</Alert>
+            {laptop ? (
+              <>
+                <Button size="pay" onClick={() => setQr(true)}>{payLabel}</Button>
+                <p className="text-small text-fg-muted">On a laptop? The button shows a UPI QR code to scan with your phone.</p>
+              </>
+            ) : (
+              <a href={link} className={buttonClass({ size: "pay" })}>{payLabel}</a>
+            )}
+          </div>
+        ) : (
+          <p className="text-fg-muted">{booker.firstName} hasn&apos;t added a UPI ID yet: pay them directly.</p>
+        )}
+        <SayPaid groupId={g.id} bookerName={booker.firstName} paid={me.paid} onChange={onChange} />
+      </div>
       {link && (
         <Sheet open={qr} onClose={() => setQr(false)} title={`Scan to pay ${booker.firstName} ${rupees(share)}`}>
           <p className="mt-2 text-fg-muted">Open any UPI app on your phone and scan this code.</p>
@@ -165,6 +198,22 @@ function PayBooker({ group: g }: { group: Group }) {
           <Button variant="secondary" className="mt-4 w-full" onClick={() => setQr(false)}>Done</Button>
         </Sheet>
       )}
+    </div>
+  );
+}
+
+// "I've paid": your own word, shown to the booker and the group. Namastute can't see payments (Learning Notes 92).
+function SayPaid({ groupId, bookerName, paid, onChange }: { groupId: string; bookerName: string; paid: boolean; onChange: () => void }) {
+  const { busy, error, run } = useAction();
+  if (paid) return <Chip variant="here" className="self-start">✓ You told {bookerName} you&apos;ve paid</Chip>;
+  return (
+    <div className="flex flex-col gap-2">
+      <Button variant="secondary" className="self-start" loading={busy} loadingLabel="Saving…"
+              onClick={() => run(async () => { await sayPaid(groupId); onChange(); })}>
+        I&apos;ve paid
+      </Button>
+      <p className="text-small text-fg-muted">Lets {bookerName} know. It&apos;s your word: Namastute can&apos;t see payments.</p>
+      {error && <Alert variant="error">{error}</Alert>}
     </div>
   );
 }

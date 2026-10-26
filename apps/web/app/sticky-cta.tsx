@@ -20,7 +20,7 @@ export default function StickyCta({ href, watch }: { href: string; watch: string
   if (!show) return null;
   return (
     <BottomBar bordered className="md:hidden">
-      <Link href={href} className={buttonClass({ className: "w-full" })}>Find co-travellers <span aria-hidden>→</span></Link>
+      <Link href={href} className={buttonClass({ className: "w-full" })}>Find my co-travellers <span aria-hidden>→</span></Link>
     </BottomBar>
   );
 }
