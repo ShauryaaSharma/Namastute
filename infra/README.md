@@ -3,11 +3,11 @@
 - **Development:** `docker compose -f infra/docker-compose.yml up -d` starts Postgres and Redis; run the API and web as usual.
 - **Production:** `docker-compose.prod.yml` runs everything on one server behind Caddy, under one domain (Learning Notes 54).
 
-⚠️ Production sends login codes by email through Amazon SES, which needs a domain ([AWS-SETUP.md](AWS-SETUP.md), section 15). Until that's set up, run with `SPRING_PROFILES_ACTIVE=prod,fake-sms`: codes go to the API's log. Phone login (SMS) answers "unavailable" in production until an SMS provider and DLT registration exist.
+⚠️ Production sends login codes by email: through Amazon SES, which needs a domain ([AWS-SETUP.md](AWS-SETUP.md), section 15), or through a Gmail account made for the app (section 16, no domain, at most 400 codes a day). Until that's set up, run with `SPRING_PROFILES_ACTIVE=prod,fake-sms`: codes go to the API's log. Phone login (SMS) answers "unavailable" in production until an SMS provider and DLT registration exist.
 
 ## Before real users: team checklist
 These need a decision, an account or a site visit, not code (Learning Notes 64):
-1. **Login emails:** buy the domain, verify it in Amazon SES and request production access ([AWS-SETUP.md](AWS-SETUP.md), section 15). SMS + DLT (MSG91 or Firebase) only if phone login is wanted later; then a developer writes the `SmsSender`.
+1. **Login emails:** for now a Gmail account made for the app ([AWS-SETUP.md](AWS-SETUP.md), section 16). Before real traffic, buy the domain, verify it in Amazon SES and request production access (section 15). SMS + DLT (MSG91 or Firebase) only if phone login is wanted later; then a developer writes the `SmsSender`.
 2. **Pickup points:** the terminal pickup locations in the database are approximate. Someone visits each terminal, notes the real app-cab pickup spot (latitude and longitude), and a developer ships them as a new migration (never by editing `V3__seed_terminals.sql`).
 3. **Map search:** OpenStreetMap's Nominatim only allows light use (about 1 search a second). Fine for a small pilot; before growing, choose Ola Maps or Google. Only `apps/web/lib/geocode.ts` changes.
 4. **Uptime monitor:** a free monitor (for example UptimeRobot) that opens `https://<your domain>/` every 5 minutes and emails the team when it fails. Without one, nobody knows the site is down.

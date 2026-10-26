@@ -42,7 +42,12 @@ services:
       PUSH_CONTACT: https://${DOMAIN}   # who push services contact about our pushes (RFC 8292)
       S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET in infra/.env}   # ID photos; access comes from the EC2 IAM role
       AWS_REGION: ${AWS_REGION:-ap-south-1}
-      EMAIL_FROM: ${EMAIL_FROM:-}       # login emails through SES; the API refuses to start without it under plain prod
+      EMAIL_FROM: ${EMAIL_FROM:-}       # who login emails come from; the API refuses to start without it under plain prod
+      EMAIL_VIA: ${EMAIL_VIA:-ses}      # ses (needs a domain) or smtp (a Gmail account made for the app): AWS-SETUP 15 / 16
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
