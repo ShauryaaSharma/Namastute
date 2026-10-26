@@ -297,6 +297,26 @@
         "tags" : [ "group-controller" ]
       }
     },
+    "/api/v1/groups/{id}/done" : {
+      "post" : {
+        "operationId" : "done",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "group-controller" ]
+      }
+    },
     "/api/v1/groups/{id}/fare" : {
       "post" : {
         "operationId" : "enterFare",
@@ -480,6 +500,26 @@
           }
         },
         "tags" : [ "chat-controller" ]
+      }
+    },
+    "/api/v1/groups/{id}/paid" : {
+      "post" : {
+        "operationId" : "paid",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "group-controller" ]
       }
     },
     "/api/v1/groups/{id}/ratings" : {
@@ -1172,6 +1212,9 @@
             "type" : "string"
           },
           "here" : {
+            "type" : "boolean"
+          },
+          "paid" : {
             "type" : "boolean"
           },
           "rating" : {

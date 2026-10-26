@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -306,6 +307,45 @@ class GroupsTest {
         assertThat(groupStatus(group)).isEqualTo("done");
     }
 
+    // ---- After the ride (Learning Notes 92) ----
+
+    @Test
+    void afterTheFareEachPersonCanSayTheyPaidAndFinish() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao");
+        pair(keshav, asha);   // Keshav asked first, so he's the booker
+        String group = groupOf(keshav);
+        lock(keshav, group);
+        here(asha, group);
+        here(keshav, group);
+
+        done(asha, group).andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("FARE_NOT_IN"));
+        paid(asha, group).andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("FARE_NOT_IN"));
+        fare(keshav, group, "600", false).andExpect(status().isNoContent());
+
+        paid(keshav, group).andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("BOOKER_DOESNT_OWE"));
+        paid(asha, group).andExpect(status().isNoContent());
+        paid(asha, group).andExpect(status().isNoContent());   // saying it twice changes nothing
+        mvc.perform(get("/api/v1/groups/current").with(as(keshav)))
+                .andExpect(jsonPath("$.members[?(@.you == false)].paid").value(true))
+                .andExpect(jsonPath("$.members[?(@.you == true)].paid").value(false));
+
+        done(asha, group).andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/trips/current").with(as(asha))).andExpect(status().isNoContent());   // her trip has ended
+        mvc.perform(get("/api/v1/groups/current").with(as(keshav))).andExpect(jsonPath("$.status").value("met"));   // still there for him
+        String next = trip(asha, 1, 1);   // and she can plan the next one straight away
+        mvc.perform(delete("/api/v1/trips/" + next).with(as(asha))).andExpect(status().isNoContent());   // tidy up
+    }
+
+    @Test
+    void onlyMembersCanFinishOrSayTheyPaid() throws Exception {
+        UUID keshav = user("Keshav Dixit"), asha = user("Asha Rao"), stranger = user("Ravi Kumar");
+        pair(keshav, asha);
+        String group = groupOf(keshav);
+
+        done(stranger, group).andExpect(status().isNotFound());
+        paid(stranger, group).andExpect(status().isNotFound());
+    }
+
     // ---- Background jobs (Learning Notes 48): move the data into the past, then run the sweep directly ----
 
     @Test
@@ -441,6 +481,14 @@ class GroupsTest {
 
     private ResultActions here(UUID user, String groupId) throws Exception {
         return mvc.perform(post("/api/v1/groups/" + groupId + "/here").with(as(user)));
+    }
+
+    private ResultActions done(UUID user, String groupId) throws Exception {
+        return mvc.perform(post("/api/v1/groups/" + groupId + "/done").with(as(user)));
+    }
+
+    private ResultActions paid(UUID user, String groupId) throws Exception {
+        return mvc.perform(post("/api/v1/groups/" + groupId + "/paid").with(as(user)));
     }
 
     private ResultActions fare(UUID user, String groupId, String total, boolean preview) throws Exception {

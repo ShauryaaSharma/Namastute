@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 94) defines every term in the book, A to Z. The **Command cheat sheet** (93) and **Interview questions** (95) are for revision. The **Backlog** (92) lists everything still open.
+- The **Glossary** (chapter 96) defines every term in the book, A to Z. The **Command cheat sheet** (95) and **Interview questions** (97) are for revision. The **Backlog** (94) lists everything still open.
 
 ---
 
@@ -115,8 +115,8 @@ flowchart LR
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
 | IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
 | X. ID verification | 78–85 | Handling ID photos safely, admin review, machine helpers for faces and text, and women-only groups |
-| XI. The front door | 86–91 | A static landing page, moving the app home, checking contrast by measurement, and logging in by email (SES or Gmail) |
-| Reference | 92–95 | What's still open, commands, glossary, interview questions |
+| XI. The front door | 86–93 | A static landing page, moving the app home, checking contrast by measurement, logging in by email (SES or Gmail), finishing a ride, and a new look |
+| Reference | 94–97 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -246,13 +246,15 @@ flowchart LR
 89. [Code walkthrough: email login, and a roomier profile](#89-code-walkthrough-email-login-and-a-roomier-profile)
 90. [Login emails through Gmail: free, with limits](#90-login-emails-through-gmail-free-with-limits)
 91. [Code walkthrough: the SMTP sender](#91-code-walkthrough-the-smtp-sender)
+92. [After the ride: finishing, and "I've paid"](#92-after-the-ride-finishing-and-ive-paid)
+93. [Code walkthrough: finishing a ride, and the landing refresh](#93-code-walkthrough-finishing-a-ride-and-the-landing-refresh)
 
 **[Reference](#reference)**
 
-92. [Backlog: everything still open](#92-backlog-everything-still-open)
-93. [Command cheat sheet](#93-command-cheat-sheet)
-94. [Glossary](#94-glossary)
-95. [Interview questions to practise](#95-interview-questions-to-practise)
+94. [Backlog: everything still open](#94-backlog-everything-still-open)
+95. [Command cheat sheet](#95-command-cheat-sheet)
+96. [Glossary](#96-glossary)
+97. [Interview questions to practise](#97-interview-questions-to-practise)
 
 ---
 
@@ -3860,6 +3862,7 @@ static Map<UUID, BigDecimal> split(BigDecimal fare, Map<UUID, Double> soloKm, UU
 - **`farePreview(...)`**: checks "met, you're the booker, no fare yet" with one `count(*)`, then returns `ShareView(firstName, booker, share)` for everyone. **Saves nothing.**
 - **`enterFare(...)`**, `@Transactional`: one conditional `UPDATE` checks all the rules at once: `set fare_total = ? where id = ? and status = 'met' and booker_id = ? and fare_total is null`. 0 rows → 409 `CANNOT_ENTER_FARE` (not the booker, not met, or already entered). Then each member's `share` is saved, and `GroupChanged("Fare entered: ₹600. Check your share and pay the booker.")`.
 - Entering the fare **doesn't** end the group: it stays `met`, so everyone keeps seeing their share. The 4-hour sweep now finishes `locked` **and** `met` groups.
+  - **Later change (92):** once the fare is in, each person can press **Done** to end their own trip and plan the next one, and say **I've paid** (their own word, never a check).
 - `leave(...)` refuses once `met` (409 `ALREADY_MET`): the ride is on.
 - `GroupView` gains `fareTotal`; `MemberView` gains `here` and `share`.
 
@@ -5821,13 +5824,15 @@ Keep `/` as the app home, and show the landing page there when nobody is logged 
 | FAQ | `<details name="faq">`, the first question open |
 | "Report and block … from any profile or chat" | Became "from any match or group member": there's no report button in chat |
 | Women-only card: "once your ID check is approved" | Became "once your ID check confirms you're a woman": approval alone isn't enough (84) |
-| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 92) |
+| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 94) |
 | A logged-in person visiting `/` | Sees the landing page; "Open the app" takes them straight in. No session check on the landing page. |
 | Checks | Lint and build; browser at 375 and 1280 px in both themes; contrast measured on every piece of text; tap targets measured |
 
 ---
 
 ## 87. Code walkthrough: the landing page
+
+> **Later change (93.4):** the dark theme is now navy ("night terminal"), and the page's words were rewritten: the headline is "Share the road. Split the fare."
 
 ### 87.0 Before you read
 The page from chapter 86. Everything is in `apps/web`.
@@ -6102,6 +6107,121 @@ Chapter 90's design, beside the SES sender from 89.
   - where the first emails land (inbox or spam);
   - the daily cap against real Redis over a whole day (the unit test fakes the counter).
 
+## 92. After the ride: finishing, and "I've paid"
+
+### 92.0 Words first
+- **Dead end:** a screen with no way forward. The person can only wait or give up.
+- **Self-reported status:** something a person says about themselves that the app can't check, shown clearly as their word ("Kabir says they've paid"), never as a fact.
+- **Complementary colours:** colours opposite each other on the colour wheel, such as navy and orange. Next to each other, each makes the other look stronger.
+- **CSS transition:** a style change animated over a short time instead of happening at once. Our buttons and links fade colour over 0.15 seconds.
+
+### 92.1 The problem
+After the booker entered the fare, everyone in the group was stuck on the fare screen:
+- **The trip stayed "grouped",** and a person may have only one active trip (`trip_one_active`, chapter 35), so planning the next trip was refused.
+- **Nothing ended it** until the background sweep closed the group, 4 hours after the meeting time (chapter 48).
+- **The designer's button was never built:** screen 6b had a "Plan another trip" button.
+- **No way to say "I've paid":** the booker had to ask everyone by message.
+
+### 92.2 The naive ways, and why they hurt
+- **End the whole group when the booker is done:** the others lose their share and the booker's UPI ID before they've paid.
+- **Let anyone finish at any time:** someone leaving before the fare is entered changes the split under the booker's feet.
+- **"Confirm" payments:** Namastute never sees the money (chapter 50). A tick that looked like proof would mislead the booker.
+
+### 92.3 The tools
+1. **Done, per person.** Once the fare is in, each person can close **their own** trip: `grouped → done`, the same move the sweep makes. They can plan their next trip straight away. The group stays `met` for the others, and the sweep still closes it later.
+2. **"I've paid" as their own word.** A `paid_at` time on the member's row (migration V13):
+   - the booker sees "✓ Kabir says they've paid";
+   - the chat gets a system message, and the booker gets a push;
+   - the existing "Namastute never sees or confirms payments" notice stays.
+3. **The same rules as everywhere else:**
+   - a stranger gets the 404 a missing group gives;
+   - "not yet" is a 409 with a reason (`FARE_NOT_IN`, `BOOKER_DOESNT_OWE`);
+   - doing it twice changes nothing.
+4. **A gentle nudge to rate,** in words only ("Before you go, you can rate your group…"), never a blocking step.
+
+### 92.4 Decisions (2026-10-26)
+| Decision | Choice |
+|---|---|
+| Who can finish | Each member, for their own trip only |
+| When | Once the fare is entered; before that the 4-hour sweep still closes forgotten groups |
+| What "I've paid" means | The member's own word, shown to the group; never a check of the payment |
+| Who can't say it | The booker: they owe nobody (409) |
+| After Done | Straight to "Plan your trip" |
+| Ratings | Optional; a reminder in words, not a gate |
+
+---
+
+## 93. Code walkthrough: finishing a ride, and the landing refresh
+
+### 93.0 Before you read
+Chapter 92 in code, plus a new look and new words for the landing page (86).
+
+### 93.1 The API (`groups`)
+- **`V13__paid_at.sql`:** `group_members.paid_at timestamptz`.
+- **`myPart(userId, groupId)`:** one query that returns your trip, whether you're the booker, whether the fare is in (`status = 'met' and fare_total is not null`) and whether you've said you paid. Anyone not in an active group gets the usual 404.
+- **`done`:** refuses with `FARE_NOT_IN` before the fare, otherwise `trips.markDone(your trip)`. The trips module only moves a trip that's still `grouped`, so pressing twice is harmless.
+- **`paid`:**
+  - the booker gets `BOOKER_DOESNT_OWE`, and before the fare it's `FARE_NOT_IN`;
+  - otherwise one conditional `update … where paid_at is null`. Only the request that actually set it sends the system message ("Kabir says they've paid their share") and the push to the booker. The push carries no amount on the lock screen, as in 58.5;
+  - saying it again changes nothing.
+- **`MemberView.paid`;** **`POST /api/v1/groups/{id}/done`** and **`/paid`** answer 204.
+
+### 93.2 Tests
+- **`GroupsTest`:**
+  - before the fare, both actions are refused;
+  - the booker can't say they paid; Asha can, twice harmlessly, and Keshav's view shows it;
+  - Done ends Asha's trip, the group stays `met` for Keshav, and Asha plans a new trip at once;
+  - strangers get 404.
+- **Five rules broken on purpose, each caught:** the fare check, ending the trip, the booker check, saving `paid_at`, and "members only".
+
+### 93.3 Web
+- **`lib/api.ts`:** `finishRide`, `sayPaid`.
+- **`fare-section.tsx`:**
+  - `Finish` (the rating hint, then "Done · plan another trip" → `/trip/new`) under both the booker's and the member's fare screens;
+  - `SayPaid` ("I've paid", then the chip "✓ You told Riya you've paid");
+  - on the booker's screen, "✓ Kabir says they've paid" under each amount.
+
+### 93.4 The landing refresh: colours and words
+- **Why navy:**
+  - Ride apps sell speed: Uber is black and white, Rapido yellow and black.
+  - Carpooling apps sell **trust**: BlaBlaCar uses deep teal and blue, because you're sharing with strangers.
+  - Namastute keeps its orange (it echoes airport signs) and puts it on a deep navy. They're complementary colours, so the orange buttons stand out, and navy reads as an airport at night: calm and safe.
+- **The dark theme's tokens changed:**
+  - `bg` `#0B1626`, `surface` `#13233A`, `surface-2` `#1C3050`;
+  - lines in navy greys;
+  - text `#F4F1EA`, muted text `#A9B4C4`;
+  - softer tints for the orange, success, danger and info boxes.
+
+  Every text and background pair was measured before changing anything: the lowest is 6.3:1 (AA asks 4.5:1). The browser's theme colour and the installed app's colours follow. The landing page and the app share these tokens, so the app's dark screens are navy too, and the two feel like one product. Light mode stays cream.
+- **The words were rewritten as a marketer would**, but with the same honesty rules as before (86):
+  - no invented numbers ("Takes 20 seconds" was cut from the draft);
+  - nothing the app doesn't do.
+- **The headline is "Share the road. Split the fare."** "Half the fare" was the first idea, but fares are split by distance, and the fares section says "Fair, not fifty-fifty". A headline must not contradict the page.
+- **Fitting the headline:**
+  - The longer first line wrapped and left "road." alone on a line.
+  - The hero grid became `minmax(0,1fr) auto`: the phone preview keeps its width and the words take the rest.
+  - The size became `clamp(3.5rem, 5.6vw, 5.75rem)`, so it scales with the window.
+
+  Measured: two lines at 1024, 1280 and 1440 px wide.
+
+### 93.5 Verified
+- **API:** 135 tests pass (2 new); 5 rules broken on purpose and caught. Web lint, type-check and build pass.
+- **Browser** (a fresh test group made by a script, with codes from the local log):
+  - as Kabir, "I've paid" turned into "✓ You told Riya you've paid";
+  - "Done · plan another trip" opened "Plan your trip";
+  - the database showed Kabir's trip `done` with `paid_at` set, Riya's still `grouped`, and the group `met`.
+- **Landing:** 90 pieces of text measured in each theme. Dark: none below AA, the lowest 6.3:1. Light: the lowest 3.9:1 for the big orange headline words (3:1 needed).
+- **Gotcha: a "failure" that was the preview pane.**
+  - In light mode one link measured 1.51:1.
+  - `getAnimations()` showed its colour transition still `running` at time 0: the preview pane doesn't advance animations while it isn't drawing, so the link was frozen at its dark-mode starting colour.
+  - After `finish()` it had the right colour, `#8A4500`.
+  - Lesson: finish all animations before measuring.
+- **Not checked:**
+  - the booker's "says they've paid" chip and the push, on screen;
+  - a real phone.
+- **The login screen** still has its own older headline ("Landed at IGI? Share the cab.").
+- **A small existing issue noticed along the way:** for light-mode visitors, the page first draws in dark and switches on load, so links fade colour for 0.15 s.
+
 ---
 
 ## Reference
@@ -6110,7 +6230,7 @@ The last four chapters are for looking things up: everything still open, the com
 
 ---
 
-## 92. Backlog: everything still open
+## 94. Backlog: everything still open
 
 Everything the project knows it still has to do, in one place, as of 2026-10-26. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
 
@@ -6165,7 +6285,7 @@ Flight-delay tracking, automatic matching, and whatever real users ask for first
 
 ---
 
-## 93. Command cheat sheet
+## 95. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -6253,7 +6373,7 @@ git fetch --prune
 
 ---
 
-## 94. Glossary
+## 96. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -6335,6 +6455,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Combining mark | Unicode sign that attaches to the previous letter (Indian vowel signs); `\p{M}` |
 | Commit | A saved snapshot of files, with a message, in Git's history |
 | Compile-time constant | A value Java knows while compiling (a `static final String` set to text); only these can go inside an annotation like `@Query` (85) |
+| Complementary colours | Colours opposite each other on the colour wheel (navy and orange); side by side, each makes the other look stronger (92) |
 | Component | A reusable piece of a screen (React) |
 | Composite index | One index over several columns, sorted by the first, then the next |
 | Concurrency | Several pieces of work running at the same time on shared data |
@@ -6354,6 +6475,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | CSRF | Another site making the user's browser send requests to us |
 | CSS filter | An effect applied to drawn pixels, e.g. `invert(1)` to darken light map tiles |
 | CSS Grid | Laying out a page in rows and columns; `1fr` is one share of the free space |
+| CSS transition | A style change animated over a short time; our buttons fade colour over 0.15 s (92, 93.5) |
 | CSS variable | A named CSS value (`--accent`) that can change while the page runs, e.g. on a dark/light switch |
 | CSWSH | Cross-site WebSocket hijacking: another site opening a socket with your cookies |
 | Cursor (pagination) | A bookmark like "older than message 1234" marking where the next page starts |
@@ -6362,6 +6484,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Data minimisation | Collect and share only the personal data a feature really needs |
 | Database | A program that stores data and answers questions about it |
 | DDL | SQL that changes structure (`create table`) |
+| Dead end | A screen with no way forward; the person can only wait or give up (92) |
 | Deadlock | Two transactions each waiting for a lock the other holds |
 | Decompression bomb | A tiny file claiming to be an enormous image, to exhaust memory when decoded |
 | Deduplication | Recognising the same item arriving twice and keeping one |
@@ -6615,6 +6738,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
 | Self-invocation | A method calling another in the same class, bypassing the proxy |
 | Self-join | A table joined with itself under two names (`me` and `t`) |
+| Self-reported status | What a person says about themselves that the app can't check, shown as their word, never as fact (92) |
 | Sender identity | The address or domain SES may send from, proven with DNS records (88) |
 | Seq Scan | Reading every row of a table |
 | Server | A computer or program that waits for requests and answers them |
@@ -6717,7 +6841,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 95. Interview questions to practise
+## 97. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6918,3 +7042,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 195. Adding the mail library could have stopped the production site from starting. How, and how did you prevent it?
 196. Why make the sender general (SMTP) rather than Gmail-specific, and how does the app choose between SMTP and SES?
 197. How did you prove the 10-second timeout works without a real slow mail server?
+198. A finished ride left people stuck on one screen for hours. What caused it, and why does "Done" end only your own trip?
+199. Your app can't see payments. How do you let people say they paid without misleading anyone?
+200. How did you choose a colour palette for a ride-sharing brand, and how did you prove it was readable?
+201. A marketing headline said "Half the fare" but fares are split by distance. What did you do, and why does it matter?
+202. A contrast check failed in an automated browser but the colours were right. What was happening?

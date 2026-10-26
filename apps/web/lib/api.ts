@@ -182,6 +182,16 @@ export async function imHere(groupId: string): Promise<void> {
   await request<void>(`/api/v1/groups/${groupId}/here`, { method: "POST" });
 }
 
+// After the ride (Learning Notes 92): ends your own trip once the fare is in, so you can plan the next one
+export async function finishRide(groupId: string): Promise<void> {
+  await request<void>(`/api/v1/groups/${groupId}/done`, { method: "POST" });
+}
+
+// "I've paid": your own word, shown to the group. Namastute never sees payments.
+export async function sayPaid(groupId: string): Promise<void> {
+  await request<void>(`/api/v1/groups/${groupId}/paid`, { method: "POST" });
+}
+
 // Booker only: everyone's share for this fare, before confirming (nothing is saved)
 export function previewFare(groupId: string, total: number): Promise<ShareView[]> {
   return request<ShareView[]>(`/api/v1/groups/${groupId}/fare/preview`, { method: "POST", body: JSON.stringify({ total }) });

@@ -107,6 +107,20 @@ class GroupController {
         return ResponseEntity.noContent().build();
     }
 
+    // After the ride (Learning Notes 92): end your own trip once the fare is in, so you can plan another
+    @PostMapping("/api/v1/groups/{id}/done")
+    ResponseEntity<Void> done(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        groups.done(userId(jwt), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // "I've paid": the member's own word, shown to the group; never a check of the payment
+    @PostMapping("/api/v1/groups/{id}/paid")
+    ResponseEntity<Void> paid(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        groups.paid(userId(jwt), id);
+        return ResponseEntity.noContent().build();
+    }
+
     private static UUID userId(Jwt jwt) {
         return UUID.fromString(jwt.getSubject());
     }

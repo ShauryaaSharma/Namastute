@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Share a cab with people from your flight.",
     start_url: "/home",
     display: "standalone",
-    background_color: "#110F0D", // the design's dark bg: the splash screen matches the app
-    theme_color: "#110F0D",
+    background_color: "#0B1626", // the design's dark bg: the splash screen matches the app
+    theme_color: "#0B1626",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
