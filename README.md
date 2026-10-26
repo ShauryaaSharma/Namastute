@@ -59,6 +59,7 @@ Travellers landing at Delhi's IGI airport around the same time, heading the same
 - **Abuse limits:** per person, at most 30 match searches, 10 share requests and 5 trip plans a minute (answered with "429 Too Many Requests"), and 20 chat or location messages per 10 seconds.
 
 **Look and feel**
+- **A landing page** at `/` for people who don't know Namastute yet: what it does, how fares are split, safety and an FAQ, in dark and light. It's static, so it shows instantly. The app itself lives at `/home`.
 - **A designed app** (Namastute's own design system): dark by default or light, following the phone until you choose; built for phones first, with multi-pane layouts on laptops; Hindi names shown properly.
 
 **Staying in touch**

@@ -110,7 +110,7 @@ export default function NewTripPage() {
         bags,
         womenOnly,
       });
-      router.replace("/");
+      router.replace("/home");
     });
   }
 

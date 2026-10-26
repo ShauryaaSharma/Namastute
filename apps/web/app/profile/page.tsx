@@ -54,7 +54,7 @@ export default function ProfilePage() {
     if (found.name || found.upi) return;
     run(async () => {
       await updateMe({ name: cleanName, upiId: cleanUpi }); // empty upiId removes it
-      router.replace("/");
+      router.replace("/home");
     });
   }
 
@@ -69,7 +69,7 @@ export default function ProfilePage() {
       <div className="flex flex-1 flex-col lg:flex-none">
         <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">
           {!firstTime && (
-            <button type="button" onClick={() => router.push("/")} className="min-h-tap self-start pr-3 font-semibold">‹ Back</button>
+            <button type="button" onClick={() => router.push("/home")} className="min-h-tap self-start pr-3 font-semibold">‹ Back</button>
           )}
           <div className="flex flex-col gap-2">
             {firstTime && <Eyebrow>Namaste · one last thing</Eyebrow>}

@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Namastute",
     short_name: "Namastute",
     description: "Share a cab with people from your flight.",
-    start_url: "/",
+    start_url: "/home",
     display: "standalone",
     background_color: "#110F0D", // the design's dark bg: the splash screen matches the app
     theme_color: "#110F0D",

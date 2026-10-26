@@ -27,7 +27,7 @@ const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");var d=t?t==="dark"
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: the theme script changes <html>'s class before React takes over
-    <html lang="en" className={`${anek.variable} ${mukta.variable} ${plexMono.variable} dark`} suppressHydrationWarning>
+    <html lang="en" className={`${anek.variable} ${mukta.variable} ${plexMono.variable} dark`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="min-h-dvh">
         <Script id="theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
         {children}
