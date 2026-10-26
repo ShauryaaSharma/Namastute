@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,11 +43,12 @@ public class TripService {
     // A match is a lone traveller (one rider) or an open group (2–3 riders). Trip ids are opaque handles:
     // tripId (the first rider's) is what "ask to share" sends; any group member can answer (Learning Notes 41.1).
     record Rider(UUID tripId, String firstName, String destArea, UserService.Rating rating) {}
-    record MatchView(UUID tripId, List<Rider> riders, long minutesAfterYou, int seats, int bags, double detourKm) {}
+    record MatchView(UUID tripId, List<Rider> riders, long minutesAfterYou, int seats, int bags, double detourKm,
+                     boolean womenOnly) {}
 
     // What the groups module may know about a trip
     public record TripSummary(UUID id, UUID userId, String terminalId, Instant exitAt, String destArea,
-                              int seats, int bags, String status, double soloKm) {}
+                              int seats, int bags, String status, double soloKm, boolean womenOnly) {}
 
     private final TripRepository trips;
     private final TerminalRepository terminals;
@@ -69,10 +71,10 @@ public class TripService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "EXIT_TIME_OUT_OF_RANGE",
                     "Exit time must be between now and 24 hours from now");
         }
-        // shortcut: refused for everyone until ID verification exists; then allow verified women (design 4.3)
-        if (req.womenOnly()) {
+        // Only women whose ID check says so (design 4.3); the switch on the screen is just a convenience
+        if (req.womenOnly() && !users.womenOnlyAllowed(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "WOMEN_ONLY_NEEDS_VERIFICATION",
-                    "Women-only trips need ID verification, which is coming soon");
+                    "Women-only trips are for women with a verified ID");
         }
 
         Point dest = Geo.point(req.destLat(), req.destLng());
@@ -87,7 +89,7 @@ public class TripService {
         try {
             TripRequest trip = trips.saveAndFlush(new TripRequest(userId, terminal.getId(), normalizeFlight(req.flightNo()),
                     req.exitAt(), dest, req.destArea().strip(), (float) (straightKm * Geo.ROAD_FACTOR),
-                    (short) req.seats(), (short) req.bags(), false));
+                    (short) req.seats(), (short) req.bags(), req.womenOnly()));
             return view(trip, terminal);
         } catch (DataIntegrityViolationException e) {
             // The database's unique index trip_one_active decided: this user already has an active trip
@@ -120,10 +122,13 @@ public class TripService {
         // Candidates: lone travellers as "groups of one", plus open groups (members loaded in one query)
         List<List<TripRequest>> candidates = new ArrayList<>();
         trips.matchCandidates(tripId).forEach(t -> candidates.add(List.of(t)));
-        List<List<UUID>> groups = openGroups.near(userId, mine.getTerminalId(), mine.getExitAt());
-        Map<UUID, TripRequest> members = trips.findAllById(groups.stream().flatMap(List::stream).toList()).stream()
+        List<OpenGroups.OpenGroup> groups = openGroups.near(userId, mine.getTerminalId(), mine.getExitAt(), mine.isWomenOnly());
+        Map<UUID, TripRequest> members = trips.findAllById(groups.stream().flatMap(g -> g.tripIds().stream()).toList()).stream()
                 .collect(Collectors.toMap(TripRequest::getId, Function.identity()));
-        groups.forEach(g -> candidates.add(g.stream().map(members::get).toList()));
+        groups.forEach(g -> candidates.add(g.tripIds().stream().map(members::get).toList()));
+        // A group stays women-only even after the member who asked for it leaves, so the badge comes from the group
+        Set<UUID> inWomenOnlyGroups = groups.stream().filter(OpenGroups.OpenGroup::womenOnly)
+                .flatMap(g -> g.tripIds().stream()).collect(Collectors.toSet());
 
         List<MatchRanker.Ranked> ranked = MatchRanker.rank(pickup, mine, candidates);
         List<UUID> riderIds = ranked.stream().flatMap(r -> r.riders().stream()).map(TripRequest::getUserId).toList();
@@ -135,7 +140,8 @@ public class TripService {
                 Duration.between(mine.getExitAt(), r.riders().stream().map(TripRequest::getExitAt).max(Instant::compareTo).orElseThrow()).toMinutes(),
                 r.riders().stream().mapToInt(TripRequest::getSeats).sum(),
                 r.riders().stream().mapToInt(TripRequest::getBags).sum(),
-                Math.round(r.detourKm() * 2) / 2.0   // nearest 0.5 km: exact numbers could help locate their destination
+                Math.round(r.detourKm() * 2) / 2.0,  // nearest 0.5 km: exact numbers could help locate their destination
+                r.riders().stream().anyMatch(t -> t.isWomenOnly() || inWomenOnlyGroups.contains(t.getId()))
         )).toList();
     }
 
@@ -181,7 +187,7 @@ public class TripService {
 
     private static TripSummary summary(TripRequest t) {
         return new TripSummary(t.getId(), t.getUserId(), t.getTerminalId(), t.getExitAt(), t.getDestArea(),
-                t.getSeats(), t.getBags(), t.getStatus().name(), t.getSoloKm());
+                t.getSeats(), t.getBags(), t.getStatus().name(), t.getSoloKm(), t.isWomenOnly());
     }
 
     List<Terminal> terminals() {

@@ -575,6 +575,7 @@ export interface components {
             sharingUntil: string;
             /** @enum {string} */
             status: "open" | "locked" | "met";
+            womenOnly: boolean;
             youAreBooker: boolean;
         };
         Keys: {
@@ -596,6 +597,7 @@ export interface components {
             seats: number;
             /** Format: uuid */
             tripId: string;
+            womenOnly: boolean;
         };
         MemberView: {
             /** Format: int32 */
@@ -655,6 +657,7 @@ export interface components {
             name: string | null;
             phone: string;
             upiId: string | null;
+            womenOnlyAllowed: boolean;
         };
         PublicKey: {
             publicKey: string;

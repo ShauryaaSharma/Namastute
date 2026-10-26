@@ -335,6 +335,7 @@ function MatchCard({ match, busy, onAsk, onBlock }: { match: Match; busy: boolea
       <div className="flex flex-wrap gap-1.5">
         <Chip>{timingText(match)}</Chip>
         <Chip>{detourText(match.detourKm)}</Chip>
+        {match.womenOnly && <Chip variant="info">Women-only</Chip>}
       </div>
       <Button size="tap" className="text-[1.0625rem]" disabled={busy} onClick={onAsk} aria-label={`Ask ${names} to share a cab`}>
         Ask to share
@@ -354,6 +355,7 @@ function CompactRow({ match, askedYou }: { match: Match; askedYou: boolean }) {
         <b className="text-[1.0625rem]">{names}</b>
         <span className="text-small text-fg-muted">
           {match.riders.length > 1 ? `Group of ${match.riders.length}` : r.destArea} · {timingText(match)} · {detourText(match.detourKm)}
+          {match.womenOnly && " · women-only"}
         </span>
       </span>
       {askedYou ? (

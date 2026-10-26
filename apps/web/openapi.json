@@ -1088,6 +1088,9 @@
             "type" : "string",
             "enum" : [ "open", "locked", "met" ]
           },
+          "womenOnly" : {
+            "type" : "boolean"
+          },
           "youAreBooker" : {
             "type" : "boolean"
           }
@@ -1146,6 +1149,9 @@
           "tripId" : {
             "type" : "string",
             "format" : "uuid"
+          },
+          "womenOnly" : {
+            "type" : "boolean"
           }
         }
       },
@@ -1305,6 +1311,9 @@
           "upiId" : {
             "type" : "string",
             "nullable" : true
+          },
+          "womenOnlyAllowed" : {
+            "type" : "boolean"
           }
         }
       },

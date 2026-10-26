@@ -1,5 +1,6 @@
 package com.namastute.trips;
 
+import com.namastute.users.UserService;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +64,7 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
     int markSearching(Collection<UUID> ids);
 
     // Stage 1 of matching: cheap filters the indexes can answer (trip_search, trip_dest_gist). MatchRanker does the rest.
+    // Women-only works both ways (design 4.3): a women-only trip only meets eligible women, and only they see it.
     // shortcut: "destinations within 15 km" misses riders going much further down the same road;
     // filter by direction from the airport (bearing) once that matters.
     @Query(nativeQuery = true, value = """
@@ -76,6 +78,8 @@ interface TripRepository extends JpaRepository<TripRequest, UUID> {
             where me.id = :tripId
               and not exists (select 1 from blocks b
                               where (b.blocker_id = me.user_id and b.blocked_id = t.user_id)
-                                 or (b.blocker_id = t.user_id and b.blocked_id = me.user_id))""")
+                                 or (b.blocker_id = t.user_id and b.blocked_id = me.user_id))
+              and (not me.women_only or t.user_id in """ + UserService.WOMEN_ONLY_USERS + ")"
+            + " and (not t.women_only or me.user_id in " + UserService.WOMEN_ONLY_USERS + ")")
     List<TripRequest> matchCandidates(UUID tripId);
 }

@@ -48,7 +48,7 @@ public class GroupService {
     // meetAt: when the group meets at the pickup; sharingFrom/Until: when live location works (locked or met groups only)
     record GroupView(UUID id, @Schema(allowableValues = {"open", "locked", "met"}) String status, boolean youAreBooker,
                      @Schema(nullable = true) String bookerUpiId, @Schema(nullable = true) BigDecimal fareTotal, List<MemberView> members,
-                     OffsetDateTime meetAt, OffsetDateTime sharingFrom, OffsetDateTime sharingUntil) {}
+                     OffsetDateTime meetAt, OffsetDateTime sharingFrom, OffsetDateTime sharingUntil, boolean womenOnly) {}
     record ShareView(String firstName, boolean booker, BigDecimal share) {}
 
     record SentRow(UUID id, UUID toTripId, String status) {}
@@ -79,6 +79,8 @@ public class GroupService {
                 .filter(t -> t.status().equals("searching") || groupOf(t.id()).filter(g -> g.status().equals("open")).isPresent())
                 // Silent block: if either side blocked the other (or anyone in their group), it looks like an ended trip
                 .filter(t -> !users.blockedEitherWay(userId, peopleAround(t)))
+                // Women-only: the same answer as for a trip that doesn't exist, so a crafted request learns nothing
+                .filter(t -> womenOnlyMismatch(mine, t).isEmpty())
                 .findFirst()
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "TRIP_NOT_FOUND", "That traveller isn't available any more"));
         try {
@@ -142,6 +144,10 @@ public class GroupService {
         TripSummary to = t.get(r.toTripId());
 
         Optional<Membership> existing = answerableGroup(userId, to);
+        // Checked again here, not only when asking: a request to someone alone stays pending after they join a group
+        womenOnlyMismatch(from, to).ifPresent(reason -> {
+            throw conflict("WOMEN_ONLY", reason);
+        });
         UUID groupId;
         if (existing.isEmpty()) {
             // The person asked was alone: the group is born now, and the asker is its maker (= booker).
@@ -151,8 +157,10 @@ public class GroupService {
             }
             groupId = db.sql("""
                             insert into groups (terminal_id, meet_at, women_only, seats_taken, bags_taken, booker_id)
-                            values (?, ?, false, ?, ?, ?) returning id""")
-                    .params(to.terminalId(), to.exitAt().atOffset(ZoneOffset.UTC), to.seats(), to.bags(), from.userId())
+                            values (?, ?, ?, ?, ?, ?) returning id""")
+                    // Women-only if either of them asked for it, for the group's whole life
+                    .params(to.terminalId(), to.exitAt().atOffset(ZoneOffset.UTC), from.womenOnly() || to.womenOnly(),
+                            to.seats(), to.bags(), from.userId())
                     .query(UUID.class).single();
             addMember(groupId, to);
         } else {
@@ -426,7 +434,7 @@ public class GroupService {
         }).toList();
         OffsetDateTime meetAt = db.sql("select meet_at from groups where id = ?").param(groupId).query(OffsetDateTime.class).single();
         return Optional.of(new GroupView(groupId, g.status(), userId.equals(g.bookerId()), users.upiId(g.bookerId()),
-                g.fareTotal(), views, meetAt, meetAt.minus(SHARE_BEFORE), meetAt.plus(SHARE_AFTER)));
+                g.fareTotal(), views, meetAt, meetAt.minus(SHARE_BEFORE), meetAt.plus(SHARE_AFTER), membership.get().womenOnly()));
     }
 
     // For the chat module: may this user read and write this group's chat? (accepted member of an open, locked or met group)
@@ -473,14 +481,29 @@ public class GroupService {
         return db.sql("select user_id from group_members where group_id = ? and status = 'accepted'").param(groupId).query(UUID.class).list();
     }
 
-    record Membership(UUID groupId, String status) {}
+    record Membership(UUID groupId, String status, boolean womenOnly) {}
 
     // The open, locked or met group this trip is an accepted member of, if any
     private Optional<Membership> groupOf(UUID tripId) {
         return db.sql("""
-                        select g.id as group_id, g.status from group_members m join groups g on g.id = m.group_id
+                        select g.id as group_id, g.status, g.women_only from group_members m join groups g on g.id = m.group_id
                         where m.trip_id = ? and m.status = 'accepted' and g.status in ('open', 'locked', 'met')""")
                 .param(tripId).query(Membership.class).optional();
+    }
+
+    // Why `from` can't join `to` (alone, or their group) under the women-only rule, if it can't. The same rule as matching
+    // (design 4.3): a women-only trip or group takes only eligible women, and someone who asked for women-only joins only
+    // a women-only group, or an eligible woman who is still alone.
+    private Optional<String> womenOnlyMismatch(TripSummary from, TripSummary to) {
+        Optional<Membership> group = groupOf(to.id());
+        boolean toWomenOnly = group.map(Membership::womenOnly).orElse(to.womenOnly());
+        if (toWomenOnly && !users.womenOnlyAllowed(from.userId())) {
+            return Optional.of("This group is women-only, for women with a verified ID");
+        }
+        if (from.womenOnly() && !(group.isPresent() ? toWomenOnly : users.womenOnlyAllowed(to.userId()))) {
+            return Optional.of("They asked for a women-only group");
+        }
+        return Optional.empty();
     }
 
     // Who may answer (team decision, Learning Notes 39.2): if the person asked is alone, only them;

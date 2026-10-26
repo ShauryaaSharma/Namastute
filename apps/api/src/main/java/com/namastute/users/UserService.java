@@ -27,6 +27,13 @@ public class UserService {
 
     static final int MIN_RATINGS = 3;
 
+    // Who may use women-only trips and groups (design 4.3, Learning Notes 84): an approved ID check whose reviewer
+    // recorded "female" from the ID. Gender comes from the ID, never from a tick box. The ONE definition: matching
+    // (TripRepository, OpenGroupsQuery) puts it in its SQL, and womenOnlyAllowed() below asks it.
+    // shortcut: IDs showing transgender / third gender (gender 'other') aren't included; that policy is the team's open
+    // decision (design open question 4), and changing this line changes every check.
+    public static final String WOMEN_ONLY_USERS = "(select id from users where verification = 'verified' and gender = 'female')";
+
     private final UserRepository users;
     private final JdbcClient db;
 
@@ -63,6 +70,10 @@ public class UserService {
 
     static Rating rating(int count, int ups, boolean idVerified) {
         return new Rating(count, count < MIN_RATINGS ? null : (int) Math.round(100.0 * ups / count), idVerified);
+    }
+
+    public boolean womenOnlyAllowed(UUID id) {
+        return db.sql("select ? in " + WOMEN_ONLY_USERS).param(id).query(Boolean.class).single();
     }
 
     // Who reviews reports (users.role, V1). Made by hand with SQL, see infra/README.md.
@@ -145,11 +156,13 @@ public class UserService {
         return toProfile(user);
     }
 
-    private static Profile toProfile(User user) {
-        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId(), user.isAdmin());
+    private Profile toProfile(User user) {
+        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId(), user.isAdmin(),
+                womenOnlyAllowed(user.getId()));
     }
 
-    // admin: shows the "Review ID checks" link; every admin endpoint checks the role again on the server
+    // admin: shows the "Review ID checks" link; every admin endpoint checks the role again on the server.
+    // womenOnlyAllowed: unlocks the women-only switch; creating the trip checks it again on the server.
     record Profile(UUID id, String phone, @Schema(nullable = true) String name, @Schema(nullable = true) String upiId,
-                   boolean admin) {}
+                   boolean admin, boolean womenOnlyAllowed) {}
 }
