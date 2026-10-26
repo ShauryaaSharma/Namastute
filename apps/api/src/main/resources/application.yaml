@@ -29,6 +29,10 @@ namastute:
     allowed-hosts: fcm.googleapis.com, push.services.mozilla.com, push.apple.com, notify.windows.com
     require-https: true
 
+  email:
+    # Login codes by email (Learning Notes 88): Amazon SES in production; development and staging log them instead
+    from: ${EMAIL_FROM:}                # e.g. Namastute <login@namastute.in>; required once SES sends for real
+    region: ${AWS_REGION:ap-south-1}
   verification:
     # ID photos in S3 (Learning Notes 78). Development: SeaweedFS from infra/docker-compose.yml with its dev keys.
     bucket: ${S3_BUCKET:namastute-verification}

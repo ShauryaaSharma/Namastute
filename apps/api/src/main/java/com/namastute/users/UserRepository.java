@@ -4,8 +4,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-// Spring Data writes the implementation at startup, including the SQL for findByPhone from the method name
+// Spring Data writes the implementation at startup, including the SQL for findByPhone / findByEmail from the method names
 interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByPhone(String phone);
+
+    Optional<User> findByEmail(String email);
 }

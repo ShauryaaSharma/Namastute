@@ -12,6 +12,7 @@ import { type BlockView, getBlocks, getPendingChecks, getVerification, type Veri
 import { plural } from "@/lib/format";
 import { setThemeChoice, type ThemeChoice, themeChoice } from "@/lib/theme";
 import { useAction } from "@/lib/use-action";
+import { AppBar } from "@/components/app-bar";
 import { AuthShell } from "../auth-shell";
 import PushPrompt from "../push-prompt";
 
@@ -64,74 +65,97 @@ export default function ProfilePage() {
   const firstTime = !me.name;
   const firstName = name.trim().split(/\s+/)[0];
 
-  return (
-    <AuthShell aside={<GroupPreview firstName={firstName} trip={trip} />}>
-      <div className="flex flex-1 flex-col lg:flex-none">
-        <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">
-          {!firstTime && (
-            <button type="button" onClick={() => router.push("/home")} className="min-h-tap self-start pr-3 font-semibold">‹ Back</button>
-          )}
-          <div className="flex flex-col gap-2">
-            {firstTime && <Eyebrow>Namaste · one last thing</Eyebrow>}
-            <h1 className="font-display text-h1 stretch-110">{firstTime ? "Complete your profile" : "Your profile"}</h1>
-          </div>
-          <form id="profile" onSubmit={save} noValidate className="flex flex-col gap-6">
-            <TextField
-              id="name"
-              label="Your first name"
-              autoComplete="given-name"
-              maxLength={60}
-              value={name}
-              onChange={(e) => { setName(e.target.value); setErrors({ ...errors, name: undefined }); }}
-              helper="Hindi or English. Co-travellers see only this and your area."
-              error={errors.name}
-            />
-            <TextField
-              id="upi"
-              label="UPI ID"
-              optional
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder="yourname@bank"
-              value={upiId}
-              onChange={(e) => { setUpiId(e.target.value); setErrors({ ...errors, upi: undefined }); }}
-              helper="Only shared with your group, so they can pay you their share if you book the cab."
-              error={errors.upi}
-            />
-            {error && <Alert variant="error">{error}</Alert>}
-          </form>
-
-          {!firstTime && (
-            <>
-              <Section title="ID verification"><IdStatus /></Section>
-              {me.admin && <Section title="Admin"><AdminLink /></Section>}
-              <Section title="Notifications"><PushPrompt /></Section>
-              <Section title="Appearance"><ThemePicker /></Section>
-              <Section title="Blocked people"><BlockedPeople /></Section>
-              <Button
-                variant="secondary"
-                onClick={() => logout().finally(() => router.replace("/login"))}
-                className="self-start"
-              >
-                Log out
-              </Button>
-            </>
-          )}
-        </div>
-        <BottomBar>
-          <Button type="submit" form="profile" loading={busy} loadingLabel="Saving…" className="w-full">
-            {firstTime ? "Save and continue" : "Save"}
-          </Button>
-        </BottomBar>
+  const header = (
+    <>
+      {!firstTime && (
+        <button type="button" onClick={() => router.push("/home")} className="min-h-tap self-start pr-3 font-semibold lg:hidden">‹ Back</button>
+      )}
+      <div className="flex flex-col gap-2">
+        {firstTime && <Eyebrow>Namaste · one last thing</Eyebrow>}
+        <h1 className="font-display text-h1 stretch-110">{firstTime ? "Complete your profile" : "Your profile"}</h1>
       </div>
-    </AuthShell>
+    </>
+  );
+  const form = (
+    <form id="profile" onSubmit={save} noValidate className="flex flex-col gap-6">
+      <TextField
+        id="name"
+        label="Your first name"
+        autoComplete="given-name"
+        maxLength={60}
+        value={name}
+        onChange={(e) => { setName(e.target.value); setErrors({ ...errors, name: undefined }); }}
+        helper="Hindi or English. Co-travellers see only this and your area."
+        error={errors.name}
+      />
+      <TextField
+        id="upi"
+        label="UPI ID"
+        optional
+        autoComplete="off"
+        autoCapitalize="none"
+        spellCheck={false}
+        placeholder="yourname@bank"
+        value={upiId}
+        onChange={(e) => { setUpiId(e.target.value); setErrors({ ...errors, upi: undefined }); }}
+        helper="Only shared with your group, so they can pay you their share if you book the cab."
+        error={errors.upi}
+      />
+      {error && <Alert variant="error">{error}</Alert>}
+    </form>
+  );
+  const saveButton = (
+    <Button type="submit" form="profile" loading={busy} loadingLabel="Saving…" className="w-full">
+      {firstTime ? "Save and continue" : "Save"}
+    </Button>
+  );
+
+  // First login (design W3): the short form beside the live preview, in the login screen's split layout
+  if (firstTime) {
+    return (
+      <AuthShell aside={<GroupPreview firstName={firstName} trip={trip} />}>
+        <div className="flex flex-1 flex-col lg:flex-none">
+          <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">{header}{form}</div>
+          <BottomBar>{saveButton}</BottomBar>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  // Afterwards it's a settings page of the app: laptops get two columns (you and your details | settings), phones one.
+  // Save sits right under the form it saves, not over the settings, which take effect on their own.
+  return (
+    <>
+      <AppBar name={me.name ?? ""} />
+      <main className="mx-auto w-full max-w-[30rem] pb-10 lg:grid lg:max-w-[72rem] lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start lg:gap-16 lg:px-8 lg:py-10">
+        <div className="flex flex-col gap-6 px-5 pt-2 lg:p-0">
+          {header}
+          <div className="hidden lg:block"><GroupPreview firstName={firstName} trip={trip} /></div>
+          {form}
+          <BottomBar className="-mx-5 lg:mx-0">{saveButton}</BottomBar>
+        </div>
+        <div className="flex flex-col gap-6 px-5 pt-6 lg:p-0">
+          <Section title="ID verification"><IdStatus /></Section>
+          {me.admin && <Section title="Admin"><AdminLink /></Section>}
+          <Section title="Notifications"><PushPrompt /></Section>
+          <Section title="Appearance"><ThemePicker /></Section>
+          <Section title="Blocked people"><BlockedPeople /></Section>
+          <Button
+            variant="secondary"
+            onClick={() => logout().finally(() => router.replace("/login"))}
+            className="self-start"
+          >
+            Log out
+          </Button>
+        </div>
+      </main>
+    </>
   );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className="flex flex-col gap-3 border-t border-line pt-6">
+    <section aria-label={title} className="flex flex-col gap-3 border-t border-line pt-6 lg:first:border-t-0 lg:first:pt-0">
       <h2 className="font-display text-h3 stretch-110">{title}</h2>
       {children}
     </section>
@@ -155,7 +179,7 @@ function GroupPreview({ firstName, trip }: { firstName: string; trip: Trip | nul
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Chip variant="muted">No phone number</Chip>
+          <Chip variant="muted">No email or phone</Chip>
           <Chip variant="muted">No surname</Chip>
           <Chip variant="muted">No exact address</Chip>
         </div>

@@ -30,7 +30,7 @@ You don't need to know how to program to follow the ideas. Code appears often, b
 ### How to read it
 - **Start here** and **The project in one page** (next) give you the basics and the map.
 - Then read the parts in order. Each part opens with a short page saying what it covers.
-- The **Glossary** (chapter 90) defines every term in the book, A to Z. The **Command cheat sheet** (89) and **Interview questions** (91) are for revision. The **Backlog** (88) lists everything still open.
+- The **Glossary** (chapter 92) defines every term in the book, A to Z. The **Command cheat sheet** (91) and **Interview questions** (93) are for revision. The **Backlog** (90) lists everything still open.
 
 ---
 
@@ -115,8 +115,8 @@ flowchart LR
 | VIII. Getting ready for real users | 64–69 | Technical debt, load testing, indexes and rate limits |
 | IX. The new look | 70–77 | A design system, accessible components, and every screen redesigned |
 | X. ID verification | 78–85 | Handling ID photos safely, admin review, machine helpers for faces and text, and women-only groups |
-| XI. The front door | 86–87 | A static landing page, moving the app home, and checking contrast by measurement |
-| Reference | 88–91 | What's still open, commands, glossary, interview questions |
+| XI. The front door | 86–89 | A static landing page, moving the app home, checking contrast by measurement, and logging in by email |
+| Reference | 90–93 | What's still open, commands, glossary, interview questions |
 
 ---
 
@@ -242,13 +242,15 @@ flowchart LR
 
 86. [The landing page: a static front door](#86-the-landing-page-a-static-front-door)
 87. [Code walkthrough: the landing page](#87-code-walkthrough-the-landing-page)
+88. [Logging in by email: a code in the inbox instead of an SMS](#88-logging-in-by-email-a-code-in-the-inbox-instead-of-an-sms)
+89. [Code walkthrough: email login, and a roomier profile](#89-code-walkthrough-email-login-and-a-roomier-profile)
 
 **[Reference](#reference)**
 
-88. [Backlog: everything still open](#88-backlog-everything-still-open)
-89. [Command cheat sheet](#89-command-cheat-sheet)
-90. [Glossary](#90-glossary)
-91. [Interview questions to practise](#91-interview-questions-to-practise)
+90. [Backlog: everything still open](#90-backlog-everything-still-open)
+91. [Command cheat sheet](#91-command-cheat-sheet)
+92. [Glossary](#92-glossary)
+93. [Interview questions to practise](#93-interview-questions-to-practise)
 
 ---
 
@@ -993,6 +995,8 @@ Browser                         Spring API                       Redis          
 - There's no separate sign-up: the first successful verify creates the user.
 
 ### 19.4 Our slices
+> **Later change (88):** login codes now go by email through Amazon SES; phone login returns once SMS is set up.
+
 Login was built in three slices: `feat/otp-api` (request and verify a code) → `feat/auth-tokens` (staying logged in: JWT, refresh tokens, Spring Security) → `feat/otp-ui` (the login screen).
 
 ---
@@ -1214,6 +1218,7 @@ private final SecureRandom random = new SecureRandom();
 - **Fields** are variables that belong to the object and live as long as it does.
 - `redis`: Spring's Redis client for string keys and values (topic 21; Spring creates it automatically from the Redis starter).
 - `sms`: **the interface**, not a concrete class. Today Spring fills it with `LogSmsSender`; later a real provider, with no change here (**polymorphism**).
+  - **Later change (89.2):** it's now `Optional<SmsSender>` (empty in production until an SMS provider exists), beside an `EmailSender`; `to` is a phone number or an email address.
 - `hmacKey`: our secret, prepared once as a key object for the HMAC algorithm.
 - `random`: **`SecureRandom`**, a cryptographically secure random generator. Ordinary `Random` can be predicted from its past outputs.
 - `final`: each field is set once in the constructor and never changes. That makes the object safe to share between many simultaneous requests (it's a **singleton** bean, topic 2.5).
@@ -1822,6 +1827,7 @@ ResponseEntity<TokenResponse> verify(@Valid @RequestBody VerifyRequest req) {
     return tokens(userId, refreshTokens.create(userId));
 }
 ```
+- **Later change (89.2):** `verify` now takes a phone number or an email address and calls `findOrCreateByPhone` or `findOrCreateByEmail`.
 - Check the code (throws on failure) → find or create the user → start a session → return tokens. Each line is one step of the flow; the logic lives in the services.
 
 ```java
@@ -4127,6 +4133,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 - `url: jdbc:postgresql://postgres:5432/namastute` and `redis.host: redis`: inside Docker's network, containers reach each other **by service name**.
 - `server.forward-headers-strategy: native`: Tomcat's `RemoteIpValve` replaces the "remote address" with `X-Forwarded-For`, but only when the request comes from a private-network address (54.5). `AuthController` still just calls `getRemoteAddr()`; no Java change was needed.
 - `LogSmsSender`: `@Profile("!prod | fake-sms")`: a profile **expression**, "not prod, OR fake-sms is on". The real server runs `prod` alone, so no log sender exists there, and with no `SmsSender` at all the app refuses to start until a real one is written.
+  - **Later change (89.2):** production now starts without an SMS sender: phone login answers 503, and login codes go by email (`SesEmailSender`).
 
 ### 55.5 `infra/docker-compose.prod.yml`
 - `name: namastute-prod`: a separate project from dev, so their volumes never mix.
@@ -4183,6 +4190,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ### 55.9 What's left before real users
 - An `SmsSender` for the chosen provider (MSG91 or Firebase): **team decision**.
+  - **Later change (88):** the pilot logs in by email through Amazon SES instead; an SMS provider is only needed if phone login returns.
 - A domain, an EC2 t3.small in Mumbai with an Elastic IP, then `infra/README.md` from step 1.
 - Off-server backup copies (S3), privacy policy and terms.
 
@@ -5042,6 +5050,7 @@ This slice builds everything later screens stand on (tokens, fonts, theme, brand
 - **Phone (420 px):** login → invalid number error (linked for screen readers) → valid number shown as "98765 00031" → code screen → a wrong code submitted itself and showed the error with red boxes → the right code → "Complete your profile" → an invalid UPI ID error under its field → a Hindi name saved ("नेहा" in the database) → home.
 - **Profile edit:** the theme switch works by click and arrow keys, a light choice survives a reload with no flash, and "Phone" clears the saved choice.
 - **Laptop (1280×800):** W1 split screen with the three promises; W2 with the paste tip; pasting a whole SMS text on the page logged in; W3's preview card updated live ("Asha Rao" → "Asha").
+  - **Later change (89.4):** after the first login, the profile is now an app page with two columns on laptops; W3's split screen stays for the first login.
 - **Screenshot gotcha:** the browser sometimes captured a frame mid-transition (a disabled button still fading from orange). Computed styles (`getComputedStyle`) confirmed the real colours.
 - **Not checked:** a real phone, screen readers, and 200% text across every screen.
 
@@ -5810,7 +5819,7 @@ Keep `/` as the app home, and show the landing page there when nobody is logged 
 | FAQ | `<details name="faq">`, the first question open |
 | "Report and block … from any profile or chat" | Became "from any match or group member": there's no report button in chat |
 | Women-only card: "once your ID check is approved" | Became "once your ID check confirms you're a woman": approval alone isn't enough (84) |
-| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 88) |
+| Footer links Privacy / Terms / Contact | Left out until those pages exist (`shortcut:`, backlog 90) |
 | A logged-in person visiting `/` | Sees the landing page; "Open the app" takes them straight in. No session check on the landing page. |
 | Checks | Lint and build; browser at 375 and 1280 px in both themes; contrast measured on every piece of text; tap targets measured |
 
@@ -5866,6 +5875,139 @@ The page from chapter 86. Everything is in `apps/web`.
   - an installed app that still has the old `start_url`. It opens `/`, and "Open the app" takes it in. Phones refresh the manifest on their own over time.
   - a full automatic accessibility scanner: loading axe from the internet into the page was blocked, so contrast and tap targets were measured by hand instead.
 
+## 88. Logging in by email: a code in the inbox instead of an SMS
+
+### 88.0 Words first
+- **Amazon SES (Simple Email Service):** AWS's service for sending email from code, about US$0.10 per 1,000 emails.
+- **SES sandbox:** where every new SES account starts. It can only send to addresses verified one by one, up to 200 a day. **Production access** lifts that; you ask with a short form, and AWS usually answers within a day.
+- **Sender identity:** the address or domain SES may send "from". For a domain, you prove you own it with DNS records.
+- **SPF, DKIM, DMARC:** DNS records that let Gmail and Outlook check that an email really comes from the domain it claims:
+  - **SPF** lists which servers may send for the domain;
+  - **DKIM** signs each email with a key published in DNS;
+  - **DMARC** says what to do when those checks fail.
+
+  Without them, login codes land in spam.
+- **DLT:** India's register for business SMS: entities, sender IDs and message templates. It applies to SMS only (AWS's SMS service included), not to email.
+- **Optional bean:** a dependency Spring may or may not have. Injecting `Optional<SmsSender>` gives an empty box when no `SmsSender` exists, instead of refusing to start.
+
+### 88.1 The problem
+Real SMS in India needs DLT registration: business paperwork that takes days to weeks. Until then production could only run in staging mode, with codes in the server log (55, AWS-SETUP). The team asked: could AWS's email service carry the codes instead?
+
+### 88.2 The naive ways, and why they hurt
+- **Send "from" a Gmail address through SES:** no domain needed, but mail servers see a Gmail address sent by Amazon's servers as forged (DMARC fails), so codes go to spam or vanish. Email needs a domain whose DNS you control, so `sslip.io` won't do.
+- **Replace phone with email everywhere:** throws away working, tested code that returns once SMS is set up. Phone numbers also carry something email can't (88.3).
+- **Ask for both** a phone and an email at login: twice the typing at an airport, for nothing yet.
+
+### 88.3 The tools, and the trade-off
+1. **An account is a phone number or an email address** (migration V12). `phone` becomes optional, `email` is new and unique, and a check makes sure every row has at least one.
+2. **One code service, two ways to deliver.** `OtpService` sends to "a destination": addresses with `@` get an email, `+91` numbers an SMS. The same 6-digit code, hashing, limits and cooldown (20–22) protect both.
+3. **Production starts without an SMS provider.** `Optional<SmsSender>` is empty there, so phone login answers *503 "Log in with your email for now"* instead of the whole app refusing to start.
+4. **Two email senders, chosen by profile,** like the SMS ones (55):
+   - `LogEmailSender` writes to the log (development, and staging with `fake-sms`, which now covers email too);
+   - `SesEmailSender` sends through SES with the server's IAM role (no keys, like S3 in 78).
+5. **The trade-off, said plainly.** In India a phone number is tied to an ID when the SIM is sold; an email address isn't. Someone blocked could come back with a new address in a minute. ID verification and its badge are the counterweight, and phone login can return once SMS and DLT exist. It's in the README's known limits.
+
+### 88.4 Decisions (2026-10-26)
+| Decision | Choice |
+|---|---|
+| Pilot login | Email, through Amazon SES (team choice A) |
+| Phone login | Kept in the code, off in production until an SMS provider and DLT exist (503, not a failed start) |
+| Same person, different capitals | Emails stored lower-case: `Asha@Gmail.com` and `asha@gmail.com` are one account |
+| Staging | `prod,fake-sms` as before; the name stayed so the running server needs no change, and it now logs emails too |
+| Sender | `login@<domain>`, with DKIM (Easy DKIM in SES) and a DMARC record; needs the domain (AWS-SETUP section 15) |
+| Code email | The code in the subject (it shows in the phone's notification), and one line saying to ignore it if unasked |
+| A failed send | 503 "We couldn't send the code", and the 30-second cooldown is cleared so the person can try again at once |
+| Existing phone accounts | Stay in the database; the website logs in by email, so admins are made again by email |
+
+---
+
+## 89. Code walkthrough: email login, and a roomier profile
+
+### 89.0 Before you read
+Chapter 88's design, touching the OTP code (23), tokens and users (27), the production build (55) and the profile screen (71).
+
+### 89.1 Migration V12 and the users module
+- **`V12__email_login.sql`:** `phone` drops `not null`, `email text unique` is added, and the check `users_phone_or_email` makes sure every account has at least one.
+- **`User`** gains `email`; its constructor takes `(phone, email)`, and one of them is null.
+- **`UserService`:** `findOrCreateByPhone` and the new `findOrCreateByEmail` share one private `findOrCreate(find, newUser)`. It's the same "look it up, else insert, and if two requests raced, read the winner" from 27, now written once.
+- **`Profile`** shows the person their own `phone` and `email` (one may be null).
+
+### 89.2 The auth module
+- **`AuthController`:** `OtpRequest` and `VerifyRequest` take `phone` *or* `email`.
+  - Each has its own `@Pattern`. A null field passes, so the check only applies to the one that was sent.
+  - `destination(phone, email)` insists on exactly one (400 otherwise), and lower-cases emails.
+  - `verify` then picks `findOrCreateByPhone` or `findOrCreateByEmail`.
+- **`OtpService`:**
+  - `to` instead of `phone`, and the per-address limit key renamed `rate:otp:to:…`.
+  - **No SMS sender:** the very first lines refuse phone codes when `sms` is empty, before touching Redis.
+  - **Sending is wrapped:** if it throws, the stored code and the cooldown are deleted, so a failed send never makes someone wait 30 seconds for nothing.
+- **`EmailSender`** is an interface, like `SmsSender`. `LogEmailSender` (`!prod | fake-sms`) logs `Email to …: Your Namastute code is …`, the line the AWS guide's log command finds.
+- **`SesEmailSender`** (`prod & !fake-sms`):
+  - an `SesV2Client` with the JDK's own HTTP client, as `PhotoStore` uses, and credentials from the IAM role;
+  - a blank `EMAIL_FROM` stops the app at startup, not at the first login;
+  - an `SdkException` becomes the 503, and the log line never contains the code.
+- **`pom.xml`:** `sesv2`, excluding the same heavy HTTP clients as `s3`.
+
+### 89.3 Tests
+- **`EmailLoginTest`**, through HTTP:
+  - logging in by email makes an account with no phone;
+  - capitals reach the same account;
+  - exactly one of phone or email is required;
+  - a failed send can be retried at once.
+- **`CapturingEmail`** reads the code from the subject, like `CapturingSms`; `failNext` makes one send fail.
+- **`PhoneLoginOffTest`** is a plain unit test: `OtpService` built by hand with no SMS sender and `null` for Redis. Any use of Redis would crash it, which proves the refusal comes first.
+- **A gotcha: "too many clients".** The first full run failed in an unrelated test with Postgres saying *"sorry, too many clients already"*.
+  - Spring keeps one application context, with its own connection pool, for every *different* test setup.
+  - `EmailLoginTest` imported a new combination of test beans, so it added one more context, and the total went past Postgres's connection limit.
+  - The fix: all four login tests import the same two configs, so they share one context.
+  - Lesson: a new combination of `@Import` or `@MockitoBean` costs a whole context. Reuse an existing setup when you can.
+
+### 89.4 Web
+- **`lib/api.ts`:** `requestOtp` and `verifyOtp` take a `Destination`: `{ email }` today, `{ phone }` again later.
+- **Login screen:**
+  - the email field (`type="email"`, `inputMode="email"`, `autoComplete="email"`, no auto-capitals);
+  - the same pattern check as the API;
+  - "Your email is never shown to other travellers";
+  - on the code screen, "Not there? Check your spam folder. It can take a minute."
+
+  `PhoneInput` stays in `field.tsx` with a note, for phone login's return.
+- **Wording:** the landing page's FAQ and safety card, and the profile's preview chip, now promise "email or phone", not just the phone.
+- **The profile on laptops.** The designer's split screen (W3) was drawn for the short first-login form. After we added settings, the left pane was mostly empty space. Now:
+  - **first login** keeps the split screen;
+  - **afterwards** the profile is an app page with the top bar: the preview card, form and **Save** on the left, the settings on the right, and one column on phones.
+
+  Save sits right under the form it saves, not floating over settings that take effect on their own.
+
+### 89.5 Infra and docs
+- `docker-compose.prod.yml` passes `EMAIL_FROM`. It's optional in compose, because staging doesn't need it, and the API demands it under plain `prod`.
+- `.env.example` has the example sender. `AWS-SETUP.md` section 15 walks through:
+  - moving to the domain;
+  - verifying it in SES;
+  - DMARC;
+  - the `ses:SendEmail` permission;
+  - testing in the sandbox;
+  - asking for production access.
+- The README and `infra/README.md` say "email via SES" where they said "SMS", and show the admin command by email.
+
+### 89.6 Verified
+- **API tests (5 new, 128 in all):** `EmailLoginTest` (4) and `PhoneLoginOffTest` (1). The existing login tests use the renamed `rate:otp:to:` key.
+- **Broken on purpose, each caught:**
+  - not lower-casing emails (by "capitals reach the same account");
+  - accepting both or neither address (by "exactly one");
+  - keeping the cooldown after a failed send (by "retried at once");
+  - no SMS-sender check (by `PhoneLoginOffTest`).
+- **Browser, on this laptop (staging-style: codes in the log):**
+  - an incomplete address showed "Enter your email address, like you@example.com.";
+  - `  Shaurya.Test@Example.com ` sent the code to `shaurya.test@example.com`;
+  - the code logged the new account in, through "Complete your profile" (the split screen, preview chip "No email or phone") to home;
+  - the profile afterwards had the top bar and two columns (416 px | the rest).
+- **Phone layout of the profile:** one column, with Save right under the form.
+- **Web:** lint, type-check and build pass, with types regenerated from the API.
+- **Not checked:**
+  - **real SES**, which needs the domain and is done in AWS-SETUP section 15. The SES sender is compiled but has never sent an email;
+  - whether codes land in spam before DMARC is in place;
+  - the profile at tablet width.
+
 ---
 
 ## Reference
@@ -5874,14 +6016,15 @@ The last four chapters are for looking things up: everything still open, the com
 
 ---
 
-## 88. Backlog: everything still open
+## 90. Backlog: everything still open
 
 Everything the project knows it still has to do, in one place, as of 2026-10-26. Each item says what kind of work it is and where the book explains it. Items marked `shortcut:` in the code are listed with the condition that would make them worth changing.
 
 ### Decisions the team has to make (no code first)
 | Item | Why it matters | Where |
 |---|---|---|
-| SMS provider + DLT registration (MSG91 or Firebase) | Real users can't log in without it; the production API refuses to start | 19, 54–55, infra/README.md |
+| A domain, then SES set up for login emails (production access) | Real users can't receive login codes until then; staging keeps them in the log | 88, infra/AWS-SETUP.md section 15 |
+| SMS provider + DLT registration (MSG91 or Firebase), only if phone login should return | Phone numbers are tied to an ID; email addresses aren't | 19, 88 |
 | Domain, then the first deployment to AWS | Web and API must share one domain for the login cookie; the runbook is ready | 54–55, infra/README.md |
 | The real pickup points at T1, T2, T3 | The seeded coordinates are approximate | 33–35 |
 | Map search provider before growing (Ola Maps or Google) | Nominatim allows about one search a second | 33 |
@@ -5928,7 +6071,7 @@ Flight-delay tracking, automatic matching, and whatever real users ask for first
 
 ---
 
-## 89. Command cheat sheet
+## 91. Command cheat sheet
 
 The commands used most often while building Namastute, grouped by task. Each one is explained in the chapter where it first appears; this page is for quick lookup. Run them from the folder named in each heading.
 
@@ -6016,7 +6159,7 @@ git fetch --prune
 
 ---
 
-## 90. Glossary
+## 92. Glossary
 
 Every term used in this book, A to Z, in one or two plain sentences. Chapters define their words in their "Words first" sections; this is the place to look one up again.
 
@@ -6037,6 +6180,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Aggregate | One number summarising many rows, e.g. a count or a percentage |
 | Allowlist | A list of the only values accepted; everything else is refused |
 | Alpine Linux | A very small Linux used for Docker images; it uses musl, so many native libraries won't load on it (82) |
+| Amazon SES | AWS's service for sending email from code; we use it for login codes (88) |
 | Anchor link | A link to a spot on the same page: `#faq` jumps to the element with `id="faq"` (86) |
 | Annotation | `@Something` tag adding information to code without changing it |
 | Anti join | Keeps rows that have no matching partner; how Postgres runs `not exists` |
@@ -6142,6 +6286,9 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Dirty checking | Hibernate detects changed fields and writes them at commit |
 | display: contents | An element that draws no box; its children are laid out as its parent's children |
 | divIcon | A Leaflet map marker made of our own HTML instead of an image |
+| DKIM | A DNS record and a signature on each email, proving it came from the domain it claims (88) |
+| DLT | India's register for business SMS (entities, sender IDs, templates); SMS only, not email (88) |
+| DMARC | A DNS record telling mail servers what to do when SPF and DKIM checks fail (88) |
 | Dockerfile | Recipe for building your own image |
 | Domain | A human-readable address like namastute.in |
 | DPDP Act 2023 | India's data protection law: notice, consent, data minimisation, deletion when done |
@@ -6280,6 +6427,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Optimistic locking | Detect conflicts with a `version` column and retry |
 | Optimistic UI | Showing your action as done before the server confirms it |
 | Optional | A box that holds a value or is empty |
+| Optional bean | A dependency Spring may not have: `Optional<SmsSender>` is empty instead of the app refusing to start (88) |
 | OptionalDouble | Java's box for "a number, or nothing" |
 | Origin | Scheme + host + port |
 | ORM | Object-Relational Mapping: objects ↔ table rows |
@@ -6370,12 +6518,14 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Secure context | A page on HTTPS or localhost; browsers only allow location, push and similar features there |
 | Self-invocation | A method calling another in the same class, bypassing the proxy |
 | Self-join | A table joined with itself under two names (`me` and `t`) |
+| Sender identity | The address or domain SES may send from, proven with DNS records (88) |
 | Seq Scan | Reading every row of a table |
 | Server | A computer or program that waits for requests and answers them |
 | Server Component | React component rendered on the server (Next.js default) |
 | Server push | The server sending data without being asked |
 | Service (microservice) | A separately running program with one job, called over the network |
 | Service worker | Background JavaScript the browser can wake even when no tab is open |
+| SES sandbox | Where new SES accounts start: mail only to verified addresses until production access is granted (88) |
 | Session | The period during which the server treats someone as logged in |
 | Severity / likelihood | How bad a problem is when it happens / how likely it is to happen |
 | SFace | OpenCV's face recognition model: an aligned face in, 128 numbers out (82) |
@@ -6391,6 +6541,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | SLO / threshold | A pass line set in advance, e.g. p95 under 500 ms |
 | SNAPSHOT | A Maven version still in development |
 | Soft ask | Your own "turn on notifications?" button before the browser's real prompt |
+| SPF | A DNS record listing which servers may send email for a domain (88) |
 | Spring profile | A named set of settings switched on with SPRING_PROFILES_ACTIVE |
 | springdoc | Library that generates an OpenAPI document from Spring controllers |
 | SQL | Structured Query Language: the language for asking and changing a database |
@@ -6419,6 +6570,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 | Terminal | A text window for typing commands |
 | Tesseract | The open-source OCR engine; Tess4J is its Java bridge (82) |
 | Testcontainers | Library that starts throwaway databases in Docker for tests |
+| Test context cache | Spring keeps one application context per distinct test setup, each with its own database connections (89.3) |
 | Text block | A Java string written between `"""` marks that can span several lines; it can't start in the middle of a line (85) |
 | Think time | The pauses a real person takes between actions |
 | Thread | One line of execution inside a program; a server runs many at once |
@@ -6465,7 +6617,7 @@ Every term used in this book, A to Z, in one or two plain sentences. Chapters de
 
 ---
 
-## 91. Interview questions to practise
+## 93. Interview questions to practise
 
 Questions an interviewer could ask about this project, roughly in the order the book covers them. Try answering each one out loud in two minutes, then check the chapter. Good answers say what was built, **why**, and what the trade-off was.
 
@@ -6656,3 +6808,8 @@ Questions an interviewer could ask about this project, roughly in the order the 
 185. A designer's spec says "Report from any chat". The app can't do that. What do you do, and why does it matter on a landing page?
 186. How do you build an accordion where only one answer is open, with no JavaScript, and what does the browser give you for free?
 187. Your contrast check reported a failure that wasn't real. What caused it, and how would you avoid it next time?
+188. Why can't you send login emails "from" a Gmail address through SES, and what does a domain give you instead?
+189. What do you lose by moving from phone login to email login in India, and what softens it?
+190. How did you make phone login switch off in production without the app refusing to start?
+191. A login email fails to send. What should the person experience, and what did you change on the server to allow it?
+192. Your full test run failed with "too many clients already" after adding one test class. Why, and how did you fix it?

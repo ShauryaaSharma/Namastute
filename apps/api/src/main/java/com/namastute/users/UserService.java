@@ -6,7 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -43,18 +45,23 @@ public class UserService {
     }
 
     public UUID findOrCreateByPhone(String phone) {
-        return users.findByPhone(phone)
-                .map(User::getId)
-                .orElseGet(() -> create(phone));
+        return findOrCreate(() -> users.findByPhone(phone), new User(phone, null));
     }
 
-    private UUID create(String phone) {
-        try {
-            return users.saveAndFlush(new User(phone)).getId();
-        } catch (DataIntegrityViolationException e) {
-            // Another request created this phone's user a moment ago (unique constraint on phone); use theirs
-            return users.findByPhone(phone).orElseThrow().getId();
-        }
+    // email: already trimmed and lower-cased (AuthController), so one address is always one account
+    public UUID findOrCreateByEmail(String email) {
+        return findOrCreate(() -> users.findByEmail(email), new User(null, email));
+    }
+
+    private UUID findOrCreate(Supplier<Optional<User>> find, User newUser) {
+        return find.get().map(User::getId).orElseGet(() -> {
+            try {
+                return users.saveAndFlush(newUser).getId();
+            } catch (DataIntegrityViolationException e) {
+                // Another request created this user a moment ago (unique phone / email); use theirs
+                return find.get().orElseThrow().getId();
+            }
+        });
     }
 
     // Ratings summaries (and the ID badge) for everyone shown on a screen, in one query. rating_sum counts thumbs up (V7).
@@ -157,12 +164,14 @@ public class UserService {
     }
 
     private Profile toProfile(User user) {
-        return new Profile(user.getId(), user.getPhone(), user.getName(), user.getUpiId(), user.isAdmin(),
+        return new Profile(user.getId(), user.getPhone(), user.getEmail(), user.getName(), user.getUpiId(), user.isAdmin(),
                 womenOnlyAllowed(user.getId()));
     }
 
     // admin: shows the "Review ID checks" link; every admin endpoint checks the role again on the server.
     // womenOnlyAllowed: unlocks the women-only switch; creating the trip checks it again on the server.
-    record Profile(UUID id, String phone, @Schema(nullable = true) String name, @Schema(nullable = true) String upiId,
+    // phone / email: how this account logs in (at least one is set, V12); only ever shown to the user themselves
+    record Profile(UUID id, @Schema(nullable = true) String phone, @Schema(nullable = true) String email,
+                   @Schema(nullable = true) String name, @Schema(nullable = true) String upiId,
                    boolean admin, boolean womenOnlyAllowed) {}
 }

@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 // The browser's preflight (OPTIONS) check: our web app is allowed, any other origin is refused
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(CapturingSms.Config.class)
+@Import({CapturingSms.Config.class, CapturingEmail.Config.class})   // the same set in every login test: they share one Spring context
 class CorsTest {
 
     @Autowired MockMvc mvc;

@@ -3,11 +3,11 @@
 - **Development:** `docker compose -f infra/docker-compose.yml up -d` starts Postgres and Redis; run the API and web as usual.
 - **Production:** `docker-compose.prod.yml` runs everything on one server behind Caddy, under one domain (Learning Notes 54).
 
-⚠️ Production can't send real login codes until an SMS provider is chosen and an `SmsSender` is written for it. Without one, the API refuses to start with the `prod` profile (on purpose).
+⚠️ Production sends login codes by email through Amazon SES, which needs a domain ([AWS-SETUP.md](AWS-SETUP.md), section 15). Until that's set up, run with `SPRING_PROFILES_ACTIVE=prod,fake-sms`: codes go to the API's log. Phone login (SMS) answers "unavailable" in production until an SMS provider and DLT registration exist.
 
 ## Before real users: team checklist
 These need a decision, an account or a site visit, not code (Learning Notes 64):
-1. **SMS provider + DLT:** choose MSG91 or Firebase and register the sender ID and message template on DLT (required for SMS in India). Then a developer writes the `SmsSender` for it; until then the production API refuses to start.
+1. **Login emails:** buy the domain, verify it in Amazon SES and request production access ([AWS-SETUP.md](AWS-SETUP.md), section 15). SMS + DLT (MSG91 or Firebase) only if phone login is wanted later; then a developer writes the `SmsSender`.
 2. **Pickup points:** the terminal pickup locations in the database are approximate. Someone visits each terminal, notes the real app-cab pickup spot (latitude and longitude), and a developer ships them as a new migration (never by editing `V3__seed_terminals.sql`).
 3. **Map search:** OpenStreetMap's Nominatim only allows light use (about 1 search a second). Fine for a small pilot; before growing, choose Ola Maps or Google. Only `apps/web/lib/geocode.ts` changes.
 4. **Uptime monitor:** a free monitor (for example UptimeRobot) that opens `https://<your domain>/` every 5 minutes and emails the team when it fails. Without one, nobody knows the site is down.
@@ -17,6 +17,8 @@ These need a decision, an account or a site visit, not code (Learning Notes 64):
 8. **Privacy policy:** it must cover ID photos (what, why, who sees them, deletion within 7 days), matching the consent notice on `/verify` (DPDP Act).
 
 ## First-time server setup (AWS, region ap-south-1 Mumbai)
+First time? Follow the click-by-click guide, [AWS-SETUP.md](AWS-SETUP.md). The steps below are the short version.
+
 1. **Server:** EC2 **t3.small** (Intel/AMD, 2 GB; the PostGIS image is amd64-only), Ubuntu LTS, 20 GB disk. Attach an **Elastic IP** so the address never changes.
 2. **Firewall (security group):** allow **80** and **443** from anywhere, **22** (SSH) only from your own IP. Nothing else: Postgres and Redis are never public.
 3. **Domain:** an **A record** for your domain (e.g. `namastute.in`) → the Elastic IP. Wait until `nslookup namastute.in` shows it: Caddy needs that before it can get a certificate.
@@ -82,9 +84,9 @@ docker compose -f infra/docker-compose.prod.yml --env-file infra/.env start api
 Admins get a push notification for every new report (category only, never names), so a safety report never waits unseen, and for every new ID check, which they review in the app: **Profile → Admin → Review ID checks**.
 ```bash
 docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T postgres psql -U namastute -d namastute -c \
-  "update users set role = 'admin' where phone = '+91XXXXXXXXXX'"
+  "update users set role = 'admin' where email = 'you@example.com'"
 ```
-Then, on the admin's phone: log in, open **Edit profile**, tap **Notify me** (on iPhone, add Namastute to the Home Screen first).
+(Accounts made by phone number: `where phone = '+91XXXXXXXXXX'` instead.) Then, on the admin's phone: log in, open **Edit profile**, tap **Notify me** (on iPhone, add Namastute to the Home Screen first).
 
 ## Reviewing reports (until there's an admin panel)
 Open reports, newest first (only admins should ever see these: they can contain personal details):
@@ -97,4 +99,4 @@ docker compose -f infra/docker-compose.prod.yml --env-file infra/.env exec -T po
 After acting on one: `update reports set status = 'actioned' where id = '...'` (or `'dismissed'`). Reports never punish anyone automatically. If someone is in danger, the app tells them to call 112.
 
 ## Local test of the production stack
-`infra/.env` with `DOMAIN=localhost` and `SPRING_PROFILES_ACTIVE=prod,fake-sms` (OTP codes then appear in `logs api`), then the same `up -d --build`. Caddy serves `https://localhost` with its own local certificate, so the browser warns once.
+`infra/.env` with `DOMAIN=localhost` and `SPRING_PROFILES_ACTIVE=prod,fake-sms` (login codes then appear in `logs api`), then the same `up -d --build`. Caddy serves `https://localhost` with its own local certificate, so the browser warns once.

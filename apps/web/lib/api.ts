@@ -74,14 +74,17 @@ async function refreshWithLock(): Promise<boolean> {
   });
 }
 
-export async function requestOtp(phone: string): Promise<void> {
-  await request<void>("/api/v1/auth/otp", { method: "POST", body: JSON.stringify({ phone }) });
+// Where the login code goes: an email address today, a phone number again once SMS is set up (Learning Notes 88)
+export type Destination = { email: string } | { phone: string };
+
+export async function requestOtp(to: Destination): Promise<void> {
+  await request<void>("/api/v1/auth/otp", { method: "POST", body: JSON.stringify(to) });
 }
 
-export async function verifyOtp(phone: string, code: string): Promise<void> {
+export async function verifyOtp(to: Destination, code: string): Promise<void> {
   const tokens = await request<TokenResponse>("/api/v1/auth/verify", {
     method: "POST",
-    body: JSON.stringify({ phone, code }),
+    body: JSON.stringify({ ...to, code }),
   });
   accessToken = tokens.accessToken;
 }

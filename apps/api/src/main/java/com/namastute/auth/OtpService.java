@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,38 +17,46 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+// One-time login codes (Learning Notes 19–22), sent to a phone number (SMS) or an email address (Learning Notes 88).
+// "to" is either one, already checked by AuthController: phone numbers start with +91, emails contain @.
 @Service
 class OtpService {
 
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
     private static final int MAX_ATTEMPTS = 5;
     private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
-    private static final int PHONE_LIMIT = 3;
-    private static final Duration PHONE_WINDOW = Duration.ofMinutes(15);
+    private static final int TO_LIMIT = 3;   // codes per phone number or email address
+    private static final Duration TO_WINDOW = Duration.ofMinutes(15);
     private static final int IP_LIMIT = 10;
     private static final Duration IP_WINDOW = Duration.ofHours(1);
 
     private final StringRedisTemplate redis;
     private final RateLimiter limits;
-    private final SmsSender sms;
+    private final Optional<SmsSender> sms;   // none in production until an SMS provider exists: phone login is off
+    private final EmailSender email;
     private final SecretKeySpec hmacKey;
     private final SecureRandom random = new SecureRandom();
 
-    OtpService(StringRedisTemplate redis, RateLimiter limits, SmsSender sms,
+    OtpService(StringRedisTemplate redis, RateLimiter limits, Optional<SmsSender> sms, EmailSender email,
                @Value("${namastute.otp.hmac-secret}") String secret) {
         this.redis = redis;
         this.limits = limits;
         this.sms = sms;
+        this.email = email;
         this.hmacKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
-    void requestOtp(String phone, String ip) {
-        Boolean cooldownStarted = redis.opsForValue().setIfAbsent(cooldownKey(phone), "1", RESEND_COOLDOWN);
+    void requestOtp(String to, String ip) {
+        boolean byEmail = to.contains("@");
+        if (!byEmail && sms.isEmpty()) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "PHONE_LOGIN_UNAVAILABLE", "Log in with your email for now");
+        }
+        Boolean cooldownStarted = redis.opsForValue().setIfAbsent(cooldownKey(to), "1", RESEND_COOLDOWN);
         if (!Boolean.TRUE.equals(cooldownStarted)) {
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "OTP_COOLDOWN",
                     "Wait 30 seconds before requesting another code");
         }
-        if (hit("rate:otp:phone:" + phone, PHONE_WINDOW) > PHONE_LIMIT) {
+        if (hit("rate:otp:to:" + to, TO_WINDOW) > TO_LIMIT) {
             throw rateLimited();
         }
         if (hit("rate:otp:ip:" + ip, IP_WINDOW) > IP_LIMIT) {
@@ -55,18 +64,29 @@ class OtpService {
         }
 
         String code = String.format("%06d", random.nextInt(1_000_000));
-        redis.opsForValue().set(codeKey(phone), hmac(code), OTP_TTL);
-        redis.delete(triesKey(phone));
-        sms.send(phone, "Your Namastute code is " + code + ". It expires in 5 minutes.");
+        redis.opsForValue().set(codeKey(to), hmac(code), OTP_TTL);
+        redis.delete(triesKey(to));
+        String text = "Your Namastute code is " + code + ". It expires in 5 minutes.";
+        try {
+            if (byEmail) {
+                email.send(to, "Your Namastute code: " + code,
+                        text + "\n\nDidn't ask for it? Ignore this email: nobody can log in without the code.");
+            } else {
+                sms.get().send(to, text);
+            }
+        } catch (RuntimeException e) {
+            redis.delete(List.of(codeKey(to), cooldownKey(to)));   // nothing was sent: they may try again straight away
+            throw e;
+        }
     }
 
-    void verify(String phone, String code) {
-        String stored = redis.opsForValue().get(codeKey(phone));
+    void verify(String to, String code) {
+        String stored = redis.opsForValue().get(codeKey(to));
         if (stored == null) {
             throw invalidCode();
         }
-        if (hit(triesKey(phone), OTP_TTL) > MAX_ATTEMPTS) {
-            redis.delete(List.of(codeKey(phone), triesKey(phone)));
+        if (hit(triesKey(to), OTP_TTL) > MAX_ATTEMPTS) {
+            redis.delete(List.of(codeKey(to), triesKey(to)));
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "OTP_TOO_MANY_ATTEMPTS",
                     "Too many wrong codes, request a new one");
         }
@@ -74,10 +94,10 @@ class OtpService {
                 hmac(code).getBytes(StandardCharsets.UTF_8),
                 stored.getBytes(StandardCharsets.UTF_8));
         // Only the request whose DEL actually removes the code wins, so two simultaneous correct guesses can't both pass
-        if (!matches || !Boolean.TRUE.equals(redis.delete(codeKey(phone)))) {
+        if (!matches || !Boolean.TRUE.equals(redis.delete(codeKey(to)))) {
             throw invalidCode();
         }
-        redis.delete(triesKey(phone));
+        redis.delete(triesKey(to));
     }
 
     // Counts one hit in a fixed window (shared RateLimiter); a Redis failure is thrown, so no code goes out unlimited
@@ -96,16 +116,16 @@ class OtpService {
         }
     }
 
-    private static String codeKey(String phone) {
-        return "otp:code:" + phone;
+    private static String codeKey(String to) {
+        return "otp:code:" + to;
     }
 
-    private static String triesKey(String phone) {
-        return "otp:tries:" + phone;
+    private static String triesKey(String to) {
+        return "otp:tries:" + to;
     }
 
-    private static String cooldownKey(String phone) {
-        return "otp:cooldown:" + phone;
+    private static String cooldownKey(String to) {
+        return "otp:cooldown:" + to;
     }
 
     private static ApiException invalidCode() {

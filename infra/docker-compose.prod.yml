@@ -42,6 +42,7 @@ services:
       PUSH_CONTACT: https://${DOMAIN}   # who push services contact about our pushes (RFC 8292)
       S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET in infra/.env}   # ID photos; access comes from the EC2 IAM role
       AWS_REGION: ${AWS_REGION:-ap-south-1}
+      EMAIL_FROM: ${EMAIL_FROM:-}       # login emails through SES; the API refuses to start without it under plain prod
     depends_on:
       postgres:
         condition: service_healthy

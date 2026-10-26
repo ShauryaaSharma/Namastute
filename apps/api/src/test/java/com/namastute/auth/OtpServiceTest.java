@@ -16,7 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 // Integration test: real Redis (and Postgres for the app context), fake SMS that remembers the last message
 @SpringBootTest
-@Import(CapturingSms.Config.class)
+@Import({CapturingSms.Config.class, CapturingEmail.Config.class})   // the same set in every login test: they share one Spring context
 class OtpServiceTest {
 
     static final String PHONE = "+919000000001";
@@ -29,7 +29,7 @@ class OtpServiceTest {
     @BeforeEach
     void cleanRedis() {
         redis.delete(List.of("otp:code:" + PHONE, "otp:tries:" + PHONE, "otp:cooldown:" + PHONE,
-                "rate:otp:phone:" + PHONE, "rate:otp:ip:" + IP));
+                "rate:otp:to:" + PHONE, "rate:otp:ip:" + IP));
     }
 
     @Test
@@ -56,7 +56,7 @@ class OtpServiceTest {
         }
 
         assertThat(errorCode(() -> otp.requestOtp(PHONE, IP))).isEqualTo("OTP_RATE_LIMITED");
-        assertThat(redis.getExpire("rate:otp:phone:" + PHONE)).as("counter has a TTL").isPositive();
+        assertThat(redis.getExpire("rate:otp:to:" + PHONE)).as("counter has a TTL").isPositive();
     }
 
     @Test
